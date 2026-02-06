@@ -8,11 +8,9 @@ import { Surface } from '../components/ui/Surface'
 export function CoursesPage() {
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(true)
-
   useEffect(() => {
     loadCourses()
   }, [])
-
   async function loadCourses() {
     setLoading(true)
     const { data } = await supabase
@@ -23,7 +21,6 @@ export function CoursesPage() {
     if (data) setCourses(data)
     setLoading(false)
   }
-
   return (
     <div className="min-h-screen">
       <Section className="pt-10 md:pt-14 pb-6 md:pb-10">
@@ -43,9 +40,7 @@ export function CoursesPage() {
           </motion.div>
         </Container>
       </Section>
-
       <Section className="py-6 md:py-10">
-        <Container>
           {loading ? (
             <div className="text-center py-16">
               <div className="mx-auto h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-teal-300/70" />
@@ -69,7 +64,6 @@ export function CoursesPage() {
                       <div className="absolute -inset-8 opacity-0 blur-2xl transition-opacity group-hover:opacity-100">
                         <div className="h-full w-full rounded-[26px] bg-gradient-to-r from-teal-400/10 via-sky-400/8 to-indigo-400/10" />
                       </div>
-
                       {course.image_url && (
                         <div className="relative aspect-video overflow-hidden border-b border-white/10 bg-white/[0.02]">
                           <img
@@ -79,7 +73,6 @@ export function CoursesPage() {
                           />
                         </div>
                       )}
-
                       <div className="relative p-6">
                         <h3 className="text-lg md:text-xl font-semibold text-slate-50 tracking-tight">
                           {course.title}
@@ -89,22 +82,16 @@ export function CoursesPage() {
                             {course.short_description}
                           </p>
                         )}
-
                         <div className="mt-5 flex items-center justify-between">
                           <span className="text-xs text-slate-500">Course</span>
                           <span className="text-xs font-semibold text-teal-300 group-hover:text-teal-200 transition-colors">
                             Open →
                           </span>
-                        </div>
-                      </div>
                     </Surface>
                   </Link>
                 </motion.div>
               ))}
-            </div>
           )}
-        </Container>
-      </Section>
     </div>
   )
 }

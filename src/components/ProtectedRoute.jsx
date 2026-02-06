@@ -4,7 +4,6 @@ import { useAuth } from '../contexts/AuthContext'
 export function ProtectedRoute({ children, allowedRoles = [] }) {
   const { user, profile, loading } = useAuth()
   const location = useLocation()
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -12,13 +11,9 @@ export function ProtectedRoute({ children, allowedRoles = [] }) {
       </div>
     )
   }
-
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />
-  }
-
   if (profile?.approval_status === 'pending' && profile?.role === 'student') {
-    return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div className="text-center max-w-md">
           <h1 className="text-xl font-semibold text-gray-800 mb-2">Account Pending</h1>
@@ -30,13 +25,7 @@ export function ProtectedRoute({ children, allowedRoles = [] }) {
             Back to Home
           </button>
         </div>
-      </div>
-    )
-  }
-
   if (allowedRoles.length > 0 && profile && !allowedRoles.includes(profile.role)) {
     return <Navigate to="/" replace />
-  }
-
   return children
 }

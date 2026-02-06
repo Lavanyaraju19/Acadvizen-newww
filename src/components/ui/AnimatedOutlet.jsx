@@ -4,7 +4,6 @@ import { useLocation, useOutlet } from 'react-router-dom'
 export function AnimatedOutlet() {
   const location = useLocation()
   const outlet = useOutlet()
-
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
@@ -19,4 +18,3 @@ export function AnimatedOutlet() {
     </AnimatePresence>
   )
 }
-

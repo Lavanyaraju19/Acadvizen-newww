@@ -22,11 +22,9 @@ export function ResourcesAdmin() {
     order_index: 0,
     is_published: true,
   })
-
   useEffect(() => {
     loadData()
   }, [])
-
   async function loadData() {
     setLoading(true)
     const [resRes, coursesRes, toolsRes] = await Promise.all([
@@ -39,7 +37,6 @@ export function ResourcesAdmin() {
     if (toolsRes.data) setTools(toolsRes.data)
     setLoading(false)
   }
-
   async function handleFileUpload(e) {
     const file = e.target.files[0]
     if (!file) return
@@ -57,11 +54,8 @@ export function ResourcesAdmin() {
     } finally {
       setUploading(false)
     }
-  }
-
   async function handleSubmit(e) {
     e.preventDefault()
-    try {
       const data = { ...formData }
       if (!data.course_id) delete data.course_id
       if (!data.tool_id) delete data.tool_id
@@ -84,23 +78,14 @@ export function ResourcesAdmin() {
         is_published: true,
       })
       loadData()
-    } catch (err) {
       alert('Error: ' + err.message)
-    }
-  }
-
   async function handleDelete(id) {
     if (!confirm('Delete this resource?')) return
     await supabase.from('resources').delete().eq('id', id)
-    loadData()
-  }
-
   function startEdit(resource) {
     setEditing(resource)
     setShowForm(true)
     setFormData(resource)
-  }
-
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -127,7 +112,6 @@ export function ResourcesAdmin() {
           ➕ Add Resource
         </button>
       </div>
-
       {(showForm || editing) && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
           <Surface className="p-6">
@@ -144,12 +128,10 @@ export function ResourcesAdmin() {
                     className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
                   />
                 </div>
-                <div>
                   <label className="block text-sm font-medium text-slate-200 mb-1">Resource Type *</label>
                   <select
                     value={formData.resource_type}
                     onChange={(e) => setFormData({ ...formData, resource_type: e.target.value })}
-                    className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
                   >
                     <option value="pdf" className="bg-[#050b12]">PDF</option>
                     <option value="video" className="bg-[#050b12]">Video</option>
@@ -157,39 +139,24 @@ export function ResourcesAdmin() {
                     <option value="brochure" className="bg-[#050b12]">Brochure</option>
                     <option value="llm_link" className="bg-[#050b12]">LLM Link</option>
                   </select>
-                </div>
               </div>
-
               {(formData.resource_type !== 'llm_link') && (
-                <div>
                   <label className="block text-sm font-medium text-slate-200 mb-1">Upload File</label>
-                  <input
                     type="file"
                     accept={formData.resource_type === 'pdf' ? '.pdf' : formData.resource_type === 'video' ? 'video/*' : 'image/*'}
                     onChange={handleFileUpload}
                     disabled={uploading}
                     className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 file:mr-4 file:rounded-lg file:border-0 file:bg-white/[0.06] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-100 hover:file:bg-white/[0.10]"
-                  />
                   {uploading && <p className="text-sm text-slate-400 mt-2">Uploading…</p>}
                   {formData.file_url && (
                     <p className="text-sm text-emerald-200 mt-2">✓ File uploaded</p>
                   )}
-                </div>
               )}
-
               {formData.resource_type === 'llm_link' && (
-                <div>
                   <label className="block text-sm font-medium text-slate-200 mb-1">External URL *</label>
-                  <input
                     type="url"
-                    required
                     value={formData.external_url}
                     onChange={(e) => setFormData({ ...formData, external_url: e.target.value })}
-                    className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
-                  />
-                </div>
-              )}
-
               <div>
                 <label className="block text-sm font-medium text-slate-200 mb-1">Description</label>
                 <textarea
@@ -198,63 +165,34 @@ export function ResourcesAdmin() {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
                 />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
                   <label className="block text-sm font-medium text-slate-200 mb-1">Course (optional)</label>
-                  <select
                     value={formData.course_id || ''}
                     onChange={(e) => setFormData({ ...formData, course_id: e.target.value || null })}
-                    className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
-                  >
                     <option value="" className="bg-[#050b12]">None</option>
                     {courses.map((c) => (
                       <option key={c.id} value={c.id} className="bg-[#050b12]">
                         {c.title}
                       </option>
                     ))}
-                  </select>
-                </div>
-                <div>
                   <label className="block text-sm font-medium text-slate-200 mb-1">Tool (optional)</label>
-                  <select
                     value={formData.tool_id || ''}
                     onChange={(e) => setFormData({ ...formData, tool_id: e.target.value || null })}
-                    className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
-                  >
-                    <option value="" className="bg-[#050b12]">None</option>
                     {tools.map((t) => (
                       <option key={t.id} value={t.id} className="bg-[#050b12]">
                         {t.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
                 <label className="block text-sm font-medium text-slate-200 mb-1">Order Index</label>
                 <input
                   type="number"
                   value={formData.order_index}
                   onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) })}
-                  className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
-                />
-              </div>
-
               <div className="flex items-center gap-2">
-                <input
                   type="checkbox"
                   id="is_published"
                   checked={formData.is_published}
                   onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
-                />
                 <label htmlFor="is_published" className="text-sm text-slate-200">
                   Published
                 </label>
-              </div>
-
               <div className="flex flex-wrap gap-2">
                 <button
                   type="submit"
@@ -263,7 +201,6 @@ export function ResourcesAdmin() {
                 >
                   {editing ? 'Update' : 'Create'}
                 </button>
-                <button
                   type="button"
                   onClick={() => {
                     setEditing(null)
@@ -282,15 +219,11 @@ export function ResourcesAdmin() {
                   }}
                   data-cursor="hover"
                   className="px-4 py-2 rounded-xl border border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.05]"
-                >
                   Cancel
-                </button>
-              </div>
             </form>
           </Surface>
         </motion.div>
       )}
-
       {loading ? (
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-300/70 mx-auto" />
@@ -324,30 +257,22 @@ export function ResourcesAdmin() {
                     >
                       {res.is_published ? 'Published' : 'Draft'}
                     </span>
-                  </td>
                   <td className="px-6 py-4 text-sm">
                     <button
                       onClick={() => startEdit(res)}
                       data-cursor="hover"
                       className="text-teal-300 hover:text-teal-200 mr-3 font-semibold"
-                    >
                       ✏️ Edit
                     </button>
-                    <button
                       onClick={() => handleDelete(res.id)}
-                      data-cursor="hover"
                       className="text-rose-300 hover:text-rose-200 font-semibold"
-                    >
                       🗑 Delete
-                    </button>
-                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
           </div>
         </Surface>
-      )}
     </div>
   )
 }

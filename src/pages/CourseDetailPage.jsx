@@ -11,11 +11,9 @@ export function CourseDetailPage() {
   const [details, setDetails] = useState([])
   const [resources, setResources] = useState([])
   const [loading, setLoading] = useState(true)
-
   useEffect(() => {
     loadCourse()
   }, [slug])
-
   async function loadCourse() {
     setLoading(true)
     const { data: courseData } = await supabase
@@ -24,7 +22,6 @@ export function CourseDetailPage() {
       .eq('slug', slug)
       .eq('is_published', true)
       .single()
-
     if (courseData) {
       setCourse(courseData)
       const { data: detailsData } = await supabase
@@ -33,37 +30,24 @@ export function CourseDetailPage() {
         .eq('course_id', courseData.id)
         .order('order_index', { ascending: true })
       if (detailsData) setDetails(detailsData)
-
       const { data: resData } = await supabase
         .from('resources')
-        .select('*')
-        .eq('course_id', courseData.id)
         .eq('is_published', true)
-        .order('order_index', { ascending: true })
       if (resData) setResources(resData)
     }
     setLoading(false)
   }
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-300/70" />
       </div>
     )
-  }
-
   if (!course) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-semibold mb-2 text-slate-50">Course not found</h1>
           <Link to="/courses" className="text-teal-300 hover:text-teal-200 transition-colors">Back to Courses</Link>
         </div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen">
       <Section className="pt-10 md:pt-14 pb-10">
@@ -75,7 +59,6 @@ export function CourseDetailPage() {
           >
             <span className="opacity-80">←</span> Back to Courses
           </Link>
-
           <Surface
             className="mt-5 overflow-hidden"
             motionProps={{
@@ -83,24 +66,20 @@ export function CourseDetailPage() {
               animate: { opacity: 1, y: 0 },
               transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
             }}
-          >
             {course.image_url && (
               <div className="relative aspect-video overflow-hidden border-b border-white/10 bg-white/[0.02]">
                 <img src={course.image_url} alt={course.title} className="h-full w-full object-cover" />
               </div>
             )}
-
             <div className="p-7 md:p-10">
               <h1 className="text-2xl md:text-4xl font-semibold tracking-tight text-slate-50">
                 {course.title}
               </h1>
-
               {course.description && (
                 <div className="mt-5 text-slate-300 leading-relaxed whitespace-pre-wrap">
                   {course.description}
                 </div>
               )}
-
               {details.length > 0 && (
                 <div className="mt-10 pt-8 border-t border-white/10">
                   <h2 className="text-xl md:text-2xl font-semibold text-slate-50">Course Content</h2>
@@ -116,15 +95,10 @@ export function CourseDetailPage() {
                           <div className="mt-2 text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">
                             {detail.content}
                           </div>
-                        )}
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
-
               {resources.length > 0 && (
-                <div className="mt-10 pt-8 border-t border-white/10">
                   <h2 className="text-xl md:text-2xl font-semibold text-slate-50">Resources</h2>
                   <div className="mt-5 grid gap-4 md:grid-cols-2">
                     {resources.map((res) => (
@@ -135,7 +109,6 @@ export function CourseDetailPage() {
                         <h3 className="text-sm font-semibold text-slate-50">{res.title}</h3>
                         {res.description && (
                           <p className="mt-2 text-sm text-slate-300">{res.description}</p>
-                        )}
                         <div className="mt-4 flex items-center gap-3">
                           {res.file_url && (
                             <a
@@ -149,22 +122,9 @@ export function CourseDetailPage() {
                             </a>
                           )}
                           {res.external_url && (
-                            <a
                               href={res.external_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              data-cursor="hover"
-                              className="text-sm font-semibold text-teal-300 hover:text-teal-200 transition-colors"
-                            >
                               Open Link →
-                            </a>
-                          )}
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </Surface>
         </Container>

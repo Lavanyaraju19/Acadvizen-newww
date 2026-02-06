@@ -8,5 +8,3 @@ export function Container({ children, className = '' }) {
       {children}
     </div>
   )
-}
-

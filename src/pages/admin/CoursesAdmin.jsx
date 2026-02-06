@@ -17,11 +17,9 @@ export function CoursesAdmin() {
     order_index: 0,
     is_published: true,
   })
-
   useEffect(() => {
     loadCourses()
   }, [])
-
   async function loadCourses() {
     setLoading(true)
     const { data } = await supabase
@@ -31,14 +29,11 @@ export function CoursesAdmin() {
     if (data) setCourses(data)
     setLoading(false)
   }
-
   function generateSlug(title) {
     return title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '')
-  }
-
   async function handleSubmit(e) {
     e.preventDefault()
     if (!formData.slug) {
@@ -64,21 +59,13 @@ export function CoursesAdmin() {
       loadCourses()
     } catch (err) {
       alert('Error: ' + err.message)
-    }
-  }
-
   async function handleDelete(id) {
     if (!confirm('Delete this course?')) return
     await supabase.from('courses').delete().eq('id', id)
-    loadCourses()
-  }
-
   function startEdit(course) {
     setEditing(course)
     setShowForm(true)
     setFormData(course)
-  }
-
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -103,13 +90,11 @@ export function CoursesAdmin() {
           ➕ Add Course
         </button>
       </div>
-
       {(showForm || editing) && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-6"
-        >
           <Surface className="p-6">
             <h3 className="text-lg font-semibold mb-4 text-slate-50">{editing ? 'Edit' : 'Add'} Course</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -126,15 +111,9 @@ export function CoursesAdmin() {
                     className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
                   />
                 </div>
-                <div>
                   <label className="block text-sm font-medium text-slate-200 mb-1">Slug</label>
-                  <input
-                    type="text"
                     value={formData.slug}
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
-                  />
-                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-200 mb-1">Short Description</label>
@@ -144,47 +123,27 @@ export function CoursesAdmin() {
                   onChange={(e) => setFormData({ ...formData, short_description: e.target.value })}
                   className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
                 />
-              </div>
-              <div>
                 <label className="block text-sm font-medium text-slate-200 mb-1">Description</label>
                 <textarea
                   rows={4}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
                   <label className="block text-sm font-medium text-slate-200 mb-1">Image URL</label>
-                  <input
                     type="url"
                     value={formData.image_url}
                     onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                    className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
-                  />
-                </div>
-                <div>
                   <label className="block text-sm font-medium text-slate-200 mb-1">Order Index</label>
-                  <input
                     type="number"
                     value={formData.order_index}
                     onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) })}
-                    className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
-                  />
-                </div>
-              </div>
               <div className="flex items-center gap-2">
-                <input
                   type="checkbox"
                   id="is_published"
                   checked={formData.is_published}
                   onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
-                />
                 <label htmlFor="is_published" className="text-sm text-slate-200">
                   Published
                 </label>
-              </div>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="submit"
@@ -193,7 +152,6 @@ export function CoursesAdmin() {
                 >
                   {editing ? 'Update' : 'Create'}
                 </button>
-                <button
                   type="button"
                   onClick={() => {
                     setEditing(null)
@@ -210,15 +168,11 @@ export function CoursesAdmin() {
                   }}
                   data-cursor="hover"
                   className="px-4 py-2 rounded-xl border border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.05]"
-                >
                   Cancel
-                </button>
-              </div>
             </form>
           </Surface>
         </motion.div>
       )}
-
       {loading ? (
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-300/70 mx-auto" />
@@ -256,24 +210,17 @@ export function CoursesAdmin() {
                       onClick={() => startEdit(course)}
                       data-cursor="hover"
                       className="text-teal-300 hover:text-teal-200 mr-3 font-semibold"
-                    >
                       ✏️ Edit
                     </button>
-                    <button
                       onClick={() => handleDelete(course.id)}
-                      data-cursor="hover"
                       className="text-rose-300 hover:text-rose-200 font-semibold"
-                    >
                       🗑 Delete
-                    </button>
-                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
           </div>
         </Surface>
-      )}
     </div>
   )
 }

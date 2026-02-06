@@ -6,11 +6,9 @@ export function StudentsAdmin() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
-
   useEffect(() => {
     loadStudents()
   }, [])
-
   async function loadStudents() {
     setLoading(true)
     const { data } = await supabase
@@ -20,7 +18,6 @@ export function StudentsAdmin() {
     if (data) setStudents(data)
     setLoading(false)
   }
-
   async function handleApprove(student, role = 'student') {
     if (!confirm(`Approve ${student.email} as ${role}?`)) return
     try {
@@ -28,51 +25,27 @@ export function StudentsAdmin() {
         .from('profiles')
         .update({ approval_status: 'approved', role })
         .eq('id', student.id)
-
       // Send email notification (in production, use Supabase Edge Function or email service)
       // For now, we'll log it - you can integrate with Resend, SendGrid, etc.
       console.log(`Email sent to ${student.email}: Your account has been approved!`)
-
       // In production, call an Edge Function:
       // await supabase.functions.invoke('send-approval-email', {
       //   body: { email: student.email, role, studentId: student.student_id }
       // })
-
       loadStudents()
       alert('Student approved successfully!')
     } catch (err) {
       alert('Error: ' + err.message)
     }
-  }
-
   async function handleReject(student) {
     if (!confirm(`Reject ${student.email}?`)) return
-    try {
-      await supabase
-        .from('profiles')
         .update({ approval_status: 'rejected' })
-        .eq('id', student.id)
-
       // Send rejection email (same as above - integrate with email service)
       console.log(`Email sent to ${student.email}: Your account application has been rejected.`)
-
-      loadStudents()
       alert('Student rejected.')
-    } catch (err) {
-      alert('Error: ' + err.message)
-    }
-  }
-
   async function handleRoleChange(student, newRole) {
     if (!confirm(`Change ${student.email} role to ${newRole}?`)) return
-    try {
       await supabase.from('profiles').update({ role: newRole }).eq('id', student.id)
-      loadStudents()
-    } catch (err) {
-      alert('Error: ' + err.message)
-    }
-  }
-
   const filtered = students.filter((s) => {
     const matchSearch =
       s.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -81,7 +54,6 @@ export function StudentsAdmin() {
     const matchStatus = filterStatus === 'all' || s.approval_status === filterStatus
     return matchSearch && matchStatus
   })
-
   return (
     <div>
       <div className="mb-6">
@@ -106,11 +78,9 @@ export function StudentsAdmin() {
           </select>
         </div>
       </div>
-
       {loading ? (
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 mx-auto" />
-        </div>
       ) : (
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
@@ -148,7 +118,6 @@ export function StudentsAdmin() {
                         <option value="admin">Admin</option>
                       </select>
                     </td>
-                    <td className="px-6 py-4">
                       <span
                         className={`px-2 py-1 text-xs rounded-full ${
                           student.approval_status === 'approved'
@@ -157,10 +126,8 @@ export function StudentsAdmin() {
                             ? 'bg-red-100 text-red-800'
                             : 'bg-yellow-100 text-yellow-800'
                         }`}
-                      >
                         {student.approval_status}
                       </span>
-                    </td>
                     <td className="px-6 py-4 text-sm">
                       {student.approval_status === 'pending' && (
                         <>
@@ -170,17 +137,13 @@ export function StudentsAdmin() {
                           >
                             ✓ Approve
                           </button>
-                          <button
                             onClick={() => handleReject(student)}
                             className="text-red-600 hover:text-red-800"
-                          >
                             ✗ Reject
-                          </button>
                         </>
                       )}
                       {student.approval_status === 'approved' && (
                         <span className="text-gray-400">Approved</span>
-                      )}
                       {student.approval_status === 'rejected' && (
                         <button
                           onClick={() => handleApprove(student, student.role)}
@@ -188,8 +151,6 @@ export function StudentsAdmin() {
                         >
                           ✓ Re-approve
                         </button>
-                      )}
-                    </td>
                   </tr>
                 ))
               )}
@@ -200,7 +161,6 @@ export function StudentsAdmin() {
               Showing {filtered.length} of {students.length} students
             </p>
           </div>
-        </div>
       )}
     </div>
   )

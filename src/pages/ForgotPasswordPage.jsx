@@ -9,7 +9,6 @@ export function ForgotPasswordPage() {
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
   const { resetPassword } = useAuth()
-
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
@@ -24,7 +23,6 @@ export function ForgotPasswordPage() {
       setLoading(false)
     }
   }
-
   return (
     <AuthShell title="Reset password" subtitle="Enter your email to receive reset instructions">
       {error && (
@@ -32,11 +30,9 @@ export function ForgotPasswordPage() {
           {error}
         </div>
       )}
-
       {success ? (
         <div className="mb-4 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">
           Check your email for password reset instructions.
-        </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
@@ -61,8 +57,6 @@ export function ForgotPasswordPage() {
             {loading ? 'Sending…' : 'Send reset link'}
           </button>
         </form>
-      )}
-
       <p className="mt-6 text-center text-sm text-slate-400">
         <Link to="/login" data-cursor="hover" className="font-semibold text-teal-300 hover:text-teal-200">
           Back to sign in

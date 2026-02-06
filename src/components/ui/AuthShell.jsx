@@ -26,4 +26,3 @@ export function AuthShell({ title, subtitle, children }) {
     </div>
   )
 }
-

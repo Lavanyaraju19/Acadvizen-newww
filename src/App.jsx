@@ -13,12 +13,10 @@ import { ContactPage } from './pages/ContactPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
-
 // Protected
 import { StudentDashboard } from './pages/dashboard/StudentDashboard'
 import { AdminDashboard } from './pages/admin/AdminDashboard'
 import { SalesView } from './pages/sales/SalesView'
-
 export default function App() {
   return (
     <Routes>
@@ -33,7 +31,6 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-
         <Route
           path="/dashboard"
           element={
@@ -42,16 +39,10 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route
           path="/sales"
-          element={
             <ProtectedRoute allowedRoles={['sales', 'admin']}>
               <SalesView />
-            </ProtectedRoute>
-          }
-        />
       </Route>
-
       <Route
         path="/admin/*"
         element={
@@ -60,7 +51,6 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

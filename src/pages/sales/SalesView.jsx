@@ -8,11 +8,9 @@ export function SalesView() {
   const [search, setSearch] = useState('')
   const [filterRole, setFilterRole] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
-
   useEffect(() => {
     loadUsers()
   }, [])
-
   async function loadUsers() {
     setLoading(true)
     const { data } = await supabase
@@ -22,7 +20,6 @@ export function SalesView() {
     if (data) setUsers(data)
     setLoading(false)
   }
-
   const filtered = users.filter((u) => {
     const matchSearch =
       u.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -32,7 +29,6 @@ export function SalesView() {
     const matchStatus = filterStatus === 'all' || u.approval_status === filterStatus
     return matchSearch && matchRole && matchStatus
   })
-
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -40,7 +36,6 @@ export function SalesView() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Sales Dashboard</h1>
           <p className="text-gray-600">View and manage registered users</p>
         </div>
-
         {/* Filters */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -54,31 +49,23 @@ export function SalesView() {
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="all">All Roles</option>
               <option value="admin">Admin</option>
               <option value="student">Student</option>
               <option value="sales">Sales</option>
             </select>
-            <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
-            </select>
           </div>
-        </div>
-
         {/* Table */}
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 mx-auto" />
-          </div>
         ) : (
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
@@ -88,21 +75,11 @@ export function SalesView() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Email
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Full Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Student ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Role
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Created
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -119,9 +96,7 @@ export function SalesView() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {user.full_name || '-'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {user.student_id || '-'}
-                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`px-2 py-1 text-xs rounded-full ${
@@ -134,23 +109,14 @@ export function SalesView() {
                           >
                             {user.role}
                           </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 py-1 text-xs rounded-full ${
                               user.approval_status === 'approved'
                                 ? 'bg-green-100 text-green-800'
                                 : user.approval_status === 'rejected'
                                 ? 'bg-red-100 text-red-800'
                                 : 'bg-yellow-100 text-yellow-800'
-                            }`}
-                          >
                             {user.approval_status}
-                          </span>
-                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(user.created_at).toLocaleDateString()}
-                        </td>
                       </tr>
                     ))
                   )}
@@ -161,8 +127,6 @@ export function SalesView() {
               <p className="text-sm text-gray-600">
                 Showing {filtered.length} of {users.length} users
               </p>
-            </div>
-          </div>
         )}
       </div>
     </div>
