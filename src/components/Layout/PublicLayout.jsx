@@ -1,9 +1,5 @@
-<<<<<<< HEAD
 import { Link } from 'react-router-dom'
-=======
-﻿import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
 import { useAuth } from '../../contexts/AuthContext'
 import { AnimatedOutlet } from '../ui/AnimatedOutlet'
 import { CustomCursor } from '../ui/CustomCursor'
@@ -121,31 +117,6 @@ export function PublicLayout() {
         <AnimatedOutlet />
       </main>
 
-<<<<<<< HEAD
-      <footer className="relative z-10 border-t border-white/10 bg-white/[0.02] backdrop-blur">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="Acadvizen" className="h-8 w-auto" />
-              <span className="font-semibold text-slate-100">Acadvizen</span>
-            </div>
-            <div className="flex gap-8 text-sm text-slate-400">
-              <Link to="/" data-cursor="hover" className="hover:text-white transition-colors">Home</Link>
-              <Link to="/tools" data-cursor="hover" className="hover:text-white transition-colors">Tools</Link>
-              <Link to="/courses" data-cursor="hover" className="hover:text-white transition-colors">Courses</Link>
-              <Link to="/about" data-cursor="hover" className="hover:text-white transition-colors">About</Link>
-              <Link to="/contact" data-cursor="hover" className="hover:text-white transition-colors">Contact</Link>
-            </div>
-          </div>
-          <p className="mt-8 text-center text-sm text-slate-500">
-            © {new Date().getFullYear()} Acadvizen Digital Marketing. All rights reserved.
-          </p>
-        </div>
-      </footer>
-    </div>
-  )
-}
-=======
       <footer className="relative z-10 mt-8">
         <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-teal-400/40 to-transparent" />
         <motion.div
@@ -251,5 +222,4 @@ export function PublicLayout() {
       </footer>
     </div>
   )
-}
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+} 

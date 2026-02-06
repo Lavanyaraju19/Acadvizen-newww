@@ -1,11 +1,11 @@
-<<<<<<< HEAD
+
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-=======
+
 ﻿import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
 import { useAuth } from '../contexts/AuthContext'
 import { AuthShell } from '../components/ui/AuthShell'
 
@@ -35,7 +35,7 @@ export function LoginPage() {
 
   return (
     <AuthShell title="Sign in" subtitle="Access your dashboard">
-<<<<<<< HEAD
+
       {error && (
         <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
           {error}
@@ -100,7 +100,7 @@ export function LoginPage() {
     </AuthShell>
   )
 }
-=======
+
       <div className="relative">
         <div aria-hidden="true" className="pointer-events-none absolute -inset-6 rounded-3xl bg-gradient-to-r from-teal-400/10 via-sky-400/5 to-indigo-400/10 blur-2xl" />
         <div className="relative">
@@ -191,4 +191,4 @@ export function LoginPage() {
 }
 
 
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+

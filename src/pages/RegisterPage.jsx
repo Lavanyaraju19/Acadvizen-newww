@@ -1,16 +1,16 @@
-<<<<<<< HEAD
+
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-=======
+
 ﻿import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
 import { useAuth } from '../contexts/AuthContext'
 import { AuthShell } from '../components/ui/AuthShell'
 
 export function RegisterPage() {
-<<<<<<< HEAD
+
   const [formData, setFormData] = useState({ email: '', password: '', fullName: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -20,7 +20,7 @@ export function RegisterPage() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
-=======
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -48,7 +48,7 @@ export function RegisterPage() {
       return
     }
 
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
     setLoading(true)
     try {
       await signUp(formData.email, formData.password, formData.fullName)
@@ -62,7 +62,7 @@ export function RegisterPage() {
 
   return (
     <AuthShell title="Create account" subtitle="Join Acadvizen today">
-<<<<<<< HEAD
+
       {error && (
         <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
           {error}
@@ -133,7 +133,7 @@ export function RegisterPage() {
     </AuthShell>
   )
 }
-=======
+
       <div className="relative">
         <div aria-hidden="true" className="pointer-events-none absolute -inset-6 rounded-3xl bg-gradient-to-r from-teal-400/10 via-sky-400/5 to-indigo-400/10 blur-2xl" />
         <div className="relative">
@@ -301,4 +301,4 @@ export function RegisterPage() {
 }
 
 
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+

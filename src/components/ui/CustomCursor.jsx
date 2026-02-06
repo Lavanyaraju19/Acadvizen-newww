@@ -1,10 +1,10 @@
-<<<<<<< HEAD
+
 import { motion, useMotionValue, useSpring } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
-=======
+
 ﻿import { motion, useMotionValue, useSpring } from 'framer-motion'
 import { useEffect, useMemo, useRef, useState } from 'react'
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
 
 function isFinePointer() {
   if (typeof window === 'undefined') return false
@@ -19,11 +19,11 @@ function isTouchLike() {
 export function CustomCursor() {
   const enabled = useMemo(() => isFinePointer() && !isTouchLike(), [])
   const [active, setActive] = useState(false)
-<<<<<<< HEAD
-=======
+
+
   const [scrollPulse, setScrollPulse] = useState(false)
   const scrollTimeout = useRef(null)
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
 
   const x = useMotionValue(-100)
   const y = useMotionValue(-100)
@@ -35,14 +35,14 @@ export function CustomCursor() {
   const haloX = useSpring(x, { stiffness: 200, damping: 35, mass: 0.9 })
   const haloY = useSpring(y, { stiffness: 200, damping: 35, mass: 0.9 })
 
-<<<<<<< HEAD
-=======
+
+
   const trailOneX = useSpring(x, { stiffness: 140, damping: 28, mass: 1.1 })
   const trailOneY = useSpring(y, { stiffness: 140, damping: 28, mass: 1.1 })
   const trailTwoX = useSpring(x, { stiffness: 90, damping: 26, mass: 1.4 })
   const trailTwoY = useSpring(y, { stiffness: 90, damping: 26, mass: 1.4 })
 
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
   useEffect(() => {
     if (!enabled) return
     document.body.classList.add('advz-cursor-none')
@@ -70,11 +70,11 @@ export function CustomCursor() {
       setActive(isInteractive(next))
     }
 
-<<<<<<< HEAD
+
     window.addEventListener('mousemove', onMove, { passive: true })
     window.addEventListener('mouseover', onOver, true)
     window.addEventListener('mouseout', onOut, true)
-=======
+
     const onScroll = () => {
       setScrollPulse(true)
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current)
@@ -85,18 +85,18 @@ export function CustomCursor() {
     window.addEventListener('mouseover', onOver, true)
     window.addEventListener('mouseout', onOut, true)
     window.addEventListener('scroll', onScroll, { passive: true })
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
 
     return () => {
       document.body.classList.remove('advz-cursor-none')
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseover', onOver, true)
       window.removeEventListener('mouseout', onOut, true)
-<<<<<<< HEAD
-=======
+
+
       window.removeEventListener('scroll', onScroll)
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current)
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
     }
   }, [enabled, x, y])
 
@@ -104,8 +104,8 @@ export function CustomCursor() {
 
   return (
     <>
-<<<<<<< HEAD
-=======
+
+
       {/* Trail */}
       <motion.div
         aria-hidden="true"
@@ -146,7 +146,7 @@ export function CustomCursor() {
         />
       </motion.div>
 
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
       {/* Halo */}
       <motion.div
         aria-hidden="true"
@@ -165,11 +165,11 @@ export function CustomCursor() {
             opacity: active ? 0.95 : 0.75,
           }}
           transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-<<<<<<< HEAD
+
           className="rounded-full"
-=======
+
           className="rounded-full relative"
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
           style={{
             background:
               'radial-gradient(circle at 30% 30%, rgba(0,191,255,0.20), rgba(0,139,139,0.10) 40%, rgba(0,0,0,0) 70%)',
@@ -178,9 +178,9 @@ export function CustomCursor() {
             backdropFilter: 'blur(6px)',
             border: '1px solid rgba(148, 163, 184, 0.18)',
           }}
-<<<<<<< HEAD
+
         />
-=======
+
         >
           <motion.div
             initial={false}
@@ -196,7 +196,7 @@ export function CustomCursor() {
             }}
           />
         </motion.div>
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
       </motion.div>
 
       {/* Dot */}

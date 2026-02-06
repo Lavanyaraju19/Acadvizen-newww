@@ -1,16 +1,16 @@
-<<<<<<< HEAD
+
 import { useEffect, useState } from 'react'
-=======
+
 ﻿import { useEffect, useMemo, useState } from 'react'
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import { Container, Section } from '../components/ui/Section'
 import { Surface } from '../components/ui/Surface'
 
-<<<<<<< HEAD
-=======
+
+
 function slugify(value = '') {
   return value
     .toLowerCase()
@@ -19,7 +19,7 @@ function slugify(value = '') {
     .replace(/(^-|-$)/g, '')
 }
 
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
 export function HomePage() {
   const [tools, setTools] = useState([])
 
@@ -37,12 +37,12 @@ export function HomePage() {
     if (data) setTools(data)
   }
 
-<<<<<<< HEAD
+
   const marqueeTools = tools.length > 0 ? [...tools, ...tools] : []
 
   return (
     <div className="min-h-screen">
-=======
+
   const fallbackToolNames = useMemo(
     () => [
       'Google Ads',
@@ -167,23 +167,23 @@ export function HomePage() {
         <div className="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-indigo-400/10 blur-[120px]" />
       </div>
 
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
       {/* Hero Section */}
       <Section className="overflow-hidden">
         <Container>
           <div className="relative">
-<<<<<<< HEAD
+
             {/* Floating accents */}
             <div aria-hidden="true" className="pointer-events-none absolute -top-10 left-6 h-24 w-24 rounded-full bg-teal-400/20 blur-2xl" />
             <div aria-hidden="true" className="pointer-events-none absolute top-10 right-0 h-32 w-32 rounded-full bg-sky-400/20 blur-2xl" />
 
-=======
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
+
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-<<<<<<< HEAD
+
               className="mx-auto max-w-3xl text-center"
             >
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs text-slate-300 backdrop-blur">
@@ -195,7 +195,7 @@ export function HomePage() {
                 Build, scale, and dominate with{' '}
                 <span className="bg-gradient-to-r from-teal-300 via-sky-300 to-indigo-300 bg-clip-text text-transparent">
                   75+ premium tools
-=======
+
               className="mx-auto max-w-4xl text-center"
             >
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs text-slate-300 backdrop-blur">
@@ -207,17 +207,17 @@ export function HomePage() {
                 Acadvizen - Build Your Own{' '}
                 <span className="bg-gradient-to-r from-teal-300 via-sky-300 to-indigo-300 bg-clip-text text-transparent">
                   Digital Marketing Course
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
                 </span>
               </h1>
 
               <p className="mt-5 text-base md:text-lg text-slate-300 leading-relaxed">
-<<<<<<< HEAD
+
                 Acadvizen combines elite courses, an operator-grade tool library, and curated resources to help you
                 execute campaigns faster—with clarity and confidence.
-=======
+
                 Choose your tools, customize your syllabus, and train for real jobs in India &amp; abroad.
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
               </p>
 
               <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
@@ -226,24 +226,24 @@ export function HomePage() {
                   data-cursor="button"
                   className="group inline-flex items-center justify-center rounded-xl bg-teal-300 px-6 py-3 text-sm font-semibold text-slate-950 shadow-[0_18px_50px_rgba(0,191,255,0.16)] transition-transform hover:-translate-y-0.5 hover:bg-teal-200"
                 >
-<<<<<<< HEAD
+
                   Explore Courses
                   <span className="ml-2 opacity-70 group-hover:opacity-100 transition-opacity">→</span>
-=======
+
                   Build Your Syllabus
                   <span className="ml-2 opacity-70 group-hover:opacity-100 transition-opacity">-&gt;</span>
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
                 </Link>
                 <Link
                   to="/tools"
                   data-cursor="hover"
                   className="inline-flex items-center justify-center rounded-xl border border-white/12 bg-white/[0.03] px-6 py-3 text-sm font-semibold text-slate-100 backdrop-blur transition-transform hover:-translate-y-0.5 hover:bg-white/[0.05]"
                 >
-<<<<<<< HEAD
+
                   Browse Tools
-=======
+
                   Explore Tools
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
                 </Link>
               </div>
             </motion.div>
@@ -252,7 +252,7 @@ export function HomePage() {
       </Section>
 
       {/* Tools Marquee */}
-<<<<<<< HEAD
+
       {tools.length > 0 && (
         <Section className="py-14 md:py-20">
           <Container>
@@ -298,7 +298,7 @@ export function HomePage() {
                           <div className="h-full w-full rounded-[24px] bg-gradient-to-r from-teal-400/10 via-sky-400/8 to-indigo-400/10" />
                         </div>
                         <div className="relative h-10 w-10 rounded-xl border border-white/10 bg-white/[0.04] overflow-hidden flex items-center justify-center">
-=======
+
       <Section className="py-14 md:py-20">
         <Container>
           <div className="relative">
@@ -342,7 +342,7 @@ export function HomePage() {
                         className="group relative flex w-[220px] shrink-0 items-center gap-4 px-2 py-2 transition-transform duration-300 hover:scale-[1.03]"
                       >
                         <div className="relative h-10 w-10 rounded-xl overflow-hidden flex items-center justify-center">
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
                           {tool.image_url ? (
                             <img src={tool.image_url} alt={tool.name} className="h-full w-full object-cover" />
                           ) : (
@@ -355,8 +355,8 @@ export function HomePage() {
                             {tool.category || 'Digital marketing'}
                           </div>
                         </div>
-<<<<<<< HEAD
-=======
+
+
                         <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100">
                           <div className="h-full w-full rounded-2xl bg-gradient-to-r from-teal-400/5 via-sky-400/5 to-indigo-400/5" />
                         </div>
@@ -388,13 +388,13 @@ export function HomePage() {
                         <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100">
                           <div className="h-full w-full rounded-2xl bg-gradient-to-r from-teal-400/5 via-sky-400/5 to-indigo-400/5" />
                         </div>
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
                       </Link>
                     ))}
                   </div>
                 </div>
               </div>
-<<<<<<< HEAD
+
             </Surface>
 
             <div className="mt-6 sm:hidden">
@@ -411,7 +411,7 @@ export function HomePage() {
       )}
 
       {/* Features */}
-=======
+
 
               <div className="mt-6 sm:hidden">
                 <Link
@@ -428,7 +428,7 @@ export function HomePage() {
       </Section>
 
       {/* Why Acadvizen */}
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
       <Section className="py-12 md:py-20">
         <Container>
           <div className="text-center mb-10">
@@ -439,7 +439,7 @@ export function HomePage() {
               transition={{ duration: 0.45 }}
               className="text-2xl md:text-3xl font-semibold text-slate-50 tracking-tight"
             >
-<<<<<<< HEAD
+
               Built for execution, designed to feel premium
             </motion.h2>
             <p className="mt-2 text-slate-300 max-w-2xl mx-auto">
@@ -455,7 +455,7 @@ export function HomePage() {
             ].map((feature, idx) => (
               <Surface
                 key={idx}
-=======
+
               Why We Are Different
             </motion.h2>
             <p className="mt-2 text-slate-300 max-w-2xl mx-auto">
@@ -472,7 +472,7 @@ export function HomePage() {
             ].map((item, idx) => (
               <Surface
                 key={item}
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
                 className="p-6 md:p-7 transition-transform hover:-translate-y-1"
                 motionProps={{
                   initial: { opacity: 0, y: 14 },
@@ -481,25 +481,25 @@ export function HomePage() {
                   transition: { delay: idx * 0.08, duration: 0.45 },
                 }}
               >
-<<<<<<< HEAD
+
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-2xl border border-white/10 bg-gradient-to-br from-teal-300/20 to-sky-300/10 shadow-[0_18px_50px_rgba(0,191,255,0.10)]" />
                   <h3 className="text-lg font-semibold text-slate-50">{feature.title}</h3>
                 </div>
                 <p className="mt-3 text-sm leading-relaxed text-slate-300">{feature.desc}</p>
-=======
+
                 <div className="flex items-start gap-3">
                   <div className="mt-1 h-9 w-9 rounded-2xl border border-white/10 bg-gradient-to-br from-teal-300/20 to-sky-300/10 shadow-[0_18px_50px_rgba(0,191,255,0.10)]" />
                   <p className="text-sm md:text-base leading-relaxed text-slate-200">{item}</p>
                 </div>
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
               </Surface>
             ))}
           </div>
         </Container>
       </Section>
 
-<<<<<<< HEAD
+
       {/* CTA */}
       <Section className="py-14 md:py-20">
         <Container className="max-w-5xl">
@@ -532,7 +532,7 @@ export function HomePage() {
               </div>
             </div>
           </Surface>
-=======
+
       {/* Who Is This For */}
       <Section className="py-12 md:py-20">
         <Container>
@@ -721,13 +721,13 @@ export function HomePage() {
               </ul>
             </Surface>
           </div>
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
         </Container>
       </Section>
     </div>
   )
 }
-<<<<<<< HEAD
-=======
 
->>>>>>> aa93dfa (Initial commit: website ready for deployment)
+
+
+
