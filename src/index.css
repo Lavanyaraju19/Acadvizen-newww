@@ -4,47 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    color-scheme: dark;
-  }
-
-  body {
-    @apply font-sans antialiased;
-    background: radial-gradient(1200px 800px at 20% 10%, rgba(0, 191, 255, 0.12), transparent 55%),
-      radial-gradient(900px 700px at 80% 20%, rgba(0, 139, 139, 0.14), transparent 50%),
-      radial-gradient(700px 500px at 50% 80%, rgba(0, 122, 173, 0.10), transparent 55%),
-      #050b12;
-    color: rgba(226, 232, 240, 0.92);
-  }
-
-  ::selection {
-    background: rgba(0, 191, 255, 0.25);
-  }
-}
-
-/* Smooth scroll */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Subtle noise overlay */
-.acadvizen-noise {
-  position: relative;
-  isolation: isolate;
-}
-.acadvizen-noise::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
-  opacity: 0.06;
-  mix-blend-mode: overlay;
-  z-index: 0;
-}
-
-/* Animated gradient (very subtle) */
 @keyframes advzGradientShift {
   0% {
     filter: hue-rotate(0deg);
@@ -59,12 +18,7 @@ html {
     transform: translate3d(0, 0, 0);
   }
 }
-.advz-animated-bg {
-  animation: advzGradientShift 14s ease-in-out infinite;
-  will-change: transform, filter;
-}
 
-/* Infinite marquee */
 @keyframes advzMarquee {
   0% {
     transform: translate3d(0, 0, 0);
@@ -73,32 +27,76 @@ html {
     transform: translate3d(-50%, 0, 0);
   }
 }
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply font-sans antialiased;
+  background: radial-gradient(1200px 800px at 20% 10%, rgba(0, 191, 255, 0.12), transparent 55%),
+    radial-gradient(900px 700px at 80% 20%, rgba(0, 139, 139, 0.14), transparent 50%),
+    radial-gradient(700px 500px at 50% 80%, rgba(0, 122, 173, 0.10), transparent 55%),
+    #050b12;
+  color: rgba(226, 232, 240, 0.92);
+}
+
+::selection {
+  background: rgba(0, 191, 255, 0.25);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.acadvizen-noise {
+  position: relative;
+  isolation: isolate;
+}
+
+.acadvizen-noise::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  z-index: 0;
+}
+
+.advz-animated-bg {
+  animation: advzGradientShift 14s ease-in-out infinite;
+  will-change: transform, filter;
+}
+
 .advz-marquee {
   display: flex;
   width: max-content;
   animation: advzMarquee var(--advz-marquee-duration, 42s) linear infinite;
   will-change: transform;
 }
+
 .advz-marquee:hover {
   animation-play-state: paused;
 }
 
-/* Hide native cursor when enabled */
 body.advz-cursor-none,
 body.advz-cursor-none * {
   cursor: none !important;
 }
 
-/* Scrollbar (WebKit) */
 *::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
+
 *::-webkit-scrollbar-thumb {
   background: rgba(148, 163, 184, 0.22);
   border-radius: 999px;
   border: 2px solid rgba(5, 11, 18, 1);
 }
+
 *::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.32);
 }

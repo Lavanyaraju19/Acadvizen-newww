@@ -14,17 +14,20 @@ const adminNav = [
   { path: '/admin/course-details', label: 'Course Details', component: CourseDetailsAdmin },
   { path: '/admin/students', label: 'Students', component: StudentsAdmin },
 ]
+
 export function AdminDashboard() {
   const location = useLocation()
+
   return (
     <div className="min-h-screen acadvizen-noise">
       <CustomCursor />
-      {/* Ambient background layers (admin route isn't wrapped by PublicLayout) */}
+
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 advz-animated-bg">
         <div className="absolute -top-40 left-[-10%] h-[520px] w-[520px] rounded-full bg-teal-400/10 blur-3xl" />
         <div className="absolute top-16 right-[-10%] h-[520px] w-[520px] rounded-full bg-sky-400/10 blur-3xl" />
         <div className="absolute bottom-[-240px] left-[30%] h-[620px] w-[620px] rounded-full bg-indigo-500/10 blur-3xl" />
       </div>
+
       <div className="sticky top-0 z-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
           <Surface className="px-5 py-4">
@@ -38,7 +41,7 @@ export function AdminDashboard() {
                 data-cursor="hover"
                 className="text-sm font-semibold text-teal-300 hover:text-teal-200 transition-colors"
               >
-                ← Back to Site
+                &lt;- Back to Site
               </Link>
             </div>
             <div className="mt-4 h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
@@ -46,6 +49,7 @@ export function AdminDashboard() {
               {adminNav.map((nav) => {
                 const active =
                   location.pathname === nav.path || (nav.path === '/admin' && location.pathname === '/admin')
+
                 return (
                   <Link
                     key={nav.path}
@@ -64,6 +68,8 @@ export function AdminDashboard() {
             </nav>
           </Surface>
         </div>
+      </div>
+
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <Routes>
           <Route path="/" element={<CoursesAdmin />} />
@@ -72,6 +78,7 @@ export function AdminDashboard() {
           <Route path="/course-details" element={<CourseDetailsAdmin />} />
           <Route path="/students" element={<StudentsAdmin />} />
         </Routes>
+      </div>
     </div>
   )
 }

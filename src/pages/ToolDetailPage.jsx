@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import { Container, Section } from '../components/ui/Section'
 import { Surface } from '../components/ui/Surface'
@@ -10,9 +9,13 @@ export function ToolDetailPage() {
   const [tool, setTool] = useState(null)
   const [resources, setResources] = useState([])
   const [loading, setLoading] = useState(true)
+
   useEffect(() => {
+    if (!slug) return
     loadTool()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug])
+
   async function loadTool() {
     setLoading(true)
     const { data: toolData } = await supabase
@@ -21,6 +24,7 @@ export function ToolDetailPage() {
       .eq('slug', slug)
       .eq('is_published', true)
       .single()
+
     if (toolData) {
       setTool(toolData)
       const { data: resData } = await supabase
@@ -30,20 +34,35 @@ export function ToolDetailPage() {
         .eq('is_published', true)
         .order('order_index', { ascending: true })
       if (resData) setResources(resData)
+    } else {
+      setTool(null)
+      setResources([])
     }
+
     setLoading(false)
   }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-300/70" />
       </div>
     )
+  }
+
   if (!tool) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-semibold mb-2 text-slate-50">Tool not found</h1>
-          <Link to="/tools" className="text-teal-300 hover:text-teal-200 transition-colors">Back to Tools</Link>
+          <Link to="/tools" className="text-teal-300 hover:text-teal-200 transition-colors">
+            Back to Tools
+          </Link>
         </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen">
       <Section className="pt-10 md:pt-14 pb-10">
@@ -53,8 +72,9 @@ export function ToolDetailPage() {
             data-cursor="hover"
             className="inline-flex items-center gap-2 text-sm font-semibold text-teal-300 hover:text-teal-200 transition-colors"
           >
-            <span className="opacity-80">←</span> Back to Tools
+            <span className="opacity-80">&lt;-</span> Back to Tools
           </Link>
+
           <Surface
             className="mt-5 overflow-hidden"
             motionProps={{
@@ -62,11 +82,13 @@ export function ToolDetailPage() {
               animate: { opacity: 1, y: 0 },
               transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
             }}
+          >
             {tool.image_url && (
               <div className="relative aspect-video overflow-hidden border-b border-white/10 bg-white/[0.02]">
                 <img src={tool.image_url} alt={tool.name} className="h-full w-full object-cover" />
               </div>
             )}
+
             <div className="p-7 md:p-10">
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-2xl md:text-4xl font-semibold tracking-tight text-slate-50">
@@ -77,11 +99,14 @@ export function ToolDetailPage() {
                     {tool.category}
                   </span>
                 )}
+              </div>
+
               {tool.description && (
                 <div className="mt-5 text-slate-300 leading-relaxed whitespace-pre-wrap">
                   {tool.description}
                 </div>
               )}
+
               {tool.link_url && (
                 <a
                   href={tool.link_url}
@@ -90,8 +115,10 @@ export function ToolDetailPage() {
                   data-cursor="button"
                   className="inline-flex items-center justify-center mt-6 rounded-xl bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition-transform hover:-translate-y-0.5 hover:bg-teal-200"
                 >
-                  Visit Tool <span className="ml-2 opacity-80">→</span>
+                  Visit Tool <span className="ml-2 opacity-80">-&gt;</span>
                 </a>
+              )}
+
               {resources.length > 0 && (
                 <div className="mt-10 pt-8 border-t border-white/10">
                   <h2 className="text-xl md:text-2xl font-semibold text-slate-50">Resources</h2>
@@ -114,16 +141,26 @@ export function ToolDetailPage() {
                               data-cursor="hover"
                               className="text-sm font-semibold text-teal-300 hover:text-teal-200 transition-colors"
                             >
-                              Download →
+                              Download -&gt;
                             </a>
                           )}
                           {res.external_url && (
+                            <a
                               href={res.external_url}
-                              Open Link →
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              data-cursor="hover"
+                              className="text-sm font-semibold text-slate-300 hover:text-slate-100 transition-colors"
+                            >
+                              Open Link -&gt;
+                            </a>
+                          )}
                         </div>
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
             </div>
           </Surface>
         </Container>
