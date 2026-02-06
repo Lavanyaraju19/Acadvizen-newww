@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 import { Link } from 'react-router-dom'
+=======
+﻿import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
+>>>>>>> aa93dfa (Initial commit: website ready for deployment)
 import { useAuth } from '../../contexts/AuthContext'
 import { AnimatedOutlet } from '../ui/AnimatedOutlet'
 import { CustomCursor } from '../ui/CustomCursor'
@@ -116,6 +121,7 @@ export function PublicLayout() {
         <AnimatedOutlet />
       </main>
 
+<<<<<<< HEAD
       <footer className="relative z-10 border-t border-white/10 bg-white/[0.02] backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
@@ -139,3 +145,111 @@ export function PublicLayout() {
     </div>
   )
 }
+=======
+      <footer className="relative z-10 mt-8">
+        <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-teal-400/40 to-transparent" />
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="border-t border-white/10 bg-white/[0.02] backdrop-blur"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="grid gap-10 md:grid-cols-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <img src="/logo.png" alt="Acadvizen" className="h-8 w-auto" />
+                  <span className="font-semibold text-slate-100">Acadvizen</span>
+                </div>
+                <p className="mt-3 text-sm text-slate-400">
+                  Premium academy for digital marketing mastery.
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Academy Index</p>
+                <div className="mt-4 flex flex-col gap-3">
+                  {[
+                    { label: 'Home', to: '/' },
+                    { label: 'Course Catalog', to: '/courses' },
+                    { label: 'Premium Tools', to: '/tools' },
+                    { label: 'Our Story', to: '/about' },
+                    { label: 'Hiring Partners', to: '/contact' },
+                    { label: 'Enroll Today', to: '/register' },
+                  ].map((item) => (
+                    <Link
+                      key={item.label}
+                      to={item.to}
+                      data-cursor="hover"
+                      className="group relative inline-flex text-sm text-slate-400 transition-colors hover:text-slate-100"
+                    >
+                      {item.label}
+                      <span className="pointer-events-none absolute left-0 -bottom-1 h-px w-full origin-left scale-x-0 bg-gradient-to-r from-teal-300 to-sky-300 transition-transform duration-300 group-hover:scale-x-100" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Support Node</p>
+                <div className="mt-4 flex flex-col gap-3">
+                  {[
+                    { label: 'Help Center', to: '/contact' },
+                    { label: 'Student FAQ', to: '/contact' },
+                    { label: 'Refund Policy', to: '/contact' },
+                    { label: 'Contact Support', to: '/contact' },
+                  ].map((item) => (
+                    <Link
+                      key={item.label}
+                      to={item.to}
+                      data-cursor="hover"
+                      className="group relative inline-flex text-sm text-slate-400 transition-colors hover:text-slate-100"
+                    >
+                      {item.label}
+                      <span className="pointer-events-none absolute left-0 -bottom-1 h-px w-full origin-left scale-x-0 bg-gradient-to-r from-teal-300 to-sky-300 transition-transform duration-300 group-hover:scale-x-100" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Legal</p>
+                <div className="mt-4 flex flex-col gap-3">
+                  {[
+                    { label: 'Terms of Service', to: '/about' },
+                    { label: 'Privacy Policy', to: '/contact' },
+                  ].map((item) => (
+                    <Link
+                      key={item.label}
+                      to={item.to}
+                      data-cursor="hover"
+                      className="group relative inline-flex text-sm text-slate-400 transition-colors hover:text-slate-100"
+                    >
+                      {item.label}
+                      <span className="pointer-events-none absolute left-0 -bottom-1 h-px w-full origin-left scale-x-0 bg-gradient-to-r from-teal-300 to-sky-300 transition-transform duration-300 group-hover:scale-x-100" />
+                    </Link>
+                  ))}
+                </div>
+
+                <p className="mt-8 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">HQ Command</p>
+                <div className="mt-4 space-y-2 text-sm text-slate-400">
+                  <p>5th Block, Jayanagar, Bengaluru, Bengaluru Urban, Karnataka</p>
+                  <p>Bangalore, KA 560078</p>
+                  <p>+91 74113 14848</p>
+                  <p>GSTIN: 29BYLPC4390P1ZO</p>
+                  <p>ceoacadvizen.com</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-10 border-t border-white/10 pt-6 text-center text-xs tracking-[0.2em] text-slate-500">
+              © 2026 ACADVIZEN OPERATIONS. ALL RIGHTS RESERVED.
+            </div>
+          </div>
+        </motion.div>
+      </footer>
+    </div>
+  )
+}
+>>>>>>> aa93dfa (Initial commit: website ready for deployment)
