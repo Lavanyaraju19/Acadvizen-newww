@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { PublicLayout } from './components/Layout/PublicLayout'
 import { ProtectedRoute } from './components/ProtectedRoute'
 
-import { HomePage } from './pages/HomePage'
+import HomePage from './pages/HomePage'
 import { ToolsPage } from './pages/ToolsPage'
 import { ToolDetailPage } from './pages/ToolDetailPage'
 import { CoursesPage } from './pages/CoursesPage'

@@ -201,16 +201,16 @@ export function PublicLayout() {
 
                 <p className="mt-8 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">HQ Command</p>
                 <div className="mt-4 space-y-2 text-sm text-slate-400">
-                  <p>4th Floor, Tech Hub, MG Road</p>
-                  <p>Bangalore, KA 560001</p>
-                  <p>+91 1800-DM-MASTERY</p>
-                  <p>hq@acadvizen.com</p>
+                  <p>No 647-35/29 5th Block, Jayanagar</p>
+                  <p>Bangalore, Karnataka 560078</p>
+                  <p>+91 7411314848</p>
+                  <p>ceo@acadvizen.com</p>
                 </div>
               </div>
             </div>
 
             <div className="mt-10 border-t border-white/10 pt-6 text-center text-xs tracking-[0.2em] text-slate-500">
-              © 2024 ACADVIZEN OPERATIONS. ALL RIGHTS RESERVED.
+              ï¿½ 2026 ACADVIZEN Digital Marketing. ALL RIGHTS RESERVED.
             </div>
           </div>
         </motion.div>
