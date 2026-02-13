@@ -178,7 +178,7 @@ html {
 
 .logo-scroll {
   display: flex;
-  animation: slideLogos 25s linear infinite;
+  animation: slideLogos var(--logo-scroll-duration, 25s) linear infinite;
   will-change: transform;
 }
 
@@ -188,7 +188,7 @@ html {
 
 .logo-scroll-reverse {
   display: flex;
-  animation: slideLogos 25s linear infinite reverse;
+  animation: slideLogos var(--logo-scroll-duration, 25s) linear infinite reverse;
   will-change: transform;
 }
 

@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import {
@@ -606,59 +606,37 @@ export default function HomePage() {
   })
   const popupCta = parseJson(popupSection.cta_json, {})
 
-  const normalizeToolKey = (value = '') =>
-    value
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '')
-      .trim()
   const toToolSlug = (value = '') =>
     value
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '')
-  const toolLogoOverrides = {
-    'google-analytics': 'analytics',
-    analytics: 'analytics',
-    'google-tag-manager': 'tagmanager',
-    tagmanager: 'tagmanager',
-    'meta-ads': 'metaads',
-    'facebook-ads': 'metaads',
-    'google-ads': 'googleads',
-  }
-  const localToolFile = (tool) => {
-    const key = normalizeToolKey(tool.slug || tool.name || '')
-    for (const [match, file] of Object.entries(toolLogoOverrides)) {
-      if (key.includes(normalizeToolKey(match))) return file
-    }
-    return key
-  }
-  const marqueeTools = useMemo(() => {
-    const source = tools.length ? tools : toolsFallback
-    return Array.from(
-      new Map(
-        source
-          .filter((tool) => tool?.slug || tool?.name)
-          .map((tool) => {
-            const slug = tool.slug || toToolSlug(tool.name || '')
-            return [
-              slug,
-              {
-                ...tool,
-                slug,
-                logoSrc: `/tools/${localToolFile(tool)}.png`,
-              },
-            ]
-          })
-      ).values()
-    )
-  }, [tools, toolsFallback])
-
-  const scrollingTools = marqueeTools.length > 0 ? marqueeTools : chooseToolItems.map((item) => ({
-    id: item.name,
-    name: item.name,
-    slug: toToolSlug(item.name),
-    logoSrc: item.logo ? `/tools/${item.logo}` : null,
-  }))
+  const scrollingTools = [
+    { name: 'Ahrefs', slug: 'ahrefs', logoSrc: '/tools/ahrefs.png' },
+    { name: 'SEMrush', slug: 'semrush', logoSrc: '/tools/semrush.png' },
+    { name: 'Screaming Frog', slug: 'screaming-frog', logoSrc: '/tools/screamingfrog.png' },
+    { name: 'Webflow', slug: 'webflow', logoSrc: '/tools/webflow.png' },
+    { name: 'Jasper', slug: 'jasper', logoSrc: '/tools/jasper.png' },
+    { name: 'Canva', slug: 'canva', logoSrc: '/tools/canva.png' },
+    { name: 'HubSpot', slug: 'hubspot', logoSrc: '/tools/hubspot.png' },
+    { name: 'ActiveCampaign', slug: 'activecampaign', logoSrc: '/tools/activecampaign.png' },
+    { name: 'Mailchimp', slug: 'mailchimp', logoSrc: '/tools/mailchimp.png' },
+    { name: 'Buffer', slug: 'buffer', logoSrc: '/tools/buffer.png' },
+    { name: 'Later', slug: 'later', logoSrc: '/tools/later.png' },
+    { name: 'Hootsuite', slug: 'hootsuite', logoSrc: '/tools/hootsuite.png' },
+    { name: 'Metricool', slug: 'metricool', logoSrc: '/tools/metricool.png' },
+    { name: 'Google Ads', slug: 'google-ads', logoSrc: '/tools/googleads.png' },
+    { name: 'Google Analytics', slug: 'google-analytics', logoSrc: '/tools/analytics.png' },
+    { name: 'Meta Ads', slug: 'meta-ads', logoSrc: '/tools/metaads.png' },
+    { name: 'YouTube Ads', slug: 'youtube-ads', logoSrc: '/tools/youtubeads.png' },
+    { name: 'Clarity', slug: 'clarity', logoSrc: '/tools/clarity.png' },
+    { name: 'ChatGPT', slug: 'chatgpt', logoSrc: '/tools/chatgpt.png' },
+    { name: 'Hotjar', slug: 'hotjar', logoSrc: '/tools/hotjar.png' },
+    { name: 'Midjourney', slug: 'midjourney', logoSrc: '/tools/midjourney.png' },
+    { name: 'ElevenLabs', slug: 'elevenlabs', logoSrc: '/tools/elevenlabs.png' },
+    { name: 'Tag Manager', slug: 'google-tag-manager', logoSrc: '/tools/tagmanager.png' },
+    { name: 'Synthesia', slug: 'synthesia', logoSrc: '/tools/synthesia.png' },
+  ]
 
   const marqueeRowA = scrollingTools.filter((_, idx) => idx % 2 === 0)
   const marqueeRowB = scrollingTools.filter((_, idx) => idx % 2 === 1)
@@ -856,7 +834,7 @@ export default function HomePage() {
             <h2 className="text-3xl font-semibold text-slate-50">Choose Your Own Tools - Unlock Opportunities</h2>
           </div>
           <div className="mt-8 space-y-4 overflow-hidden">
-            <div className="logo-scroll gap-6 min-w-max">
+            <div className="logo-scroll gap-6 min-w-max" style={{ '--logo-scroll-duration': '58s' }}>
               {[...chooseToolRowA, ...chooseToolRowA].map((tool, idx) => (
                 <div
                   key={`${tool.name}-choice-a-${idx}`}
@@ -873,7 +851,7 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
-            <div className="logo-scroll-reverse gap-6 min-w-max">
+            <div className="logo-scroll-reverse gap-6 min-w-max" style={{ '--logo-scroll-duration': '58s' }}>
               {[...chooseToolRowB, ...chooseToolRowB].map((tool, idx) => (
                 <div
                   key={`${tool.name}-choice-b-${idx}`}
@@ -1470,3 +1448,4 @@ export default function HomePage() {
     </div>
   )
 }
+
