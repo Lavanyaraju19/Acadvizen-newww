@@ -187,6 +187,36 @@ export default function HomePage() {
       featured_image: '/blog-images/image6.jpg',
     },
   ])
+  const [testimonialShowcase] = useState([
+    {
+      id: 'showcase-accenture',
+      name: 'Acadvizen Learner',
+      role: 'Placed at Accenture',
+      quote: 'Hands-on project training helped me transition confidently into a digital marketing role.',
+      image_url: '/testimonials/accenture.jpg',
+    },
+    {
+      id: 'showcase-tcs',
+      name: 'Acadvizen Learner',
+      role: 'Placed at TCS',
+      quote: 'The structured curriculum and interview preparation made placement conversion much easier.',
+      image_url: '/testimonials/tcs.jpg',
+    },
+    {
+      id: 'showcase-ibm',
+      name: 'Acadvizen Learner',
+      role: 'Placed at IBM',
+      quote: 'Tool-based learning and live campaigns gave me practical confidence from day one.',
+      image_url: '/testimonials/ibm.jpg',
+    },
+    {
+      id: 'showcase-cognizant',
+      name: 'Acadvizen Learner',
+      role: 'Placed at Cognizant',
+      quote: 'Portfolio guidance and mock interviews directly improved my hiring outcomes.',
+      image_url: '/testimonials/cognizant.jpg',
+    },
+  ])
   const [statCounts, setStatCounts] = useState({
     careers: 0,
     placed: 0,
@@ -506,6 +536,38 @@ export default function HomePage() {
     amazon: 'amazon',
     zomato: 'zomato',
   }
+  const partnerDomainOverrides = {
+    tcs: 'tcs.com',
+    adobe: 'adobe.com',
+    google: 'google.com',
+    deloitte: 'deloitte.com',
+    capgemini: 'capgemini.com',
+    cognizant: 'cognizant.com',
+    ibm: 'ibm.com',
+    infosys: 'infosys.com',
+    atlassian: 'atlassian.com',
+    oracle: 'oracle.com',
+    zoho: 'zoho.com',
+    salesforce: 'salesforce.com',
+    hubspot: 'hubspot.com',
+    flipkart: 'flipkart.com',
+    wipro: 'wipro.com',
+    kpmg: 'kpmg.com',
+    yahoo: 'yahoo.com',
+    ey: 'ey.com',
+    sap: 'sap.com',
+    intel: 'intel.com',
+    nvidia: 'nvidia.com',
+    reddit: 'reddit.com',
+    replicon: 'replicon.com',
+    'jungle square': 'junglesquare.com',
+    continental: 'continental.com',
+    develop: 'develop.com',
+    ktm: 'ktm.com',
+    lakme: 'lakmeindia.com',
+    axa: 'axa.com',
+    dentsu: 'dentsu.com',
+  }
   const localPartnerFile = (name = '') => {
     const key = name.toLowerCase().trim()
     if (partnerLogoOverrides[key]) return partnerLogoOverrides[key]
@@ -514,11 +576,24 @@ export default function HomePage() {
     }
     return toLogoSlug(name)
   }
+  const fallbackPartnerLogo = (name = '') => {
+    const key = name.toLowerCase().trim()
+    if (partnerDomainOverrides[key]) return `https://logo.clearbit.com/${partnerDomainOverrides[key]}`
+    for (const [match, domain] of Object.entries(partnerDomainOverrides)) {
+      if (key.includes(match)) return `https://logo.clearbit.com/${domain}`
+    }
+    const slug = toLogoSlug(name)
+    return slug ? `https://logo.clearbit.com/${slug}.com` : null
+  }
   const withLocalLogo = (partner) => ({
     ...partner,
     logoSrc: `/logos/${localPartnerFile(partner.name)}.png`,
+    fallbackLogo: fallbackPartnerLogo(partner.name),
   })
   const partnerLogos = uniquePartners.map(withLocalLogo)
+  const companyLogos = Array.from({ length: 21 }, (_, idx) => `/logos/company-${String(idx + 1).padStart(2, '0')}.png`)
+  const companyRowA = companyLogos.filter((_, idx) => idx % 2 === 0)
+  const companyRowB = companyLogos.filter((_, idx) => idx % 2 === 1)
 
   const actionsSection = getSection('actions')
   const actionsCta = parseJson(actionsSection.cta_json, {})
@@ -1165,64 +1240,37 @@ export default function HomePage() {
             <h2 className="text-3xl font-semibold text-slate-50">{partnersSection.title}</h2>
             {partnersSection.subtitle && <p className="mt-3 text-slate-300">{partnersSection.subtitle}</p>}
           </div>
-          <div className="mt-8">
-            {partnersError ? (
-              <div className="text-sm text-rose-300 text-center">
-                {partnersError}
-                <button
-                  type="button"
-                  onClick={() => {
-                    loadPartners()
-                    loadCounts()
-                  }}
-                  className="ml-3 inline-flex rounded-lg border border-white/10 px-3 py-1 text-[10px] text-slate-200 hover:bg-white/[0.05]"
-                >
-                  Retry
-                </button>
-              </div>
-            ) : partnersToUse.length === 0 ? (
-              <div className="text-sm text-slate-400 text-center">
-                Partner logos will appear after data is loaded.
-                {partnersCount !== null && (
-                  <span className="ml-2 text-xs text-slate-500">
-                    (Active partners in DB: {partnersCount})
-                  </span>
-                )}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                {partnerLogos.map((partner) => (
-                  <div
-                    key={partner.name}
-                    className="flex min-h-[88px] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4"
-                  >
-                    {partner.logoSrc || partner.logo_url ? (
-                      <>
-                        <img
-                          src={partner.logoSrc || partner.logo_url}
-                          alt={partner.name}
-                          className="h-10 w-auto object-contain"
-                          loading="lazy"
-                          onError={(e) => {
-                            const fallback = partner.logo_url || null
-                            if (fallback && e.currentTarget.src !== fallback) {
-                              e.currentTarget.src = fallback
-                              return
-                            }
-                            e.currentTarget.style.display = 'none'
-                            const textFallback = e.currentTarget.nextElementSibling
-                            if (textFallback) textFallback.style.display = 'block'
-                          }}
-                        />
-                        <span className="hidden text-sm font-semibold text-slate-200">{partner.name}</span>
-                      </>
-                    ) : (
-                      <span className="text-sm font-semibold text-slate-200">{partner.name}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+          <div className="mt-8 space-y-4 overflow-hidden">
+            <div className="logo-scroll gap-10 min-w-max">
+              {[...companyRowA, ...companyRowA].map((logo, idx) => (
+                <div key={`company-row-a-${idx}`} className="flex min-w-[180px] items-center justify-center px-4 py-2">
+                  <img
+                    src={logo}
+                    alt={`Company ${idx + 1}`}
+                    className="h-12 w-auto object-contain"
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none'
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="logo-scroll-reverse gap-10 min-w-max">
+              {[...companyRowB, ...companyRowB].map((logo, idx) => (
+                <div key={`company-row-b-${idx}`} className="flex min-w-[180px] items-center justify-center px-4 py-2">
+                  <img
+                    src={logo}
+                    alt={`Company ${idx + 1}`}
+                    className="h-12 w-auto object-contain"
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none'
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </Container>
       </Section>
@@ -1265,14 +1313,26 @@ export default function HomePage() {
         <Container>
           <h2 className="text-3xl font-semibold text-slate-50 text-center">Success Stories</h2>
           <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {testimonials.length === 0 ? (
+            {[...testimonialShowcase, ...testimonials].length === 0 ? (
               <div className="text-sm text-slate-300 text-center">No testimonials yet.</div>
             ) : (
-              testimonials.map((story) => (
-                <Surface key={story.id} className="p-5 tilt-card">
-                  <div className="text-sm font-semibold text-slate-50">{story.name}</div>
+              [...testimonialShowcase, ...testimonials].map((story) => (
+                <Surface key={story.id} className="p-0 overflow-hidden tilt-card">
+                  {story.image_url && (
+                    <div className="aspect-[4/3] overflow-hidden border-b border-white/10 bg-white/[0.02]">
+                      <img
+                        src={story.image_url}
+                        alt={story.name}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                  <div className="p-5">
+                    <div className="text-sm font-semibold text-slate-50">{story.name}</div>
                   {story.role && <div className="text-xs text-slate-400">{story.role}</div>}
                   {story.quote && <p className="mt-3 text-sm text-slate-300">"{story.quote}"</p>}
+                  </div>
                 </Surface>
               ))
             )}
