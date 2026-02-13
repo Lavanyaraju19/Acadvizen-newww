@@ -1,0 +1,227 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Ethnocentric';
+  src: local('Ethnocentric');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+.font-ethnocentric {
+  font-family: 'Ethnocentric', 'Poppins', 'Inter', system-ui, sans-serif;
+  letter-spacing: 0.02em;
+}
+
+@keyframes advzGradientShift {
+  0% {
+    filter: hue-rotate(0deg);
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    filter: hue-rotate(10deg);
+    transform: translate3d(-1%, 0.5%, 0);
+  }
+  100% {
+    filter: hue-rotate(0deg);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes advzMarquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes advzTicker {
+  0% {
+    transform: translate3d(-100%, 0, 0);
+  }
+  100% {
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+@keyframes advzFloat {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes gradientWave {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes slideLogos {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply font-sans antialiased;
+  font-size: 16px;
+  background: radial-gradient(1200px 800px at 20% 10%, rgba(0, 191, 255, 0.12), transparent 55%),
+    radial-gradient(900px 700px at 80% 20%, rgba(0, 139, 139, 0.14), transparent 50%),
+    radial-gradient(700px 500px at 50% 80%, rgba(0, 122, 173, 0.10), transparent 55%),
+    #050b12;
+  color: rgba(226, 232, 240, 0.92);
+}
+
+::selection {
+  background: rgba(0, 191, 255, 0.25);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.acadvizen-noise {
+  position: relative;
+  isolation: isolate;
+}
+
+.acadvizen-noise::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  z-index: 0;
+}
+
+.advz-animated-bg {
+  animation: advzGradientShift 14s ease-in-out infinite;
+  will-change: transform, filter;
+}
+
+.advz-marquee {
+  display: flex;
+  width: max-content;
+  animation: advzMarquee var(--advz-marquee-duration, 42s) linear infinite;
+  will-change: transform;
+}
+
+.advz-marquee:hover {
+  animation-play-state: paused;
+}
+
+.advz-ticker {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: advzTicker var(--advz-ticker-duration, 18s) linear infinite;
+  will-change: transform;
+}
+
+.advz-ticker:hover {
+  animation-play-state: paused;
+}
+
+.advz-float {
+  animation: advzFloat 5s ease-in-out infinite;
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.wave-text {
+  background: linear-gradient(90deg, #00f5ff, #007cf0, #00dfd8, #00f5ff);
+  background-size: 300% 300%;
+  animation: gradientWave 6s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.logo-scroll {
+  display: flex;
+  animation: slideLogos 25s linear infinite;
+  will-change: transform;
+}
+
+.logo-scroll:hover {
+  animation-play-state: paused;
+}
+
+.logo-scroll-reverse {
+  display: flex;
+  animation: slideLogos 25s linear infinite reverse;
+  will-change: transform;
+}
+
+.logo-scroll-reverse:hover {
+  animation-play-state: paused;
+}
+
+.tilt-card {
+  transform-style: preserve-3d;
+  transition: transform 300ms ease, box-shadow 300ms ease;
+}
+
+.tilt-card:hover {
+  transform: translateY(-6px) rotateX(1.5deg) rotateY(-1.5deg);
+  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.45);
+}
+
+body.advz-cursor-none,
+body.advz-cursor-none * {
+  cursor: none !important;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.22);
+  border-radius: 999px;
+  border: 2px solid rgba(5, 11, 18, 1);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.32);
+}
