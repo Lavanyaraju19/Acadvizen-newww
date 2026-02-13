@@ -247,7 +247,7 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
-    const targets = { careers: 1000, placed: 6255, partners: 2500 }
+    const targets = { careers: 1000, placed: 625, partners: 250 }
     const duration = 1400
     const start = performance.now()
     let raf
@@ -937,18 +937,19 @@ export default function HomePage() {
               <Surface className="p-4 w-full max-w-sm">
                 <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
                   <img
-                    src="/about/ceo-founder.png"
-                    alt="CEO / Founder"
+                    src="/about/tharika-chakrapani-raju.jpg"
+                    alt="Tharika Chakrapani Raju - Co-Founder"
                     className="h-[420px] w-full object-cover object-top"
                     loading="lazy"
                     onError={(e) => {
                       e.currentTarget.onerror = null
-                      e.currentTarget.src = '/about/harika.jpg'
+                      e.currentTarget.src = '/about/jyoti.jpg'
                     }}
                   />
                 </div>
                 <div className="mt-4 text-center">
-                  <h3 className="text-lg font-semibold text-slate-50">CEO / Founder</h3>
+                  <h3 className="text-lg font-semibold text-slate-50">Tharika Chakrapani Raju</h3>
+                  <p className="mt-1 text-sm text-slate-300">Co-Founder</p>
                 </div>
               </Surface>
             </div>
@@ -1196,26 +1197,31 @@ export default function HomePage() {
                     className="flex min-h-[88px] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4"
                   >
                     {partner.logoSrc || partner.logo_url ? (
-                      <img
-                        src={partner.logoSrc || partner.logo_url}
-                        alt={partner.name}
-                        className="h-10 w-auto object-contain"
-                        loading="lazy"
-                        onError={(e) => {
-                          const fallback = partner.logo_url || null
-                          if (fallback && e.currentTarget.src !== fallback) {
-                            e.currentTarget.src = fallback
-                          } else {
+                      <>
+                        <img
+                          src={partner.logoSrc || partner.logo_url}
+                          alt={partner.name}
+                          className="h-10 w-auto object-contain"
+                          loading="lazy"
+                          onError={(e) => {
+                            const fallback = partner.logo_url || null
+                            if (fallback && e.currentTarget.src !== fallback) {
+                              e.currentTarget.src = fallback
+                              return
+                            }
                             e.currentTarget.style.display = 'none'
-                          }
-                        }}
-                      />
+                            const textFallback = e.currentTarget.nextElementSibling
+                            if (textFallback) textFallback.style.display = 'block'
+                          }}
+                        />
+                        <span className="hidden text-sm font-semibold text-slate-200">{partner.name}</span>
+                      </>
                     ) : (
                       <span className="text-sm font-semibold text-slate-200">{partner.name}</span>
                     )}
                   </div>
                 ))}
-                </div>
+              </div>
             )}
           </div>
         </Container>

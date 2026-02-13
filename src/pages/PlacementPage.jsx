@@ -97,7 +97,7 @@ export function PlacementPage() {
               <div className="mx-auto h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-teal-300/70" />
             </div>
           ) : placements.length === 0 ? (
-            <Surface className="p-10 text-center text-slate-400">{emptySection.body}</Surface>
+            <></>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {placements.map((placement, idx) => (

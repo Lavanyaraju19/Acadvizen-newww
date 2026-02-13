@@ -64,12 +64,12 @@ export function AboutPage() {
   const founders = parseJson(foundersSection.items_json, [
     {
       name: 'Harika Gamireddy',
-      role: 'Founder',
+      role: 'Employee',
       image: '/about/harika.jpg',
     },
     {
       name: 'Jyoti',
-      role: 'Co-Founder',
+      role: 'Employee',
       image: '/about/jyoti.jpg',
     },
   ])

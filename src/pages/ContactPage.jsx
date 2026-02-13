@@ -76,7 +76,7 @@ export function ContactPage() {
           <h2 className="text-3xl md:text-4xl font-semibold text-slate-50 mb-3">Contact ACADVIZEN</h2>
           <div className="mb-6 space-y-1 text-sm text-slate-300">
             <p>Phone: +91-7411314848</p>
-            <p>Email: ppppppp@gmail.com</p>
+            <p>Email: operation@acadvizen.com</p>
           </div>
           {formSection.title && <h1 className="text-xl font-semibold text-slate-100 mb-6">{formSection.title}</h1>}
           {submitted ? (
