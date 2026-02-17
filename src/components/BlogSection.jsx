@@ -10,7 +10,7 @@ export function BlogSection({ section, posts }) {
     <Section className="py-10 md:py-14">
       <Container>
         <Surface className="p-6 md:p-8">
-          <div className="flex items-center justify-between gap-4 mb-6">
+          <div className="mb-6 flex items-center justify-between gap-4">
             <div>
               <h2 className="text-2xl font-semibold text-slate-50">{section.title}</h2>
               {section.subtitle && <p className="mt-2 text-sm text-slate-300">{section.subtitle}</p>}
@@ -19,39 +19,37 @@ export function BlogSection({ section, posts }) {
           {posts.length === 0 ? (
             <div className="text-sm text-slate-300">{section.body}</div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-8">
               {posts.map((post) => {
                 const postSlug = post.slug || String(post.id)
                 const preview = stripHtml(post.excerpt || post.summary || post.content || '')
+
                 return (
-                <Link
-                  key={post.id}
-                  to={`/blog/${postSlug}`}
-                  className="group block rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden transition hover:-translate-y-1"
-                >
-                  {post.featured_image && (
-                    <div className="aspect-video overflow-hidden border-b border-white/10">
-                      <img src={post.featured_image} alt={post.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
+                  <Link
+                    key={post.id}
+                    to={`/blog/${postSlug}`}
+                    className="group block rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden transition hover:-translate-y-1"
+                  >
+                    {post.featured_image && (
+                      <img
+                        src={post.featured_image}
+                        alt={post.title}
+                        className="w-full h-[220px] object-cover rounded-t-2xl"
+                      />
+                    )}
+                    <div className="p-4">
+                      <p className="text-sm text-gray-400">
+                        {post.published_at ? new Date(post.published_at).toDateString() : 'Draft'}
+                      </p>
+                      <h3 className="mt-2 text-lg font-semibold text-slate-50">{post.title}</h3>
+                      {preview && <p className="mt-2 line-clamp-3 text-gray-400">{preview}</p>}
+                      <span className="mt-3 inline-flex items-center gap-2 font-medium text-green-400">
+                        Read article <span aria-hidden="true">→</span>
+                      </span>
                     </div>
-                  )}
-                  <div className="p-4">
-                    <div className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                      {post.published_at
-                        ? new Date(post.published_at).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })
-                        : 'Draft'}
-                    </div>
-                    <div className="mt-2 text-sm font-semibold text-slate-50">{post.title}</div>
-                    {preview && <p className="mt-2 text-xs text-slate-300 line-clamp-3">{preview}</p>}
-                    <div className="mt-3 text-xs font-semibold text-teal-300 group-hover:text-teal-200 transition-colors">
-                      Read article -&gt;
-                    </div>
-                  </div>
-                </Link>
-              )})}
+                  </Link>
+                )
+              })}
             </div>
           )}
         </Surface>

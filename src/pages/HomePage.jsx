@@ -143,78 +143,34 @@ export default function HomePage() {
     { name: 'Flipkart', logo_url: 'https://logo.clearbit.com/flipkart.com', row_group: 'row_b' },
     { name: 'Yahoo', logo_url: 'https://logo.clearbit.com/yahoo.com', row_group: 'row_b' },
   ])
-  const [blogFallback] = useState([
-    {
-      id: 'fallback-1',
-      title: 'How to Build Real Campaign Skills',
-      excerpt: 'Learn the practical workflow behind campaign planning, execution, and optimization.',
-      published_at: new Date().toISOString(),
-      featured_image: '/blog-images/image1.jpg',
-    },
-    {
-      id: 'fallback-2',
-      title: 'Creative Strategy for Digital Marketing',
-      excerpt: 'Craft offers and messages that convert across channels.',
-      published_at: new Date().toISOString(),
-      featured_image: '/blog-images/image2.jpg',
-    },
-    {
-      id: 'fallback-3',
-      title: 'Analytics That Drive Growth',
-      excerpt: 'Use dashboards and KPIs to make data-driven decisions.',
-      published_at: new Date().toISOString(),
-      featured_image: '/blog-images/image3.jpg',
-    },
-    {
-      id: 'fallback-4',
-      title: 'Modern SEO That Still Works',
-      excerpt: 'Core SEO principles that build long-term traffic and visibility.',
-      published_at: new Date().toISOString(),
-      featured_image: '/blog-images/image4.jpg',
-    },
-    {
-      id: 'fallback-5',
-      title: 'Performance Marketing Playbook',
-      excerpt: 'Ads, funnels, and optimization tactics for ROI-focused teams.',
-      published_at: new Date().toISOString(),
-      featured_image: '/blog-images/image5.jpg',
-    },
-    {
-      id: 'fallback-6',
-      title: 'Digital Marketing Skills for Careers',
-      excerpt: 'The skill stack recruiters look for in digital roles.',
-      published_at: new Date().toISOString(),
-      featured_image: '/blog-images/image6.jpg',
-    },
-  ])
   const [testimonialShowcase] = useState([
     {
       id: 'showcase-accenture',
       name: 'Acadvizen Learner',
       role: 'Placed at Accenture',
       quote: 'Hands-on project training helped me transition confidently into a digital marketing role.',
-      image_url: '/testimonials/accenture.jpg',
+      image_url: '/images/success/success2.jpg',
     },
     {
       id: 'showcase-tcs',
       name: 'Acadvizen Learner',
       role: 'Placed at TCS',
       quote: 'The structured curriculum and interview preparation made placement conversion much easier.',
-      image_url: '/testimonials/tcs.jpg',
+      image_url: '/images/success/success1.jpg',
     },
     {
       id: 'showcase-ibm',
       name: 'Acadvizen Learner',
       role: 'Placed at IBM',
       quote: 'Tool-based learning and live campaigns gave me practical confidence from day one.',
-      image_url: '/testimonials/ibm.jpg',
+      image_url: '/images/success/success.jpg',
     },
     {
       id: 'showcase-cognizant',
       name: 'Acadvizen Learner',
       role: 'Placed at Cognizant',
       quote: 'Portfolio guidance and mock interviews directly improved my hiring outcomes.',
-      image_url: '/testimonials/cognizant.jpg',
+      image_url: '/images/success/success3.jpg',
     },
   ])
   const [statCounts, setStatCounts] = useState({
@@ -333,16 +289,30 @@ export default function HomePage() {
   }
 
   async function loadBlogPosts() {
-    const { data } = await supabase
+    let { data, error } = await supabase
       .from('blog_posts')
       .select('*')
-      .eq('is_published', true)
+      .eq('status', 'published')
       .order('published_at', { ascending: false })
-      .limit(3)
-    if (!data || data.length === 0) {
-      setBlogPosts(blogFallback)
+      .limit(4)
+
+    // Backward compatibility: some environments still use is_published without status.
+    if (error && String(error.message || '').toLowerCase().includes('status')) {
+      const fallbackRes = await supabase
+        .from('blog_posts')
+        .select('*')
+        .eq('is_published', true)
+        .order('published_at', { ascending: false })
+        .limit(4)
+      data = fallbackRes.data
+      error = fallbackRes.error
+    }
+
+    if (error || !data || data.length === 0) {
+      setBlogPosts([])
       return
     }
+
     const hydrated = data.map((post, idx) => ({
       ...post,
       featured_image:
@@ -1124,27 +1094,6 @@ export default function HomePage() {
         </Container>
       </Section>
 
-      {(toolsError || toolsCount !== null) && (
-        <div className="text-center text-xs text-slate-400">
-          {toolsError ? (
-            <span className="text-rose-300">{toolsError}</span>
-          ) : (
-            <>Active tools in DB: <span className="text-slate-200">{toolsCount}</span></>
-          )}
-          <button
-            type="button"
-            onClick={() => {
-              loadTools()
-              loadPartners()
-              loadCounts()
-            }}
-            className="ml-3 inline-flex rounded-lg border border-white/10 px-3 py-1 text-[10px] text-slate-200 hover:bg-white/[0.05]"
-          >
-            Refresh
-          </button>
-        </div>
-      )}
-
       <Section className="py-10 md:py-12" id="tools-marquee">
         <Container>
           <div className="text-center max-w-3xl mx-auto">
@@ -1301,7 +1250,7 @@ export default function HomePage() {
                       <img
                         src={story.image_url}
                         alt={story.name}
-                        className="h-full w-full object-cover"
+                        className="w-full h-[220px] object-cover rounded-xl"
                         loading="lazy"
                       />
                     </div>
@@ -1448,4 +1397,5 @@ export default function HomePage() {
     </div>
   )
 }
+
 

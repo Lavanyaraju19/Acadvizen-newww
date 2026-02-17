@@ -90,9 +90,9 @@ export function BlogPage() {
                         </div>
                         <h3 className="mt-3 text-lg font-semibold text-slate-50">{post.title}</h3>
                         {post.excerpt && <p className="mt-2 text-sm text-slate-300 line-clamp-3">{post.excerpt}</p>}
-                        <div className="mt-4 text-xs font-semibold text-teal-300 group-hover:text-teal-200 transition-colors">
-                          Read more -&gt;
-                        </div>
+                        <span className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-teal-300 group-hover:text-teal-200 transition-colors">
+                          Read article <span aria-hidden="true">→</span>
+                        </span>
                       </div>
                     </Surface>
                   </Link>

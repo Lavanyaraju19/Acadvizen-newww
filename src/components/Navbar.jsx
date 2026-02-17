@@ -128,7 +128,7 @@ export function Navbar() {
               <div className="flex items-center gap-2">
                 <Link
                   to="/login"
-                  className="rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-200 hover:bg-white/[0.05]"
+                  className="rounded-lg bg-teal-300 px-3 py-2 text-xs font-semibold text-slate-950 hover:bg-teal-200"
                 >
                   Student Login
                 </Link>
