@@ -208,7 +208,7 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
-    const targets = { careers: 1000, placed: 625, partners: 250 }
+    const targets = { careers: 10000, placed: 900, partners: 350 }
     const duration = 1400
     const start = performance.now()
     let raf
