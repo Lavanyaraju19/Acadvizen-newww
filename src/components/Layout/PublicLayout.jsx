@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { AnimatedOutlet } from '../ui/AnimatedOutlet'
 import { CustomCursor } from '../ui/CustomCursor'
 import { Navbar } from '../Navbar'
+import { BottomDockNav } from '../BottomDockNav'
 
 export function PublicLayout() {
   const [tickerItems, setTickerItems] = useState([])
@@ -51,9 +52,11 @@ export function PublicLayout() {
         </div>
       </div>
 
-      <main className="flex-1 relative z-10">
+      <main className="flex-1 relative z-10 pb-28 md:pb-32">
         <AnimatedOutlet />
       </main>
+
+      <BottomDockNav />
 
       <footer className="relative z-10 mt-8">
         <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-teal-400/40 to-transparent" />

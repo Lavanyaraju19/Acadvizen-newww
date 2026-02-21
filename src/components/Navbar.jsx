@@ -1,15 +1,11 @@
-import { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabaseClient'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 export function Navbar() {
   const { user, profile, signOut, loading } = useAuth()
-  const location = useLocation()
-  const navigate = useNavigate()
   const [showConfirm, setShowConfirm] = useState(false)
   const [showPanel, setShowPanel] = useState(false)
-  const [courses, setCourses] = useState([])
 
   const handleSignOut = async () => {
     setShowConfirm(false)
@@ -20,40 +16,11 @@ export function Navbar() {
     }
   }
 
-  useEffect(() => {
-    loadCourses()
-  }, [])
-
-  async function loadCourses() {
-    const { data } = await supabase
-      .from('courses')
-      .select('id, title, slug')
-      .eq('is_active', true)
-      .order('order_index', { ascending: true })
-      .limit(6)
-    if (data) setCourses(data)
-  }
-
-  const goToSection = (id) => (event) => {
-    if (event) event.preventDefault()
-    setShowPanel(false)
-    if (location.pathname !== '/') {
-      navigate('/')
-      setTimeout(() => {
-        const el = document.getElementById(id)
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 120)
-      return
-    }
-    const el = document.getElementById(id)
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-
   return (
     <header className="sticky top-0 z-50">
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-6">
+          <div className="flex items-center">
             <Link to="/" className="flex items-center gap-2 group" data-cursor="hover">
               <div className="relative">
                 <div className="absolute -inset-2 rounded-xl bg-teal-400/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -61,38 +28,12 @@ export function Navbar() {
               </div>
               <span className="font-semibold text-slate-100 hidden sm:inline tracking-tight">Acadvizen</span>
             </Link>
-
-            <div className="hidden md:block relative group">
-              <button
-                type="button"
-                className="text-slate-300 hover:text-white text-sm font-medium transition-colors"
-              >
-                Courses
-              </button>
-              <div className="absolute left-0 top-full mt-3 w-64 rounded-2xl border border-white/10 bg-slate-950/95 backdrop-blur shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                <div className="p-4 space-y-3">
-                  {courses.length === 0 ? (
-                    <div className="text-xs text-slate-400">Courses loading...</div>
-                  ) : (
-                    courses.map((course) => (
-                      <Link
-                        key={course.id}
-                        to={`/courses/${course.slug}`}
-                        className="block text-sm text-slate-200 hover:text-white"
-                      >
-                        {course.title}
-                      </Link>
-                    ))
-                  )}
-                  <Link to="/courses" className="block text-xs font-semibold text-teal-300 hover:text-teal-200">
-                    View all courses
-                  </Link>
-                </div>
-              </div>
-            </div>
           </div>
 
           <div className="hidden md:flex items-center gap-6">
+            <Link to="/courses" className="text-slate-300 hover:text-white text-sm font-medium transition-colors">
+              Courses
+            </Link>
             <Link to="/about" className="text-slate-300 hover:text-white text-sm font-medium transition-colors">
               About Us
             </Link>
@@ -102,20 +43,9 @@ export function Navbar() {
             <Link to="/contact" className="text-slate-300 hover:text-white text-sm font-medium transition-colors">
               Contact
             </Link>
-            <a
-              href="/#blog"
-              onClick={goToSection('blog')}
-              className="text-slate-300 hover:text-white text-sm font-medium transition-colors"
-            >
+            <Link to="/blog" className="text-slate-300 hover:text-white text-sm font-medium transition-colors">
               Blogs
-            </a>
-            <a
-              href="/#testimonials"
-              onClick={goToSection('testimonials')}
-              className="text-slate-300 hover:text-white text-sm font-medium transition-colors"
-            >
-              Testimonials
-            </a>
+            </Link>
           </div>
 
           <div className="flex items-center gap-3">
@@ -123,22 +53,6 @@ export function Navbar() {
               <span className="hidden sm:inline text-xs text-teal-300 bg-teal-500/10 px-3 py-1 rounded-full">
                 {profile?.role === 'admin' ? `Admin: ${user.email}` : `Signed in: ${user.email}`}
               </span>
-            )}
-            {!loading && !user && (
-              <div className="flex items-center gap-2">
-                <Link
-                  to="/login"
-                  className="rounded-lg bg-teal-300 px-3 py-2 text-xs font-semibold text-slate-950 hover:bg-teal-200"
-                >
-                  Student Login
-                </Link>
-                <Link
-                  to="/register"
-                  className="rounded-lg bg-teal-300 px-3 py-2 text-xs font-semibold text-slate-950 hover:bg-teal-200"
-                >
-                  Register
-                </Link>
-              </div>
             )}
             {!loading && user && (
               <div className="flex items-center gap-2">
@@ -219,47 +133,16 @@ export function Navbar() {
                 Contact
               </Link>
               <Link
-                to="/login"
+                to="/blog"
                 onClick={() => setShowPanel(false)}
                 className="block rounded-lg px-3 py-2 hover:bg-white/[0.05]"
               >
-                Student Login
-              </Link>
-              <a
-                href="/#blog"
-                onClick={goToSection('blog')}
-                className="block rounded-lg px-3 py-2 hover:bg-white/[0.05]"
-              >
                 Blogs
-              </a>
-              <a
-                href="/#testimonials"
-                onClick={goToSection('testimonials')}
-                className="block rounded-lg px-3 py-2 hover:bg-white/[0.05]"
-              >
-                Testimonials
-              </a>
+              </Link>
             </div>
 
             <div className="mt-auto space-y-2">
-              {!user ? (
-                <>
-                  <Link
-                    to="/login"
-                    onClick={() => setShowPanel(false)}
-                    className="block w-full text-center rounded-lg bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-200"
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    to="/register"
-                    onClick={() => setShowPanel(false)}
-                    className="block w-full text-center rounded-lg border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05]"
-                  >
-                    Register
-                  </Link>
-                </>
-              ) : (
+              {user && (
                 <button
                   onClick={() => {
                     setShowPanel(false)

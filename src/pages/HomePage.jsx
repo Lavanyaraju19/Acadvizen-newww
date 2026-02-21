@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import {
@@ -23,24 +23,11 @@ import { Surface } from '../components/ui/Surface'
 import { BlogSection } from '../components/BlogSection'
 
 export default function HomePage() {
-  const metaTitle = 'Best Digital Marketing Institute in Bangalore | ACADVIZEN'
+  const metaTitle = 'Best Digital Marketing Institute in Bangalore ACADVIZEN'
   const metaDescription =
     'ACADVIZEN is the best digital marketing training institute in Bangalore offering live projects, 50+ tools, placement assistance, and industry-ready skills.'
   const metaKeywords =
     'best digital marketing training institute in bangalore, digital marketing institute in bangalore, digital marketing course with placement, digital marketing training institute in bangalore'
-  const digitalMarketingTopics = [
-    'Content Creation',
-    'SEO',
-    'Blogging',
-    'Google Ads',
-    'Meta Ads',
-    'Copywriting',
-    'E-Commerce',
-    'Performance Marketing',
-    'Social Media Marketing',
-    'UI-UX Designing',
-    'Website Design',
-  ]
   const coursePrograms = [
     {
       name: 'Basic',
@@ -55,35 +42,22 @@ export default function HomePage() {
       features: ['95 Days', '65+ Tools', '25+ Live Projects', 'Internship + Placement', 'Guest Lectures'],
     },
   ]
-  const chooseToolItems = [
-    { name: 'Google Analytics', logo: 'analytics.png' },
-    { name: 'Google Tag Manager', logo: 'tagmanager.png' },
-    { name: 'ChatGPT', logo: 'chatgpt.png' },
-    { name: 'SEMrush', logo: 'semrush.png' },
-    { name: 'Ahrefs', logo: 'ahrefs.png' },
-    { name: 'Google Ads', logo: 'googleads.png' },
-    { name: 'Meta Ads', logo: 'metaads.png' },
-    { name: 'Canva', logo: 'canva.png' },
-    { name: 'WordPress', logo: null },
-    { name: 'Hootsuite', logo: 'hootsuite.png' },
-    { name: 'Buffer', logo: 'buffer.png' },
-    { name: 'Jasper', logo: 'jasper.png' },
-    { name: 'LinkedIn', logo: null },
-    { name: 'Google My Business', logo: null },
-  ]
   const learningValues = [
     { label: 'Tools', value: '50+' },
     { label: 'Live Projects', value: '15+' },
     { label: 'Duration', value: '3 Months' },
     { label: 'Jobs Worldwide', value: '5M+' },
   ]
-  const careerOpportunities = [
-    { region: 'South America', growth: '+15%' },
-    { region: 'Asia', growth: '+13%' },
-    { region: 'Europe', growth: '+10%' },
-    { region: 'North America', growth: '+10%' },
-    { region: 'Africa', growth: '+9%' },
-    { region: 'Australia', growth: '+8%' },
+  const campusFeatures = [
+    { icon: '📶', label: '5G WiFi' },
+    { icon: '🤖', label: 'AI Enabled Tech' },
+    { icon: '🎤', label: 'Amphitheater' },
+    { icon: '🎬', label: 'Studio' },
+    { icon: '🎙️', label: 'Podcast Room' },
+    { icon: '🧩', label: 'Breakout Area' },
+    { icon: '🖥️', label: 'Smart Classroom' },
+    { icon: '📚', label: 'Library' },
+    { icon: '🏓', label: 'Recreation Area' },
   ]
   const faqItems = [
     {
@@ -113,7 +87,6 @@ export default function HomePage() {
   const [submitted, setSubmitted] = useState(false)
   const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [showAddress, setShowAddress] = useState(false)
   const [scrollY, setScrollY] = useState(0)
   const [homeSections, setHomeSections] = useState({})
   const [blogPosts, setBlogPosts] = useState([])
@@ -123,6 +96,8 @@ export default function HomePage() {
   const [toolsCount, setToolsCount] = useState(null)
   const [partnersCount, setPartnersCount] = useState(null)
   const [activeFaq, setActiveFaq] = useState(0)
+  const [isCampusVideoPlaying, setIsCampusVideoPlaying] = useState(false)
+  const campusVideoRef = useRef(null)
   const [toolsFallback] = useState([
     { name: 'Google Ads', slug: 'google-ads', brand_color: '#4285F4' },
     { name: 'Meta Ads', slug: 'meta-ads', brand_color: '#1877F2' },
@@ -565,10 +540,6 @@ export default function HomePage() {
   const companyRowA = companyLogos.filter((_, idx) => idx % 2 === 0)
   const companyRowB = companyLogos.filter((_, idx) => idx % 2 === 1)
 
-  const actionsSection = getSection('actions')
-  const actionsCta = parseJson(actionsSection.cta_json, {})
-  const addressText = actionsSection.body || ''
-
   const popupSection = getSection('registration_popup', {
     title: 'Quick Registration',
     subtitle: 'Reserve your spot in under 60 seconds.',
@@ -610,8 +581,6 @@ export default function HomePage() {
 
   const marqueeRowA = scrollingTools.filter((_, idx) => idx % 2 === 0)
   const marqueeRowB = scrollingTools.filter((_, idx) => idx % 2 === 1)
-  const chooseToolRowA = chooseToolItems.filter((_, idx) => idx % 2 === 0)
-  const chooseToolRowB = chooseToolItems.filter((_, idx) => idx % 2 === 1)
 
   const openPopup = () => {
     setScrollY(window.scrollY)
@@ -623,6 +592,16 @@ export default function HomePage() {
     setSubmitted(false)
     setFormError('')
     setTimeout(() => window.scrollTo(0, scrollY), 0)
+  }
+
+  const toggleCampusVideo = () => {
+    const video = campusVideoRef.current
+    if (!video) return
+    if (video.paused) {
+      video.play()
+      return
+    }
+    video.pause()
   }
 
   const handleSubmit = async (event) => {
@@ -736,45 +715,6 @@ export default function HomePage() {
         </Container>
       </Section>
 
-      <Section className="py-10 md:py-12" id="skills-success">
-        <Container>
-          <div className="text-center max-w-4xl mx-auto">
-            <h2 className="text-3xl font-semibold text-slate-50">
-              Digital Marketing Institute in Bangalore - Where Skills Meet Success
-            </h2>
-            <button
-              onClick={openPopup}
-              className="mt-6 rounded-xl bg-teal-300 px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-teal-200"
-            >
-              Book a Free Trial Class
-            </button>
-          </div>
-        </Container>
-      </Section>
-
-      <Section className="py-10 md:py-12" id="what-is-digital-marketing">
-        <Container>
-          <div className="text-center max-w-4xl mx-auto">
-            <h2 className="text-3xl font-semibold text-slate-50">What is Digital Marketing?</h2>
-            <p className="mt-3 text-slate-300">
-              Digital Marketing is Visibility, Strategy, Presence, Connection, Engagement, Reach, Awareness,
-              Results, and Performance.
-            </p>
-          </div>
-          <div className="mt-8 overflow-hidden">
-            <div className="logo-scroll gap-4 min-w-max">
-              {[...digitalMarketingTopics, ...digitalMarketingTopics].map((topic, idx) => (
-                <span
-                  key={`${topic}-${idx}`}
-                  className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium text-slate-200"
-                >
-                  {topic}
-                </span>
-              ))}
-            </div>
-          </div>
-        </Container>
-      </Section>
 
       <Section className="py-10 md:py-12" id="course-programs">
         <Container>
@@ -783,64 +723,23 @@ export default function HomePage() {
           </div>
           <div className="mt-8 grid gap-5 md:grid-cols-3">
             {coursePrograms.map((program) => (
-              <Surface key={program.name} className="p-6">
-                <h3 className="text-xl font-semibold text-slate-50">{program.name}</h3>
-                <div className="mt-4 space-y-2 text-sm text-slate-300">
-                  {program.features.map((feature) => (
-                    <div key={`${program.name}-${feature}`} className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
-                      {feature}
-                    </div>
-                  ))}
-                </div>
-              </Surface>
+              <Link key={program.name} to="/courses" className="block">
+                <Surface className="p-6 h-full transition-all duration-300 hover:-translate-y-1 hover:border-teal-300/50">
+                  <h3 className="text-xl font-semibold text-slate-50">{program.name}</h3>
+                  <div className="mt-4 space-y-2 text-sm text-slate-300">
+                    {program.features.map((feature) => (
+                      <div key={`${program.name}-${feature}`} className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
+                        {feature}
+                      </div>
+                    ))}
+                  </div>
+                </Surface>
+              </Link>
             ))}
           </div>
         </Container>
       </Section>
 
-      <Section className="py-10 md:py-12" id="choose-your-tools-opportunities">
-        <Container>
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl font-semibold text-slate-50">Choose Your Own Tools - Unlock Opportunities</h2>
-          </div>
-          <div className="mt-8 space-y-4 overflow-hidden">
-            <div className="logo-scroll gap-6 min-w-max" style={{ '--logo-scroll-duration': '58s' }}>
-              {[...chooseToolRowA, ...chooseToolRowA].map((tool, idx) => (
-                <div
-                  key={`${tool.name}-choice-a-${idx}`}
-                  className="flex min-w-[170px] items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4"
-                >
-                  {tool.logo ? (
-                    <img src={`/tools/${tool.logo}`} alt={tool.name} className="h-8 w-auto object-contain" loading="lazy" />
-                  ) : (
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.02] text-[10px] font-semibold text-slate-200">
-                      {tool.name.charAt(0)}
-                    </span>
-                  )}
-                  <span className="text-xs text-slate-200">{tool.name}</span>
-                </div>
-              ))}
-            </div>
-            <div className="logo-scroll-reverse gap-6 min-w-max" style={{ '--logo-scroll-duration': '58s' }}>
-              {[...chooseToolRowB, ...chooseToolRowB].map((tool, idx) => (
-                <div
-                  key={`${tool.name}-choice-b-${idx}`}
-                  className="flex min-w-[170px] items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4"
-                >
-                  {tool.logo ? (
-                    <img src={`/tools/${tool.logo}`} alt={tool.name} className="h-8 w-auto object-contain" loading="lazy" />
-                  ) : (
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.02] text-[10px] font-semibold text-slate-200">
-                      {tool.name.charAt(0)}
-                    </span>
-                  )}
-                  <span className="text-xs text-slate-200">{tool.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Container>
-      </Section>
 
       <Section className="py-10 md:py-12" id="learning-values">
         <Container>
@@ -858,18 +757,40 @@ export default function HomePage() {
         </Container>
       </Section>
 
-      <Section className="py-10 md:py-12" id="career-opportunities">
+      <Section className="py-12 md:py-16 experience-section" id="experience-life">
         <Container>
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl font-semibold text-slate-50">Career Opportunities in Digital Marketing</h2>
+          <h2 className="experience-title">Experience Life at ACADVIZEN</h2>
+          <div className="mt-8 experience-video">
+            <video
+              ref={campusVideoRef}
+              src="https://www.w3schools.com/html/mov_bbb.mp4"
+              poster="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1600&auto=format&fit=crop"
+              onPlay={() => setIsCampusVideoPlaying(true)}
+              onPause={() => setIsCampusVideoPlaying(false)}
+              controls
+            />
+            {!isCampusVideoPlaying && (
+              <div className="experience-overlay">
+                <button type="button" className="play-btn" onClick={toggleCampusVideo} aria-label="Play video">
+                  ▶
+                </button>
+              </div>
+            )}
           </div>
-          <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-            {careerOpportunities.map((item) => (
-              <Surface key={item.region} className="p-4 text-center">
-                <div className="text-lg font-semibold text-teal-200">{item.growth}</div>
-                <div className="mt-1 text-xs text-slate-300">{item.region}</div>
-              </Surface>
+
+          <div className="campus-features">
+            {campusFeatures.map((item) => (
+              <div key={item.label} className="campus-chip">
+                <i>{item.icon}</i>
+                <span>{item.label}</span>
+              </div>
             ))}
+          </div>
+
+          <div className="mt-6 text-center">
+            <button type="button" onClick={openPopup} className="tour-btn">
+              Schedule Campus Tour
+            </button>
           </div>
         </Container>
       </Section>
@@ -944,68 +865,6 @@ export default function HomePage() {
               ACADVIZEN placement drives connect trained candidates with top recruiters through resume support, mock
               interviews, portfolio guidance, and hiring assistance.
             </p>
-          </div>
-        </Container>
-      </Section>
-
-      <Section className="py-10 md:py-12" id="about-acadvizen">
-        <Container>
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl font-semibold text-slate-50 text-center">About ACADVIZEN</h2>
-            <p className="mt-3 text-center text-slate-300">
-              ACADVIZEN is a leading digital marketing training institute in Bangalore focused on practical learning,
-              AI-driven strategies, and real-world campaign execution.
-            </p>
-            <div className="mt-8 flex justify-center">
-              <Surface className="p-4 w-full max-w-sm">
-                <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
-                  <img
-                    src="/about/tharika-chakrapani-raju.jpg"
-                    alt="Tharika Chakrapani Raju - Co-Founder"
-                    className="h-[420px] w-full object-cover object-top"
-                    loading="lazy"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null
-                      e.currentTarget.src = '/about/jyoti.jpg'
-                    }}
-                  />
-                </div>
-                <div className="mt-4 text-center">
-                  <h3 className="text-lg font-semibold text-slate-50">Tharika Chakrapani Raju</h3>
-                  <p className="mt-1 text-sm text-slate-300">Co-Founder</p>
-                </div>
-              </Surface>
-            </div>
-            <div className="mt-8 grid gap-5 md:grid-cols-3">
-              <Surface className="p-6">
-                <h3 className="text-lg font-semibold text-slate-50">Our Mission</h3>
-                <p className="mt-3 text-sm text-slate-300">
-                  To combine creativity, data, and AI to train the next generation of digital marketers.
-                </p>
-              </Surface>
-              <Surface className="p-6">
-                <h3 className="text-lg font-semibold text-slate-50">Our Vision</h3>
-                <p className="mt-3 text-sm text-slate-300">
-                  To shape future marketers using AI-driven strategies for tomorrow&apos;s digital economy.
-                </p>
-              </Surface>
-              <Surface className="p-6">
-                <h3 className="text-lg font-semibold text-slate-50">Why Choose Us</h3>
-                <div className="mt-3 space-y-2 text-sm text-slate-300">
-                  {[
-                    'Industry mentors',
-                    'Live projects',
-                    'Placement assistance',
-                    'Soft skills training',
-                    'Tool-based learning',
-                  ].map((item) => (
-                    <div key={item} className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              </Surface>
-            </div>
           </div>
         </Container>
       </Section>
@@ -1202,6 +1061,37 @@ export default function HomePage() {
         </Container>
       </Section>
 
+      <Section className="py-12 md:py-16" id="testimonials">
+        <Container>
+          <h2 className="text-3xl font-semibold text-slate-50 text-center">Success Stories</h2>
+          <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {[...testimonialShowcase, ...testimonials].length === 0 ? (
+              <div className="text-sm text-slate-300 text-center">No testimonials yet.</div>
+            ) : (
+              [...testimonialShowcase, ...testimonials].map((story) => (
+                <Surface key={story.id} className="p-0 overflow-hidden tilt-card">
+                  {story.image_url && (
+                    <div className="aspect-[4/3] overflow-hidden border-b border-white/10 bg-white/[0.02]">
+                      <img
+                        src={story.image_url}
+                        alt={story.name}
+                        className="w-full h-[220px] object-cover rounded-xl"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                  <div className="p-5">
+                    <div className="text-sm font-semibold text-slate-50">{story.name}</div>
+                  {story.role && <div className="text-xs text-slate-400">{story.role}</div>}
+                  {story.quote && <p className="mt-3 text-sm text-slate-300">"{story.quote}"</p>}
+                  </div>
+                </Surface>
+              ))
+            )}
+          </div>
+        </Container>
+      </Section>
+
       <Section className="py-12 md:py-16" id="live-projects">
         <Container>
           <div className="grid gap-6 lg:grid-cols-2">
@@ -1236,75 +1126,8 @@ export default function HomePage() {
         </Container>
       </Section>
 
-      <Section className="py-12 md:py-16" id="testimonials">
-        <Container>
-          <h2 className="text-3xl font-semibold text-slate-50 text-center">Success Stories</h2>
-          <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {[...testimonialShowcase, ...testimonials].length === 0 ? (
-              <div className="text-sm text-slate-300 text-center">No testimonials yet.</div>
-            ) : (
-              [...testimonialShowcase, ...testimonials].map((story) => (
-                <Surface key={story.id} className="p-0 overflow-hidden tilt-card">
-                  {story.image_url && (
-                    <div className="aspect-[4/3] overflow-hidden border-b border-white/10 bg-white/[0.02]">
-                      <img
-                        src={story.image_url}
-                        alt={story.name}
-                        className="w-full h-[220px] object-cover rounded-xl"
-                        loading="lazy"
-                      />
-                    </div>
-                  )}
-                  <div className="p-5">
-                    <div className="text-sm font-semibold text-slate-50">{story.name}</div>
-                  {story.role && <div className="text-xs text-slate-400">{story.role}</div>}
-                  {story.quote && <p className="mt-3 text-sm text-slate-300">"{story.quote}"</p>}
-                  </div>
-                </Surface>
-              ))
-            )}
-          </div>
-        </Container>
-      </Section>
-
       <div id="blog">
         <BlogSection section={blogSection} posts={blogPosts} />
-      </div>
-
-      <div className="fixed right-4 bottom-6 z-40 hidden md:block">
-        <div className="rounded-2xl border border-white/10 bg-slate-950/90 p-4 space-y-3 shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
-          <button
-            onClick={openPopup}
-            className="w-40 rounded-xl bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-200"
-          >
-            {actionsCta.apply_label || 'Apply Now'}
-          </button>
-          <a
-            href="tel:+917411314848"
-            className="block w-40 rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05]"
-          >
-            Call
-          </a>
-          <a
-            href="https://wa.me/917411314848"
-            target="_blank"
-            rel="noreferrer"
-            className="block w-40 rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05]"
-          >
-            WhatsApp
-          </a>
-          <button
-            onClick={() => setShowAddress(!showAddress)}
-            className="w-40 rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05]"
-          >
-            {actionsCta.address_label || 'Address'}
-          </button>
-          {showAddress && addressText && (
-            <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-slate-300 whitespace-pre-line">
-              {addressText}
-            </div>
-          )}
-        </div>
       </div>
 
       {showPopup && (

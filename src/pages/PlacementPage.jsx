@@ -19,6 +19,14 @@ const hiringPartnerLogos = [
   { name: 'TCS', file: 'tcs.png' },
   { name: 'Uber', file: 'uber.png' },
 ]
+const careerOpportunities = [
+  { region: 'South America', growth: '+15%' },
+  { region: 'Asia', growth: '+13%' },
+  { region: 'Europe', growth: '+10%' },
+  { region: 'North America', growth: '+10%' },
+  { region: 'Africa', growth: '+9%' },
+  { region: 'Australia', growth: '+8%' },
+]
 
 export function PlacementPage() {
   const [placements, setPlacements] = useState([])
@@ -87,6 +95,22 @@ export function PlacementPage() {
               <p className="mt-3 text-slate-300 max-w-2xl mx-auto">{heroSection.subtitle}</p>
             )}
           </motion.div>
+        </Container>
+      </Section>
+
+      <Section className="py-8 md:py-10" id="career-opportunities">
+        <Container>
+          <div className="text-center max-w-3xl mx-auto">
+            <h2 className="text-3xl font-semibold text-slate-50">Career Opportunities in Digital Marketing</h2>
+          </div>
+          <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+            {careerOpportunities.map((item) => (
+              <Surface key={item.region} className="p-4 text-center">
+                <div className="text-lg font-semibold text-teal-200">{item.growth}</div>
+                <div className="mt-1 text-xs text-slate-300">{item.region}</div>
+              </Surface>
+            ))}
+          </div>
         </Container>
       </Section>
 

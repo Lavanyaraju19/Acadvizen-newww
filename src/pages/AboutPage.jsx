@@ -100,6 +100,68 @@ export function AboutPage() {
         </Container>
       </Section>
 
+      <Section className="py-10 md:py-12">
+        <Container>
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-3xl font-semibold text-slate-50 text-center">About ACADVIZEN</h2>
+            <p className="mt-3 text-center text-slate-300">
+              ACADVIZEN is a leading digital marketing training institute in Bangalore focused on practical learning,
+              AI-driven strategies, and real-world campaign execution.
+            </p>
+            <div className="mt-8 flex justify-center">
+              <Surface className="p-4 w-full max-w-sm">
+                <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
+                  <img
+                    src="/about/tharika-chakrapani-raju.jpg"
+                    alt="Tharika Chakrapani Raju - Co-Founder"
+                    className="h-[420px] w-full object-cover object-top"
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null
+                      e.currentTarget.src = '/about/jyoti.jpg'
+                    }}
+                  />
+                </div>
+                <div className="mt-4 text-center">
+                  <h3 className="text-lg font-semibold text-slate-50">Tharika Chakrapani Raju</h3>
+                  <p className="mt-1 text-sm text-slate-300">Co-Founder</p>
+                </div>
+              </Surface>
+            </div>
+            <div className="mt-8 grid gap-5 md:grid-cols-3">
+              <Surface className="p-6">
+                <h3 className="text-lg font-semibold text-slate-50">Our Mission</h3>
+                <p className="mt-3 text-sm text-slate-300">
+                  To combine creativity, data, and AI to train the next generation of digital marketers.
+                </p>
+              </Surface>
+              <Surface className="p-6">
+                <h3 className="text-lg font-semibold text-slate-50">Our Vision</h3>
+                <p className="mt-3 text-sm text-slate-300">
+                  To shape future marketers using AI-driven strategies for tomorrow&apos;s digital economy.
+                </p>
+              </Surface>
+              <Surface className="p-6">
+                <h3 className="text-lg font-semibold text-slate-50">Why Choose Us</h3>
+                <div className="mt-3 space-y-2 text-sm text-slate-300">
+                  {[
+                    'Industry mentors',
+                    'Live projects',
+                    'Placement assistance',
+                    'Soft skills training',
+                    'Tool-based learning',
+                  ].map((item) => (
+                    <div key={item} className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </Surface>
+            </div>
+          </div>
+        </Container>
+      </Section>
+
       <Section className="py-8 md:py-14">
         <Container className="max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-6 items-stretch">

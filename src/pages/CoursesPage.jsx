@@ -5,6 +5,18 @@ import { supabase } from '../lib/supabaseClient'
 import { Container, Section } from '../components/ui/Section'
 import { Surface } from '../components/ui/Surface'
 
+const courseHighlights = [
+  { icon: '🧠', label: 'Skill Tracks', value: '12' },
+  { icon: '⏱️', label: 'Live Practice Hours', value: '220+' },
+  { icon: '🧩', label: 'Applied Modules', value: '34' },
+  { icon: '🎓', label: 'Mentor Clinics', value: '1:1' },
+  { icon: '🧰', label: 'Tool Stack Access', value: '30+' },
+  { icon: '📦', label: 'Portfolio Sprints', value: '8' },
+  { icon: '🏁', label: 'Capstone Missions', value: '6' },
+  { icon: '🌍', label: 'Career Readiness', value: 'Global' },
+  { icon: '📈', label: 'Interview Workshops', value: 'Weekly' },
+]
+
 export function CoursesPage() {
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(true)
@@ -60,7 +72,7 @@ export function CoursesPage() {
 
   return (
     <div className="min-h-screen">
-      <Section className="pt-10 md:pt-14 pb-6 md:pb-10">
+      <Section className="pt-10 md:pt-14 pb-6 md:pb-10" id="overview">
         <Container>
           <motion.div
             initial={{ opacity: 0, y: 14 }}
@@ -76,7 +88,25 @@ export function CoursesPage() {
         </Container>
       </Section>
 
-      <Section className="py-6 md:py-10">
+      <Section className="py-6 md:py-10" id="course-highlights">
+        <Container>
+          <div className="course-highlights-wrap">
+            <h2 className="course-highlights-title">Course Highlights</h2>
+            <p className="course-highlights-subtitle">A practical blueprint designed for high-growth careers.</p>
+            <div className="course-highlight-grid">
+              {courseHighlights.map((item) => (
+                <article key={item.label} className="course-highlight-card">
+                  <span className="course-highlight-icon">{item.icon}</span>
+                  <div className="course-highlight-label">{item.label}</div>
+                  <div className="course-highlight-value">{item.value}</div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </Container>
+      </Section>
+
+      <Section className="py-6 md:py-10" id="curriculum">
         <Container>
           {loading ? (
             <div className="text-center py-16">
@@ -130,6 +160,62 @@ export function CoursesPage() {
               ))}
             </div>
           )}
+        </Container>
+      </Section>
+
+      <Section className="py-10 md:py-12" id="success-stories">
+        <Container>
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl font-semibold text-slate-50">Success Stories</h2>
+            <p className="mt-3 text-slate-300">Learners turned campaigns into real offers at growth-focused teams.</p>
+          </div>
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {[
+              { name: 'Ritu S', role: 'Performance Marketer', org: 'Infosys' },
+              { name: 'Varun K', role: 'SEO Strategist', org: 'Deloitte' },
+              { name: 'Megha P', role: 'Growth Analyst', org: 'Amazon' },
+            ].map((story) => (
+              <Surface key={story.name} className="p-5">
+                <div className="text-base font-semibold text-slate-50">{story.name}</div>
+                <p className="mt-2 text-sm text-slate-300">{story.role}</p>
+                <div className="mt-3 text-xs text-teal-300">{story.org}</div>
+              </Surface>
+            ))}
+          </div>
+        </Container>
+      </Section>
+
+      <Section className="py-10 md:py-12" id="our-people">
+        <Container>
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl font-semibold text-slate-50">Our People</h2>
+            <p className="mt-3 text-slate-300">Mentors, reviewers, and practitioners from industry teams.</p>
+          </div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {['SEO Mentor', 'Ads Mentor', 'Analytics Mentor', 'Content Mentor'].map((person) => (
+              <Surface key={person} className="p-5 text-center">
+                <div className="mx-auto h-14 w-14 rounded-full border border-white/10 bg-white/[0.05]" />
+                <div className="mt-4 text-sm font-semibold text-slate-100">{person}</div>
+              </Surface>
+            ))}
+          </div>
+        </Container>
+      </Section>
+
+      <Section className="py-10 md:py-12" id="projects">
+        <Container>
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl font-semibold text-slate-50">Projects</h2>
+            <p className="mt-3 text-slate-300">Portfolio-grade executions across paid, organic, and automation tracks.</p>
+          </div>
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {['Campaign Build Sprint', 'SEO Growth Case', 'Analytics Dashboard Build'].map((project) => (
+              <Surface key={project} className="p-6">
+                <div className="text-sm font-semibold text-slate-50">{project}</div>
+                <p className="mt-3 text-xs text-slate-300">Real task briefs, deadlines, and mentor review loops.</p>
+              </Surface>
+            ))}
+          </div>
         </Container>
       </Section>
     </div>
