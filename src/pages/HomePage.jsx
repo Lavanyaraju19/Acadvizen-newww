@@ -1162,37 +1162,6 @@ export default function HomePage() {
         </Container>
       </Section>
 
-      <Section className="py-12 md:py-16" id="testimonials">
-        <Container>
-          <h2 className="text-3xl font-semibold text-slate-50 text-center">Success Stories</h2>
-          <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {[...testimonialShowcase, ...testimonials].length === 0 ? (
-              <div className="text-sm text-slate-300 text-center">No testimonials yet.</div>
-            ) : (
-              [...testimonialShowcase, ...testimonials].map((story) => (
-                <Surface key={story.id} className="p-0 overflow-hidden tilt-card">
-                  {story.image_url && (
-                    <div className="aspect-[4/3] overflow-hidden border-b border-white/10 bg-white/[0.02]">
-                      <img
-                        src={story.image_url}
-                        alt={story.name}
-                        className="w-full h-[220px] object-cover rounded-xl"
-                        loading="lazy"
-                      />
-                    </div>
-                  )}
-                  <div className="p-5">
-                    <div className="text-sm font-semibold text-slate-50">{story.name}</div>
-                  {story.role && <div className="text-xs text-slate-400">{story.role}</div>}
-                  {story.quote && <p className="mt-3 text-sm text-slate-300">"{story.quote}"</p>}
-                  </div>
-                </Surface>
-              ))
-            )}
-          </div>
-        </Container>
-      </Section>
-
       <Section className="py-12 md:py-16" id="live-projects">
         <Container>
           <div className="grid gap-6 lg:grid-cols-2">
