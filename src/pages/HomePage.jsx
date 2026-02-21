@@ -59,6 +59,12 @@ export default function HomePage() {
     { icon: '📚', label: 'Library' },
     { icon: '🏓', label: 'Recreation Area' },
   ]
+  const learnerStories = [
+    { name: 'Ananya R', company: 'Accenture', image: '/images/success/success2.jpg' },
+    { name: 'Rahul S', company: 'TCS', image: '/images/success/success1.jpg' },
+    { name: 'Isha M', company: 'IBM', image: '/images/success/success.jpg' },
+    { name: 'Karthik V', company: 'Cognizant', image: '/images/success/success3.jpg' },
+  ]
   const faqItems = [
     {
       question: 'What is course duration?',
@@ -96,6 +102,10 @@ export default function HomePage() {
   const [toolsCount, setToolsCount] = useState(null)
   const [partnersCount, setPartnersCount] = useState(null)
   const [activeFaq, setActiveFaq] = useState(0)
+  const [activeStoryIndex, setActiveStoryIndex] = useState(0)
+  const [pauseStories, setPauseStories] = useState(false)
+  const [touchStartX, setTouchStartX] = useState(0)
+  const [touchEndX, setTouchEndX] = useState(0)
   const [isCampusVideoPlaying, setIsCampusVideoPlaying] = useState(false)
   const campusVideoRef = useRef(null)
   const [toolsFallback] = useState([
@@ -226,6 +236,14 @@ export default function HomePage() {
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
   }, [])
+
+  useEffect(() => {
+    if (pauseStories || learnerStories.length === 0) return undefined
+    const timer = setInterval(() => {
+      setActiveStoryIndex((prev) => (prev + 1) % learnerStories.length)
+    }, 3000)
+    return () => clearInterval(timer)
+  }, [pauseStories, learnerStories.length])
 
   async function loadTools() {
     const { data, error } = await supabase
@@ -602,6 +620,20 @@ export default function HomePage() {
       return
     }
     video.pause()
+  }
+
+  const jumpToStory = (idx) => {
+    setActiveStoryIndex(idx)
+  }
+
+  const handleStoriesSwipeEnd = () => {
+    const delta = touchEndX - touchStartX
+    if (Math.abs(delta) < 40) return
+    if (delta < 0) {
+      setActiveStoryIndex((prev) => (prev + 1) % learnerStories.length)
+      return
+    }
+    setActiveStoryIndex((prev) => (prev - 1 + learnerStories.length) % learnerStories.length)
   }
 
   const handleSubmit = async (event) => {
@@ -1055,6 +1087,75 @@ export default function HomePage() {
                     }}
                   />
                 </div>
+              ))}
+            </div>
+          </div>
+        </Container>
+      </Section>
+
+      <Section className="py-12 md:py-16">
+        <Container>
+          <div className="impact-section">
+            <h2 className="impact-title">Real Stories. Real Impact. Real Careers.</h2>
+            <p className="impact-subtitle">Meet the learners who transformed their futures.</p>
+
+            <div
+              className="stories-carousel"
+              id="home-success-stories"
+              onMouseEnter={() => setPauseStories(true)}
+              onMouseLeave={() => setPauseStories(false)}
+              onTouchStart={(event) => {
+                setPauseStories(true)
+                setTouchEndX(0)
+                setTouchStartX(event.touches[0].clientX)
+              }}
+              onTouchMove={(event) => setTouchEndX(event.touches[0].clientX)}
+              onTouchEnd={() => {
+                setPauseStories(false)
+                handleStoriesSwipeEnd()
+              }}
+            >
+              {learnerStories.map((story, idx) => {
+                const total = learnerStories.length
+                let diff = idx - activeStoryIndex
+                if (diff > total / 2) diff -= total
+                if (diff < -total / 2) diff += total
+
+                const isCenter = diff === 0
+                const isSide = Math.abs(diff) === 1
+                const hidden = Math.abs(diff) > 1
+                const translate = diff * 62
+                const scale = isCenter ? 1 : isSide ? 0.9 : 0.82
+
+                return (
+                  <article
+                    key={story.name}
+                    className="story-card"
+                    style={{
+                      transform: `translateX(calc(-50% + ${translate}%)) scale(${scale})`,
+                      opacity: hidden ? 0 : 1,
+                      zIndex: isCenter ? 30 : isSide ? 20 : 10,
+                    }}
+                  >
+                    <img src={story.image} alt={story.name} loading="lazy" />
+                    <div className="story-meta">
+                      <div className="story-name">{story.name}</div>
+                      <div className="company-pill">{story.company}</div>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+
+            <div className="stories-dots">
+              {learnerStories.map((story, idx) => (
+                <button
+                  key={`${story.name}-dot`}
+                  type="button"
+                  aria-label={`Go to story ${idx + 1}`}
+                  className={activeStoryIndex === idx ? 'is-active' : ''}
+                  onClick={() => jumpToStory(idx)}
+                />
               ))}
             </div>
           </div>

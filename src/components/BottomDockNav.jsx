@@ -2,29 +2,28 @@ import { Link, useLocation } from 'react-router-dom'
 import { MessageCircle, Phone } from 'lucide-react'
 
 const dockItems = [
-  { label: 'Overview', hash: '#overview' },
-  { label: 'Course Highlights', hash: '#course-highlights' },
-  { label: 'Success Stories', hash: '#success-stories' },
-  { label: 'Our People', hash: '#our-people' },
-  { label: 'Curriculum', hash: '#curriculum' },
-  { label: 'Projects', hash: '#projects' },
+  { label: 'Overview', to: '/' },
+  { label: 'Course Highlights', to: '/courses#course-highlights' },
+  { label: 'Success Stories', to: '/placement#success-stories' },
+  { label: 'Our People', to: '/about' },
+  { label: 'Curriculum', to: '/courses#curriculum' },
+  { label: 'Projects', to: '/courses#projects' },
 ]
 
 export function BottomDockNav() {
   const location = useLocation()
-  const isCoursesPage = location.pathname === '/courses'
-  const activeHash = location.hash || '#overview'
+  const currentRoute = `${location.pathname}${location.hash || ''}`
 
   return (
     <div className="dock-nav-wrap" role="navigation" aria-label="Course quick navigation">
       <div className="dock-nav">
         <div className="dock-scroll">
           {dockItems.map((item) => {
-            const isActive = isCoursesPage && activeHash === item.hash
+            const isActive = currentRoute === item.to
             return (
               <Link
                 key={item.label}
-                to={`/courses${item.hash}`}
+                to={item.to}
                 className={`dock-link ${isActive ? 'is-active' : ''}`}
               >
                 {item.label}

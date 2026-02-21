@@ -13,6 +13,7 @@ import { AboutPage } from './pages/AboutPage'
 import { ContactPage } from './pages/ContactPage'
 import { PlacementPage } from './pages/PlacementPage'
 import { PlacementDetailPage } from './pages/PlacementDetailPage'
+import { HireFromUsPage } from './pages/HireFromUsPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
@@ -39,6 +40,7 @@ export default function App() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/placement" element={<PlacementPage />} />
         <Route path="/placement/:id" element={<PlacementDetailPage />} />
+        <Route path="/hire-from-us" element={<HireFromUsPage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />

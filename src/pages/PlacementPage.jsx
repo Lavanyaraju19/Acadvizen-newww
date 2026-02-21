@@ -27,6 +27,52 @@ const careerOpportunities = [
   { region: 'Africa', growth: '+9%' },
   { region: 'Australia', growth: '+8%' },
 ]
+const careerPathSteps = [
+  {
+    title: 'Join Your Course',
+    desc: 'Begin your journey by enrolling in a role-focused track tailored to your career goals.',
+  },
+  {
+    title: 'Skill-Building Projects & Certifications',
+    desc: 'Gain hands-on experience through real projects and certifications that validate your skills.',
+  },
+  {
+    title: 'Portfolio & Resume Workshops',
+    desc: 'Craft a standout resume and portfolio with expert guidance to impress potential employers.',
+  },
+  {
+    title: 'Mock Interviews + HR Training',
+    desc: 'Prepare for real interviews with mock sessions, HR best practices, and communication tips.',
+  },
+  {
+    title: 'Placement Drives with Top Recruiters',
+    desc: 'Get access to placement drives and job opportunities with top companies hiring actively.',
+  },
+  {
+    title: 'Offer Letters + Joining Support',
+    desc: 'Receive offer letters and complete post-placement support from documentation to onboarding.',
+  },
+]
+const placementStories = [
+  {
+    name: 'Acadvizen Learner',
+    role: 'Placed at Accenture',
+    quote: 'Hands-on project training helped me transition confidently into a digital marketing role.',
+    image_url: '/images/success/success2.jpg',
+  },
+  {
+    name: 'Acadvizen Learner',
+    role: 'Placed at TCS',
+    quote: 'The structured curriculum and interview preparation made placement conversion much easier.',
+    image_url: '/images/success/success1.jpg',
+  },
+  {
+    name: 'Acadvizen Learner',
+    role: 'Placed at IBM',
+    quote: 'Tool-based learning and live campaigns gave me practical confidence from day one.',
+    image_url: '/images/success/success.jpg',
+  },
+]
 
 export function PlacementPage() {
   const [placements, setPlacements] = useState([])
@@ -114,6 +160,28 @@ export function PlacementPage() {
         </Container>
       </Section>
 
+      <Section className="py-10 md:py-14" id="digital-marketing-career-path">
+        <Container className="max-w-6xl">
+          <h2 className="text-4xl md:text-6xl font-semibold italic text-slate-50 text-center md:text-left">
+            Digital Marketing Career Path
+          </h2>
+          <div className="relative mt-10 md:mt-14 space-y-14 md:space-y-16">
+            <div className="absolute left-1/2 top-0 hidden h-full -translate-x-1/2 border-l border-white/25 md:block" />
+            {careerPathSteps.map((step, idx) => (
+              <div key={step.title} className="relative grid gap-6 md:grid-cols-2 md:gap-16">
+                <div className={`${idx % 2 ? 'md:order-2' : ''}`}>
+                  <h3 className="text-3xl md:text-5xl font-medium text-slate-50">{step.title}</h3>
+                </div>
+                <div className={`${idx % 2 ? 'md:order-1' : ''}`}>
+                  <p className="text-lg md:text-2xl leading-relaxed text-slate-100">{step.desc}</p>
+                </div>
+                <span className="absolute left-1/2 top-2 hidden h-5 w-5 -translate-x-1/2 rounded-full border border-white/40 bg-slate-100 md:block" />
+              </div>
+            ))}
+          </div>
+        </Container>
+      </Section>
+
       <Section className="py-6 md:py-10">
         <Container>
           {loading ? (
@@ -164,6 +232,26 @@ export function PlacementPage() {
               ))}
             </div>
           )}
+        </Container>
+      </Section>
+
+      <Section className="py-12 md:py-16" id="success-stories">
+        <Container>
+          <h2 className="text-3xl font-semibold text-slate-50 text-center">Success Stories</h2>
+          <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {placementStories.map((story) => (
+              <Surface key={`${story.name}-${story.role}`} className="p-0 overflow-hidden tilt-card">
+                <div className="aspect-[4/3] overflow-hidden border-b border-white/10 bg-white/[0.02]">
+                  <img src={story.image_url} alt={story.name} className="w-full h-[220px] object-cover rounded-xl" loading="lazy" />
+                </div>
+                <div className="p-5">
+                  <div className="text-sm font-semibold text-slate-50">{story.name}</div>
+                  <div className="text-xs text-slate-400">{story.role}</div>
+                  <p className="mt-3 text-sm text-slate-300">"{story.quote}"</p>
+                </div>
+              </Surface>
+            ))}
+          </div>
         </Container>
       </Section>
 
