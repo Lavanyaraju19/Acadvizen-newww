@@ -16,7 +16,11 @@ const courseHighlights = [
   { icon: 'R', label: 'Career Readiness', value: 'Global' },
   { icon: 'I', label: 'Interview Workshops', value: 'Weekly' },
 ]
-const packageCards = ['Package 1: 35k', 'Package 2: 55k', 'Package 3: 75k']
+const packageCards = [
+  { icon: '1', label: 'Package 1', value: '35k' },
+  { icon: '2', label: 'Package 2', value: '55k' },
+  { icon: '3', label: 'Package 3', value: '75k' },
+]
 
 export function CoursesPage() {
   const [courses, setCourses] = useState([])
@@ -103,14 +107,13 @@ export function CoursesPage() {
                 </article>
               ))}
             </div>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-6 course-highlight-grid">
               {packageCards.map((pkg) => (
-                <div
-                  key={pkg}
-                  className="rounded-xl border border-white/20 bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white"
-                >
-                  {pkg}
-                </div>
+                <article key={pkg.label} className="course-highlight-card">
+                  <span className="course-highlight-icon">{pkg.icon}</span>
+                  <div className="course-highlight-label">{pkg.label}</div>
+                  <div className="course-highlight-value font-extrabold">{pkg.value}</div>
+                </article>
               ))}
             </div>
           </div>
