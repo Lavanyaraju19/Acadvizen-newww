@@ -17,9 +17,9 @@ const courseHighlights = [
   { icon: 'I', label: 'Interview Workshops', value: 'Weekly' },
 ]
 const packageCards = [
-  { icon: '1', label: 'Package 1', value: '35k' },
-  { icon: '2', label: 'Package 2', value: '55k' },
-  { icon: '3', label: 'Package 3', value: '75k' },
+  { icon: '1', label: 'Package 1', value: '₹35,000' },
+  { icon: '2', label: 'Package 2', value: '₹55,000' },
+  { icon: '3', label: 'Package 3', value: '₹75,000' },
 ]
 
 export function CoursesPage() {
