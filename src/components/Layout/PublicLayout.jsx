@@ -104,32 +104,10 @@ export function PublicLayout() {
               </div>
 
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Support Node</p>
-                <div className="mt-4 flex flex-col gap-3">
-                  {[
-                    { label: 'Help Center', to: '/contact' },
-                    { label: 'Student FAQ', to: '/contact' },
-                    { label: 'Refund Policy', to: '/contact' },
-                    { label: 'Contact Support', to: '/contact' },
-                  ].map((item) => (
-                    <Link
-                      key={item.label}
-                      to={item.to}
-                      data-cursor="hover"
-                      className="group relative inline-flex text-sm text-slate-400 transition-colors hover:text-slate-100"
-                    >
-                      {item.label}
-                      <span className="pointer-events-none absolute left-0 -bottom-1 h-px w-full origin-left scale-x-0 bg-gradient-to-r from-teal-300 to-sky-300 transition-transform duration-300 group-hover:scale-x-100" />
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Legal</p>
                 <div className="mt-4 flex flex-col gap-3">
                   {[
-                    { label: 'Terms of Service', to: '/about' },
+                    { label: 'Terms of Service', to: '/terms-of-service' },
                     { label: 'Privacy Policy', to: '/privacy-policy' },
                   ].map((item) => (
                     <Link

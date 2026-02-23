@@ -6,15 +6,15 @@ import { Container, Section } from '../components/ui/Section'
 import { Surface } from '../components/ui/Surface'
 
 const courseHighlights = [
-  { icon: '🧠', label: 'Skill Tracks', value: '12' },
-  { icon: '⏱️', label: 'Live Practice Hours', value: '220+' },
-  { icon: '🧩', label: 'Applied Modules', value: '34' },
-  { icon: '🎓', label: 'Mentor Clinics', value: '1:1' },
-  { icon: '🧰', label: 'Tool Stack Access', value: '30+' },
-  { icon: '📦', label: 'Portfolio Sprints', value: '8' },
-  { icon: '🏁', label: 'Capstone Missions', value: '6' },
-  { icon: '🌍', label: 'Career Readiness', value: 'Global' },
-  { icon: '📈', label: 'Interview Workshops', value: 'Weekly' },
+  { icon: 'S', label: 'Skill Tracks', value: '12', package: 'Package 1: 35k' },
+  { icon: 'L', label: 'Live Practice Hours', value: '220+', package: 'Package 2: 55k' },
+  { icon: 'A', label: 'Applied Modules', value: '34', package: 'Package 3: 75k' },
+  { icon: 'M', label: 'Mentor Clinics', value: '1:1' },
+  { icon: 'T', label: 'Tool Stack Access', value: '30+' },
+  { icon: 'P', label: 'Portfolio Sprints', value: '8' },
+  { icon: 'C', label: 'Capstone Missions', value: '6' },
+  { icon: 'R', label: 'Career Readiness', value: 'Global' },
+  { icon: 'I', label: 'Interview Workshops', value: 'Weekly' },
 ]
 
 export function CoursesPage() {
@@ -99,6 +99,11 @@ export function CoursesPage() {
                   <span className="course-highlight-icon">{item.icon}</span>
                   <div className="course-highlight-label">{item.label}</div>
                   <div className="course-highlight-value">{item.value}</div>
+                  {item.package && (
+                    <div className="mt-3 inline-flex rounded-lg bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
+                      {item.package}
+                    </div>
+                  )}
                 </article>
               ))}
             </div>
@@ -221,3 +226,4 @@ export function CoursesPage() {
     </div>
   )
 }
+

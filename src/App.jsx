@@ -18,6 +18,7 @@ import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { PrivacyPolicy } from './pages/PrivacyPolicy'
+import { TermsOfService } from './pages/TermsOfService'
 import { AdminLogin } from './pages/admin/Login'
 
 import { StudentDashboard } from './pages/dashboard/StudentDashboard'
@@ -42,6 +43,7 @@ export default function App() {
         <Route path="/placement/:id" element={<PlacementDetailPage />} />
         <Route path="/hire-from-us" element={<HireFromUsPage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
