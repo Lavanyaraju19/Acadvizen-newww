@@ -5,7 +5,6 @@ import {
   Target,
   Wrench,
   Rocket,
-  Clock,
   GraduationCap,
   Briefcase,
   TrendingUp,
@@ -18,6 +17,7 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
+import { assetUrl } from '../lib/assetUrl'
 import { Container, Section } from '../components/ui/Section'
 import { Surface } from '../components/ui/Surface'
 import { BlogSection } from '../components/BlogSection'
@@ -385,17 +385,6 @@ export default function HomePage() {
     title: 'Acadvizen - Build Your Own Digital Marketing Course',
     subtitle: 'Choose your tools, customize your syllabus, and train for real jobs in India.',
   })
-  const whySection = getSection('why_acadvizen', {
-    title: 'Why We Are Different',
-    subtitle: 'Most institutes force a fixed syllabus. At Acadvizen, you build your own learning path.',
-    items_json: [
-      'What modules you want',
-      'Which tools you want to master',
-      'Your pace and career goals',
-      'Your specialization (SEO, Ads, Social, Analytics)',
-    ],
-  })
-  const whyItems = parseJson(whySection.items_json, [])
   const whoSection = getSection('who_for', {
     title: 'Who Is This For?',
     items_json: [
@@ -570,6 +559,11 @@ export default function HomePage() {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '')
+  const toolLogoSrc = (tool) => {
+    if (tool.logoSrc) return assetUrl(tool.logoSrc)
+    if (tool.logo_url) return assetUrl(tool.logo_url)
+    return null
+  }
   const scrollingTools = [
     { name: 'Ahrefs', slug: 'ahrefs', logoSrc: '/tools/ahrefs.png' },
     { name: 'SEMrush', slug: 'semrush', logoSrc: '/tools/semrush.png' },
@@ -693,10 +687,12 @@ export default function HomePage() {
             <h1 className="text-5xl md:text-7xl font-bold wave-text">
               {metaTitle}
             </h1>
-            <h3 className="mt-4 text-lg md:text-xl text-slate-200 font-medium">{metaDescription}</h3>
             {heroSection.subtitle && (
-              <p className="mt-3 text-sm md:text-base text-slate-300">
-                {heroSection.subtitle.replace('abroad', 'India')}
+              <p className="mt-6 text-xl md:text-2xl text-slate-100 font-bold">
+                {heroSection.subtitle
+                  .replace(/\s*&\s*abroad\.?/i, '')
+                  .replace(/\s+abroad\.?/i, '')
+                  .trim()}
               </p>
             )}
             <div className="mt-10">
@@ -863,133 +859,11 @@ export default function HomePage() {
         </Container>
       </Section>
 
-      <Section className="py-10 md:py-12" id="faq">
-        <Container>
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl font-semibold text-slate-50">FAQ</h2>
-          </div>
-          <div className="mt-8 max-w-4xl mx-auto space-y-3">
-            {faqItems.map((item, idx) => {
-              const isOpen = activeFaq === idx
-              return (
-                <Surface key={item.question} className="p-0 overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setActiveFaq(isOpen ? null : idx)}
-                    className="w-full px-5 py-4 text-left flex items-center justify-between"
-                  >
-                    <span className="text-sm font-semibold text-slate-100">{item.question}</span>
-                    <ChevronDown className={`h-4 w-4 text-slate-300 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  {isOpen && <div className="border-t border-white/10 px-5 py-4 text-sm text-slate-300">{item.answer}</div>}
-                </Surface>
-              )
-            })}
-          </div>
-        </Container>
-      </Section>
-
-      <Section className="py-10 md:py-12" id="placement-acadvizen">
-        <Container>
-          <div className="text-center max-w-4xl mx-auto">
-            <h2 className="text-3xl font-semibold text-slate-50">Placement at ACADVIZEN</h2>
-            <p className="mt-3 text-slate-300">
-              ACADVIZEN placement drives connect trained candidates with top recruiters through resume support, mock
-              interviews, portfolio guidance, and hiring assistance.
-            </p>
-          </div>
-        </Container>
-      </Section>
-
-      <Section className="py-12 md:py-16" id="why">
-        <Container>
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl font-semibold text-slate-50">{whySection.title}</h2>
-            {whySection.subtitle && <p className="mt-3 text-slate-300">{whySection.subtitle}</p>}
-          </div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {whyItems.map((item, idx) => {
-              const icons = [Target, Wrench, Rocket, Clock]
-              const Icon = icons[idx % icons.length]
-              return (
-                <div
-                  key={`${item}-${idx}`}
-                  className="group rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl tilt-card"
-                >
-                  <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-teal-400/15 text-teal-200">
-                    <Icon className="h-5 w-5 float" />
-                  </div>
-                  <div className="text-sm text-slate-200">{item}</div>
-                </div>
-              )
-            })}
-          </div>
-        </Container>
-      </Section>
-
-      <Section className="py-12 md:py-16" id="who-for">
-        <Container>
-          <h2 className="text-3xl font-semibold text-slate-50 text-center">{whoSection.title}</h2>
-          <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {whoItems.map((card, idx) => {
-              const icons = [GraduationCap, Briefcase, TrendingUp, Laptop]
-              const Icon = icons[idx % icons.length]
-              return (
-                  <div
-                    key={`${card.title}-${idx}`}
-                    className="group rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-all duration-300 hover:scale-105 hover:shadow-xl tilt-card"
-                  >
-                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-sky-400/15 text-sky-200">
-                    <Icon className="h-6 w-6 float" />
-                  </div>
-                  <div className="text-sm font-semibold text-slate-50">{card.title}</div>
-                  <p className="mt-2 text-xs text-slate-300">{card.desc}</p>
-                </div>
-              )
-            })}
-          </div>
-        </Container>
-      </Section>
-
-      <Section className="py-12 md:py-16" id="syllabus">
-        <Container>
-          <h2 className="text-3xl font-semibold text-slate-50 text-center">{syllabusSection.title}</h2>
-          <div className="mt-8 grid gap-6 lg:grid-cols-2">
-            <Surface className="p-6">
-              <div className="flex items-center gap-3">
-                <BookOpen className="h-6 w-6 text-teal-200 float" />
-                <h3 className="text-lg font-semibold text-slate-50">Core Modules</h3>
-              </div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {moduleItems.map((item, idx) => (
-                  <div key={`${item}-${idx}`} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs text-slate-200">
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </Surface>
-            <Surface className="p-6">
-              <div className="flex items-center gap-3">
-                <Wrench className="h-6 w-6 text-sky-200 float" />
-                <h3 className="text-lg font-semibold text-slate-50">Choose Your Tools</h3>
-              </div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {toolItems.map((item, idx) => (
-                  <div key={`${item}-${idx}`} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs text-slate-200">
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </Surface>
-          </div>
-        </Container>
-      </Section>
-
       <Section className="py-10 md:py-12" id="tools-marquee">
         <Container>
           <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl font-semibold text-slate-50">Tools You Will Master</h2>
-            <p className="mt-3 text-sm text-slate-300">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-50">Tools You Will Master</h2>
+            <p className="mt-3 text-base md:text-lg text-slate-300">
               Explore the tools you will work with. Click any logo to view details.
             </p>
           </div>
@@ -999,25 +873,25 @@ export default function HomePage() {
                 <Link
                   key={`${tool.slug || tool.name}-row-a-${idx}`}
                   to={`/tools/${tool.slug || toToolSlug(tool.name || '')}`}
-                  className="flex min-w-[170px] items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-4 transition hover:-translate-y-1 hover:border-teal-300/60"
+                  className="tilt-card flex min-w-[220px] items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-4 transition hover:-translate-y-1 hover:border-teal-300/60"
                 >
                   {tool.logoSrc || tool.logo_url ? (
                     <img
-                      src={tool.logoSrc || tool.logo_url}
+                      src={toolLogoSrc(tool)}
                       alt={tool.name || tool.slug}
-                      className="h-10 w-auto object-contain"
+                      className="h-12 w-auto object-contain float"
                       loading="lazy"
                       onError={(e) => {
                         const fallback = tool.logo_url || null
                         if (fallback && e.currentTarget.src !== fallback) {
-                          e.currentTarget.src = fallback
+                          e.currentTarget.src = assetUrl(fallback)
                         } else {
                           e.currentTarget.style.display = 'none'
                         }
                       }}
                     />
                   ) : null}
-                  <span className="text-xs text-slate-200 whitespace-nowrap">{tool.name || tool.slug}</span>
+                  <span className="text-sm font-semibold text-slate-200 whitespace-nowrap">{tool.name || tool.slug}</span>
                 </Link>
               ))}
             </div>
@@ -1026,25 +900,25 @@ export default function HomePage() {
                 <Link
                   key={`${tool.slug || tool.name}-row-b-${idx}`}
                   to={`/tools/${tool.slug || toToolSlug(tool.name || '')}`}
-                  className="flex min-w-[170px] items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-4 transition hover:-translate-y-1 hover:border-teal-300/60"
+                  className="tilt-card flex min-w-[220px] items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-4 transition hover:-translate-y-1 hover:border-teal-300/60"
                 >
                   {tool.logoSrc || tool.logo_url ? (
                     <img
-                      src={tool.logoSrc || tool.logo_url}
+                      src={toolLogoSrc(tool)}
                       alt={tool.name || tool.slug}
-                      className="h-10 w-auto object-contain"
+                      className="h-12 w-auto object-contain float"
                       loading="lazy"
                       onError={(e) => {
                         const fallback = tool.logo_url || null
                         if (fallback && e.currentTarget.src !== fallback) {
-                          e.currentTarget.src = fallback
+                          e.currentTarget.src = assetUrl(fallback)
                         } else {
                           e.currentTarget.style.display = 'none'
                         }
                       }}
                     />
                   ) : null}
-                  <span className="text-xs text-slate-200 whitespace-nowrap">{tool.name || tool.slug}</span>
+                  <span className="text-sm font-semibold text-slate-200 whitespace-nowrap">{tool.name || tool.slug}</span>
                 </Link>
               ))}
             </div>
@@ -1052,10 +926,69 @@ export default function HomePage() {
         </Container>
       </Section>
 
+      <Section className="py-12 md:py-16" id="syllabus">
+        <Container>
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-50 text-center">Build Your Own Syllabus</h2>
+          <div className="mt-8 grid gap-6 lg:grid-cols-2">
+            <Surface className="p-6">
+              <div className="flex items-center gap-3">
+                <BookOpen className="h-7 w-7 text-teal-200 float" />
+                <h3 className="text-2xl font-bold text-slate-50">Core Modules</h3>
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {moduleItems.map((item, idx) => (
+                  <div key={`${item}-${idx}`} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-200">
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </Surface>
+            <Surface className="p-6">
+              <div className="flex items-center gap-3">
+                <Wrench className="h-7 w-7 text-sky-200 float" />
+                <h3 className="text-2xl font-bold text-slate-50">Choose Your Tools</h3>
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {toolItems.map((item, idx) => (
+                  <div key={`${item}-${idx}`} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-200">
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </Surface>
+          </div>
+        </Container>
+      </Section>
+
+      <Section className="py-12 md:py-16" id="who-for">
+        <Container>
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-50 text-center">{whoSection.title}</h2>
+          <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {whoItems.map((card, idx) => {
+              const icons = [GraduationCap, Briefcase, TrendingUp, Laptop]
+              const Icon = icons[idx % icons.length]
+              return (
+                <div
+                  key={`${card.title}-${idx}`}
+                  className="group rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-all duration-300 hover:scale-105 hover:shadow-xl tilt-card"
+                >
+                  <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-sky-400/15 text-sky-200">
+                    <Icon className="h-7 w-7 float" />
+                  </div>
+                  <div className="text-base font-bold text-slate-50">{card.title}</div>
+                  <p className="mt-2 text-sm text-slate-300">{card.desc}</p>
+                </div>
+              )
+            })}
+          </div>
+        </Container>
+      </Section>
+
       <Section className="py-12 md:py-16" id="hiring-partners">
         <Container>
           <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl font-semibold text-slate-50">{partnersSection.title}</h2>
+            <p className="text-base md:text-lg font-bold uppercase tracking-[0.18em] text-teal-200">Placements</p>
+            <h2 className="mt-3 text-4xl md:text-5xl font-bold text-slate-50">{partnersSection.title}</h2>
             {partnersSection.subtitle && <p className="mt-3 text-slate-300">{partnersSection.subtitle}</p>}
           </div>
           <div className="mt-8 space-y-4 overflow-hidden">
@@ -1063,12 +996,13 @@ export default function HomePage() {
               {[...companyRowA, ...companyRowA].map((logo, idx) => (
                 <div key={`company-row-a-${idx}`} className="flex min-w-[180px] items-center justify-center px-4 py-2">
                   <img
-                    src={logo}
+                    src={assetUrl(logo)}
                     alt={`Company ${idx + 1}`}
                     className="h-12 w-auto object-contain"
                     loading="lazy"
                     onError={(e) => {
-                      e.currentTarget.style.display = 'none'
+                      e.currentTarget.onerror = null
+                      e.currentTarget.src = assetUrl('/logos/google.png')
                     }}
                   />
                 </div>
@@ -1078,12 +1012,13 @@ export default function HomePage() {
               {[...companyRowB, ...companyRowB].map((logo, idx) => (
                 <div key={`company-row-b-${idx}`} className="flex min-w-[180px] items-center justify-center px-4 py-2">
                   <img
-                    src={logo}
+                    src={assetUrl(logo)}
                     alt={`Company ${idx + 1}`}
                     className="h-12 w-auto object-contain"
                     loading="lazy"
                     onError={(e) => {
-                      e.currentTarget.style.display = 'none'
+                      e.currentTarget.onerror = null
+                      e.currentTarget.src = assetUrl('/logos/tcs.png')
                     }}
                   />
                 </div>
@@ -1137,7 +1072,15 @@ export default function HomePage() {
                       zIndex: isCenter ? 30 : isSide ? 20 : 10,
                     }}
                   >
-                    <img src={story.image} alt={story.name} loading="lazy" />
+                    <img
+                      src={assetUrl(story.image)}
+                      alt={story.name}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null
+                        e.currentTarget.src = assetUrl('/images/success/success.jpg')
+                      }}
+                    />
                     <div className="story-meta">
                       <div className="story-name">{story.name}</div>
                       <div className="company-pill">{story.company}</div>
@@ -1192,6 +1135,32 @@ export default function HomePage() {
             >
               Enroll Now
             </button>
+          </div>
+        </Container>
+      </Section>
+
+      <Section className="py-10 md:py-12" id="faq">
+        <Container>
+          <div className="text-center max-w-3xl mx-auto">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-50">FAQ</h2>
+          </div>
+          <div className="mt-8 max-w-4xl mx-auto space-y-3">
+            {faqItems.map((item, idx) => {
+              const isOpen = activeFaq === idx
+              return (
+                <Surface key={item.question} className="p-0 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setActiveFaq(isOpen ? null : idx)}
+                    className="w-full px-5 py-4 text-left flex items-center justify-between"
+                  >
+                    <span className="text-lg font-bold text-slate-100">{item.question}</span>
+                    <ChevronDown className={`h-5 w-5 text-slate-300 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {isOpen && <div className="border-t border-white/10 px-5 py-4 text-base text-slate-300">{item.answer}</div>}
+                </Surface>
+              )
+            })}
           </div>
         </Container>
       </Section>

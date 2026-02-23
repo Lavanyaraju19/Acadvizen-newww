@@ -77,10 +77,6 @@ export function PublicLayout() {
                 <p className="mt-3 text-sm text-slate-400">
                   Premium academy for digital marketing mastery.
                 </p>
-                <p className="mt-3 text-sm text-slate-400">
-                  ACADVIZEN is the best digital marketing training institute in Bangalore offering live campaign
-                  training, AI-driven marketing tools, placement assistance, and career-focused mentorship.
-                </p>
               </div>
 
               <div>

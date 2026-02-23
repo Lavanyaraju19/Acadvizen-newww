@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from '../lib/supabaseClient'
 import { Container, Section } from '../components/ui/Section'
 import { Surface } from '../components/ui/Surface'
+import { assetUrl } from '../lib/assetUrl'
 
 export function ToolsPage() {
   const [tools, setTools] = useState([])
@@ -185,15 +186,16 @@ export function ToolsPage() {
                             <div className="h-12 w-12 shrink-0 rounded-2xl border border-white/10 bg-white/[0.04] overflow-hidden flex items-center justify-center shadow-[0_18px_60px_rgba(0,0,0,0.45)]">
                               {localLogoFor(tool) || tool.logo_url ? (
                                 <img
-                                  src={localLogoFor(tool) || tool.logo_url}
+                                  src={localLogoFor(tool) ? assetUrl(localLogoFor(tool)) : assetUrl(tool.logo_url)}
                                   alt={tool.name}
                                   className="h-full w-full object-contain"
                                   onError={(e) => {
                                     const fallback = tool.logo_url || null
                                     if (fallback && e.currentTarget.src !== fallback) {
-                                      e.currentTarget.src = fallback
+                                      e.currentTarget.src = assetUrl(fallback)
                                     } else {
-                                      e.currentTarget.style.display = 'none'
+                                      e.currentTarget.onerror = null
+                                      e.currentTarget.src = assetUrl('/logo.png')
                                     }
                                   }}
                                 />

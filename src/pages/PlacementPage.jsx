@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { supabase } from '../lib/supabaseClient'
 import { Container, Section } from '../components/ui/Section'
 import { Surface } from '../components/ui/Surface'
+import { assetUrl } from '../lib/assetUrl'
 
 const hiringPartnerLogos = [
   { name: 'Accenture', file: 'accenture.png' },
@@ -144,6 +145,18 @@ export function PlacementPage() {
         </Container>
       </Section>
 
+      <Section className="py-10 md:py-12" id="placement-acadvizen">
+        <Container>
+          <div className="text-center max-w-4xl mx-auto">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-50">Placement at ACADVIZEN</h2>
+            <p className="mt-3 text-lg text-slate-300">
+              ACADVIZEN placement drives connect trained candidates with top recruiters through resume support, mock
+              interviews, portfolio guidance, and hiring assistance.
+            </p>
+          </div>
+        </Container>
+      </Section>
+
       <Section className="py-8 md:py-10" id="career-opportunities">
         <Container>
           <div className="text-center max-w-3xl mx-auto">
@@ -205,9 +218,13 @@ export function PlacementPage() {
                       {placement.featured_image && (
                         <div className="relative aspect-video overflow-hidden border-b border-white/10 bg-white/[0.02]">
                           <img
-                            src={placement.featured_image}
+                            src={assetUrl(placement.featured_image)}
                             alt={placement.title}
                             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null
+                              e.currentTarget.src = assetUrl('/images/success/success1.jpg')
+                            }}
                           />
                         </div>
                       )}
@@ -242,7 +259,16 @@ export function PlacementPage() {
             {placementStories.map((story) => (
               <Surface key={`${story.name}-${story.role}`} className="p-0 overflow-hidden tilt-card">
                 <div className="aspect-[4/3] overflow-hidden border-b border-white/10 bg-white/[0.02]">
-                  <img src={story.image_url} alt={story.name} className="w-full h-[220px] object-cover rounded-xl" loading="lazy" />
+                  <img
+                    src={assetUrl(story.image_url)}
+                    alt={story.name}
+                    className="w-full h-[220px] object-cover rounded-xl"
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null
+                      e.currentTarget.src = assetUrl('/images/success/success.jpg')
+                    }}
+                  />
                 </div>
                 <div className="p-5">
                   <div className="text-sm font-semibold text-slate-50">{story.name}</div>
@@ -290,10 +316,14 @@ export function PlacementPage() {
                       className="flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] px-3 py-4"
                     >
                       <img
-                        src={`/logos/${partner.file}`}
+                        src={assetUrl(`/logos/${partner.file}`)}
                         alt={partner.name}
                         className="h-10 w-auto object-contain"
                         loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null
+                          e.currentTarget.src = assetUrl('/logo.png')
+                        }}
                       />
                     </div>
                   ))}

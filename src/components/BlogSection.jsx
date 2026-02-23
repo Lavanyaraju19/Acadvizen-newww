@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Container, Section } from './ui/Section'
 import { Surface } from './ui/Surface'
+import { assetUrl } from '../lib/assetUrl'
 
 export function BlogSection({ section, posts }) {
   if (!section) return null
@@ -32,9 +33,13 @@ export function BlogSection({ section, posts }) {
                   >
                     {post.featured_image && (
                       <img
-                        src={post.featured_image}
+                        src={assetUrl(post.featured_image)}
                         alt={post.title}
                         className="w-full h-[220px] object-cover rounded-t-2xl"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null
+                          e.currentTarget.src = assetUrl('/blog-images/image1.jpg')
+                        }}
                       />
                     )}
                     <div className="p-4">

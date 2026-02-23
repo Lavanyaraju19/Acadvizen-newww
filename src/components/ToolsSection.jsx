@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Container, Section } from './ui/Section'
 import { Surface } from './ui/Surface'
+import { assetUrl } from '../lib/assetUrl'
 
 export function ToolsSection({ section, tools, categories, selectedCategory, onCategoryChange }) {
   const featuredTools = tools.slice(0, 12)
@@ -27,8 +28,8 @@ export function ToolsSection({ section, tools, categories, selectedCategory, onC
 
   const logoFor = (tool) => {
     const local = localLogoFor(tool)
-    if (local) return local
-    if (tool.logo_url) return tool.logo_url
+    if (local) return assetUrl(local)
+    if (tool.logo_url) return assetUrl(tool.logo_url)
     if (tool.website_url) {
       const match = tool.website_url.match(/^https?:\/\/([^/]+)/i)
       if (match?.[1]) return `https://logo.clearbit.com/${match[1]}`
@@ -80,7 +81,8 @@ export function ToolsSection({ section, tools, categories, selectedCategory, onC
                         if (fallback && e.currentTarget.src !== fallback) {
                           e.currentTarget.src = fallback
                         } else {
-                          e.currentTarget.style.display = 'none'
+                          e.currentTarget.onerror = null
+                          e.currentTarget.src = assetUrl('/logo.png')
                         }
                       }}
                     />
@@ -112,7 +114,8 @@ export function ToolsSection({ section, tools, categories, selectedCategory, onC
                         if (fallback && e.currentTarget.src !== fallback) {
                           e.currentTarget.src = fallback
                         } else {
-                          e.currentTarget.style.display = 'none'
+                          e.currentTarget.onerror = null
+                          e.currentTarget.src = assetUrl('/logo.png')
                         }
                       }}
                     />
@@ -151,7 +154,8 @@ export function ToolsSection({ section, tools, categories, selectedCategory, onC
                           if (fallback && e.currentTarget.src !== fallback) {
                             e.currentTarget.src = fallback
                           } else {
-                            e.currentTarget.style.display = 'none'
+                            e.currentTarget.onerror = null
+                            e.currentTarget.src = assetUrl('/logo.png')
                           }
                         }}
                       />

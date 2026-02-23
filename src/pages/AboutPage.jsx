@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { supabase } from '../lib/supabaseClient'
 import { Container, Section } from '../components/ui/Section'
 import { Surface } from '../components/ui/Surface'
+import { assetUrl } from '../lib/assetUrl'
 
 export function AboutPage() {
   const [pageSections, setPageSections] = useState({})
@@ -101,62 +102,58 @@ export function AboutPage() {
       </Section>
 
       <Section className="py-10 md:py-12">
-        <Container>
-          <div className="max-w-5xl mx-auto">
+        <Container className="max-w-7xl">
+          <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl font-semibold text-slate-50 text-center">About ACADVIZEN</h2>
             <p className="mt-3 text-center text-slate-300">
               ACADVIZEN is a leading digital marketing training institute in Bangalore focused on practical learning,
               AI-driven strategies, and real-world campaign execution.
             </p>
-            <div className="mt-8 flex justify-center">
-              <Surface className="p-4 w-full max-w-sm">
+            <div className="mt-10 grid gap-8 lg:grid-cols-[1.35fr_1.65fr] items-stretch">
+              <Surface className="p-5">
                 <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
                   <img
-                    src="/about/tharika-chakrapani-raju.jpg"
+                    src={assetUrl('/about/tharii.jpg')}
                     alt="Tharika Chakrapani Raju - Co-Founder"
-                    className="h-[420px] w-full object-cover object-top"
+                    className="h-[500px] lg:h-[520px] w-full object-cover object-top"
                     loading="lazy"
                     onError={(e) => {
                       e.currentTarget.onerror = null
-                      e.currentTarget.src = '/about/jyoti.jpg'
+                      e.currentTarget.src = assetUrl('/about/jyoti.jpg')
                     }}
                   />
                 </div>
-                <div className="mt-4 text-center">
-                  <h3 className="text-lg font-semibold text-slate-50">Tharika Chakrapani Raju</h3>
-                  <p className="mt-1 text-sm text-slate-300">Co-Founder</p>
-                </div>
               </Surface>
-            </div>
-            <div className="mt-8 grid gap-5 md:grid-cols-3">
-              <Surface className="p-6">
-                <h3 className="text-lg font-semibold text-slate-50">Our Mission</h3>
-                <p className="mt-3 text-sm text-slate-300">
-                  To combine creativity, data, and AI to train the next generation of digital marketers.
-                </p>
-              </Surface>
-              <Surface className="p-6">
-                <h3 className="text-lg font-semibold text-slate-50">Our Vision</h3>
-                <p className="mt-3 text-sm text-slate-300">
-                  To shape future marketers using AI-driven strategies for tomorrow&apos;s digital economy.
-                </p>
-              </Surface>
-              <Surface className="p-6">
-                <h3 className="text-lg font-semibold text-slate-50">Why Choose Us</h3>
-                <div className="mt-3 space-y-2 text-sm text-slate-300">
-                  {[
-                    'Industry mentors',
-                    'Live projects',
-                    'Placement assistance',
-                    'Soft skills training',
-                    'Tool-based learning',
-                  ].map((item) => (
-                    <div key={item} className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              </Surface>
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                <Surface className="p-7">
+                  <h3 className="text-3xl font-bold text-slate-50">Our Mission</h3>
+                  <p className="mt-3 text-lg text-slate-300">
+                    To combine creativity, data, and AI to train the next generation of digital marketers.
+                  </p>
+                </Surface>
+                <Surface className="p-7">
+                  <h3 className="text-3xl font-bold text-slate-50">Our Vision</h3>
+                  <p className="mt-3 text-lg text-slate-300">
+                    To shape future marketers using AI-driven strategies for tomorrow&apos;s digital economy.
+                  </p>
+                </Surface>
+                <Surface className="p-7">
+                  <h3 className="text-3xl font-bold text-slate-50">Why Choose Us</h3>
+                  <div className="mt-3 space-y-2 text-lg text-slate-300">
+                    {[
+                      'Industry mentors',
+                      'Live projects',
+                      'Placement assistance',
+                      'Soft skills training',
+                      'Tool-based learning',
+                    ].map((item) => (
+                      <div key={item} className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-3">
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                </Surface>
+              </div>
             </div>
           </div>
         </Container>
@@ -285,11 +282,19 @@ export function AboutPage() {
             <div className="mt-6 grid gap-6 md:grid-cols-2">
               {founders.map((person) => (
                 <div key={person.name} className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
-                  <div className="mx-auto h-28 w-28 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
-                    <img src={person.image} alt={person.name} className="h-full w-full object-cover" />
+                  <div className="mx-auto h-52 w-52 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
+                    <img
+                      src={assetUrl(person.image)}
+                      alt={person.name}
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null
+                        e.currentTarget.src = assetUrl('/about/tharii.jpg')
+                      }}
+                    />
                   </div>
-                  <div className="mt-4 text-base font-semibold text-slate-50">{person.name}</div>
-                  {person.role && <div className="mt-1 text-sm text-slate-400">{person.role}</div>}
+                  <div className="mt-4 text-3xl font-bold text-slate-50">{person.name}</div>
+                  {person.role && <div className="mt-1 text-xl text-slate-400">{person.role}</div>}
                 </div>
               ))}
             </div>

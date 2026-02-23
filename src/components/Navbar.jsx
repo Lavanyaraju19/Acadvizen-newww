@@ -30,13 +30,7 @@ export function Navbar() {
             </Link>
           </div>
 
-          <div className="hidden md:flex items-center gap-6">
-            <Link to="/courses" className="text-slate-300 hover:text-white text-sm font-medium transition-colors">
-              Courses
-            </Link>
-            <Link to="/about" className="text-slate-300 hover:text-white text-sm font-medium transition-colors">
-              About Us
-            </Link>
+          <div className="hidden md:flex items-center gap-6 ml-auto">
             <Link to="/placement" className="text-slate-300 hover:text-white text-sm font-medium transition-colors">
               Placement
             </Link>
@@ -45,9 +39,6 @@ export function Navbar() {
             </Link>
             <Link to="/contact" className="text-slate-300 hover:text-white text-sm font-medium transition-colors">
               Contact
-            </Link>
-            <Link to="/blog" className="text-slate-300 hover:text-white text-sm font-medium transition-colors">
-              Blogs
             </Link>
           </div>
 
@@ -108,32 +99,11 @@ export function Navbar() {
 
             <div className="mt-6 space-y-3 text-sm text-slate-200">
               <Link
-                to="/courses"
-                onClick={() => setShowPanel(false)}
-                className="block rounded-lg px-3 py-2 hover:bg-white/[0.05]"
-              >
-                Courses
-              </Link>
-              <Link
-                to="/about"
-                onClick={() => setShowPanel(false)}
-                className="block rounded-lg px-3 py-2 hover:bg-white/[0.05]"
-              >
-                About Us
-              </Link>
-              <Link
                 to="/placement"
                 onClick={() => setShowPanel(false)}
                 className="block rounded-lg px-3 py-2 hover:bg-white/[0.05]"
               >
                 Placement
-              </Link>
-              <Link
-                to="/contact"
-                onClick={() => setShowPanel(false)}
-                className="block rounded-lg px-3 py-2 hover:bg-white/[0.05]"
-              >
-                Contact
               </Link>
               <Link
                 to="/hire-from-us"
@@ -143,11 +113,11 @@ export function Navbar() {
                 Hire From Us
               </Link>
               <Link
-                to="/blog"
+                to="/contact"
                 onClick={() => setShowPanel(false)}
                 className="block rounded-lg px-3 py-2 hover:bg-white/[0.05]"
               >
-                Blogs
+                Contact
               </Link>
             </div>
 
