@@ -6,9 +6,9 @@ import { Container, Section } from '../components/ui/Section'
 import { Surface } from '../components/ui/Surface'
 
 const courseHighlights = [
-  { icon: 'S', label: 'Skill Tracks', value: '12', package: 'Package 1: 35k' },
-  { icon: 'L', label: 'Live Practice Hours', value: '220+', package: 'Package 2: 55k' },
-  { icon: 'A', label: 'Applied Modules', value: '34', package: 'Package 3: 75k' },
+  { icon: 'S', label: 'Skill Tracks', value: '12' },
+  { icon: 'L', label: 'Live Practice Hours', value: '220+' },
+  { icon: 'A', label: 'Applied Modules', value: '34' },
   { icon: 'M', label: 'Mentor Clinics', value: '1:1' },
   { icon: 'T', label: 'Tool Stack Access', value: '30+' },
   { icon: 'P', label: 'Portfolio Sprints', value: '8' },
@@ -16,6 +16,7 @@ const courseHighlights = [
   { icon: 'R', label: 'Career Readiness', value: 'Global' },
   { icon: 'I', label: 'Interview Workshops', value: 'Weekly' },
 ]
+const packageCards = ['Package 1: 35k', 'Package 2: 55k', 'Package 3: 75k']
 
 export function CoursesPage() {
   const [courses, setCourses] = useState([])
@@ -99,12 +100,17 @@ export function CoursesPage() {
                   <span className="course-highlight-icon">{item.icon}</span>
                   <div className="course-highlight-label">{item.label}</div>
                   <div className="course-highlight-value">{item.value}</div>
-                  {item.package && (
-                    <div className="mt-3 inline-flex rounded-lg bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
-                      {item.package}
-                    </div>
-                  )}
                 </article>
+              ))}
+            </div>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {packageCards.map((pkg) => (
+                <div
+                  key={pkg}
+                  className="rounded-xl border border-white/20 bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white"
+                >
+                  {pkg}
+                </div>
               ))}
             </div>
           </div>
