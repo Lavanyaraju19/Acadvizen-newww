@@ -48,9 +48,6 @@ export function PrivacyPolicy() {
               Gravatar service to see if you are using it.
             </p>
             <p className="mt-4 text-slate-300 leading-relaxed">
-              The Gravatar service privacy policy is available here: https://automattic.com/privacy/.
-            </p>
-            <p className="mt-4 text-slate-300 leading-relaxed">
               After approval of your comment, your profile picture is visible to the public in the context of your
               comment.
             </p>
