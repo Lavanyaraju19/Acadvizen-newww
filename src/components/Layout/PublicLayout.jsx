@@ -85,7 +85,6 @@ export function PublicLayout() {
                   {[
                     { label: 'Home', to: '/' },
                     { label: 'Course Catalog', to: '/courses' },
-                    { label: 'Premium Tools', to: '/tools' },
                     { label: 'Our Story', to: '/about' },
                     { label: 'Hiring Partners', to: '/contact' },
                     { label: 'Enroll Today', to: '/register' },
