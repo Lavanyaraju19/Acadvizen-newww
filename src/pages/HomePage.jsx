@@ -31,15 +31,34 @@ export default function HomePage() {
   const coursePrograms = [
     {
       name: 'Basic',
-      features: ['45 Days', '15 Tools', '7 Live Projects', 'Placement Assistance'],
+      features: [
+        '45 Days',
+        '15+ Tools, Gen AI Tools, Digital Marketing Tools',
+        '7 Live Projects',
+        'Placement Assistance',
+        'Package 1 - ₹35,000',
+      ],
     },
     {
       name: 'Advanced',
-      features: ['65 Days', '20+ Tools', '15+ Live Projects', 'Placement Assistance'],
+      features: [
+        '65 Days',
+        '20+ Tools, Gen AI Tools, Digital Marketing Tools',
+        '15+ Live Projects',
+        'Placement Assistance',
+        'Package 2 - ₹55,000',
+      ],
     },
     {
       name: 'Master',
-      features: ['95 Days', '65+ Tools', '25+ Live Projects', 'Internship + Placement', 'Guest Lectures'],
+      features: [
+        '95 Days',
+        '65+ Tools, Gen AI Tools, Digital Marketing Tools',
+        '25+ Live Projects',
+        'Internship + Placement',
+        'Guest Lectures',
+        'Package 3 - ₹75,000',
+      ],
     },
   ]
   const learningValues = [
