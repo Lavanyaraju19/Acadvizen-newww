@@ -21,7 +21,7 @@ const termsParagraphs = [
   "You shall indemnify and hold harmless Platform Owner, its affiliates, group companies (as applicable) and their respective officers, directors, agents, and employees, from any claim or demand, or actions including reasonable attorney's fees, made by any third party or penalty imposed due to or arising out of Your breach of this Terms of Use, privacy Policy and other Policies, or Your violation of any law, rules or regulations or the rights (including infringement of intellectual property rights) of a third party.",
   'Notwithstanding anything contained in these Terms of Use, the parties shall not be liable for any failure to perform an obligation under these Terms if performance is prevented or delayed by a force majeure event.',
   'These Terms and any dispute or claim relating to it, or its enforceability, shall be governed by and construed in accordance with the laws of India.',
-  'All disputes arising out of or in connection with these Terms shall be subject to the exclusive jurisdiction of the courts in and .',
+  'All disputes arising out of or in connection with these Terms shall be subject to the exclusive jurisdiction of the courts in India .',
   'All concerns or communications relating to these Terms must be communicated to us using the contact information provided on this website.',
 ]
 
