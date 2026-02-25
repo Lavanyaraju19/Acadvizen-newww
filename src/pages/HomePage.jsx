@@ -23,9 +23,9 @@ import { Surface } from '../components/ui/Surface'
 import { BlogSection } from '../components/BlogSection'
 
 export default function HomePage() {
-  const metaTitle = 'Best Digital Marketing Institute in Bangalore ACADVIZEN'
+  const metaTitle = 'Best Digital Marketing Course In Bangalore'
   const metaDescription =
-    'ACADVIZEN is the best digital marketing training institute in Bangalore offering live projects, 50+ tools, placement assistance, and industry-ready skills.'
+    'Upgrade your career with the best digital marketing training institute in Bangalore—learn practical tools, live campaigns, and industry-ready strategies.'
   const metaKeywords =
     'best digital marketing training institute in bangalore, digital marketing institute in bangalore, digital marketing course with placement, digital marketing training institute in bangalore'
   const coursePrograms = [
@@ -767,6 +767,10 @@ export default function HomePage() {
         <Container>
           <div className="text-center max-w-3xl mx-auto">
             <h2 className="text-3xl font-semibold text-slate-50">Our Course Programs</h2>
+            <h4 className="mt-3 text-base md:text-lg text-slate-300">
+              Upgrade your career with the best digital marketing training institute in Bangalore—learn practical
+              tools, live campaigns, and industry-ready strategies.
+            </h4>
           </div>
           <div className="mt-8 grid gap-5 md:grid-cols-3">
             {coursePrograms.map((program) => (
@@ -838,42 +842,6 @@ export default function HomePage() {
             <button type="button" onClick={openPopup} className="tour-btn">
               Schedule Campus Tour
             </button>
-          </div>
-        </Container>
-      </Section>
-
-      <Section className="py-10 md:py-12" id="why-acadvizen-different-structured">
-        <Container>
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl font-semibold text-slate-50">What Makes ACADVIZEN Different?</h2>
-          </div>
-          <div className="mt-8 grid gap-5 md:grid-cols-2">
-            <Surface className="p-6">
-              <h3 className="text-lg font-semibold text-slate-50">What Most Institutes Teach</h3>
-              <div className="mt-4 space-y-2 text-sm text-slate-300">
-                {['Same marketing tools', 'No customization', 'Theory heavy', 'No real projects'].map((item) => (
-                  <div key={item} className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </Surface>
-            <Surface className="p-6">
-              <h3 className="text-lg font-semibold text-slate-50">What Makes ACADVIZEN Different</h3>
-              <div className="mt-4 space-y-2 text-sm text-slate-300">
-                {[
-                  'Customize tools',
-                  'Real campaign execution',
-                  'Career specialization',
-                  'Industry workflows',
-                  'Placement support',
-                ].map((item) => (
-                  <div key={item} className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </Surface>
           </div>
         </Container>
       </Section>
@@ -1154,6 +1122,42 @@ export default function HomePage() {
             >
               Enroll Now
             </button>
+          </div>
+        </Container>
+      </Section>
+
+      <Section className="py-10 md:py-12" id="why-acadvizen-different-structured">
+        <Container>
+          <div className="text-center max-w-3xl mx-auto">
+            <h2 className="text-3xl font-semibold text-slate-50">What Makes ACADVIZEN Different?</h2>
+          </div>
+          <div className="mt-8 grid gap-5 md:grid-cols-2">
+            <Surface className="p-6">
+              <h3 className="text-lg font-semibold text-slate-50">What Most Institutes Teach</h3>
+              <div className="mt-4 space-y-2 text-sm text-slate-300">
+                {['Same marketing tools', 'No customization', 'Theory heavy', 'No real projects'].map((item) => (
+                  <div key={item} className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </Surface>
+            <Surface className="p-6">
+              <h3 className="text-lg font-semibold text-slate-50">What Makes ACADVIZEN Different</h3>
+              <div className="mt-4 space-y-2 text-sm text-slate-300">
+                {[
+                  'Customize tools',
+                  'Real campaign execution',
+                  'Career specialization',
+                  'Industry workflows',
+                  'Placement support',
+                ].map((item) => (
+                  <div key={item} className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </Surface>
           </div>
         </Container>
       </Section>

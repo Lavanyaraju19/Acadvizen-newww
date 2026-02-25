@@ -6,6 +6,7 @@ import { AnimatedOutlet } from '../ui/AnimatedOutlet'
 import { CustomCursor } from '../ui/CustomCursor'
 import { Navbar } from '../Navbar'
 import { BottomDockNav } from '../BottomDockNav'
+import { Facebook, Instagram, Linkedin, Youtube } from 'lucide-react'
 
 export function PublicLayout() {
   const [tickerItems, setTickerItems] = useState([])
@@ -127,6 +128,44 @@ export function PublicLayout() {
                   <p>Bangalore, Karnataka 560078</p>
                   <p>+91 7411314848</p>
                   <p>ceo@acadvizen.com</p>
+                </div>
+                <div className="mt-6 flex items-center gap-3 text-slate-300">
+                  <a
+                    href="https://www.instagram.com/acadvizen/"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Instagram"
+                    className="transition-colors hover:text-slate-100"
+                  >
+                    <Instagram className="h-4 w-4" />
+                  </a>
+                  <a
+                    href="https://www.linkedin.com/company/acadvizen-digital-marketing-institute/?viewAsMember=true"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="LinkedIn"
+                    className="transition-colors hover:text-slate-100"
+                  >
+                    <Linkedin className="h-4 w-4" />
+                  </a>
+                  <a
+                    href="https://www.youtube.com/@Acadvizen"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="YouTube"
+                    className="transition-colors hover:text-slate-100"
+                  >
+                    <Youtube className="h-4 w-4" />
+                  </a>
+                  <a
+                    href="https://www.facebook.com/profile.php?id=61586987972331"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Facebook"
+                    className="transition-colors hover:text-slate-100"
+                  >
+                    <Facebook className="h-4 w-4" />
+                  </a>
                 </div>
               </div>
             </div>

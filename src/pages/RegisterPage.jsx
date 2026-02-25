@@ -1,41 +1,36 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { useAuth } from '../contexts/AuthContext'
 import { AuthShell } from '../components/ui/AuthShell'
+import { supabase } from '../lib/supabaseClient'
 
 export function RegisterPage() {
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
-    confirmPassword: '',
     fullName: '',
     phone: '',
     learningMode: 'online',
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { signUp } = useAuth()
   const navigate = useNavigate()
-
-  const passwordMismatch = useMemo(
-    () => formData.confirmPassword.length > 0 && formData.password !== formData.confirmPassword,
-    [formData.confirmPassword, formData.password],
-  )
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match')
-      return
-    }
-
     setLoading(true)
     try {
-      await signUp(formData.email, formData.password, formData.fullName)
-      navigate('/login', { state: { message: 'Registration successful! Please check your email to verify your account.' } })
+      await supabase.from('registrations').insert([
+        {
+          full_name: formData.fullName.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          learning_mode: formData.learningMode,
+          page: '/register',
+        },
+      ])
+      navigate('/login', { state: { message: 'Registration successful! We will contact you soon.' } })
     } catch (err) {
       setError(err.message || 'Failed to register')
     } finally {
@@ -44,7 +39,7 @@ export function RegisterPage() {
   }
 
   return (
-    <AuthShell title="Create account" subtitle="Join Acadvizen today">
+    <AuthShell title="Secure Your Spot">
       <div className="relative">
         <div aria-hidden="true" className="pointer-events-none absolute -inset-6 rounded-3xl bg-gradient-to-r from-teal-400/10 via-sky-400/5 to-indigo-400/10 blur-2xl" />
         <div className="relative">
@@ -142,66 +137,13 @@ export function RegisterPage() {
               </div>
             </div>
 
-            <div className="relative">
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                minLength={6}
-                placeholder=" "
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="peer w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 pb-3 pt-5 text-sm text-slate-100 placeholder:text-transparent outline-none transition focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
-              />
-              <label
-                htmlFor="password"
-                className="pointer-events-none absolute left-4 -top-2 rounded bg-[#050b12] px-1 text-xs text-slate-400 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-placeholder-shown:text-slate-500 peer-focus:-top-2 peer-focus:text-xs peer-focus:text-teal-200"
-              >
-                Password
-              </label>
-              <p className="mt-2 text-xs text-slate-500">Minimum 6 characters</p>
-            </div>
-
-            <div className="relative">
-              <input
-                id="confirmPassword"
-                name="confirm_password"
-                type="password"
-                required
-                placeholder=" "
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                className={`peer w-full rounded-xl border bg-white/[0.03] px-4 pb-3 pt-5 text-sm text-slate-100 placeholder:text-transparent outline-none transition focus:ring-2 ${
-                  passwordMismatch
-                    ? 'border-red-500/40 focus:border-red-400/60 focus:ring-red-400/20'
-                    : 'border-white/10 focus:border-teal-300/40 focus:ring-teal-300/15'
-                }`}
-              />
-              <label
-                htmlFor="confirmPassword"
-                className="pointer-events-none absolute left-4 -top-2 rounded bg-[#050b12] px-1 text-xs text-slate-400 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-placeholder-shown:text-slate-500 peer-focus:-top-2 peer-focus:text-xs peer-focus:text-teal-200"
-              >
-                Confirm Password
-              </label>
-              {passwordMismatch && (
-                <motion.p
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-2 text-xs text-red-300"
-                >
-                  Passwords do not match.
-                </motion.p>
-              )}
-            </div>
-
             <button
               type="submit"
               disabled={loading}
               data-cursor="button"
               className="w-full rounded-xl bg-teal-300 px-4 py-3 text-sm font-semibold text-slate-950 transition-transform hover:-translate-y-0.5 hover:bg-teal-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating account...' : 'Sign up'}
+              {loading ? 'Submitting...' : 'Submit'}
             </button>
           </form>
 
