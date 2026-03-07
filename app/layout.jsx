@@ -1,20 +1,39 @@
 import './globals.css'
 import Script from 'next/script'
 import Providers from './providers'
-import { buildMetadata, siteConfig } from './lib/seo'
+import { siteConfig } from './lib/seo'
 import { blogs as localBlogs } from '../data/blogs'
 
 export const metadata = {
-  metadataBase: new URL(siteConfig.siteUrl),
-  ...buildMetadata({
-    title: 'AI-Powered Digital Marketing Institute in Bangalore',
-    description:
-      'Acadvizen offers AI-powered digital marketing courses with live projects, internships, and placement support in Bangalore.',
-    path: '/',
-  }),
+  metadataBase: new URL('https://acadvizen.com'),
+  title: {
+    default: 'Acadvizen',
+    template: '%s | Acadvizen',
+  },
+  description: 'Acadvizen helps students discover universities, courses, and career guidance.',
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: 'Acadvizen',
+    description: 'Education and career guidance platform',
+    url: 'https://acadvizen.com',
+    siteName: 'Acadvizen',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Acadvizen',
+    description: 'Education guidance platform',
+  },
+  alternates: {
+    canonical: 'https://acadvizen.com',
+  },
 }
 
 export default function RootLayout({ children }) {
+  const GA_ID = process.env.NEXT_PUBLIC_GA_ID || 'G-XXXXXXXXXX'
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -117,13 +136,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <Script
           id="ga-loader"
           strategy="afterInteractive"
-          src="https://www.googletagmanager.com/gtag/js?id=G-XHHL082QEE"
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
         />
         <Script id="ga-script" strategy="afterInteractive">
           {`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
-gtag('config', 'G-XHHL082QEE');`}
+gtag('config', '${GA_ID}');`}
         </Script>
         <Script id="meta-pixel" strategy="afterInteractive">
           {`!function(f,b,e,v,n,t,s)

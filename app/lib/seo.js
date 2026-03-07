@@ -1,4 +1,4 @@
-const SITE_URL = 'https://www.acadvizen.com'
+const SITE_URL = 'https://acadvizen.com'
 const SITE_NAME = 'Acadvizen'
 const DEFAULT_IMAGE = '/logo.png'
 

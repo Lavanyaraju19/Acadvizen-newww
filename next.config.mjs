@@ -8,14 +8,29 @@ const __dirname = path.dirname(__filename)
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  compress: true,
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       { protocol: 'https', hostname: '**' },
       { protocol: 'http', hostname: '**' },
     ],
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+        ],
+      },
+    ]
   },
   webpack: (config) => {
     config.resolve.alias = {
