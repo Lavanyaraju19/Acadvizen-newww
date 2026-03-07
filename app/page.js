@@ -1,5 +1,6 @@
-import { HomeClientPage } from '../client-pages'
-import { buildMetadata } from '../lib/seo'
+import { HomeClientPage } from './client-pages'
+import { buildMetadata } from './lib/seo'
+import { PublicLayout } from '../src/components/Layout/PublicLayout'
 
 export const dynamic = 'force-static'
 
@@ -10,6 +11,10 @@ export const metadata = buildMetadata({
   path: '/',
 })
 
-export default function Page() {
-  return <HomeClientPage />
+export default function Home() {
+  return (
+    <PublicLayout>
+      <HomeClientPage />
+    </PublicLayout>
+  )
 }
