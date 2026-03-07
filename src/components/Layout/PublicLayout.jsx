@@ -1,35 +1,27 @@
-import { useEffect, useState } from 'react'
+'use client'
+
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { supabase } from '../../lib/supabaseClient'
-import { AnimatedOutlet } from '../ui/AnimatedOutlet'
 import { CustomCursor } from '../ui/CustomCursor'
 import { Navbar } from '../Navbar'
 import { BottomDockNav } from '../BottomDockNav'
 import { Facebook, Instagram, Linkedin, Youtube } from 'lucide-react'
 
-export function PublicLayout() {
-  const [tickerItems, setTickerItems] = useState([])
-
-  useEffect(() => {
-    loadTicker()
-    const tickerChannel = supabase
-      .channel('public-ticker-layout')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'ticker' }, loadTicker)
-      .subscribe()
-    return () => {
-      supabase.removeChannel(tickerChannel)
-    }
-  }, [])
-
-  async function loadTicker() {
-    const { data } = await supabase
-      .from('ticker')
-      .select('*')
-      .eq('is_active', true)
-      .order('order_index', { ascending: true })
-    if (data) setTickerItems(data)
-  }
+export function PublicLayout({ children }) {
+  const locationLinks = [
+    'Digital Marketing Courses in Bangalore',
+    'Digital Marketing Courses in Jayanagar',
+    'Digital Marketing Courses in JP Nagar',
+    'Digital Marketing Courses in Koramangala',
+    'Digital Marketing Courses in Mysore',
+    'Digital Marketing Courses in Indiranagar',
+    'Digital Marketing Courses in MG Road',
+    'Digital Marketing Courses in Rajajinagar',
+    'Digital Marketing Courses in RR Nagar',
+    'Digital Marketing Courses in HSR Layout',
+    'Digital Marketing Courses in Whitefield',
+    'Digital Marketing Courses in Marathahalli',
+  ]
 
   return (
     <div className="min-h-screen flex flex-col acadvizen-noise">
@@ -41,20 +33,18 @@ export function PublicLayout() {
         <div className="absolute bottom-[-240px] left-[30%] h-[620px] w-[620px] rounded-full bg-indigo-500/10 blur-3xl" />
       </div>
 
-      <Navbar />
-
-      <div className="relative z-10 w-full bg-slate-950/95 border-b border-white/10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2 overflow-hidden">
-          <div className="advz-ticker text-xs sm:text-sm text-teal-200" style={{ '--advz-ticker-duration': '18s' }}>
-            {tickerItems.length > 0
-              ? tickerItems.map((item) => item.text).join(' | ')
-              : 'Next Batch Starts in 5 Days | Limited Seats Available | Admissions Open Now'}
-          </div>
+      <div className="sticky top-0 z-[55] w-full border-b border-emerald-700/40 bg-emerald-950/95">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2 text-center">
+          <p className="text-xs sm:text-sm font-semibold text-emerald-200">
+            Starting from March 16 | Limited Seats Available | Admissions Open Now
+          </p>
         </div>
       </div>
 
+      <Navbar />
+
       <main className="flex-1 relative z-10 pb-28 md:pb-32">
-        <AnimatedOutlet />
+        {children}
       </main>
 
       <BottomDockNav />
@@ -170,7 +160,22 @@ export function PublicLayout() {
               </div>
             </div>
 
-            <div className="mt-10 border-t border-white/10 pt-6 text-center text-xs tracking-[0.2em] text-slate-500">
+            <div className="mt-10 border-t border-white/10 pt-6">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4 text-left">
+                <h4 className="text-xl font-semibold text-slate-100">Digital Marketing Courses in India</h4>
+                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-slate-300 leading-relaxed">
+                  {locationLinks.map((label, idx) => (
+                    <span key={label} className="inline-flex items-center gap-3">
+                      {idx > 0 && <span className="text-slate-500">|</span>}
+                      <a href="/" className="hover:text-slate-100 transition-colors">
+                        {label}
+                      </a>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 text-center text-xs tracking-[0.2em] text-slate-500">
               (c) 2026 ACADVIZEN Digital Marketing. ALL RIGHTS RESERVED.
             </div>
           </div>

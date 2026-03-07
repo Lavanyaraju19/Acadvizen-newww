@@ -3,10 +3,11 @@ import { MessageCircle, Phone } from 'lucide-react'
 
 const dockItems = [
   { label: 'Overview', to: '/' },
-  { label: 'Course Highlights', to: '/courses' },
+  { label: 'Course Highlights', to: '/courses#course-highlights' },
   { label: 'Success Stories', to: '/placement#success-stories' },
-  { label: 'Our People', to: '/about' },
-  { label: 'Blogs', to: '/blog' },
+  { label: 'About Us', to: '/about' },
+  { label: 'Curriculum', to: '/courses#curriculum' },
+  { label: 'Projects', to: '/courses#projects' },
 ]
 
 export function BottomDockNav() {

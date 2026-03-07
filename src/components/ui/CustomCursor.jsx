@@ -1,5 +1,5 @@
 import { motion, useMotionValue, useSpring } from 'framer-motion'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 function isFinePointer() {
   if (typeof window === 'undefined') return false
@@ -12,7 +12,7 @@ function isTouchLike() {
 }
 
 export function CustomCursor() {
-  const enabled = useMemo(() => isFinePointer() && !isTouchLike(), [])
+  const [enabled, setEnabled] = useState(false)
   const [active, setActive] = useState(false)
   const [scrollPulse, setScrollPulse] = useState(false)
   const scrollTimeout = useRef(null)
@@ -30,6 +30,10 @@ export function CustomCursor() {
   const trailOneY = useSpring(y, { stiffness: 140, damping: 28, mass: 1.1 })
   const trailTwoX = useSpring(x, { stiffness: 90, damping: 26, mass: 1.4 })
   const trailTwoY = useSpring(y, { stiffness: 90, damping: 26, mass: 1.4 })
+
+  useEffect(() => {
+    setEnabled(isFinePointer() && !isTouchLike())
+  }, [])
 
   useEffect(() => {
     if (!enabled) return
