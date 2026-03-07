@@ -1,3 +1,5 @@
+export const revalidate = 1;
+
 import { PlacementDetailClientPage } from '../../../client-pages'
 import { buildMetadata } from '../../../lib/seo'
 import { fetchPlacementById } from '../../../lib/contentMeta'

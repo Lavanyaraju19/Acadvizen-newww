@@ -1,3 +1,5 @@
+﻿export const revalidate = 1;
+
 import Link from 'next/link'
 import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, Search } from 'lucide-react'
 import { Surface } from '../../src/components/ui/Surface'
@@ -37,3 +39,4 @@ export default function Page() {
     </Surface>
   )
 }
+

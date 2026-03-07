@@ -1,3 +1,5 @@
+export const revalidate = 1;
+
 import BlogLayout from '../../../../components/BlogLayout'
 import { buildMetadata } from '../../../lib/seo'
 import { blogs as localBlogs } from '../../../../data/blogs'

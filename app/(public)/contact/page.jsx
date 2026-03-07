@@ -1,3 +1,5 @@
+﻿export const revalidate = 1;
+
 import { ContactClientPage } from '../../client-pages'
 import { buildMetadata } from '../../lib/seo'
 
@@ -17,3 +19,4 @@ export default function Page() {
     </>
   )
 }
+

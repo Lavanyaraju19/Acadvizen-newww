@@ -1,3 +1,5 @@
+﻿export const revalidate = 1;
+
 import AdminLoginForm from '../../../components/AdminLoginForm'
 import { buildMetadata } from '../../lib/seo'
 
@@ -14,3 +16,4 @@ metadata.robots = {
 export default function Page() {
   return <AdminLoginForm />
 }
+

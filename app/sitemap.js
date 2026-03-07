@@ -1,3 +1,5 @@
+﻿export const revalidate = 1;
+
 import { blogs } from '../data/blogs'
 
 const SITE_URL = 'https://acadvizen.com'
@@ -25,3 +27,4 @@ export default function sitemap() {
 
   return [...staticEntries, ...blogEntries]
 }
+

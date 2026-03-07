@@ -1,3 +1,5 @@
+﻿export const revalidate = 1;
+
 import { HomeClientPage } from './client-pages'
 import { PublicLayout } from '../src/components/Layout/PublicLayout'
 
@@ -13,3 +15,4 @@ export default function Page() {
     </PublicLayout>
   )
 }
+

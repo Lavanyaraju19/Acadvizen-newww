@@ -1,3 +1,5 @@
+﻿export const revalidate = 1;
+
 import { CoursesClientPage } from '../../client-pages'
 import { buildMetadata } from '../../lib/seo'
 
@@ -18,3 +20,4 @@ export default function Page() {
     </>
   )
 }
+

@@ -1,3 +1,5 @@
+﻿export const revalidate = 1;
+
 import AdminSectionShell from '../AdminSectionShell'
 
 export default function Page() {
@@ -8,4 +10,5 @@ export default function Page() {
     />
   )
 }
+
 

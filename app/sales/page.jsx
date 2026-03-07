@@ -1,3 +1,5 @@
+﻿export const revalidate = 1;
+
 import { SalesClientPage } from '../client-pages'
 import { buildMetadata } from '../lib/seo'
 
@@ -10,3 +12,4 @@ export const metadata = buildMetadata({
 export default function Page() {
   return <SalesClientPage />
 }
+

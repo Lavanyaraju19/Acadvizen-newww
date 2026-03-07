@@ -1,3 +1,5 @@
+export const revalidate = 1;
+
 import { CourseDetailClientPage } from '../../../client-pages'
 import { buildMetadata } from '../../../lib/seo'
 import { fetchCourseBySlug } from '../../../lib/contentMeta'

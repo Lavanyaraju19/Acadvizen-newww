@@ -1,3 +1,5 @@
+﻿export const revalidate = 1;
+
 import Link from 'next/link'
 import { buildMetadata } from '../../lib/seo'
 
@@ -167,3 +169,4 @@ export default function Page() {
     </div>
   )
 }
+

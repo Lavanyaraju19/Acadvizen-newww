@@ -1,3 +1,5 @@
+export const revalidate = 1;
+
 import { ToolDetailClientPage } from '../../../client-pages'
 import { buildMetadata } from '../../../lib/seo'
 import { fetchToolBySlug } from '../../../lib/contentMeta'
