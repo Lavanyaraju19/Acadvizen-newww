@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { supabase } from '../../lib/supabaseClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
+import WorldCareerMap from '../../../components/WorldCareerMap'
 import { assetUrl } from '../../lib/assetUrl'
 
 const hiringPartnerLogos = [
@@ -75,21 +76,6 @@ const placementStories = [
     image_url: '/images/success/success.jpg',
   },
 ]
-const worldFlags = [
-  '\u{1F1EE}\u{1F1F3}', // India
-  '\u{1F1FA}\u{1F1F8}', // USA
-  '\u{1F1EC}\u{1F1E7}', // UK
-  '\u{1F1E6}\u{1F1EA}', // UAE
-  '\u{1F1F8}\u{1F1EC}', // Singapore
-  '\u{1F1E6}\u{1F1FA}', // Australia
-  '\u{1F1E8}\u{1F1E6}', // Canada
-  '\u{1F1E9}\u{1F1EA}', // Germany
-  '\u{1F1F3}\u{1F1F1}', // Netherlands
-  '\u{1F1EB}\u{1F1F7}', // France
-  '\u{1F1EF}\u{1F1F5}', // Japan
-  '\u{1F1FF}\u{1F1E6}', // South Africa
-]
-
 export function PlacementPage() {
   const [placements, setPlacements] = useState([])
   const [loading, setLoading] = useState(true)
@@ -173,17 +159,13 @@ export function PlacementPage() {
       <Section className="py-8 md:py-10" id="global-career-opportunities">
         <Container>
           <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl font-semibold text-slate-50">Career Opportunities Across the World</h2>
+            <h2 className="text-3xl font-semibold text-slate-50">Career Opportunities Across the World 🌍</h2>
             <p className="mt-3 text-slate-300">
-              Digital Marketing opens doors to career opportunities across the world {'\u{1F30D}'}
+              Digital Marketing opens doors to global career opportunities across 12+ countries.
             </p>
           </div>
-          <div className="mt-8 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-            {worldFlags.map((flag) => (
-              <Surface key={flag} className="p-4 text-center">
-                <span className="text-2xl">{flag}</span>
-              </Surface>
-            ))}
+          <div className="mt-8">
+            <WorldCareerMap />
           </div>
         </Container>
       </Section>

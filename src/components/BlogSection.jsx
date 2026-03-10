@@ -1,3 +1,6 @@
+'use client'
+
+import { useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Image from 'next/image'
 import { Container, Section } from './ui/Section'
@@ -7,6 +10,7 @@ import { assetUrl } from '../lib/assetUrl'
 export function BlogSection({ section, posts }) {
   if (!section) return null
   const stripHtml = (value = '') => String(value).replace(/<[^>]*>/g, ' ')
+  const sliderRef = useRef(null)
   const formatPublishedDate = (value) => {
     if (!value) return 'Draft'
     return new Date(value).toLocaleDateString('en-US', {
@@ -15,6 +19,13 @@ export function BlogSection({ section, posts }) {
       day: 'numeric',
       timeZone: 'UTC',
     })
+  }
+  const visiblePosts = useMemo(() => posts || [], [posts])
+
+  const handleScroll = (direction) => {
+    if (!sliderRef.current) return
+    const amount = sliderRef.current.clientWidth
+    sliderRef.current.scrollBy({ left: direction * amount, behavior: 'smooth' })
   }
 
   return (
@@ -26,12 +37,33 @@ export function BlogSection({ section, posts }) {
               <h2 className="text-2xl font-semibold text-slate-50">{section.title}</h2>
               {section.subtitle && <p className="mt-2 text-sm text-slate-300">{section.subtitle}</p>}
             </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleScroll(-1)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.08]"
+                aria-label="Scroll blogs left"
+              >
+                <span aria-hidden="true">‹</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleScroll(1)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.08]"
+                aria-label="Scroll blogs right"
+              >
+                <span aria-hidden="true">›</span>
+              </button>
+            </div>
           </div>
-          {posts.length === 0 ? (
+          {visiblePosts.length === 0 ? (
             <div className="text-sm text-slate-300">{section.body}</div>
           ) : (
-            <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-8">
-              {posts.map((post) => {
+            <div
+              ref={sliderRef}
+              className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2"
+            >
+              {visiblePosts.map((post) => {
                 const postSlug = post.slug || String(post.id)
                 const preview = stripHtml(post.excerpt || post.summary || post.content || '')
 
@@ -39,7 +71,7 @@ export function BlogSection({ section, posts }) {
                   <Link
                     key={post.id}
                     to={`/blog/${postSlug}`}
-                    className="group block rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden transition hover:-translate-y-1"
+                    className="group block min-w-[260px] sm:min-w-[320px] lg:min-w-[300px] xl:min-w-[320px] snap-start rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden transition hover:-translate-y-1"
                   >
                     {post.featured_image && (
                       <div className="relative h-[220px] w-full overflow-hidden rounded-t-2xl">
@@ -59,7 +91,7 @@ export function BlogSection({ section, posts }) {
                       <h3 className="mt-2 text-lg font-semibold text-slate-50">{post.title}</h3>
                       {preview && <p className="mt-2 line-clamp-3 text-gray-400">{preview}</p>}
                       <span className="mt-3 inline-flex items-center gap-2 font-medium text-green-400">
-                        Read article <span aria-hidden="true">→</span>
+                        Read article
                       </span>
                     </div>
                   </Link>

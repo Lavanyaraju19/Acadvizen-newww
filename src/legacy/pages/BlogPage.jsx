@@ -50,24 +50,34 @@ export function BlogPage() {
       .select('*')
       .eq('is_published', true)
       .order('published_at', { ascending: false })
+    let fetched = []
     if (!error && data && data.length > 0) {
-      setPosts(data.map(mergeWithLocal))
+      fetched = data.map(mergeWithLocal)
     } else {
       const blogsTableRes = await supabase
         .from('blogs')
         .select('*')
         .order('created_at', { ascending: false })
       if (!blogsTableRes.error && blogsTableRes.data && blogsTableRes.data.length > 0) {
-        setPosts(blogsTableRes.data.map(mergeWithLocal))
-      } else {
-        const fallbackPosts = localBlogs.map((post) => mergeWithLocal({
-          ...post,
-          featured_image: post.image,
-          published_at: post.created_at,
-        }))
-        setPosts(fallbackPosts)
+        fetched = blogsTableRes.data.map(mergeWithLocal)
       }
     }
+
+    const localFallback = localBlogs.map((post) =>
+      mergeWithLocal({
+        ...post,
+        featured_image: post.image,
+        published_at: post.created_at,
+      })
+    )
+
+    const merged = [...fetched]
+    for (const post of localFallback) {
+      if (!merged.some((item) => (item.slug || item.id) === (post.slug || post.id))) {
+        merged.push(post)
+      }
+    }
+    setPosts(merged)
     setLoading(false)
   }
 
@@ -130,7 +140,7 @@ export function BlogPage() {
                         <h3 className="mt-3 text-lg font-semibold text-slate-50">{post.title}</h3>
                         {post.excerpt && <p className="mt-2 text-sm text-slate-300 line-clamp-3">{post.excerpt}</p>}
                         <span className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-teal-300 group-hover:text-teal-200 transition-colors">
-                          Read article <span aria-hidden="true">→</span>
+                          Read article
                         </span>
                       </div>
                     </Surface>

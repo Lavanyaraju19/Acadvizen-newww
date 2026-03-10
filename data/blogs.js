@@ -157,4 +157,156 @@ export const blogs = [
 `,
     created_at: '2026-02-20T10:00:00.000Z',
   },
+  {
+    id: 'blog-7',
+    slug: 'seo-vs-paid-ads-career-growth',
+    title: 'SEO vs Paid Ads: Which Is Better for Career Growth?',
+    excerpt: 'A clear career-focused comparison of SEO and paid advertising with practical guidance.',
+    image: '/blog-images/blog7-1.jpg',
+    meta_title: 'SEO vs Paid Ads: Which Is Better for Career Growth?',
+    meta_description: 'Compare SEO and paid advertising careers, skill paths, and long-term opportunities.',
+    content: `
+<h2>Understanding the Foundation: SEO vs Google Ads</h2>
+<p>Search Engine Optimization (SEO) focuses on improving a website’s visibility in organic search results. It involves optimizing website structure, content quality, keyword usage, and technical performance so that search engines rank the website naturally.</p>
+<p>Paid advertising, particularly through Google Ads, allows businesses to place their ads at the top of search engine results by paying for targeted clicks or impressions. The SEO vs Google Ads discussion often revolves around organic growth versus instant visibility.</p>
+<img src="/blog-images/blog7-1.jpg" alt="SEO vs Paid Ads comparison" />
+
+<h2>The Philosophical Difference Between SEO and Paid Ads</h2>
+<p>SEO is about patience, strategy, and long-term value creation. It requires marketers to understand search engine algorithms, user behavior, content quality, and website architecture.</p>
+<p>Paid advertising represents speed, precision, and data-driven decision making. PPC specialists focus on audience targeting, bidding strategies, ad copy optimization, and campaign analytics.</p>
+<img src="/blog-images/blog7-2.jpg" alt="SEO long-term vs paid ads speed" />
+
+<h2>Career Opportunities in SEO</h2>
+<p>SEO professionals work on keyword research, content optimization, link building, and technical website performance. Roles include SEO Executive, SEO Specialist, Technical SEO Analyst, and Organic Growth Consultant.</p>
+<p>The strength of an SEO career lies in sustainability. Organic rankings can generate consistent traffic and leads long after the initial optimization.</p>
+<img src="/blog-images/blog7-3.jpg" alt="SEO career opportunities" />
+
+<h2>Career Opportunities in Paid Ads (PPC)</h2>
+<p>PPC specialists manage campaigns across platforms such as Google Ads, social media ads, and display networks. Roles include PPC Executive, Performance Marketing Analyst, and Paid Media Strategist.</p>
+<p>Paid advertising offers immediate impact, making it a powerful specialization for revenue-focused organizations.</p>
+<img src="/blog-images/blog7-4.jpg" alt="Paid ads career path" />
+
+<h2>Difference Between SEO and Paid Ads in Career Development</h2>
+<p>SEO focuses on long-term growth. Paid ads deliver immediate results but stop when budgets pause.</p>
+<p>SEO skillsets center on content, technical audits, and search intent. PPC skillsets emphasize targeting, budget optimization, and conversion tracking.</p>
+
+<h2>SEO Career vs PPC Career: Which One Is Better?</h2>
+<p>SEO suits strategic thinkers who enjoy research and long-term impact. PPC suits professionals who enjoy fast testing, analytics, and measurable ROI.</p>
+<p>In practice, modern digital marketing integrates both. Professionals who understand both organic and paid channels gain a powerful advantage.</p>
+
+<h2>The Future of SEO and Paid Advertising</h2>
+<p>AI, automation, and evolving platforms will continue to reshape both SEO and paid ads. The core goal remains the same: connecting businesses with the right audience at the right time.</p>
+
+<h2>Conclusion</h2>
+<p>SEO represents patience and sustainable authority. Paid advertising represents speed and measurable performance. The best path is the one aligned with your strengths and long-term goals.</p>
+`,
+    created_at: '2026-03-01T10:00:00.000Z',
+  },
+  {
+    id: 'blog-8',
+    slug: 'grow-your-brand-social-media-2026',
+    title: 'How to Grow Your Brand on Social Media in 2026',
+    excerpt: 'A modern guide to social media branding, community building, and growth strategies.',
+    image: '/blog-images/blog8-4.jpg',
+    meta_title: 'How to Grow Your Brand on Social Media in 2026',
+    meta_description: 'Social media branding strategies, growth tips, and trends to build a strong online presence in 2026.',
+    content: `
+<h2>The Philosophy of Brand Building on Social Media</h2>
+<p>A brand is an emotion, a perception, and a story that people associate with a business. Social media gives brands the opportunity to communicate this story directly to their audience.</p>
+<p>Authenticity is the most valuable currency of branding. The future of branding lies in building communities, not just customers.</p>
+<img src="/blog-images/blog8-1.jpg" alt="Brand building on social media" />
+
+<h2>Understanding the Changing Social Media Landscape in 2026</h2>
+<p>AI-powered recommendations, video-first strategies, creator collaborations, and community-driven marketing are shaping social media success in 2026.</p>
+<p>Platforms now prioritize meaningful engagement over mass reach, making quality content and interaction essential.</p>
+<img src="/blog-images/blog8-2.jpg" alt="Social media trends 2026" />
+
+<h2>Defining a Clear Social Media Branding Strategy</h2>
+<p>Your brand should answer: What do you stand for? What value do you offer? Why should people trust you?</p>
+<p>Consistency in voice, visuals, and messaging builds familiarity and trust.</p>
+<img src="/blog-images/blog8-3.jpg" alt="Social media branding strategy" />
+
+<h2>Creating Valuable and Engaging Content</h2>
+<p>Content should educate, inspire, entertain, or solve a problem. Storytelling makes brands human and relatable.</p>
+<p>Short-form video remains the most effective engagement format across platforms.</p>
+<img src="/blog-images/blog8-4.jpg" alt="Engaging social media content" />
+
+<h2>Building a Community Instead of an Audience</h2>
+<p>True brand growth happens when followers become a community through interaction, trust, and shared values.</p>
+<p>Encourage discussions, respond to comments, and feature user-generated content.</p>
+
+<h2>Conclusion</h2>
+<p>Growing a brand in 2026 requires creativity, strategy, and authenticity. Focus on meaningful relationships and consistent value delivery to build long-term brand equity.</p>
+`,
+    created_at: '2026-03-04T10:00:00.000Z',
+  },
+  {
+    id: 'blog-9',
+    slug: 'performance-marketing-skills-2026',
+    title: 'Why Performance Marketing Skills Are in High Demand in 2026',
+    excerpt: 'Performance marketing careers are rising fast as businesses demand measurable growth.',
+    image: '/blog-images/blog9-1.jpg',
+    meta_title: 'Why Performance Marketing Skills Are in High Demand in 2026',
+    meta_description: 'Explore why performance marketing careers are expanding and which skills matter most in 2026.',
+    content: `
+<h2>The Evolution of Marketing: From Creativity to Accountability</h2>
+<p>Marketing has shifted from vague brand awareness to measurable, data-driven growth. Every click and conversion can now be tracked.</p>
+<img src="/blog-images/blog9-1.jpg" alt="Marketing accountability" />
+
+<h2>What Is Performance Marketing?</h2>
+<p>Performance marketing is a results-oriented approach where advertisers pay for specific actions like clicks, leads, or sales.</p>
+<p>Key channels include search ads, social media ads, affiliate marketing, and display networks.</p>
+<img src="/blog-images/blog9-2.jpg" alt="Performance marketing channels" />
+
+<h2>The Rising Demand for Performance Marketers</h2>
+<p>Businesses need measurable ROI, and digital ad spending continues to rise. This drives demand for performance-focused specialists.</p>
+<img src="/blog-images/blog9-3.jpg" alt="Demand for performance marketers" />
+
+<h2>Key Performance Marketing Skills for 2026</h2>
+<p>Critical skills include data analysis, paid advertising expertise, conversion rate optimization, automation tools, and strategic thinking.</p>
+<img src="/blog-images/blog9-4.jpg" alt="Performance marketing skills" />
+
+<h2>Why a Career in Performance Marketing Is Rewarding</h2>
+<p>Performance marketers directly influence revenue, enjoy high growth potential, and can work across agencies, startups, and enterprises.</p>
+<img src="/blog-images/blog9-5.jpg" alt="Performance marketing career growth" />
+
+<h2>Conclusion</h2>
+<p>Performance marketing is a powerful career path for professionals who combine analytics, strategy, and creativity to drive measurable outcomes.</p>
+`,
+    created_at: '2026-03-06T10:00:00.000Z',
+  },
+  {
+    id: 'blog-10',
+    slug: 'digital-skills-education-6th-standard',
+    title: 'Why India Is Introducing Digital Skills Education from 6th Standard',
+    excerpt: 'India is shaping the next generation with early digital literacy and technology skills.',
+    image: '/blog-images/blog10-1.jpg',
+    meta_title: 'Why India Is Introducing Digital Skills Education from 6th Standard',
+    meta_description: 'Learn why digital skills education is being introduced early and how it prepares students for the future.',
+    content: `
+<h2>The Changing Landscape of Education</h2>
+<p>Technology is reshaping education through interactive platforms, AI tools, and online resources. Students need more than access - they need digital literacy.</p>
+<img src="/blog-images/blog10-1.jpg" alt="Digital education transformation" />
+
+<h2>Understanding Digital Skills Education in India</h2>
+<p>Digital education includes computer fundamentals, internet research, cybersecurity, data handling, and coding foundations.</p>
+<img src="/blog-images/blog10-2.jpg" alt="Digital skills education in India" />
+
+<h2>Why Digital Skills Are Taught in Schools</h2>
+<p>Industries demand digital expertise across professions. Early education builds confidence, creativity, and problem-solving ability.</p>
+<img src="/blog-images/blog10-3.jpg" alt="Digital literacy in schools" />
+
+<h2>The Importance of Digital Skills for Students</h2>
+<p>Digital skills enhance learning, prepare students for future careers, and develop analytical and creative thinking.</p>
+<img src="/blog-images/blog10-4.jpg" alt="Importance of digital skills" />
+
+<h2>Government Initiatives Supporting Digital Education</h2>
+<p>Programs like Digital India, Skill India, and NEP 2020 emphasize coding, computational thinking, and technology-based learning.</p>
+<img src="/blog-images/blog10-5.jpg" alt="Government initiatives for digital education" />
+
+<h2>Conclusion</h2>
+<p>Introducing digital education from 6th standard prepares students for the evolving digital economy and empowers them to thrive in technology-driven careers.</p>
+`,
+    created_at: '2026-03-09T10:00:00.000Z',
+  },
 ]

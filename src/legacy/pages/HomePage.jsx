@@ -5,10 +5,6 @@ import { Link } from 'react-router-dom'
 import {
   Target,
   Rocket,
-  GraduationCap,
-  Briefcase,
-  TrendingUp,
-  Laptop,
   FileText,
   Linkedin,
   MessageCircle,
@@ -930,15 +926,26 @@ export default function HomePage() {
           <h2 className="text-4xl md:text-5xl font-bold text-slate-50 text-center">{whoSection.title}</h2>
           <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {whoItems.map((card, idx) => {
-              const icons = [GraduationCap, Briefcase, TrendingUp, Laptop]
-              const Icon = icons[idx % icons.length]
+              const whoImages = [
+                '/who-for/freshers.png',
+                '/who-for/working-professionals.jpg',
+                '/who-for/business-owners.png',
+                '/who-for/freelancers.webp',
+              ]
+              const iconSrc = whoImages[idx % whoImages.length]
               return (
                 <div
                   key={`${card.title}-${idx}`}
                   className="group rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-all duration-300 hover:scale-105 hover:shadow-xl tilt-card"
                 >
                   <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-sky-400/15 text-sky-200">
-                    <Icon className="h-7 w-7 float" />
+                    <Image
+                      src={iconSrc}
+                      alt={card.title}
+                      width={28}
+                      height={28}
+                      className="h-7 w-7 object-contain float"
+                    />
                   </div>
                   <div className="text-base font-bold text-slate-50">{card.title}</div>
                   <p className="mt-2 text-sm text-slate-300">{card.desc}</p>

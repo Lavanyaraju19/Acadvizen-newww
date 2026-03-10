@@ -111,7 +111,7 @@ export default function BlogLayout({
               </p>
               <h3 className="mt-6 text-xl font-semibold text-slate-100">Student Success Stories</h3>
               <p className="mt-2 text-slate-300">
-                Our students come from different backgrounds — graduates, working professionals, career switchers, and entrepreneurs.
+                Our students come from different backgrounds - graduates, working professionals, career switchers, and entrepreneurs.
               </p>
               <h3 className="mt-6 text-xl font-semibold text-slate-100">Placement Support at Acadvizen</h3>
               <p className="mt-2 text-slate-300">

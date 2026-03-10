@@ -35,6 +35,9 @@ export function Navbar() {
             <Link to="/placement" className="text-slate-300 hover:text-white text-sm font-medium transition-colors">
               Placement
             </Link>
+            <Link to="/blog" className="text-slate-300 hover:text-white text-sm font-medium transition-colors">
+              Blogs
+            </Link>
             <Link to="/hire-from-us" className="text-slate-300 hover:text-white text-sm font-medium transition-colors">
               Hire From Us
             </Link>
@@ -105,6 +108,13 @@ export function Navbar() {
                 className="block rounded-lg px-3 py-2 hover:bg-white/[0.05]"
               >
                 Placement
+              </Link>
+              <Link
+                to="/blog"
+                onClick={() => setShowPanel(false)}
+                className="block rounded-lg px-3 py-2 hover:bg-white/[0.05]"
+              >
+                Blogs
               </Link>
               <Link
                 to="/hire-from-us"
