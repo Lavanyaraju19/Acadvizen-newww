@@ -73,16 +73,16 @@ export function ContactPage() {
           animate={{ opacity: 1, y: 0 }}
           className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur p-8 md:p-12"
         >
-          <h2 className="text-3xl md:text-4xl font-semibold text-slate-50 mb-3">
+          <h1 className="text-3xl md:text-4xl font-semibold text-slate-50 mb-3">
             Looking for the best digital marketing institute?
-          </h2>
+          </h1>
           <div className="mb-6 space-y-1 text-sm text-slate-300">
             <p>
               Join our digital marketing course today and take the first step towards a high-income, future-ready
               career.
             </p>
           </div>
-          {formSection.title && <h1 className="text-xl font-semibold text-slate-100 mb-6">{formSection.title}</h1>}
+          {formSection.title && <h2 className="text-xl font-semibold text-slate-100 mb-6">{formSection.title}</h2>}
           {submitted ? (
             <div className="p-4 rounded-lg border border-emerald-400/20 bg-emerald-400/10 text-emerald-200">
               {formSection.body}

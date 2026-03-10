@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import Image from 'next/image'
 import { supabase } from '../../lib/supabaseClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
@@ -61,7 +62,15 @@ export function PlacementDetailPage() {
         <Section className="py-4">
           <Container className="max-w-4xl">
             <div className="rounded-3xl overflow-hidden border border-white/10 bg-white/[0.02]">
-              <img src={placement.featured_image} alt={placement.title} className="w-full h-full object-cover" />
+              <div className="relative h-[280px] sm:h-[360px] w-full">
+                <Image
+                  src={placement.featured_image}
+                  alt={placement.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 900px"
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
           </Container>
         </Section>

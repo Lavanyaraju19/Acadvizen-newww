@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import Image from 'next/image'
 import { useAuth } from '../../../contexts/AuthContext'
 import { supabase } from '../../../lib/supabaseClient'
 import { Container, Section } from '../../../components/ui/Section'
@@ -118,9 +119,11 @@ export function StudentDashboard() {
                         </div>
                         {course.image_url && (
                           <div className="relative aspect-video overflow-hidden rounded-xl border border-white/10 bg-white/[0.02] mb-4">
-                            <img
+                            <Image
                               src={course.image_url}
                               alt={course.title}
+                              fill
+                              sizes="(max-width: 768px) 100vw, 360px"
                               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                             />
                           </div>
@@ -150,8 +153,8 @@ export function StudentDashboard() {
                     </div>
                     <div className="relative">
                       {tool.logo_url ? (
-                        <div className="aspect-square rounded-xl border border-white/10 bg-white/[0.03] mb-2 overflow-hidden">
-                          <img src={tool.logo_url} alt={tool.name} className="w-full h-full object-contain" />
+                        <div className="relative aspect-square rounded-xl border border-white/10 bg-white/[0.03] mb-2 overflow-hidden">
+                          <Image src={tool.logo_url} alt={tool.name} fill sizes="96px" className="w-full h-full object-contain" />
                         </div>
                       ) : (
                         <div className="aspect-square rounded-xl border border-white/10 bg-white/[0.03] mb-2 flex items-center justify-center">

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
+import Image from 'next/image'
 import { supabase } from '../../lib/supabaseClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
@@ -185,9 +186,11 @@ export function ToolsPage() {
                           <div className="relative flex items-start gap-4">
                             <div className="h-12 w-12 shrink-0 rounded-2xl border border-white/10 bg-white/[0.04] overflow-hidden flex items-center justify-center shadow-[0_18px_60px_rgba(0,0,0,0.45)]">
                               {localLogoFor(tool) || tool.logo_url ? (
-                                <img
+                                <Image
                                   src={localLogoFor(tool) ? assetUrl(localLogoFor(tool)) : assetUrl(tool.logo_url)}
                                   alt={tool.name}
+                                  width={48}
+                                  height={48}
                                   className="h-full w-full object-contain"
                                   onError={(e) => {
                                     const fallback = tool.logo_url || null

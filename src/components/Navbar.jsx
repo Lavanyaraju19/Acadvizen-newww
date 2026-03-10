@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import Image from 'next/image'
 import { useAuth } from '../contexts/AuthContext'
 
 export function Navbar() {
@@ -24,7 +25,7 @@ export function Navbar() {
             <Link to="/" className="flex items-center gap-2 group" data-cursor="hover">
               <div className="relative">
                 <div className="absolute -inset-2 rounded-xl bg-teal-400/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                <img src="/logo.png" alt="Acadvizen" className="relative h-9 w-auto" />
+                <Image src="/logo.png" alt="Acadvizen" width={128} height={36} className="relative h-9 w-auto" />
               </div>
               <span className="font-semibold text-slate-100 hidden sm:inline tracking-tight">Acadvizen</span>
             </Link>

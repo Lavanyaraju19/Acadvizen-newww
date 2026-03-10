@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { Link, useParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { supabase } from '../../lib/supabaseClient'
@@ -48,10 +49,14 @@ function MbaVsDigitalMarketingBody() {
         like search, paid ads, social platforms, content ecosystems, and conversion optimization. Learners can build
         credibility through real campaign outputs and measurable KPIs.
       </p>
-      <img
+      <Image
         src="/blog/mba-vs-digital-marketing-2026/blog123.jpg"
         alt="Types of Digital Marketing"
+        width={800}
+        height={450}
+        sizes="(max-width: 900px) 100vw, 800px"
         className="w-full max-w-[800px] h-auto object-cover rounded-xl my-8 mx-auto"
+        loading="lazy"
       />
       <p className="mt-6 mb-6 text-lg leading-relaxed text-gray-700">
         Compared to long-form degree tracks, practical digital programs typically provide earlier employability and
@@ -65,10 +70,14 @@ function MbaVsDigitalMarketingBody() {
         content intelligence. Teams expect marketers to use AI responsibly for research acceleration, optimization, and
         decision support without losing strategic judgment.
       </p>
-      <img
+      <Image
         src="/blog/mba-vs-digital-marketing-2026/blog121.jpg"
         alt="SEO and AI Marketing"
+        width={800}
+        height={450}
+        sizes="(max-width: 900px) 100vw, 800px"
         className="w-full max-w-[800px] h-auto object-cover rounded-xl my-8 mx-auto"
+        loading="lazy"
       />
       <p className="mt-6 mb-6 text-lg leading-relaxed text-gray-700">
         Professionals who combine SEO fundamentals with AI fluency are positioned strongly for high-impact roles in
@@ -81,10 +90,14 @@ function MbaVsDigitalMarketingBody() {
         Social media strategy now directly influences trust, discovery, and revenue. Brands expect marketers to
         understand platform behavior, creative testing, audience segmentation, and funnel-based campaign planning.
       </p>
-      <img
+      <Image
         src="/blog/mba-vs-digital-marketing-2026/blog111.jpg"
         alt="Social Media Strategy"
+        width={800}
+        height={450}
+        sizes="(max-width: 900px) 100vw, 800px"
         className="w-full max-w-[800px] h-auto object-cover rounded-xl my-8 mx-auto"
+        loading="lazy"
       />
       <p className="mt-6 mb-6 text-lg leading-relaxed text-gray-700">
         This demand spans B2B and B2C sectors, making social performance and content strategy one of the strongest
@@ -98,10 +111,14 @@ function MbaVsDigitalMarketingBody() {
         long-term management mobility, while digital marketing often delivers faster outcomes through project-led
         evidence and market-aligned skills.
       </p>
-      <img
+      <Image
         src="/blog/mba-vs-digital-marketing-2026/blog124.jpg"
         alt="Digital Marketing Campaign"
+        width={800}
+        height={450}
+        sizes="(max-width: 900px) 100vw, 800px"
         className="w-full max-w-[800px] h-auto object-cover rounded-xl my-8 mx-auto"
+        loading="lazy"
       />
       <p className="mt-6 mb-6 text-lg leading-relaxed text-gray-700">
         If your priority is entering or scaling in growth-oriented roles quickly, digital marketing generally provides
@@ -252,9 +269,12 @@ export function BlogPostPage() {
         <Section className="py-4">
           <Container className="max-w-4xl">
             <div className="rounded-3xl overflow-hidden border border-white/10 bg-white/[0.02]">
-              <img
+              <Image
                 src={post.featured_image}
                 alt={post.title}
+                width={1200}
+                height={630}
+                sizes="(max-width: 1024px) 100vw, 900px"
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   e.currentTarget.onerror = null

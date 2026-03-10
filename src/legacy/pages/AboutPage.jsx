@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+import Image from 'next/image'
 import { supabase } from '../../lib/supabaseClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
@@ -116,11 +117,13 @@ export function AboutPage() {
             </p>
             <div className="mt-10 grid gap-8 lg:grid-cols-[1.35fr_1.65fr] items-stretch">
               <Surface className="p-5">
-                <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
-                  <img
+                <div className="relative h-[500px] lg:h-[520px] w-full overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
+                  <Image
                     src={assetUrl('/about/tharii.jpg')}
                     alt="Tharika Chakrapani Raju - Co-Founder"
-                    className="h-[500px] lg:h-[520px] w-full object-cover object-top"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 520px"
+                    className="object-cover object-top"
                     loading="lazy"
                     onError={(e) => {
                       e.currentTarget.onerror = null
@@ -297,10 +300,12 @@ export function AboutPage() {
                   className="rounded-2xl border border-white/10 p-6 text-center"
                   style={{ backgroundColor: trainerPalette[idx % trainerPalette.length] }}
                 >
-                  <div className="mx-auto h-52 w-52 overflow-hidden rounded-2xl border border-white/20 bg-white/20">
-                    <img
+                  <div className="relative mx-auto h-52 w-52 overflow-hidden rounded-2xl border border-white/20 bg-white/20">
+                    <Image
                       src={assetUrl(person.image)}
                       alt={person.name}
+                      fill
+                      sizes="208px"
                       className="h-full w-full object-cover"
                       onError={(e) => {
                         e.currentTarget.onerror = null

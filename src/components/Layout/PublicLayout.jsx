@@ -1,6 +1,7 @@
 'use client'
 
 import { Link } from 'react-router-dom'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { CustomCursor } from '../ui/CustomCursor'
 import { Navbar } from '../Navbar'
@@ -62,7 +63,7 @@ export function PublicLayout({ children }) {
             <div className="grid gap-10 md:grid-cols-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <img src="/logo.png" alt="Acadvizen" className="h-8 w-auto" />
+                  <Image src="/logo.png" alt="Acadvizen" width={120} height={32} className="h-8 w-auto" />
                   <span className="font-semibold text-slate-100">Acadvizen</span>
                 </div>
                 <p className="mt-3 text-sm text-slate-400">

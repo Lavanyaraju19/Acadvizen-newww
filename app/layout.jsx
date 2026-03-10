@@ -32,6 +32,11 @@ export const metadata = {
   },
 }
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
+
 export default function RootLayout({ children }) {
   const GA_ID = process.env.NEXT_PUBLIC_GA_ID || 'G-XXXXXXXXXX'
   const organizationSchema = {
@@ -69,6 +74,18 @@ export default function RootLayout({ children }) {
       addressRegion: 'Karnataka',
       postalCode: '560078',
       addressCountry: 'IN',
+    },
+  }
+
+  const websiteSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Acadvizen',
+    url: siteConfig.siteUrl,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${siteConfig.siteUrl}/blog?query={search_term_string}`,
+      'query-input': 'required name=search_term_string',
     },
   }
 
@@ -175,6 +192,11 @@ fbq('track', 'PageView');`}
           id="schema-organization"
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+        <script
+          id="schema-website"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
         <script
           id="schema-localbusiness"

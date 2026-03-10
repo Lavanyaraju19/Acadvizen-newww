@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import Image from 'next/image'
 import { supabase } from '../../lib/supabaseClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
@@ -246,9 +247,11 @@ export function PlacementPage() {
                       <Surface className="h-full overflow-hidden transition-transform duration-200 group-hover:-translate-y-1">
                         {placement.featured_image && (
                           <div className="relative aspect-video overflow-hidden border-b border-white/10 bg-white/[0.02]">
-                            <img
+                            <Image
                               src={assetUrl(placement.featured_image)}
                               alt={placement.title}
+                              fill
+                              sizes="(max-width: 768px) 100vw, 420px"
                               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                               onError={(e) => {
                                 e.currentTarget.onerror = null
@@ -293,11 +296,13 @@ export function PlacementPage() {
           <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {placementStories.map((story) => (
               <Surface key={`${story.name}-${story.role}`} className="p-0 overflow-hidden tilt-card">
-                <div className="aspect-[4/3] overflow-hidden border-b border-white/10 bg-white/[0.02]">
-                  <img
+                <div className="relative aspect-[4/3] overflow-hidden border-b border-white/10 bg-white/[0.02]">
+                  <Image
                     src={assetUrl(story.image_url)}
                     alt={story.name}
-                    className="w-full h-[220px] object-cover rounded-xl"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 320px"
+                    className="object-cover rounded-xl"
                     loading="lazy"
                     onError={(e) => {
                       e.currentTarget.onerror = null
@@ -349,9 +354,11 @@ export function PlacementPage() {
                       key={partner.name}
                       className="flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] px-3 py-4"
                     >
-                      <img
+                      <Image
                         src={assetUrl(`/logos/${partner.file}`)}
                         alt={partner.name}
+                        width={120}
+                        height={40}
                         className="h-10 w-auto object-contain"
                         loading="lazy"
                         onError={(e) => {

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import Image from 'next/image'
 import { Container, Section } from './ui/Section'
 import { Surface } from './ui/Surface'
 import { assetUrl } from '../lib/assetUrl'
@@ -72,9 +73,11 @@ export function ToolsSection({ section, tools, categories, selectedCategory, onC
                   className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-xs text-slate-200"
                 >
                   {logoFor(tool) ? (
-                    <img
+                    <Image
                       src={logoFor(tool)}
                       alt={tool.name}
+                      width={24}
+                      height={24}
                       className="h-6 w-6 object-contain"
                       onError={(e) => {
                         const fallback = tool.logo_url || null
@@ -105,9 +108,11 @@ export function ToolsSection({ section, tools, categories, selectedCategory, onC
                   className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-xs text-slate-200"
                 >
                   {logoFor(tool) ? (
-                    <img
+                    <Image
                       src={logoFor(tool)}
                       alt={tool.name}
+                      width={24}
+                      height={24}
                       className="h-6 w-6 object-contain"
                       onError={(e) => {
                         const fallback = tool.logo_url || null
@@ -145,9 +150,11 @@ export function ToolsSection({ section, tools, categories, selectedCategory, onC
                 <div className="relative flex flex-col items-center text-center">
                   <div className="h-16 w-16 rounded-2xl flex items-center justify-center bg-white/95 text-slate-950">
                     {logoFor(tool) ? (
-                      <img
+                      <Image
                         src={logoFor(tool)}
                         alt={tool.name}
+                        width={40}
+                        height={40}
                         className="h-10 w-10 object-contain"
                         onError={(e) => {
                           const fallback = tool.logo_url || null

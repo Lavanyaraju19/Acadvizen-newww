@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import {
@@ -756,7 +757,7 @@ export default function HomePage() {
                   </video>
                 ) : (
                   <div className="h-full w-full flex items-center justify-center bg-slate-950/70">
-                    <img src="/logo.png" alt="Acadvizen" className="h-24 w-auto opacity-80" />
+                    <Image src="/logo.png" alt="Acadvizen" width={96} height={96} className="h-24 w-auto opacity-80" />
                   </div>
                 )}
                 {heroVideoAvailable && !heroVideoPlaying && (
@@ -869,9 +870,11 @@ export default function HomePage() {
                   className="tilt-card flex min-w-[220px] items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-4 transition hover:-translate-y-1 hover:border-teal-300/60"
                 >
                   {tool.logoSrc || tool.logo_url ? (
-                    <img
+                    <Image
                       src={toolLogoSrc(tool)}
                       alt={tool.name || tool.slug}
+                      width={48}
+                      height={48}
                       className="h-12 w-auto object-contain float"
                       loading="lazy"
                       onError={(e) => {
@@ -896,9 +899,11 @@ export default function HomePage() {
                   className="tilt-card flex min-w-[220px] items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-4 transition hover:-translate-y-1 hover:border-teal-300/60"
                 >
                   {tool.logoSrc || tool.logo_url ? (
-                    <img
+                    <Image
                       src={toolLogoSrc(tool)}
                       alt={tool.name || tool.slug}
+                      width={48}
+                      height={48}
                       className="h-12 w-auto object-contain float"
                       loading="lazy"
                       onError={(e) => {
@@ -955,9 +960,11 @@ export default function HomePage() {
             <div className="logo-scroll gap-10 min-w-max">
               {[...companyRowA, ...companyRowA].map((logo, idx) => (
                 <div key={`company-row-a-${idx}`} className="flex min-w-[180px] items-center justify-center px-4 py-2">
-                  <img
+                  <Image
                     src={assetUrl(logo)}
                     alt={`Company ${idx + 1}`}
+                    width={120}
+                    height={48}
                     className="h-12 w-auto object-contain"
                     loading="lazy"
                     onError={(e) => {
@@ -971,9 +978,11 @@ export default function HomePage() {
             <div className="logo-scroll-reverse gap-10 min-w-max">
               {[...companyRowB, ...companyRowB].map((logo, idx) => (
                 <div key={`company-row-b-${idx}`} className="flex min-w-[180px] items-center justify-center px-4 py-2">
-                  <img
+                  <Image
                     src={assetUrl(logo)}
                     alt={`Company ${idx + 1}`}
+                    width={120}
+                    height={48}
                     className="h-12 w-auto object-contain"
                     loading="lazy"
                     onError={(e) => {

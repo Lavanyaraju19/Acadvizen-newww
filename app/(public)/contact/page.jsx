@@ -14,7 +14,6 @@ export const metadata = buildMetadata({
 export default function Page() {
   return (
     <>
-      <h1 className="sr-only">Contact Acadvizen</h1>
       <ContactClientPage />
     </>
   )

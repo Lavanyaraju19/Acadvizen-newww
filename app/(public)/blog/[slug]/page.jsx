@@ -181,6 +181,40 @@ export default async function Page({ params }) {
   }
 
   const { toc, sections } = parseBlogContent(blog.content || '')
+  const blogPostingSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: blog.title,
+    description: blog.meta_description || blog.excerpt,
+    image: blog.featured_image || blog.image || '/blog-images/image1.jpg',
+    datePublished: blog.published_at || blog.created_at,
+    dateModified: blog.updated_at || blog.published_at || blog.created_at,
+    author: {
+      '@type': 'Organization',
+      name: 'Acadvizen',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Acadvizen',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://acadvizen.com/logo.png',
+      },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://acadvizen.com/blog/${blog.slug}`,
+    },
+  }
 
-  return <BlogLayout blog={blog} toc={toc} contentSections={sections} relatedBlogs={related} />
+  return (
+    <>
+      <script
+        id="schema-blogposting"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingSchema) }}
+      />
+      <BlogLayout blog={blog} toc={toc} contentSections={sections} relatedBlogs={related} />
+    </>
+  )
 }

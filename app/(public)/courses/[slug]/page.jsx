@@ -28,7 +28,6 @@ export default function Page() {
   return (
     <>
       <div className="sr-only">
-        <h1>Digital Marketing Course Details</h1>
         <a href="/blog">Read latest blogs</a>
         <a href="/contact">Contact admissions</a>
         <a href="/digital-marketing-course-in-bangalore">Digital marketing course in Bangalore</a>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import Image from 'next/image'
 import { supabase } from '../../lib/supabaseClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
@@ -77,9 +78,11 @@ export function ToolDetailsPage() {
               style={{ background: tool.brand_color || '#0ea5e9' }}
             >
               {localLogoFor(tool) || tool.logo_url ? (
-                <img
+                <Image
                   src={localLogoFor(tool) || tool.logo_url}
                   alt={tool.name}
+                  width={48}
+                  height={48}
                   className="h-12 w-12 object-contain"
                   onError={(e) => {
                     const fallback = tool.logo_url || null

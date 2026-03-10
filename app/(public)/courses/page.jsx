@@ -15,7 +15,6 @@ export const metadata = buildMetadata({
 export default function Page() {
   return (
     <>
-      <h1 className="sr-only">Digital Marketing Courses</h1>
       <CoursesClientPage />
     </>
   )
