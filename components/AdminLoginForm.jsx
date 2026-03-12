@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabaseClient'
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from '../lib/env'
 
 export default function AdminLoginForm() {
   const router = useRouter()
@@ -15,14 +16,23 @@ export default function AdminLoginForm() {
   async function getSupabaseForLogin() {
     if (supabase?.auth) return supabase
 
-    const response = await fetch('/api/public-config', { cache: 'no-store' })
-    const payload = await response.json()
-    const url = payload?.data?.url
-    const anonKey = payload?.data?.anonKey
+    let url = SUPABASE_URL
+    let anonKey = SUPABASE_ANON_KEY
+
+    if (!url || !anonKey) {
+      try {
+        const response = await fetch('/api/public-config', { cache: 'no-store' })
+        const payload = await response.json()
+        url = payload?.data?.url || ''
+        anonKey = payload?.data?.anonKey || ''
+      } catch {
+        // fall through to validation below
+      }
+    }
 
     if (!url || !anonKey) {
       throw new Error(
-        'Supabase configuration missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY and restart the server.'
+        'Supabase configuration is unavailable. Contact support if this persists.'
       )
     }
 

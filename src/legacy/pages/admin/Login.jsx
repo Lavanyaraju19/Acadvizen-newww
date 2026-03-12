@@ -3,13 +3,14 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { Surface } from '../../../components/ui/Surface'
 import { useAuth } from '../../../contexts/AuthContext'
 import { supabase } from '../../../lib/supabaseClient'
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from '../../../../lib/env'
 
 export function AdminLogin() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, profile, loading, signOut } = useAuth()
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const supabaseUrl = SUPABASE_URL
+  const supabaseAnonKey = SUPABASE_ANON_KEY
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -78,7 +79,7 @@ export function AdminLogin() {
         setError('Sign-in timed out. Please try again.')
       }, 18000)
       if (!supabaseUrl || !supabaseAnonKey) {
-        setError('Supabase env vars missing. Check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.')
+        setError('Supabase configuration is unavailable. Contact support if this persists.')
         clearTimeout(hardTimeout)
         return
       }
