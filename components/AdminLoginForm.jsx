@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabaseClient'
 
 export default function AdminLoginForm() {
@@ -11,19 +12,35 @@ export default function AdminLoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const envMissing =
-    !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  async function getSupabaseForLogin() {
+    if (supabase?.auth) return supabase
+
+    const response = await fetch('/api/public-config', { cache: 'no-store' })
+    const payload = await response.json()
+    const url = payload?.data?.url
+    const anonKey = payload?.data?.anonKey
+
+    if (!url || !anonKey) {
+      throw new Error(
+        'Supabase configuration missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY and restart the server.'
+      )
+    }
+
+    return createClient(url, anonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+      realtime: {
+        params: {},
+      },
+    })
+  }
 
   const handleLogin = async (event) => {
     event.preventDefault()
     setError('')
-
-    if (envMissing) {
-      setError(
-        'Supabase configuration missing. Check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY'
-      )
-      return
-    }
 
     if (!email.trim() || !password.trim()) {
       setError('Please enter email and password.')
@@ -32,7 +49,8 @@ export default function AdminLoginForm() {
 
     try {
       setLoading(true)
-      const { data, error: loginError } = await supabase.auth.signInWithPassword({
+      const client = await getSupabaseForLogin()
+      const { data, error: loginError } = await client.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim(),
       })
@@ -48,7 +66,7 @@ export default function AdminLoginForm() {
         return
       }
 
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile, error: profileError } = await client
         .from('profiles')
         .select('role')
         .eq('id', user.id)
@@ -56,7 +74,7 @@ export default function AdminLoginForm() {
 
       if (profileError || profile?.role !== 'admin') {
         setError('Access denied: not an admin')
-        await supabase.auth.signOut()
+        await client.auth.signOut()
         return
       }
 
