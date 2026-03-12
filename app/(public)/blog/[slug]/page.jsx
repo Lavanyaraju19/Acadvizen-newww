@@ -4,78 +4,9 @@ import BlogLayout from '../../../../components/BlogLayout'
 import { buildMetadata } from '../../../lib/seo'
 import { blogs as localBlogs } from '../../../../data/blogs'
 import { getServerSupabaseClient } from '../../../../lib/supabaseServer'
+import { parseBlogContent } from '../../../../lib/blogContent'
 
 export const dynamicParams = true
-
-function slugify(value = '') {
-  return String(value)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
-}
-
-function stripTags(value = '') {
-  return String(value).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
-}
-
-function linkifyText(value = '') {
-  return value
-    .replace(
-      /AI Digital Marketing Career Guide 2026/g,
-      '<a href="/blog/ai-digital-marketing-career-2026" class="text-teal-300">AI Digital Marketing Career Guide 2026</a>'
-    )
-    .replace(
-      /SEO Career Opportunities in India/g,
-      '<a href="/blog/seo-career-india" class="text-teal-300">SEO Career Opportunities in India</a>'
-    )
-}
-
-function parseBlogContent(content = '') {
-  const source = String(content || '').trim()
-  if (!source) {
-    return {
-      toc: [{ id: 'overview', title: 'Overview' }],
-      sections: [{ id: 'overview', heading: 'Overview', paragraphs: ['Content will be updated soon.'], image: null }],
-    }
-  }
-
-  const sections = []
-  const headingRegex = /<h2[^>]*>(.*?)<\/h2>/gi
-  const hasH2 = headingRegex.test(source)
-
-  if (!hasH2) {
-    const paragraphs = source
-      .split(/\n{2,}/)
-      .map((line) => stripTags(line))
-      .filter(Boolean)
-    return {
-      toc: [{ id: 'overview', title: 'Overview' }],
-      sections: [{ id: 'overview', heading: 'Overview', paragraphs, image: null }],
-    }
-  }
-
-  headingRegex.lastIndex = 0
-  const matches = [...source.matchAll(/<h2[^>]*>(.*?)<\/h2>/gi)]
-  matches.forEach((match, index) => {
-    const heading = stripTags(match[1]) || `Section ${index + 1}`
-    const start = match.index + match[0].length
-    const end = index + 1 < matches.length ? matches[index + 1].index : source.length
-    const block = source.slice(start, end)
-    const paragraphs = [...block.matchAll(/<p[^>]*>(.*?)<\/p>/gi)]
-      .map((entry) => stripTags(linkifyText(entry[1])))
-      .filter(Boolean)
-    const imageMatch = block.match(/<img[^>]*src=["']([^"']+)["'][^>]*alt=["']([^"']*)["'][^>]*>/i)
-    sections.push({
-      id: slugify(heading),
-      heading,
-      paragraphs,
-      image: imageMatch ? { src: imageMatch[1], alt: imageMatch[2] } : null,
-    })
-  })
-
-  const toc = sections.map((section) => ({ id: section.id, title: section.heading }))
-  return { toc, sections }
-}
 
 function pickFirstNonEmpty(...values) {
   for (const value of values) {

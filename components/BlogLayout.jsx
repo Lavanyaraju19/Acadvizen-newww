@@ -48,7 +48,7 @@ export default function BlogLayout({
               <section key={`${section.id}-${idx}`} id={section.id} className="scroll-mt-24 space-y-4">
                 {section.heading && <h2 className="text-2xl md:text-3xl font-semibold text-slate-50">{section.heading}</h2>}
                 {section.paragraphs.map((paragraph, pIdx) => (
-                  <p key={`${section.id}-p-${pIdx}`} className="text-lg leading-relaxed text-slate-300">
+                  <p key={`${section.id}-p-${pIdx}`} className="whitespace-pre-line text-lg leading-relaxed text-slate-300">
                     {paragraph}
                   </p>
                 ))}

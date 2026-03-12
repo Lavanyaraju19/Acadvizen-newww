@@ -9,6 +9,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 import { blogs as localBlogs } from '../../../data/blogs'
+import { parseBlogContent } from '../../../lib/blogContent'
 
 function MbaVsDigitalMarketingBody() {
   return (
@@ -275,7 +276,7 @@ export function BlogPostPage() {
   }
 
   const isMbaVsDigitalMarketingPost = post.slug === 'mba-vs-digital-marketing-2026'
-  const hasHtml = typeof post.content === 'string' && /<\/?[a-z][\s\S]*>/i.test(post.content)
+  const parsedContent = parseBlogContent(post.content || post.excerpt || '')
 
   return (
     <div className="min-h-screen">
@@ -322,13 +323,32 @@ export function BlogPostPage() {
           <div className="prose prose-invert max-w-none text-slate-200">
             {isMbaVsDigitalMarketingPost ? (
               <MbaVsDigitalMarketingBody />
-            ) : hasHtml ? (
-              <div
-                className="[&_img]:w-full [&_img]:max-w-[800px] [&_img]:h-[220px] [&_img]:object-cover [&_img]:rounded-xl [&_img]:my-8 [&_img]:mx-auto"
-                dangerouslySetInnerHTML={{ __html: post.content }}
-              />
             ) : (
-              post.content || post.excerpt || 'Content will be updated soon.'
+              <div className="space-y-8">
+                {parsedContent.sections.map((section, index) => (
+                  <section key={`${section.id}-${index}`} className="space-y-4">
+                    {section.heading ? (
+                      <h2 className="text-2xl font-semibold text-slate-100">{section.heading}</h2>
+                    ) : null}
+                    {section.paragraphs.map((paragraph, paragraphIndex) => (
+                      <p key={`${section.id}-p-${paragraphIndex}`} className="whitespace-pre-line leading-relaxed text-slate-300">
+                        {paragraph}
+                      </p>
+                    ))}
+                    {section.image?.src ? (
+                      <div className="relative my-8 h-[220px] w-full overflow-hidden rounded-xl border border-white/10 bg-white/[0.02] sm:h-[320px]">
+                        <Image
+                          src={section.image.src}
+                          alt={section.image.alt || section.heading || post.title}
+                          fill
+                          sizes="(max-width: 900px) 100vw, 800px"
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : null}
+                  </section>
+                ))}
+              </div>
             )}
           </div>
           {post.author && (

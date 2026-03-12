@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../../lib/supabaseClient'
 import { useAuth } from '../../../contexts/AuthContext'
@@ -54,112 +54,18 @@ function UploadField({ bucket, onUploaded }) {
 }
 
 function BlogContentEditor({ value, onChange }) {
-  const textareaRef = useRef(null)
-  const [inlineUrl, setInlineUrl] = useState('')
-  const [uploading, setUploading] = useState(false)
-  const [error, setError] = useState('')
-
-  const insertAtCursor = (text) => {
-    const textarea = textareaRef.current
-    if (!textarea) {
-      onChange(`${value || ''}${text}`)
-      return
-    }
-    const start = textarea.selectionStart ?? 0
-    const end = textarea.selectionEnd ?? 0
-    const current = value || ''
-    const nextValue = `${current.slice(0, start)}${text}${current.slice(end)}`
-    onChange(nextValue)
-    requestAnimationFrame(() => {
-      textarea.focus()
-      const cursor = start + text.length
-      textarea.selectionStart = cursor
-      textarea.selectionEnd = cursor
-    })
-  }
-
-  const insertImageTag = (url) => {
-    if (!url) return
-    insertAtCursor(`\n<img src="${url}" alt="Blog image" />\n`)
-  }
-
-  const handleUpload = async (file) => {
-    if (!file) return
-    setUploading(true)
-    setError('')
-    try {
-      const publicUrl = await uploadFile(file, 'blog-images')
-      insertImageTag(publicUrl)
-    } catch (err) {
-      setError(err?.message || 'Image upload failed.')
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  const handleDrop = (event) => {
-    event.preventDefault()
-    const file = event.dataTransfer?.files?.[0]
-    if (file) handleUpload(file)
-  }
-
-  const handlePaste = (event) => {
-    const items = Array.from(event.clipboardData?.items || [])
-    const fileItem = items.find((item) => item.kind === 'file')
-    if (fileItem) {
-      event.preventDefault()
-      const file = fileItem.getAsFile()
-      if (file) handleUpload(file)
-    }
-  }
-
   return (
     <div className="mt-2 space-y-3">
       <textarea
-        ref={textareaRef}
         rows={8}
         value={value ?? ''}
         onChange={(event) => onChange(event.target.value)}
-        onDrop={handleDrop}
-        onDragOver={(event) => event.preventDefault()}
-        onPaste={handlePaste}
         className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
-        placeholder="Write your blog HTML here. Drop or paste images to insert them at the cursor."
+        placeholder="Paste plain blog text here. Use blank lines between paragraphs. No HTML needed."
       />
-      <div className="grid gap-3 md:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Inline Image Upload</label>
-          <input
-            type="file"
-            onChange={(event) => handleUpload(event.target.files?.[0])}
-            className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Inline Image URL</label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={inlineUrl}
-              onChange={(event) => setInlineUrl(event.target.value)}
-              placeholder="https://..."
-              className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
-            />
-            <button
-              type="button"
-              onClick={() => {
-                insertImageTag(inlineUrl.trim())
-                setInlineUrl('')
-              }}
-              className="rounded-xl border border-white/10 px-3 py-2 text-xs text-slate-200 hover:bg-white/[0.05]"
-            >
-              Insert
-            </button>
-          </div>
-        </div>
+      <div className="text-xs text-slate-400">
+        Tip: Use the <span className="text-slate-200">Featured Image</span> field for the main blog image. Line breaks in this text are preserved automatically.
       </div>
-      {uploading && <div className="text-xs text-slate-400">Uploading image...</div>}
-      {error && <div className="text-xs text-rose-300">{error}</div>}
     </div>
   )
 }
