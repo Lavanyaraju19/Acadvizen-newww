@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import Image from 'next/image'
 import { supabase } from '../../lib/supabaseClient'
+import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
+import { subscribeToTable } from '../../../lib/realtime'
+import { buildInternalLinks } from '../../../lib/internalLinker'
 
 export function CourseDetailPage() {
   const { slug } = useParams()
@@ -11,49 +14,41 @@ export function CourseDetailPage() {
   const [details, setDetails] = useState([])
   const [resources, setResources] = useState([])
   const [loading, setLoading] = useState(true)
+  const [internalLinks, setInternalLinks] = useState({ blogs: [], tools: [], placements: [] })
 
   useEffect(() => {
     if (!slug) return
     loadCourse()
-    const coursesChannel = supabase
-      .channel('public-course-detail')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'courses' }, loadCourse)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'course_details' }, loadCourse)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'resources' }, loadCourse)
-      .subscribe()
+    const coursesChannel = subscribeToTable('courses', () => loadCourse())
+    const detailsChannel = subscribeToTable('course_details', () => loadCourse())
+    const resourcesChannel = subscribeToTable('resources', () => loadCourse())
 
     return () => {
-      supabase.removeChannel(coursesChannel)
+      if (coursesChannel) supabase?.removeChannel(coursesChannel)
+      if (detailsChannel) supabase?.removeChannel(detailsChannel)
+      if (resourcesChannel) supabase?.removeChannel(resourcesChannel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug])
 
   async function loadCourse() {
     setLoading(true)
-    const { data: courseData } = await supabase
-      .from('courses')
-      .select('*')
-      .eq('slug', slug)
-      .eq('is_active', true)
-      .single()
+    const { data: courseData } = await fetchPublicData('courses', { slug })
+    const courseRow = Array.isArray(courseData) ? courseData[0] : courseData
 
-    if (courseData) {
-      setCourse(courseData)
+    if (courseRow) {
+      setCourse(courseRow)
 
-      const { data: detailsData } = await supabase
-        .from('course_details')
-        .select('*')
-        .eq('course_id', courseData.id)
-        .order('order_index', { ascending: true })
+      const { data: detailsData } = await fetchPublicData('course-details', { course_id: courseRow.id })
       if (detailsData) setDetails(detailsData)
 
-      const { data: resData } = await supabase
-        .from('resources')
-        .select('*')
-        .eq('course_id', courseData.id)
-        .eq('is_active', true)
-        .order('order_index', { ascending: true })
-      if (resData) setResources(resData)
+      const { data: resData } = await fetchPublicData('resources', { course_id: courseRow.id })
+      const filtered = Array.isArray(resData)
+        ? resData.filter((item) => item.is_active !== false)
+        : []
+      if (resData) setResources(filtered)
+
+      await loadInternalLinks(courseRow)
     } else {
       setCourse(null)
       setDetails([])
@@ -82,6 +77,34 @@ export function CourseDetailPage() {
         </div>
       </div>
     )
+  }
+
+  async function loadInternalLinks(courseRow) {
+    const [blogRes, toolRes, placementRes] = await Promise.all([
+      fetchPublicData('blog-posts', { limit: 8 }),
+      fetchPublicData('tools-extended', { limit: 8 }),
+      fetchPublicData('placements', { limit: 6 }),
+    ])
+
+    const blogs = Array.isArray(blogRes.data) ? blogRes.data : []
+    const tools = Array.isArray(toolRes.data) ? toolRes.data : []
+    const placements = Array.isArray(placementRes.data) ? placementRes.data : []
+
+    const links = buildInternalLinks(
+      { title: courseRow?.title || 'Course' },
+      {
+        blogs: blogs.map((item) => ({ title: item.title, slug: item.slug, type: 'blog' })),
+        courses: [],
+        tools: tools.map((item) => ({ title: item.name, slug: item.slug, type: 'tool' })),
+      },
+      4
+    )
+
+    setInternalLinks({
+      blogs: links.blogs,
+      tools: links.tools,
+      placements: placements.slice(0, 4),
+    })
   }
 
   return (
@@ -194,19 +217,47 @@ export function CourseDetailPage() {
 
               <div className="mt-10 pt-8 border-t border-white/10">
                 <h2 className="text-xl md:text-2xl font-semibold text-slate-50">Related Links</h2>
-                <div className="mt-4 flex flex-wrap gap-4 text-sm">
-                  <Link to="/contact" className="text-teal-300 hover:text-teal-200 transition-colors">
-                    Contact admissions
-                  </Link>
-                  <Link
-                    to="/digital-marketing-course-in-bangalore"
-                    className="text-teal-300 hover:text-teal-200 transition-colors"
-                  >
-                    Digital marketing course in Bangalore
-                  </Link>
-                  <Link to="/blog" className="text-teal-300 hover:text-teal-200 transition-colors">
-                    Read latest blogs
-                  </Link>
+                <div className="mt-5 grid gap-6 text-sm md:grid-cols-3">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Blogs</div>
+                    <div className="mt-3 flex flex-col gap-2">
+                      {internalLinks.blogs.length ? (
+                        internalLinks.blogs.map((item) => (
+                          <Link key={item.slug} to={`/blog/${item.slug}`} className="text-teal-300 hover:text-teal-200">
+                            {item.title}
+                          </Link>
+                        ))
+                      ) : (
+                        <span className="text-slate-400">More blogs coming soon.</span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Tools</div>
+                    <div className="mt-3 flex flex-col gap-2">
+                      {internalLinks.tools.length ? (
+                        internalLinks.tools.map((item) => (
+                          <Link key={item.slug} to={`/tools/${item.slug}`} className="text-teal-300 hover:text-teal-200">
+                            {item.title}
+                          </Link>
+                        ))
+                      ) : (
+                        <span className="text-slate-400">Tools will appear here.</span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Placements</div>
+                    <div className="mt-3 flex flex-col gap-2 text-slate-300">
+                      {internalLinks.placements.length ? (
+                        internalLinks.placements.map((item) => (
+                          <div key={item.id}>{item.company_name || item.company || 'Placement partner'}</div>
+                        ))
+                      ) : (
+                        <span className="text-slate-400">Placement updates coming soon.</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

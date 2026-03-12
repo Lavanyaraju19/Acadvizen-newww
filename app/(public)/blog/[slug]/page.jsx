@@ -3,11 +3,9 @@ export const revalidate = 1;
 import BlogLayout from '../../../../components/BlogLayout'
 import { buildMetadata } from '../../../lib/seo'
 import { blogs as localBlogs } from '../../../../data/blogs'
+import { getServerSupabaseClient } from '../../../../lib/supabaseServer'
 
 export const dynamicParams = true
-
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
-const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 function slugify(value = '') {
   return String(value)
@@ -79,29 +77,47 @@ function parseBlogContent(content = '') {
   return { toc, sections }
 }
 
+function pickFirstNonEmpty(...values) {
+  for (const value of values) {
+    if (value === null || value === undefined) continue
+    if (typeof value === 'string' && value.trim() === '') continue
+    return value
+  }
+  return null
+}
+
+async function fetchPublishedBlogs(supabase, table) {
+  let query = supabase.from(table).select('*').order('created_at', { ascending: false }).limit(50)
+  let { data, error } = await query.eq('status', 'published')
+  if (error && String(error.message || '').toLowerCase().includes('status')) {
+    query = supabase.from(table).select('*').order('created_at', { ascending: false }).limit(50)
+    ;({ data, error } = await query.eq('is_published', true))
+  }
+  if (error && String(error.message || '').toLowerCase().includes('is_published')) {
+    query = supabase.from(table).select('*').order('created_at', { ascending: false }).limit(50)
+    ;({ data, error } = await query)
+  }
+  if (error) return []
+  return Array.isArray(data) ? data : []
+}
+
 async function fetchSupabaseBlogs() {
-  if (!SUPABASE_URL || !SUPABASE_KEY) return []
+  let supabase
+  try {
+    supabase = getServerSupabaseClient()
+  } catch {
+    return []
+  }
+  if (!supabase) return []
   const tables = ['blog_posts', 'blogs']
   for (const table of tables) {
-    try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*&order=created_at.desc&limit=50`, {
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-        },
-        next: { revalidate: 300 },
-      })
-      if (!res.ok) continue
-      const rows = await res.json()
-      if (Array.isArray(rows) && rows.length) {
-        return rows.map((row) => ({
-          ...row,
-          featured_image: row.featured_image || row.image,
-          published_at: row.published_at || row.created_at,
-        }))
-      }
-    } catch {
-      // ignore and fallback
+    const rows = await fetchPublishedBlogs(supabase, table)
+    if (rows.length) {
+      return rows.map((row) => ({
+        ...row,
+        featured_image: row.featured_image || row.image,
+        published_at: row.published_at || row.created_at,
+      }))
     }
   }
   return []
@@ -126,12 +142,27 @@ async function getBlogData(slug) {
 
   const localMatch = localBlogs.find((item) => item.slug === blog.slug || item.id === blog.id)
   const finalBlog = {
-    ...(localMatch || {}),
     ...blog,
-    title: blog.title || localMatch?.title,
-    excerpt: blog.excerpt || localMatch?.excerpt,
-    content: blog.content || localMatch?.content,
-    featured_image: blog.featured_image || blog.image || localMatch?.image || '/blog-images/image1.jpg',
+    ...(localMatch || {}),
+    title: pickFirstNonEmpty(localMatch?.title, blog.title),
+    excerpt: pickFirstNonEmpty(localMatch?.excerpt, blog.excerpt),
+    content: pickFirstNonEmpty(localMatch?.content, blog.content),
+    meta_title: pickFirstNonEmpty(localMatch?.meta_title, blog.meta_title, blog.title),
+    meta_description: pickFirstNonEmpty(localMatch?.meta_description, blog.meta_description, blog.excerpt),
+    featured_image: pickFirstNonEmpty(
+      localMatch?.image,
+      localMatch?.featured_image,
+      blog.featured_image,
+      blog.image,
+      '/blog-images/image1.jpg'
+    ),
+    image: pickFirstNonEmpty(
+      localMatch?.image,
+      localMatch?.featured_image,
+      blog.image,
+      blog.featured_image,
+      '/blog-images/image1.jpg'
+    ),
   }
 
   const related = merged

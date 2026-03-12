@@ -27,8 +27,8 @@ export function AdminDashboard() {
     setShowConfirm(false)
     try {
       await signOut('global')
-    } catch (err) {
-      console.error('Logout failed', err)
+    } catch {
+      // noop
     }
     navigate('/admin/login', { replace: true })
   }

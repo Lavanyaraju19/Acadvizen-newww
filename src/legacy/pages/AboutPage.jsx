@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { supabase } from '../../lib/supabaseClient'
+import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 import { assetUrl } from '../../lib/assetUrl'
@@ -12,21 +13,16 @@ export function AboutPage() {
   useEffect(() => {
     loadPageSections()
     const pageChannel = supabase
-      .channel('public-page-about')
+      ?.channel('public-page-about')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'page_sections' }, loadPageSections)
       .subscribe()
     return () => {
-      supabase.removeChannel(pageChannel)
+      if (pageChannel) supabase?.removeChannel(pageChannel)
     }
   }, [])
 
   async function loadPageSections() {
-    const { data } = await supabase
-      .from('page_sections')
-      .select('*')
-      .eq('page_slug', 'about')
-      .eq('is_active', true)
-      .order('order_index', { ascending: true })
+    const { data } = await fetchPublicData('page-sections', { page: 'about' })
     if (!data) return
     const next = {}
     data.forEach((section) => {
@@ -52,8 +48,8 @@ export function AboutPage() {
   const heroCta = parseJson(heroSection.cta_json, {})
   const storySection = getSection('story')
   const storyItems = parseJson(storySection.items_json, [
-    'Acadvizen was founded to make digital marketing education flexible and outcome-driven. We believe every learner should be able to build a learning path that matches their goals, tools, and pace.',
-    'Our programs are designed around real projects, career support, and industry-grade tools so that students and professionals can transition confidently into real-world roles.',
+    'Best academy for AI digital marketing.',
+    'Acadvizen is a leading AI-powered digital marketing learning institute.',
   ])
   const statsSection = getSection('stats')
   const statsItems = parseJson(statsSection.items_json, [])
@@ -65,19 +61,18 @@ export function AboutPage() {
   const foundersSection = getSection('founders')
   const founders = parseJson(foundersSection.items_json, [
     {
-      name: 'Harika Gamireddy',
-      image: '/about/harika.jpg',
+      name: 'Chandra',
+      image: '/team/chandra.jpg',
+    },
+    {
+      name: 'Manasvini',
+      image: '/team/manasvini.png',
     },
   ])
-  const sanitizedFounders = founders
-    .filter((person) => {
-      const name = String(person?.name || '').toLowerCase()
-      return !name.includes('jyoti') && !name.includes('chandar')
-    })
-    .map((person) => ({
-      ...person,
-      image: person?.image || '/about/chandar.jpg',
-    }))
+  const sanitizedFounders = (Array.isArray(founders) ? founders : []).map((person) => ({
+    ...person,
+    image: person?.image || '/team/chandra.jpg',
+  }))
   const trainerPalette = ['#2A9D3A', '#1D4ED8', '#EAB308']
 
   return (
@@ -97,11 +92,11 @@ export function AboutPage() {
               </div>
             )}
             <h1 className="mt-6 text-3xl md:text-5xl font-semibold tracking-tight text-slate-50">
-              {heroSection.title}
+              {heroSection.title || 'Best Academy for AI Digital Marketing'}
             </h1>
-            {heroSection.subtitle && (
-              <p className="mt-4 text-slate-300 max-w-2xl mx-auto">{heroSection.subtitle}</p>
-            )}
+            <p className="mt-4 text-slate-300 max-w-2xl mx-auto">
+              {heroSection.subtitle || 'Acadvizen leading AI-powered digital marketing learning institute.'}
+            </p>
           </motion.div>
         </Container>
       </Section>
@@ -109,7 +104,9 @@ export function AboutPage() {
       <Section className="py-10 md:py-12">
         <Container className="max-w-7xl">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-semibold text-slate-50 text-center">About ACADVIZEN</h2>
+            <h2 className="text-3xl font-semibold text-slate-50 text-center">
+              Best Academy for AI Digital Marketing
+            </h2>
             <p className="mt-3 text-center text-slate-300">
               ACADVIZEN stands as the best digital marketing training institute in Bangalore, delivering practical,
               career-driven education. As a top-rated digital marketing institute in Bangalore, we combine live

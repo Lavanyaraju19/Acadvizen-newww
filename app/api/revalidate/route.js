@@ -12,11 +12,11 @@ export async function POST(request) {
       }
     })
 
-    return NextResponse.json({ ok: true, revalidated: paths })
+    return NextResponse.json({ success: true, data: { revalidated: paths }, error: null })
   } catch (error) {
     return NextResponse.json(
-      { ok: false, error: error?.message || 'Revalidation failed' },
-      { status: 500 },
+      { success: false, error: error?.message || 'Revalidation failed', data: [] },
+      { status: 500 }
     )
   }
 }

@@ -3,8 +3,11 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { supabase } from '../../lib/supabaseClient'
+import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
+import { subscribeToTable } from '../../../lib/realtime'
+import { buildInternalLinks } from '../../../lib/internalLinker'
 
 const courseHighlights = [
   { icon: 'S', label: 'Skill Tracks', value: '12' },
@@ -17,53 +20,35 @@ const courseHighlights = [
   { icon: 'R', label: 'Career Readiness', value: 'Global' },
   { icon: 'I', label: 'Interview Workshops', value: 'Weekly' },
 ]
-const packageCards = [
-  { icon: '1', label: 'Package 1', value: '₹35,000' },
-  { icon: '2', label: 'Package 2', value: '₹55,000' },
-  { icon: '3', label: 'Package 3', value: '₹75,000' },
-]
 
 export function CoursesPage() {
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(true)
   const [pageSections, setPageSections] = useState({})
+  const [internalLinks, setInternalLinks] = useState({ blogs: [], tools: [], placements: [] })
 
   useEffect(() => {
     loadCourses()
     loadPageSections()
-    const channel = supabase
-      .channel('public-courses')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'courses' }, loadCourses)
-      .subscribe()
-    const pageChannel = supabase
-      .channel('public-page-courses')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'page_sections' }, loadPageSections)
-      .subscribe()
+    const channel = subscribeToTable('courses', () => loadCourses())
+    const pageChannel = subscribeToTable('page_sections', () => loadPageSections())
 
     return () => {
-      supabase.removeChannel(channel)
-      supabase.removeChannel(pageChannel)
+      if (channel) supabase?.removeChannel(channel)
+      if (pageChannel) supabase?.removeChannel(pageChannel)
     }
   }, [])
 
   async function loadCourses() {
     setLoading(true)
-    const { data } = await supabase
-      .from('courses')
-      .select('*')
-      .eq('is_active', true)
-      .order('order_index', { ascending: true })
+    const { data } = await fetchPublicData('courses')
     if (data) setCourses(data)
+    if (data) await loadInternalLinks(data)
     setLoading(false)
   }
 
   async function loadPageSections() {
-    const { data } = await supabase
-      .from('page_sections')
-      .select('*')
-      .eq('page_slug', 'courses')
-      .eq('is_active', true)
-      .order('order_index', { ascending: true })
+    const { data } = await fetchPublicData('page-sections', { page: 'courses' })
     if (!data) return
     const next = {}
     data.forEach((section) => {
@@ -74,6 +59,34 @@ export function CoursesPage() {
 
   const getSection = (key) => pageSections[key] || {}
   const heroSection = getSection('hero')
+
+  async function loadInternalLinks(courseData) {
+    const [blogRes, toolRes, placementRes] = await Promise.all([
+      fetchPublicData('blog-posts', { limit: 8 }),
+      fetchPublicData('tools-extended', { limit: 8 }),
+      fetchPublicData('placements', { limit: 6 }),
+    ])
+
+    const blogs = Array.isArray(blogRes.data) ? blogRes.data : []
+    const tools = Array.isArray(toolRes.data) ? toolRes.data : []
+    const placements = Array.isArray(placementRes.data) ? placementRes.data : []
+
+    const links = buildInternalLinks(
+      { title: heroSection.title || 'Courses' },
+      {
+        blogs: blogs.map((item) => ({ title: item.title, slug: item.slug, type: 'blog' })),
+        courses: (courseData || []).map((item) => ({ title: item.title, slug: item.slug, type: 'course' })),
+        tools: tools.map((item) => ({ title: item.name, slug: item.slug, type: 'tool' })),
+      },
+      4
+    )
+
+    setInternalLinks({
+      blogs: links.blogs,
+      tools: links.tools,
+      placements: placements.slice(0, 4),
+    })
+  }
 
   return (
     <div className="min-h-screen">
@@ -104,15 +117,6 @@ export function CoursesPage() {
                   <span className="course-highlight-icon">{item.icon}</span>
                   <div className="course-highlight-label">{item.label}</div>
                   <div className="course-highlight-value">{item.value}</div>
-                </article>
-              ))}
-            </div>
-            <div className="mt-6 course-highlight-grid">
-              {packageCards.map((pkg) => (
-                <article key={pkg.label} className="course-highlight-card">
-                  <span className="course-highlight-icon">{pkg.icon}</span>
-                  <div className="course-highlight-label">{pkg.label}</div>
-                  <div className="course-highlight-value font-extrabold">{pkg.value}</div>
                 </article>
               ))}
             </div>
@@ -230,6 +234,56 @@ export function CoursesPage() {
               </Surface>
             ))}
           </div>
+        </Container>
+      </Section>
+
+      <Section className="py-10 md:py-12" id="related-links">
+        <Container>
+          <Surface className="p-6">
+            <h2 className="text-xl font-semibold text-slate-50">Explore More</h2>
+            <div className="mt-5 grid gap-6 md:grid-cols-3">
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Blog Guides</div>
+                <div className="mt-3 flex flex-col gap-2 text-sm">
+                  {internalLinks.blogs.length ? (
+                    internalLinks.blogs.map((item) => (
+                      <Link key={item.slug} to={`/blog/${item.slug}`} className="text-teal-300 hover:text-teal-200">
+                        {item.title}
+                      </Link>
+                    ))
+                  ) : (
+                    <span className="text-slate-400">New guides coming soon.</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Tools</div>
+                <div className="mt-3 flex flex-col gap-2 text-sm">
+                  {internalLinks.tools.length ? (
+                    internalLinks.tools.map((item) => (
+                      <Link key={item.slug} to={`/tools/${item.slug}`} className="text-teal-300 hover:text-teal-200">
+                        {item.title}
+                      </Link>
+                    ))
+                  ) : (
+                    <span className="text-slate-400">Tools will appear here.</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Placements</div>
+                <div className="mt-3 flex flex-col gap-2 text-sm text-slate-300">
+                  {internalLinks.placements.length ? (
+                    internalLinks.placements.map((item) => (
+                      <div key={item.id}>{item.company_name || item.company || 'Placement partner'}</div>
+                    ))
+                  ) : (
+                    <span className="text-slate-400">Placement updates coming soon.</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Surface>
         </Container>
       </Section>
     </div>

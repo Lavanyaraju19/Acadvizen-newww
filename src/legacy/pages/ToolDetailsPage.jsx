@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import Image from 'next/image'
-import { supabase } from '../../lib/supabaseClient'
+import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 
@@ -28,22 +28,15 @@ export function ToolDetailsPage() {
 
   async function loadTool() {
     setLoading(true)
-    const { data } = await supabase
-      .from('tools_extended')
-      .select('*')
-      .eq('slug', slug)
-      .eq('is_active', true)
-      .single()
-    setTool(data || null)
-    if (data?.category) {
-      const { data: relatedData } = await supabase
-        .from('tools_extended')
-        .select('*')
-        .eq('category', data.category)
-        .eq('is_active', true)
-        .neq('slug', data.slug)
-        .limit(6)
-      if (relatedData) setRelated(relatedData)
+    const { data } = await fetchPublicData('tools-extended', { slug })
+    const toolRow = Array.isArray(data) ? data[0] : data
+    setTool(toolRow)
+    if (toolRow?.category) {
+      const { data: relatedData } = await fetchPublicData('tools-extended', { category: toolRow.category, limit: 6 })
+      const relatedList = Array.isArray(relatedData)
+        ? relatedData.filter((item) => item.slug !== toolRow.slug)
+        : []
+      if (relatedData) setRelated(relatedList)
     }
     setLoading(false)
   }
@@ -83,6 +76,7 @@ export function ToolDetailsPage() {
                   alt={tool.name}
                   width={48}
                   height={48}
+                  style={{ aspectRatio: '1/1' }}
                   className="h-12 w-12 object-contain"
                   onError={(e) => {
                     const fallback = tool.logo_url || null
@@ -144,5 +138,3 @@ export function ToolDetailsPage() {
 }
 
 export default ToolDetailsPage
-
-

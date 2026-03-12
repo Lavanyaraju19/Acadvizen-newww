@@ -4,19 +4,17 @@ import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import {
   Target,
-  Rocket,
-  FileText,
-  Linkedin,
-  MessageCircle,
-  Users,
+  Sparkles,
   ChevronDown,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
+import { fetchPublicData } from '../../lib/apiClient'
 import { assetUrl } from '../../lib/assetUrl'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 import { BlogSection } from '../../components/BlogSection'
 import { blogs as localBlogs } from '../../../data/blogs'
+import { subscribeToTable } from '../../../lib/realtime'
 
 export default function HomePage() {
   const metaTitle = 'Best Digital Marketing Course In Bangalore'
@@ -32,7 +30,6 @@ export default function HomePage() {
         '15+ Tools, Gen AI Tools, Digital Marketing Tools',
         '7 Live Projects',
         'Placement Assistance',
-        'Package 1 - Rs 35,000',
       ],
     },
     {
@@ -42,7 +39,6 @@ export default function HomePage() {
         '20+ Tools, Gen AI Tools, Digital Marketing Tools',
         '15+ Live Projects',
         'Placement Assistance',
-        'Package 2 - Rs 55,000',
       ],
     },
     {
@@ -53,7 +49,6 @@ export default function HomePage() {
         '25+ Live Projects',
         'Internship + Placement',
         'Guest Lectures',
-        'Package 3 - Rs 75,000',
       ],
     },
   ]
@@ -191,35 +186,20 @@ export default function HomePage() {
       setShowPopup(true)
     }, 90000)
 
-    const toolsChannel = supabase
-      .channel('public-tools-extended-home')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tools_extended' }, loadTools)
-      .subscribe()
-    const testimonialsChannel = supabase
-      .channel('public-testimonials-home')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'testimonials' }, loadTestimonials)
-      .subscribe()
-    const blogChannel = supabase
-      .channel('public-blog-posts-home')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'blog_posts' }, loadBlogPosts)
-      .subscribe()
-    const homeSectionsChannel = supabase
-      .channel('public-home-sections')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'home_sections' }, loadHomeSections)
-      .subscribe()
-    const partnersChannel = supabase
-      .channel('public-hiring-partners')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'hiring_partners' }, loadPartners)
-      .subscribe()
+    const toolsChannel = subscribeToTable('tools_extended', () => loadTools())
+    const testimonialsChannel = subscribeToTable('testimonials', () => loadTestimonials())
+    const blogChannel = subscribeToTable('blog_posts', () => loadBlogPosts())
+    const homeSectionsChannel = subscribeToTable('home_sections', () => loadHomeSections())
+    const partnersChannel = subscribeToTable('hiring_partners', () => loadPartners())
 
     return () => {
       clearTimeout(timer)
       window.removeEventListener('scroll', handleScroll)
-      supabase.removeChannel(toolsChannel)
-      supabase.removeChannel(testimonialsChannel)
-      supabase.removeChannel(blogChannel)
-      supabase.removeChannel(homeSectionsChannel)
-      supabase.removeChannel(partnersChannel)
+      if (toolsChannel) supabase?.removeChannel(toolsChannel)
+      if (testimonialsChannel) supabase?.removeChannel(testimonialsChannel)
+      if (blogChannel) supabase?.removeChannel(blogChannel)
+      if (homeSectionsChannel) supabase?.removeChannel(homeSectionsChannel)
+      if (partnersChannel) supabase?.removeChannel(partnersChannel)
     }
   }, [])
 
@@ -262,14 +242,9 @@ export default function HomePage() {
 
 
   async function loadTools() {
-    const { data, error } = await supabase
-      .from('tools_extended')
-      .select('*')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
+    const { data, error } = await fetchPublicData('tools-extended')
     if (error) {
-      console.error('[home] tools fetch error', error)
-      const message = error.message || ''
+      const message = String(error || '')
       if (error?.name === 'AbortError' || message.includes('signal is aborted')) {
         setToolsError('')
         setTools(toolsFallback)
@@ -289,50 +264,12 @@ export default function HomePage() {
   }
 
   async function loadTestimonials() {
-    const { data } = await supabase
-      .from('testimonials')
-      .select('*')
-      .eq('is_active', true)
-      .order('order_index', { ascending: true })
+    const { data } = await fetchPublicData('testimonials')
     if (data) setTestimonials(data)
   }
 
   async function loadBlogPosts() {
-    let { data, error } = await supabase
-      .from('blog_posts')
-      .select('*')
-      .eq('status', 'published')
-      .order('published_at', { ascending: false })
-      .limit(6)
-
-    // Backward compatibility: some environments still use is_published without status.
-    if (error && String(error.message || '').toLowerCase().includes('status')) {
-      const fallbackRes = await supabase
-        .from('blog_posts')
-        .select('*')
-        .eq('is_published', true)
-        .order('published_at', { ascending: false })
-        .limit(6)
-      data = fallbackRes.data
-      error = fallbackRes.error
-    }
-
-    // Support installations that use a `blogs` table instead of `blog_posts`.
-    if (error || !data || data.length === 0) {
-      const blogsTableRes = await supabase
-        .from('blogs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(6)
-      if (!blogsTableRes.error && blogsTableRes.data && blogsTableRes.data.length > 0) {
-        data = blogsTableRes.data.map((post) => ({
-          ...post,
-          featured_image: post.featured_image || post.image,
-          published_at: post.published_at || post.created_at,
-        }))
-        error = null
-      }
-    }
+    let { data, error } = await fetchPublicData('blog-posts', { limit: 6 })
 
     if (error || !data || data.length === 0) {
       const fallbackBlogs = localBlogs
@@ -347,17 +284,31 @@ export default function HomePage() {
       return
     }
 
+    const pickFirstNonEmpty = (...values) => {
+      for (const value of values) {
+        if (value === null || value === undefined) continue
+        if (typeof value === 'string' && value.trim() === '') continue
+        return value
+      }
+      return null
+    }
+
     const hydrated = data.map((post, idx) => {
       const local = localBlogs.find((item) => item.slug === post.slug || item.id === post.id)
       return {
-        ...(local || {}),
         ...post,
-        title: post.title || local?.title,
-        excerpt: post.excerpt || local?.excerpt,
-        content: post.content || local?.content,
-        featured_image:
-          post.featured_image || post.image || local?.image || (idx === 0 ? '/blog-images/image1.jpg' : `/blog-images/image${idx + 1}.jpg`),
-        published_at: post.published_at || post.created_at || local?.created_at,
+        ...(local || {}),
+        title: pickFirstNonEmpty(local?.title, post.title),
+        excerpt: pickFirstNonEmpty(local?.excerpt, post.excerpt),
+        content: pickFirstNonEmpty(local?.content, post.content),
+        featured_image: pickFirstNonEmpty(
+          local?.image,
+          local?.featured_image,
+          post.featured_image,
+          post.image,
+          idx === 0 ? '/blog-images/image1.jpg' : `/blog-images/image${idx + 1}.jpg`
+        ),
+        published_at: pickFirstNonEmpty(post.published_at, post.created_at, local?.created_at),
       }
     })
     const localFallback = localBlogs
@@ -378,14 +329,9 @@ export default function HomePage() {
   }
 
   async function loadPartners() {
-    const { data, error } = await supabase
-      .from('hiring_partners')
-      .select('*')
-      .eq('is_active', true)
-      .order('order_index', { ascending: true })
+    const { data, error } = await fetchPublicData('hiring-partners')
     if (error) {
-      console.error('[home] partners fetch error', error)
-      const message = error.message || ''
+      const message = String(error || '')
       if (error?.name === 'AbortError' || message.includes('signal is aborted')) {
         setPartnersError('')
         setPartners(partnersFallback)
@@ -405,24 +351,14 @@ export default function HomePage() {
   }
 
   async function loadCounts() {
-    const { count: toolTotal, error: toolCountError } = await supabase
-      .from('tools_extended')
-      .select('id', { count: 'exact', head: true })
-      .eq('is_active', true)
-    if (!toolCountError) setToolsCount(toolTotal ?? 0)
+    const { data: toolCount } = await fetchPublicData('tools-extended', { count: true })
+    if (toolCount?.count !== undefined) setToolsCount(toolCount.count ?? 0)
 
-    const { count: partnerTotal, error: partnerCountError } = await supabase
-      .from('hiring_partners')
-      .select('id', { count: 'exact', head: true })
-      .eq('is_active', true)
-    if (!partnerCountError) setPartnersCount(partnerTotal ?? 0)
+    const { data: partnerCount } = await fetchPublicData('hiring-partners', { count: true })
+    if (partnerCount?.count !== undefined) setPartnersCount(partnerCount.count ?? 0)
   }
   async function loadHomeSections() {
-    const { data } = await supabase
-      .from('home_sections')
-      .select('*')
-      .eq('is_active', true)
-      .order('order_index', { ascending: true })
+    const { data } = await fetchPublicData('home-sections')
     if (!data) return
     const next = {}
     data.forEach((section) => {
@@ -466,22 +402,6 @@ export default function HomePage() {
     ],
   })
   const whoItems = parseJson(whoSection.items_json, [])
-  const liveProjectsSection = getSection('live_projects', {
-    title: 'Live Projects & Placement Support',
-    body: 'Work on real campaigns and get hands-on experience.',
-  })
-  const liveBody = liveProjectsSection.body || ''
-  const placementSection = getSection('placement_support', {
-    subtitle: 'Placement Support',
-    items_json: [
-      'Resume building',
-      'LinkedIn profile optimization',
-      'Mock interviews',
-      'Hiring partner network',
-      'Internship & job opportunities in India & abroad',
-    ],
-  })
-  const placementItems = parseJson(placementSection.items_json, [])
   const blogSection = getSection('blog_section', {
     title: 'From the Blog',
     subtitle: 'Latest insights from Acadvizen.',
@@ -582,6 +502,29 @@ export default function HomePage() {
   const companyLogos = Array.from({ length: 21 }, (_, idx) => `/logos/company-${String(idx + 1).padStart(2, '0')}.png`)
   const companyRowA = companyLogos.filter((_, idx) => idx % 2 === 0)
   const companyRowB = companyLogos.filter((_, idx) => idx % 2 === 1)
+  const whoWorkedTopics = [
+    'Digital marketing',
+    'Social media',
+    'Performance marketing',
+    'SEO',
+    'GEO',
+    'AEO',
+    'E-mail marketing',
+    'Content marketing',
+    'UI/UX',
+    'Website design',
+    'Paid marketing',
+    'Meta',
+    'Google Ads',
+    'Bing Ads',
+    'Keyword research',
+    'LinkedIn ads',
+    'Gen AI',
+    'AI tools',
+    'WhatsApp marketing',
+    'Graphic designing',
+    'Video design',
+  ]
 
   const popupSection = getSection('registration_popup', {
     title: 'Quick Registration',
@@ -753,7 +696,14 @@ export default function HomePage() {
                   </video>
                 ) : (
                   <div className="h-full w-full flex items-center justify-center bg-slate-950/70">
-                    <Image src="/logo.png" alt="Acadvizen" width={96} height={96} className="h-24 w-auto opacity-80" />
+                    <Image
+                      src="/logo.png"
+                      alt="Acadvizen"
+                      width={96}
+                      height={96}
+                      className="h-24 w-auto opacity-80"
+                      style={{ width: 'auto', height: 'auto' }}
+                    />
                   </div>
                 )}
                 {heroVideoAvailable && !heroVideoPlaying && (
@@ -832,14 +782,14 @@ export default function HomePage() {
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
               'Course duration',
-              'Learning mode - classroom & online',
+              'Learning mode - classroom and online',
               'Choose your tools',
-              'Personalized syllabus',
-              '25+ case studies',
-              'Hands-on practical learning',
+              'Personalize syllabus',
+              'Case studies 25+',
+              'Hands on learning / practical experience',
               'Global experts',
               'Industry experts',
-              '35+ global certifications',
+              'Global certifications 35+',
             ].map((item) => (
               <Surface key={item} className="p-4">
                 <div className="text-sm font-semibold text-slate-100">{item}</div>
@@ -871,7 +821,8 @@ export default function HomePage() {
                       alt={tool.name || tool.slug}
                       width={48}
                       height={48}
-                      className="h-12 w-auto object-contain float"
+                    className="h-12 w-auto object-contain float"
+                    style={{ width: 'auto', height: 'auto' }}
                       loading="lazy"
                       onError={(e) => {
                         const fallback = tool.logo_url || null
@@ -900,7 +851,8 @@ export default function HomePage() {
                       alt={tool.name || tool.slug}
                       width={48}
                       height={48}
-                      className="h-12 w-auto object-contain float"
+                    className="h-12 w-auto object-contain float"
+                    style={{ width: 'auto', height: 'auto' }}
                       loading="lazy"
                       onError={(e) => {
                         const fallback = tool.logo_url || null
@@ -938,13 +890,13 @@ export default function HomePage() {
                   key={`${card.title}-${idx}`}
                   className="group rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-all duration-300 hover:scale-105 hover:shadow-xl tilt-card"
                 >
-                  <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-sky-400/15 text-sky-200">
+                  <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-sky-400/15 text-sky-200">
                     <Image
                       src={iconSrc}
                       alt={card.title}
-                      width={28}
-                      height={28}
-                      className="h-7 w-7 object-contain float"
+                      width={44}
+                      height={44}
+                      className="h-11 w-11 object-contain float"
                     />
                   </div>
                   <div className="text-base font-bold text-slate-50">{card.title}</div>
@@ -962,6 +914,10 @@ export default function HomePage() {
             <p className="text-base md:text-lg font-bold uppercase tracking-[0.18em] text-teal-200">Placements</p>
             <h2 className="mt-3 text-4xl md:text-5xl font-bold text-slate-50">{partnersSection.title}</h2>
             {partnersSection.subtitle && <p className="mt-3 text-slate-300">{partnersSection.subtitle}</p>}
+            <p className="mt-2 text-sm uppercase tracking-[0.2em] text-slate-400">Global Partners</p>
+            <p className="mt-3 text-slate-300">
+              Digital Marketing opens doors to career opportunities across the world 🌍
+            </p>
           </div>
           <div className="mt-8 space-y-4 overflow-hidden">
             <div className="logo-scroll gap-10 min-w-max">
@@ -973,6 +929,7 @@ export default function HomePage() {
                     width={120}
                     height={48}
                     className="h-12 w-auto object-contain"
+                    style={{ width: 'auto', height: 'auto' }}
                     loading="lazy"
                     onError={(e) => {
                       e.currentTarget.onerror = null
@@ -991,6 +948,7 @@ export default function HomePage() {
                     width={120}
                     height={48}
                     className="h-12 w-auto object-contain"
+                    style={{ width: 'auto', height: 'auto' }}
                     loading="lazy"
                     onError={(e) => {
                       e.currentTarget.onerror = null
@@ -1004,36 +962,21 @@ export default function HomePage() {
         </Container>
       </Section>
 
-      <Section className="py-12 md:py-16" id="live-projects">
+      <Section className="py-10 md:py-12" id="who-worked">
         <Container>
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Surface className="p-6">
-              <h3 className="text-xl font-semibold text-slate-50">Real Projects</h3>
-              <p className="mt-3 text-sm text-slate-300">{liveBody}</p>
-            </Surface>
-            <Surface className="p-6">
-              <h3 className="text-xl font-semibold text-slate-50">{placementSection.subtitle}</h3>
-              <div className="mt-4 space-y-3 text-sm text-slate-300">
-                {placementItems.map((item, idx) => {
-                  const icons = [FileText, Linkedin, MessageCircle, Users, Rocket]
-                  const Icon = icons[idx % icons.length]
-                  return (
-                    <div key={`${item}-${idx}`} className="flex items-center gap-3">
-                      <Icon className="h-4 w-4 text-teal-200 float" />
-                      <span>{item}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </Surface>
+          <div className="text-center max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-semibold text-slate-50">Who Have All Worked</h2>
+            <p className="mt-3 text-slate-300">Expertise delivered across modern digital marketing disciplines.</p>
           </div>
-          <div className="mt-8 flex justify-center">
-            <button
-              onClick={openPopup}
-              className="rounded-xl bg-teal-300 px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-teal-200"
-            >
-              Enroll Now
-            </button>
+          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {whoWorkedTopics.map((topic) => (
+              <Surface key={topic} className="p-4 text-center">
+                <div className="flex items-center justify-center gap-3 text-sm font-semibold text-slate-100">
+                  <Sparkles className="h-6 w-6 text-teal-200" />
+                  <span>{topic}</span>
+                </div>
+              </Surface>
+            ))}
           </div>
         </Container>
       </Section>

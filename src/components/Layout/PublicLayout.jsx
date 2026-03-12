@@ -63,7 +63,14 @@ export function PublicLayout({ children }) {
             <div className="grid gap-10 md:grid-cols-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <Image src="/logo.png" alt="Acadvizen" width={120} height={32} className="h-8 w-auto" />
+                  <Image
+                    src="/logo.png"
+                    alt="Acadvizen"
+                    width={120}
+                    height={32}
+                    style={{ aspectRatio: '120/32', width: 'auto', height: 'auto' }}
+                    className="h-8 w-auto"
+                  />
                   <span className="font-semibold text-slate-100">Acadvizen</span>
                 </div>
                 <p className="mt-3 text-sm text-slate-400">

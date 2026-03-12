@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabaseClient'
 import { motion } from 'framer-motion'
 import { Surface } from '../../../components/ui/Surface'
+import { uploadFile } from '../../../../lib/storageUpload'
 
 const emptyForm = {
   title: '',
@@ -9,6 +10,8 @@ const emptyForm = {
   description: '',
   short_description: '',
   image_url: '',
+  thumbnail_url: '',
+  pdf_url: '',
   order_index: 0,
   is_published: true,
 }
@@ -22,6 +25,7 @@ export function CoursesAdmin() {
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const [uploadingField, setUploadingField] = useState('')
 
   useEffect(() => {
     loadCourses()
@@ -91,9 +95,25 @@ export function CoursesAdmin() {
       description: course.description || '',
       short_description: course.short_description || '',
       image_url: course.image_url || '',
+      thumbnail_url: course.thumbnail_url || '',
+      pdf_url: course.pdf_url || '',
       order_index: course.order_index ?? 0,
       is_published: Boolean(course.is_published),
     })
+  }
+
+  async function handleFileUpload(file, bucket, field) {
+    if (!file) return
+    setUploadingField(field)
+    setErrorMessage('')
+    try {
+      const publicUrl = await uploadFile(file, bucket)
+      setFormData((prev) => ({ ...prev, [field]: publicUrl }))
+    } catch (err) {
+      setErrorMessage(err?.message || 'Upload failed.')
+    } finally {
+      setUploadingField('')
+    }
   }
 
   return (
@@ -167,13 +187,21 @@ export function CoursesAdmin() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-200 mb-1">Image URL</label>
+                  <label className="block text-sm font-medium text-slate-200 mb-1">Course Image URL</label>
                   <input
                     type="url"
                     value={formData.image_url}
                     onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                     className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
                   />
+                  <input
+                    type="file"
+                    onChange={(e) => handleFileUpload(e.target.files?.[0], 'course-images', 'image_url')}
+                    className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-slate-100"
+                  />
+                  {uploadingField === 'image_url' && (
+                    <div className="mt-1 text-xs text-slate-400">Uploading image...</div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-200 mb-1">Order Index</label>
@@ -183,6 +211,43 @@ export function CoursesAdmin() {
                     onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value, 10) || 0 })}
                     className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
                   />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-200 mb-1">Course Thumbnail URL</label>
+                  <input
+                    type="url"
+                    value={formData.thumbnail_url}
+                    onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
+                  />
+                  <input
+                    type="file"
+                    onChange={(e) => handleFileUpload(e.target.files?.[0], 'course-thumbnails', 'thumbnail_url')}
+                    className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-slate-100"
+                  />
+                  {uploadingField === 'thumbnail_url' && (
+                    <div className="mt-1 text-xs text-slate-400">Uploading thumbnail...</div>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-200 mb-1">Course PDF URL</label>
+                  <input
+                    type="url"
+                    value={formData.pdf_url}
+                    onChange={(e) => setFormData({ ...formData, pdf_url: e.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
+                  />
+                  <input
+                    type="file"
+                    onChange={(e) => handleFileUpload(e.target.files?.[0], 'course-pdfs', 'pdf_url')}
+                    className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-slate-100"
+                  />
+                  {uploadingField === 'pdf_url' && (
+                    <div className="mt-1 text-xs text-slate-400">Uploading PDF...</div>
+                  )}
                 </div>
               </div>
 

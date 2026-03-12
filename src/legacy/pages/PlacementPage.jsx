@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { supabase } from '../../lib/supabaseClient'
+import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 import WorldCareerMap from '../../../components/WorldCareerMap'
 import { assetUrl } from '../../lib/assetUrl'
+import { subscribeToTable } from '../../../lib/realtime'
 
 const hiringPartnerLogos = [
   { name: 'Accenture', file: 'accenture.png' },
@@ -21,14 +23,6 @@ const hiringPartnerLogos = [
   { name: 'PayPal', file: 'paypal.png' },
   { name: 'TCS', file: 'tcs.png' },
   { name: 'Uber', file: 'uber.png' },
-]
-const careerOpportunities = [
-  { region: 'South America', growth: '+15%' },
-  { region: 'Asia', growth: '+13%' },
-  { region: 'Europe', growth: '+10%' },
-  { region: 'North America', growth: '+10%' },
-  { region: 'Africa', growth: '+9%' },
-  { region: 'Australia', growth: '+8%' },
 ]
 const careerPathSteps = [
   {
@@ -84,38 +78,23 @@ export function PlacementPage() {
   useEffect(() => {
     loadPlacements()
     loadPageSections()
-    const channel = supabase
-      .channel('public-placements')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'placements' }, loadPlacements)
-      .subscribe()
-    const pageChannel = supabase
-      .channel('public-page-placement')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'page_sections' }, loadPageSections)
-      .subscribe()
+    const channel = subscribeToTable('placements', () => loadPlacements())
+    const pageChannel = subscribeToTable('page_sections', () => loadPageSections())
     return () => {
-      supabase.removeChannel(channel)
-      supabase.removeChannel(pageChannel)
+      if (channel) supabase?.removeChannel(channel)
+      if (pageChannel) supabase?.removeChannel(pageChannel)
     }
   }, [])
 
   async function loadPlacements() {
     setLoading(true)
-    const { data } = await supabase
-      .from('placements')
-      .select('*')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
+    const { data } = await fetchPublicData('placements')
     if (data) setPlacements(data)
     setLoading(false)
   }
 
   async function loadPageSections() {
-    const { data } = await supabase
-      .from('page_sections')
-      .select('*')
-      .eq('page_slug', 'placement')
-      .eq('is_active', true)
-      .order('order_index', { ascending: true })
+    const { data } = await fetchPublicData('page-sections', { page: 'placement' })
     if (!data) return
     const next = {}
     data.forEach((section) => {
@@ -126,42 +105,49 @@ export function PlacementPage() {
 
   const getSection = (key) => pageSections[key] || {}
   const heroSection = getSection('hero')
+  const heroTitle = heroSection.title || 'Acadvizen Placement'
+  const heroSubtitle =
+    heroSection.subtitle ||
+    'Placement support helps candidates stand out, get noticed by top recruiters, and unlock real career opportunities.'
+
+  const opportunityBubbles = [
+    { region: 'North America', growth: '+10%', left: '18%', top: '36%', size: 'h-32 w-32' },
+    { region: 'Europe', growth: '+10%', left: '50%', top: '33%', size: 'h-28 w-28' },
+    { region: 'Asia', growth: '+13%', left: '81%', top: '35%', size: 'h-40 w-40' },
+    { region: 'South America', growth: '+15%', left: '18%', top: '76%', size: 'h-32 w-32' },
+    { region: 'Africa', growth: '+9%', left: '50%', top: '74%', size: 'h-28 w-28' },
+    { region: 'Australia', growth: '+8%', left: '81%', top: '73%', size: 'h-28 w-28' },
+  ]
+
+  const floatingLights = [
+    { id: 'light-1', left: '8%', top: '92%', delay: '0s', size: 'h-4 w-4' },
+    { id: 'light-2', left: '62%', top: '14%', delay: '1s', size: 'h-3 w-3' },
+    { id: 'light-3', left: '90%', top: '56%', delay: '0.6s', size: 'h-4 w-4' },
+  ]
   return (
     <div className="min-h-screen">
-      <Section className="pt-10 md:pt-14 pb-6 md:pb-10">
+      <Section className="py-10 md:py-12" id="placement-acadvizen">
         <Container>
           <motion.div
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="text-center"
+            className="text-center max-w-4xl mx-auto"
           >
-            <h1 className="text-3xl md:text-5xl font-semibold tracking-tight text-slate-50">{heroSection.title}</h1>
-            {heroSection.subtitle && (
-              <p className="mt-3 text-slate-300 max-w-2xl mx-auto">{heroSection.subtitle}</p>
-            )}
-          </motion.div>
-        </Container>
-      </Section>
-
-      <Section className="py-10 md:py-12" id="placement-acadvizen">
-        <Container>
-          <div className="text-center max-w-4xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-50">Acadvizen Placement</h2>
+            <h1 className="text-4xl md:text-5xl font-bold text-slate-50">{heroTitle}</h1>
             <p className="mt-3 text-lg text-slate-300">
-              Placement support helps candidates stand out, get noticed by top recruiters, and unlock real career
-              opportunities.
+              {heroSubtitle}
             </p>
-          </div>
+          </motion.div>
         </Container>
       </Section>
 
       <Section className="py-8 md:py-10" id="global-career-opportunities">
         <Container>
           <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl font-semibold text-slate-50">Career Opportunities Across the World 🌍</h2>
+            <h2 className="text-3xl font-semibold text-slate-50">Global Learner Growth Map</h2>
             <p className="mt-3 text-slate-300">
-              Digital Marketing opens doors to global career opportunities across 12+ countries.
+              Night-theme world view with learner points and regional growth percentages.
             </p>
           </div>
           <div className="mt-8">
@@ -172,16 +158,68 @@ export function PlacementPage() {
 
       <Section className="py-8 md:py-10" id="career-opportunities">
         <Container>
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl font-semibold text-slate-50">Career Opportunities in Digital Marketing</h2>
-          </div>
-          <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-            {careerOpportunities.map((item) => (
-              <Surface key={item.region} className="p-4 text-center">
-                <div className="text-lg font-semibold text-teal-200">{item.growth}</div>
-                <div className="mt-1 text-xs text-slate-300">{item.region}</div>
-              </Surface>
-            ))}
+          <div className="relative mt-2 overflow-hidden rounded-[30px] border border-cyan-300/20 bg-[radial-gradient(circle_at_16%_22%,rgba(14,116,144,0.24),transparent_30%),radial-gradient(circle_at_82%_80%,rgba(67,56,202,0.26),transparent_35%),linear-gradient(120deg,rgba(2,10,27,0.98),rgba(5,18,45,0.96)_46%,rgba(14,23,56,0.95))] p-7 md:p-10">
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute -left-24 -top-20 h-72 w-72 rounded-full bg-cyan-500/12 blur-3xl" />
+              <div className="absolute -right-20 -bottom-20 h-72 w-72 rounded-full bg-blue-500/12 blur-3xl" />
+              {floatingLights.map((bubble) => (
+                <div
+                  key={bubble.id}
+                  className="absolute"
+                  style={{ left: bubble.left, top: bubble.top }}
+                >
+                  <span
+                    className={`absolute ${bubble.size} -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300/45 animate-ping`}
+                    style={{ animationDelay: bubble.delay }}
+                  />
+                  <span
+                    className={`absolute ${bubble.size} -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300/80 shadow-[0_0_24px_rgba(34,211,238,0.65)] advz-float`}
+                    style={{ animationDelay: bubble.delay }}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="relative">
+              <div className="text-center">
+                <h2 className="text-3xl font-semibold text-slate-50 md:text-5xl">Career Opportunities Across the World</h2>
+                <p className="mt-3 text-slate-300 md:text-2xl">
+                  Digital Marketing opens doors to career opportunities across the world.
+                </p>
+              </div>
+
+              <div className="relative mt-8 hidden h-[360px] md:block">
+                {opportunityBubbles.map((item, idx) => (
+                  <div
+                    key={item.region}
+                    className="absolute -translate-x-1/2 -translate-y-1/2"
+                    style={{ left: item.left, top: item.top }}
+                  >
+                    <div
+                      className={`${item.size} rounded-full border border-cyan-200/25 bg-gradient-to-br from-cyan-400/28 via-blue-500/24 to-indigo-500/22 shadow-[inset_0_1px_2px_rgba(255,255,255,0.18),0_16px_32px_rgba(2,10,27,0.45)] flex flex-col items-center justify-center text-center advz-float`}
+                      style={{ animationDelay: `${idx * 0.35}s` }}
+                    >
+                      <div className="text-3xl font-semibold text-slate-100 md:text-5xl">{item.growth}</div>
+                      <div className="mt-1 max-w-[90%] text-base leading-tight text-slate-200 md:text-xl">
+                        {item.region}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-7 grid grid-cols-2 gap-3 md:hidden">
+                {opportunityBubbles.map((item, idx) => (
+                  <div
+                    key={`${item.region}-mobile`}
+                    className="rounded-2xl border border-white/15 bg-white/[0.06] p-4 text-center advz-float"
+                    style={{ animationDelay: `${idx * 0.2}s` }}
+                  >
+                    <div className="text-2xl font-semibold text-cyan-200">{item.growth}</div>
+                    <div className="mt-1 text-sm text-slate-200">{item.region}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </Container>
       </Section>
@@ -234,6 +272,7 @@ export function PlacementPage() {
                               alt={placement.title}
                               fill
                               sizes="(max-width: 768px) 100vw, 420px"
+                              style={{ aspectRatio: '16/9' }}
                               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                               onError={(e) => {
                                 e.currentTarget.onerror = null
@@ -271,8 +310,8 @@ export function PlacementPage() {
         <Container>
           <h2 className="text-3xl font-semibold text-slate-50 text-center">Success Stories</h2>
           <p className="mt-3 text-center text-slate-300 max-w-4xl mx-auto">
-            Our students come from different backgrounds - graduates, working professionals, career switchers, and
-            entrepreneurs. What connects them is one decision: upgrading their skills to become future-ready digital
+            Our students come from different backgrounds — graduates, working professionals, career switchers, and
+            entrepreneurs. What connects them is one decision: to upgrade their skills and become future-ready digital
             marketers.
           </p>
           <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
@@ -308,7 +347,8 @@ export function PlacementPage() {
           <div className="max-w-5xl mx-auto">
             <h2 className="text-3xl font-semibold text-slate-50 text-center">Placement Support</h2>
             <p className="mt-3 text-center text-slate-300">
-              Resume building, mock interviews, portfolio development, and recruiter connections.
+              Our placement cell ensures students are industry-ready through resume building, mock interviews,
+              portfolio development, and recruiter connections.
             </p>
 
             <div className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -342,6 +382,7 @@ export function PlacementPage() {
                         width={120}
                         height={40}
                         className="h-10 w-auto object-contain"
+                        style={{ width: 'auto', height: 'auto' }}
                         loading="lazy"
                         onError={(e) => {
                           e.currentTarget.onerror = null
@@ -361,7 +402,3 @@ export function PlacementPage() {
 }
 
 export default PlacementPage
-
-
-
-

@@ -28,7 +28,6 @@ export function StudentsAdmin() {
         .from('profiles')
         .update({ approval_status: 'approved', role })
         .eq('id', student.id)
-      console.log(`Email sent to ${student.email}: Your account has been approved!`)
       loadStudents()
       alert('Student approved successfully!')
     } catch (err) {
@@ -42,7 +41,6 @@ export function StudentsAdmin() {
       .from('profiles')
       .update({ approval_status: 'rejected' })
       .eq('id', student.id)
-    console.log(`Email sent to ${student.email}: Your account application has been rejected.`)
     loadStudents()
     alert('Student rejected.')
   }

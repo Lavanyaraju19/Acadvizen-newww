@@ -12,8 +12,8 @@ export function Navbar() {
     setShowConfirm(false)
     try {
       await signOut('global')
-    } catch (err) {
-      console.error('Sign out failed', err)
+    } catch {
+      // noop
     }
   }
 
@@ -25,7 +25,14 @@ export function Navbar() {
             <Link to="/" className="flex items-center gap-2 group" data-cursor="hover">
               <div className="relative">
                 <div className="absolute -inset-2 rounded-xl bg-teal-400/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                <Image src="/logo.png" alt="Acadvizen" width={128} height={36} className="relative h-9 w-auto" />
+                <Image
+                  src="/logo.png"
+                  alt="Acadvizen"
+                  width={128}
+                  height={36}
+                  className="relative h-9 w-auto"
+                  style={{ width: 'auto', height: 'auto' }}
+                />
               </div>
               <span className="font-semibold text-slate-100 hidden sm:inline tracking-tight">Acadvizen</span>
             </Link>

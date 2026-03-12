@@ -1,28 +1,30 @@
 import type { MetadataRoute } from 'next'
 import { blogs } from '../data/blogs'
+import { getServerSupabaseClient } from '../lib/supabaseServer'
 
 export const revalidate = 1
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
-const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
 async function fetchSupabaseSlugs(table: string, slugField = 'slug') {
-  if (!SUPABASE_URL || !SUPABASE_KEY) return []
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=${slugField}&order=created_at.desc`, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-      },
-      next: { revalidate: 300 },
-    })
-    if (!res.ok) return []
-    const rows = await res.json()
-    return Array.isArray(rows) ? rows.map((row) => row?.[slugField]).filter(Boolean) : []
+    const supabase = getServerSupabaseClient()
+    if (!supabase) return []
+    const { data, error } = await supabase
+      .from(table)
+      .select(slugField)
+      .order('created_at', { ascending: false })
+    if (error) return []
+    return Array.isArray(data) ? data.map((row) => row?.[slugField]).filter(Boolean) : []
   } catch {
     return []
   }
 }
+
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://acadvizen.com'
@@ -75,6 +77,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }))
 
   const courseSlugs = await fetchSupabaseSlugs('courses')
+  const toolSlugs = await fetchSupabaseSlugs('tools_extended')
+  const locationSlugs = await fetchSupabaseSlugs('locations')
+  const locationNames = await fetchSupabaseSlugs('locations', 'name')
+  const normalizedLocationSlugs = locationSlugs.length
+    ? locationSlugs
+    : locationNames.map((name) => slugify(String(name)))
   const courseEntries: MetadataRoute.Sitemap = courseSlugs.map((slug) => ({
     url: `${baseUrl}/courses/${slug}`,
     lastModified: now,
@@ -82,5 +90,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
-  return [...staticEntries, ...blogEntries, ...supabaseBlogEntries, ...courseEntries]
+  const toolEntries: MetadataRoute.Sitemap = toolSlugs.map((slug) => ({
+    url: `${baseUrl}/tools/${slug}`,
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }))
+
+  const locationEntries: MetadataRoute.Sitemap = normalizedLocationSlugs.map((slug) => ({
+    url: `${baseUrl}/digital-marketing-courses-${slug}`,
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }))
+
+  return [
+    ...staticEntries,
+    ...blogEntries,
+    ...supabaseBlogEntries,
+    ...courseEntries,
+    ...toolEntries,
+    ...locationEntries,
+  ]
 }

@@ -1,10 +1,23 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '../../../src/lib/supabaseClient'
 import { Surface } from '../../../src/components/ui/Surface'
+import { uploadFile } from '../../../lib/storageUpload'
 
-const buckets = ['images', 'videos', 'documents', 'lms-files']
+const buckets = [
+  'blog-images',
+  'blog-files',
+  'course-images',
+  'course-thumbnails',
+  'course-pdfs',
+  'tools-assets',
+  'placements',
+  'partner-logos',
+  'brochures',
+  'gallery',
+  'videos',
+  'site-assets',
+]
 
 export default function MediaManagerClient() {
   const [bucket, setBucket] = useState('images')
@@ -15,16 +28,12 @@ export default function MediaManagerClient() {
     if (!file) return
     setUploading(true)
     setStatus('')
-    const safeName = file.name.replace(/\s+/g, '-')
-    const path = `${Date.now()}-${safeName}`
-    const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true })
-    if (error) {
-      setStatus(error.message)
-      setUploading(false)
-      return
+    try {
+      const publicUrl = await uploadFile(file, bucket)
+      setStatus(publicUrl ? `Uploaded: ${publicUrl}` : 'Uploaded successfully')
+    } catch (err) {
+      setStatus(err?.message || 'Upload failed.')
     }
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path)
-    setStatus(data?.publicUrl ? `Uploaded: ${data.publicUrl}` : 'Uploaded successfully')
     setUploading(false)
   }
 

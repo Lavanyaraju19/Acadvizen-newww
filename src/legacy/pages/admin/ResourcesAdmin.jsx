@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabaseClient'
 import { motion } from 'framer-motion'
 import { Surface } from '../../../components/ui/Surface'
+import { uploadFile } from '../../../../lib/storageUpload'
 
 const emptyForm = {
   title: '',
@@ -22,8 +23,8 @@ export function ResourcesAdmin() {
   const [editing, setEditing] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState(emptyForm)
-  const [uploadBucket, setUploadBucket] = useState('pdfs')
-  const [uploadFile, setUploadFile] = useState(null)
+  const [uploadBucket, setUploadBucket] = useState('course-pdfs')
+  const [uploadFileItem, setUploadFileItem] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -90,7 +91,7 @@ export function ResourcesAdmin() {
   function startEdit(resource) {
     setEditing(resource)
     setShowForm(true)
-    setUploadFile(null)
+    setUploadFileItem(null)
     setUploadError('')
     setFormData({
       title: resource.title || '',
@@ -105,22 +106,17 @@ export function ResourcesAdmin() {
   }
 
   async function handleUpload() {
-    if (!uploadFile) {
+    if (!uploadFileItem) {
       setUploadError('Select a file to upload.')
       return
     }
     setUploading(true)
     setUploadError('')
-    const safeName = uploadFile.name.replace(/\s+/g, '-')
-    const filePath = `${Date.now()}-${safeName}`
-    const { error } = await supabase.storage.from(uploadBucket).upload(filePath, uploadFile, {
-      upsert: true,
-    })
-    if (error) {
-      setUploadError(error.message)
-    } else {
-      const { data } = supabase.storage.from(uploadBucket).getPublicUrl(filePath)
-      setFormData((prev) => ({ ...prev, file_url: data?.publicUrl || '' }))
+    try {
+      const publicUrl = await uploadFile(uploadFileItem, uploadBucket)
+      setFormData((prev) => ({ ...prev, file_url: publicUrl }))
+    } catch (err) {
+      setUploadError(err?.message || 'Upload failed.')
     }
     setUploading(false)
   }
@@ -199,9 +195,10 @@ export function ResourcesAdmin() {
                     onChange={(e) => setUploadBucket(e.target.value)}
                     className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
                   >
-                    <option value="pdfs" className="bg-[#050b12]">PDFs</option>
-                    <option value="videos" className="bg-[#050b12]">Videos</option>
+                    <option value="course-pdfs" className="bg-[#050b12]">Course PDFs</option>
                     <option value="brochures" className="bg-[#050b12]">Brochures</option>
+                    <option value="gallery" className="bg-[#050b12]">Gallery</option>
+                    <option value="videos" className="bg-[#050b12]">Videos</option>
                   </select>
                 </div>
                 <div className="md:col-span-2">
@@ -209,7 +206,7 @@ export function ResourcesAdmin() {
                   <div className="flex flex-col md:flex-row gap-3">
                     <input
                       type="file"
-                      onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                      onChange={(e) => setUploadFileItem(e.target.files?.[0] || null)}
                       className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
                     />
                     <button
@@ -294,7 +291,7 @@ export function ResourcesAdmin() {
                     setEditing(null)
                     setShowForm(false)
                     setFormData(emptyForm)
-                    setUploadFile(null)
+                    setUploadFileItem(null)
                     setUploadError('')
                   }}
                   data-cursor="hover"

@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { Link, useParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
+import { fetchPublicData } from '../../lib/apiClient'
+import { buildInternalLinks } from '../../../lib/internalLinker'
+import { subscribeToTable } from '../../../lib/realtime'
 import { supabase } from '../../lib/supabaseClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
@@ -143,17 +146,31 @@ export function BlogPostPage() {
   const { slug } = useParams()
   const [post, setPost] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [internalLinks, setInternalLinks] = useState({ blogs: [], courses: [], tools: [], locations: [] })
+  const pickFirstNonEmpty = (...values) => {
+    for (const value of values) {
+      if (value === null || value === undefined) continue
+      if (typeof value === 'string' && value.trim() === '') continue
+      return value
+    }
+    return null
+  }
   const mergeWithLocal = (incoming) => {
     const local = localBlogs.find((item) => item.slug === incoming?.slug || item.id === incoming?.id || item.slug === slug)
     return {
-      ...(local || {}),
       ...(incoming || {}),
-      title: incoming?.title || local?.title,
-      excerpt: incoming?.excerpt || local?.excerpt,
-      content: incoming?.content || local?.content,
-      featured_image:
-        incoming?.featured_image || incoming?.image || local?.image || '/blog-images/image1.jpg',
-      published_at: incoming?.published_at || incoming?.created_at || local?.created_at,
+      ...(local || {}),
+      title: pickFirstNonEmpty(local?.title, incoming?.title),
+      excerpt: pickFirstNonEmpty(local?.excerpt, incoming?.excerpt),
+      content: pickFirstNonEmpty(local?.content, incoming?.content),
+      featured_image: pickFirstNonEmpty(
+        local?.image,
+        local?.featured_image,
+        incoming?.featured_image,
+        incoming?.image,
+        '/blog-images/image1.jpg'
+      ),
+      published_at: pickFirstNonEmpty(incoming?.published_at, incoming?.created_at, local?.created_at),
     }
   }
   const formatPublishedDate = (value) => {
@@ -168,59 +185,73 @@ export function BlogPostPage() {
 
   useEffect(() => {
     loadPost()
+    const blogChannel = subscribeToTable('blog_posts', () => loadPost())
+    const legacyChannel = subscribeToTable('blogs', () => loadPost())
+    return () => {
+      if (blogChannel) supabase?.removeChannel(blogChannel)
+      if (legacyChannel) supabase?.removeChannel(legacyChannel)
+    }
   }, [slug])
 
   async function loadPost() {
     setLoading(true)
-    const { data } = await supabase
-      .from('blog_posts')
-      .select('*')
-      .eq('slug', slug)
-      .eq('is_published', true)
-      .single()
-    if (data) {
-      setPost(mergeWithLocal(data))
+    const { data: bySlug } = await fetchPublicData('blog-posts', { slug })
+    if (Array.isArray(bySlug) ? bySlug[0] : bySlug) {
+      const row = Array.isArray(bySlug) ? bySlug[0] : bySlug
+      const merged = mergeWithLocal(row)
+      setPost(merged)
+      await loadInternalLinks(merged)
       setLoading(false)
       return
     }
 
-    const { data: byId } = await supabase
-      .from('blog_posts')
-      .select('*')
-      .eq('id', slug)
-      .eq('is_published', true)
-      .single()
-    if (byId) {
-      setPost(mergeWithLocal(byId))
-      setLoading(false)
-      return
-    }
-
-    const { data: blogsBySlug } = await supabase
-      .from('blogs')
-      .select('*')
-      .eq('slug', slug)
-      .single()
-    if (blogsBySlug) {
-      setPost(mergeWithLocal(blogsBySlug))
-      setLoading(false)
-      return
-    }
-
-    const { data: blogsById } = await supabase
-      .from('blogs')
-      .select('*')
-      .eq('id', slug)
-      .single()
-    if (blogsById) {
-      setPost(mergeWithLocal(blogsById))
+    const { data: byId } = await fetchPublicData('blog-posts', { id: slug })
+    if (Array.isArray(byId) ? byId[0] : byId) {
+      const row = Array.isArray(byId) ? byId[0] : byId
+      const merged = mergeWithLocal(row)
+      setPost(merged)
+      await loadInternalLinks(merged)
       setLoading(false)
       return
     }
 
     const fallbackPost = localBlogs.find((item) => item.slug === slug || item.id === slug)
-    setPost(fallbackPost ? mergeWithLocal(fallbackPost) : null)
+    const mergedFallback = fallbackPost ? mergeWithLocal(fallbackPost) : null
+    setPost(mergedFallback)
+    if (mergedFallback) {
+      await loadInternalLinks(mergedFallback)
+    }
     setLoading(false)
+  }
+
+  async function loadInternalLinks(sourcePost) {
+    const [blogRes, courseRes, toolRes, locationRes] = await Promise.all([
+      fetchPublicData('blog-posts', { limit: 8 }),
+      fetchPublicData('courses'),
+      fetchPublicData('tools-extended', { limit: 8 }),
+      fetchPublicData('locations'),
+    ])
+
+    const blogs = Array.isArray(blogRes.data) ? blogRes.data : []
+    const courses = Array.isArray(courseRes.data) ? courseRes.data : []
+    const tools = Array.isArray(toolRes.data) ? toolRes.data : []
+    const locations = Array.isArray(locationRes.data) ? locationRes.data : []
+
+    const links = buildInternalLinks(
+      { title: sourcePost?.title || sourcePost?.meta_title },
+      {
+        blogs: blogs.map((item) => ({ title: item.title, slug: item.slug, type: 'blog' })),
+        courses: courses.map((item) => ({ title: item.title, slug: item.slug, type: 'course' })),
+        tools: tools.map((item) => ({ title: item.name, slug: item.slug, type: 'tool' })),
+        locations: locations.map((item) => ({
+          title: item.meta_title || item.name,
+          slug: item.slug,
+          type: 'location',
+        })),
+      },
+      4
+    )
+    setInternalLinks(links)
   }
 
   if (loading) {
@@ -305,22 +336,67 @@ export function BlogPostPage() {
           )}
           <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
             <h3 className="text-base font-semibold text-slate-50">Related Links</h3>
-            <div className="mt-3 flex flex-wrap gap-3 text-sm">
-              <Link to="/digital-marketing-course-in-bangalore" className="text-teal-300 hover:text-teal-200">
-                Best digital marketing course in Bangalore
-              </Link>
-              <Link to="/seo-course-in-bangalore" className="text-teal-300 hover:text-teal-200">
-                SEO course in Bangalore
-              </Link>
-              <Link to="/ai-digital-marketing-course" className="text-teal-300 hover:text-teal-200">
-                AI digital marketing course
-              </Link>
-              <Link to="/contact" className="text-teal-300 hover:text-teal-200">
-                Contact
-              </Link>
-              <Link to="/blog" className="text-teal-300 hover:text-teal-200">
-                Blog
-              </Link>
+            <div className="mt-4 grid gap-6 text-sm md:grid-cols-4">
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Blogs</div>
+                <div className="mt-2 flex flex-col gap-2">
+                  {internalLinks.blogs.length ? (
+                    internalLinks.blogs.map((item) => (
+                      <Link key={item.slug} to={`/blog/${item.slug}`} className="text-teal-300 hover:text-teal-200">
+                        {item.title}
+                      </Link>
+                    ))
+                  ) : (
+                    <span className="text-slate-400">More blogs coming soon.</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Courses</div>
+                <div className="mt-2 flex flex-col gap-2">
+                  {internalLinks.courses.length ? (
+                    internalLinks.courses.map((item) => (
+                      <Link key={item.slug} to={`/courses/${item.slug}`} className="text-teal-300 hover:text-teal-200">
+                        {item.title}
+                      </Link>
+                    ))
+                  ) : (
+                    <span className="text-slate-400">Course details updating soon.</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Tools</div>
+                <div className="mt-2 flex flex-col gap-2">
+                  {internalLinks.tools.length ? (
+                    internalLinks.tools.map((item) => (
+                      <Link key={item.slug} to={`/tools/${item.slug}`} className="text-teal-300 hover:text-teal-200">
+                        {item.title}
+                      </Link>
+                    ))
+                  ) : (
+                    <span className="text-slate-400">Tools will appear here.</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Locations</div>
+                <div className="mt-2 flex flex-col gap-2">
+                  {internalLinks.locations.length ? (
+                    internalLinks.locations.map((item) => (
+                      <Link
+                        key={item.slug}
+                        to={`/digital-marketing-courses-${item.slug}`}
+                        className="text-teal-300 hover:text-teal-200"
+                      >
+                        {item.title}
+                      </Link>
+                    ))
+                  ) : (
+                    <span className="text-slate-400">Locations coming soon.</span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </Container>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../../lib/supabaseClient'
 import { useAuth } from '../../../contexts/AuthContext'
@@ -6,6 +6,7 @@ import { Surface } from '../../../components/ui/Surface'
 import { CoursesAdmin } from './CoursesAdmin'
 import { ToolsAdmin } from './ToolsAdmin'
 import { ResourcesAdmin } from './ResourcesAdmin'
+import { uploadFile } from '../../../../lib/storageUpload'
 
 function SectionShell({ title, subtitle, children, actions }) {
   return (
@@ -30,14 +31,11 @@ function UploadField({ bucket, onUploaded }) {
     if (!file) return
     setUploading(true)
     setError('')
-    const safeName = file.name.replace(/\s+/g, '-')
-    const path = `${Date.now()}-${safeName}`
-    const { error: uploadError } = await supabase.storage.from(bucket).upload(path, file, { upsert: true })
-    if (uploadError) {
-      setError(uploadError.message)
-    } else {
-      const { data } = supabase.storage.from(bucket).getPublicUrl(path)
-      onUploaded(data?.publicUrl || '')
+    try {
+      const publicUrl = await uploadFile(file, bucket)
+      onUploaded(publicUrl)
+    } catch (err) {
+      setError(err?.message || 'Upload failed.')
     }
     setUploading(false)
   }
@@ -50,6 +48,117 @@ function UploadField({ bucket, onUploaded }) {
         className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
       />
       {uploading && <div className="text-xs text-slate-400">Uploading...</div>}
+      {error && <div className="text-xs text-rose-300">{error}</div>}
+    </div>
+  )
+}
+
+function BlogContentEditor({ value, onChange }) {
+  const textareaRef = useRef(null)
+  const [inlineUrl, setInlineUrl] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState('')
+
+  const insertAtCursor = (text) => {
+    const textarea = textareaRef.current
+    if (!textarea) {
+      onChange(`${value || ''}${text}`)
+      return
+    }
+    const start = textarea.selectionStart ?? 0
+    const end = textarea.selectionEnd ?? 0
+    const current = value || ''
+    const nextValue = `${current.slice(0, start)}${text}${current.slice(end)}`
+    onChange(nextValue)
+    requestAnimationFrame(() => {
+      textarea.focus()
+      const cursor = start + text.length
+      textarea.selectionStart = cursor
+      textarea.selectionEnd = cursor
+    })
+  }
+
+  const insertImageTag = (url) => {
+    if (!url) return
+    insertAtCursor(`\n<img src="${url}" alt="Blog image" />\n`)
+  }
+
+  const handleUpload = async (file) => {
+    if (!file) return
+    setUploading(true)
+    setError('')
+    try {
+      const publicUrl = await uploadFile(file, 'blog-images')
+      insertImageTag(publicUrl)
+    } catch (err) {
+      setError(err?.message || 'Image upload failed.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleDrop = (event) => {
+    event.preventDefault()
+    const file = event.dataTransfer?.files?.[0]
+    if (file) handleUpload(file)
+  }
+
+  const handlePaste = (event) => {
+    const items = Array.from(event.clipboardData?.items || [])
+    const fileItem = items.find((item) => item.kind === 'file')
+    if (fileItem) {
+      event.preventDefault()
+      const file = fileItem.getAsFile()
+      if (file) handleUpload(file)
+    }
+  }
+
+  return (
+    <div className="mt-2 space-y-3">
+      <textarea
+        ref={textareaRef}
+        rows={8}
+        value={value ?? ''}
+        onChange={(event) => onChange(event.target.value)}
+        onDrop={handleDrop}
+        onDragOver={(event) => event.preventDefault()}
+        onPaste={handlePaste}
+        className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
+        placeholder="Write your blog HTML here. Drop or paste images to insert them at the cursor."
+      />
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Inline Image Upload</label>
+          <input
+            type="file"
+            onChange={(event) => handleUpload(event.target.files?.[0])}
+            className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Inline Image URL</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={inlineUrl}
+              onChange={(event) => setInlineUrl(event.target.value)}
+              placeholder="https://..."
+              className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                insertImageTag(inlineUrl.trim())
+                setInlineUrl('')
+              }}
+              className="rounded-xl border border-white/10 px-3 py-2 text-xs text-slate-200 hover:bg-white/[0.05]"
+            >
+              Insert
+            </button>
+          </div>
+        </div>
+      </div>
+      {uploading && <div className="text-xs text-slate-400">Uploading image...</div>}
       {error && <div className="text-xs text-rose-300">{error}</div>}
     </div>
   )
@@ -250,6 +359,11 @@ function CrudSection({
                 value={form[field.name] ?? ''}
                 onChange={(event) => setForm({ ...form, [field.name]: event.target.value })}
                 className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
+              />
+            ) : field.type === 'blog-content' ? (
+              <BlogContentEditor
+                value={form[field.name] ?? ''}
+                onChange={(nextValue) => setForm({ ...form, [field.name]: nextValue })}
               />
             ) : field.type === 'list' ? (
               <div className="mt-2 space-y-2">
@@ -510,6 +624,7 @@ const cmsSections = [
   { key: 'courses', label: 'Courses' },
   { key: 'tools', label: 'Tools' },
   { key: 'resources', label: 'Resources' },
+  { key: 'locations', label: 'Locations' },
   { key: 'cohorts', label: 'Cohorts' },
   { key: 'testimonials', label: 'Testimonials' },
   { key: 'hiring_partners', label: 'Hiring Partners' },
@@ -671,7 +786,7 @@ export function AdminCmsDashboard() {
                   { name: 'primary_button_link', label: 'Primary Button Link' },
                   { name: 'secondary_button_text', label: 'Secondary Button Text' },
                   { name: 'secondary_button_link', label: 'Secondary Button Link' },
-                  { name: 'hero_image_url', label: 'Hero Image Upload', type: 'file', bucket: 'images', fullWidth: true },
+                  { name: 'hero_image_url', label: 'Hero Image Upload', type: 'file', bucket: 'site-assets', fullWidth: true },
                   { name: 'list_items', label: 'List Items', type: 'list', fullWidth: true, default: [''] },
                   { name: 'order_index', label: 'Order', type: 'number', default: 0 },
                   { name: 'is_active', label: 'Active', type: 'checkbox', default: true },
@@ -778,12 +893,34 @@ export function AdminCmsDashboard() {
                   { name: 'title', label: 'Title' },
                   { name: 'slug', label: 'Slug' },
                   { name: 'excerpt', label: 'Excerpt', type: 'textarea', fullWidth: true },
-                  { name: 'content', label: 'Content', type: 'textarea', fullWidth: true },
-                  { name: 'featured_image', label: 'Featured Image', type: 'file', bucket: 'blog' },
+                  { name: 'content', label: 'Content', type: 'blog-content', fullWidth: true },
+                  { name: 'featured_image', label: 'Featured Image Upload', type: 'file', bucket: 'blog-images' },
+                  { name: 'featured_image_url', label: 'Featured Image URL' },
                   { name: 'author', label: 'Author' },
                   { name: 'published_at', label: 'Published At', type: 'datetime-local' },
                   { name: 'is_published', label: 'Published', type: 'checkbox', default: true },
                 ]}
+                itemToForm={(item) => ({
+                  title: item.title ?? '',
+                  slug: item.slug ?? '',
+                  excerpt: item.excerpt ?? '',
+                  content: item.content ?? '',
+                  featured_image: '',
+                  featured_image_url: item.featured_image || item.image || '',
+                  author: item.author ?? '',
+                  published_at: item.published_at ? item.published_at.slice(0, 16) : '',
+                  is_published: Boolean(item.is_published ?? item.status === 'published'),
+                })}
+                formToPayload={(form) => ({
+                  title: form.title,
+                  slug: form.slug,
+                  excerpt: form.excerpt,
+                  content: form.content,
+                  featured_image: form.featured_image || form.featured_image_url || null,
+                  author: form.author || null,
+                  published_at: form.published_at || null,
+                  is_published: Boolean(form.is_published),
+                })}
               />
             )}
             {active === 'placements' && (
@@ -807,6 +944,24 @@ export function AdminCmsDashboard() {
             {active === 'courses' && <CoursesAdmin />}
             {active === 'tools' && <ToolsAdmin />}
             {active === 'resources' && <ResourcesAdmin />}
+            {active === 'locations' && (
+              <CrudSection
+                table="locations"
+                title="Location SEO Pages"
+                subtitle="Manage programmatic location SEO content."
+                refreshPaths={['/']}
+                fields={[
+                  { name: 'name', label: 'Location Name' },
+                  { name: 'slug', label: 'Slug' },
+                  { name: 'meta_title', label: 'Meta Title' },
+                  { name: 'meta_description', label: 'Meta Description', type: 'textarea', fullWidth: true },
+                  { name: 'intro_text', label: 'Intro Text', type: 'textarea', fullWidth: true },
+                  { name: 'why_text', label: 'Why Section', type: 'textarea', fullWidth: true },
+                  { name: 'demand_text', label: 'Demand Section', type: 'textarea', fullWidth: true },
+                  { name: 'is_active', label: 'Active', type: 'checkbox', default: true },
+                ]}
+              />
+            )}
 
             {active === 'cohorts' && (
               <CrudSection
@@ -855,7 +1010,7 @@ export function AdminCmsDashboard() {
                 refreshPaths={['/']}
                 fields={[
                   { name: 'name', label: 'Company Name' },
-                  { name: 'logo_url', label: 'Logo URL', type: 'file', bucket: 'gallery' },
+                  { name: 'logo_url', label: 'Logo URL', type: 'file', bucket: 'partner-logos' },
                   {
                     name: 'row_group',
                     label: 'Row Group',

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { supabase } from '../../lib/supabaseClient'
+import { fetchPublicData } from '../../lib/apiClient'
 
 export function ContactPage() {
   const [formData, setFormData] = useState({
@@ -16,21 +17,16 @@ export function ContactPage() {
   useEffect(() => {
     loadPageSections()
     const pageChannel = supabase
-      .channel('public-page-contact')
+      ?.channel('public-page-contact')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'page_sections' }, loadPageSections)
       .subscribe()
     return () => {
-      supabase.removeChannel(pageChannel)
+      if (pageChannel) supabase?.removeChannel(pageChannel)
     }
   }, [])
 
   async function loadPageSections() {
-    const { data } = await supabase
-      .from('page_sections')
-      .select('*')
-      .eq('page_slug', 'contact')
-      .eq('is_active', true)
-      .order('order_index', { ascending: true })
+    const { data } = await fetchPublicData('page-sections', { page: 'contact' })
     if (!data) return
     const next = {}
     data.forEach((section) => {
@@ -53,11 +49,12 @@ export function ContactPage() {
 
   const getSection = (key) => pageSections[key] || {}
   const formSection = getSection('form')
+  const officeSection = getSection('office')
   const formCta = parseJson(formSection.cta_json, {})
+  const officeImages = parseJson(officeSection.items_json, [])
 
   function handleSubmit(e) {
     e.preventDefault()
-    console.log('Contact form submitted:', formData)
     setSubmitted(true)
     setTimeout(() => {
       setSubmitted(false)
@@ -178,6 +175,15 @@ export function ContactPage() {
             <p>Marenahalli, 5th Block, Jayanagar</p>
             <p>Bengaluru, Karnataka 560078</p>
           </div>
+          {officeImages.length > 0 && (
+            <div className="grid gap-3 p-2 md:grid-cols-2">
+              {officeImages.map((img, idx) => (
+                <div key={`${img}-${idx}`} className="relative h-48 overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]">
+                  <img src={img} alt="Acadvizen office" className="h-full w-full object-cover" />
+                </div>
+              ))}
+            </div>
+          )}
           <iframe
             title="ACADVIZEN Bengaluru Location"
             src="https://www.google.com/maps?q=Bengaluru&output=embed"
@@ -185,6 +191,7 @@ export function ContactPage() {
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
           />
+          <div className="mt-3 text-sm font-semibold text-slate-200">Directions</div>
           <a
             href="https://www.google.com/maps?q=Acadvizen+Institute+Jayanagar+Bengaluru"
             target="_blank"

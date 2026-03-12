@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase, hasSupabaseConfig } from '../lib/supabaseClient'
+import { supabase } from '../lib/supabaseClient'
 
 export default function AdminLoginForm() {
   const router = useRouter()
@@ -11,7 +11,8 @@ export default function AdminLoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const envMissing = !hasSupabaseConfig
+  const envMissing =
+    !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   const handleLogin = async (event) => {
     event.preventDefault()

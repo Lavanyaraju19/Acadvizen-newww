@@ -8,8 +8,8 @@ export function AdminLogin() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, profile, loading, signOut } = useAuth()
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -150,10 +150,8 @@ export function AdminLogin() {
       const message = err?.message || 'Unable to sign in.'
       if (err?.name === 'AbortError' || message.includes('signal is aborted')) {
         setError('Request was interrupted. Please try again; if it persists, restart the dev server.')
-        console.warn('[auth] Request aborted during sign-in', err)
       } else if (message.includes('Failed to fetch')) {
         setError('Network error. Unable to reach Supabase. Check your internet and env vars.')
-        console.error('[auth] Failed to fetch from Supabase', err)
       } else {
         setError(message)
       }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabaseClient'
 import { motion } from 'framer-motion'
 import { Surface } from '../../../components/ui/Surface'
+import { uploadFile } from '../../../../lib/storageUpload'
 
 const emptyForm = {
   name: '',
@@ -23,6 +24,7 @@ export function ToolsAdmin() {
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const [uploadingLogo, setUploadingLogo] = useState(false)
 
   useEffect(() => {
     loadTools()
@@ -96,6 +98,20 @@ export function ToolsAdmin() {
       website_url: tool.website_url || '',
       is_active: tool.is_active ?? true,
     })
+  }
+
+  async function handleLogoUpload(file) {
+    if (!file) return
+    setUploadingLogo(true)
+    setErrorMessage('')
+    try {
+      const publicUrl = await uploadFile(file, 'tools-assets')
+      setFormData((prev) => ({ ...prev, logo_url: publicUrl }))
+    } catch (err) {
+      setErrorMessage(err?.message || 'Upload failed.')
+    } finally {
+      setUploadingLogo(false)
+    }
   }
 
   return (
@@ -188,6 +204,12 @@ export function ToolsAdmin() {
                     onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
                     className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
                   />
+                  <input
+                    type="file"
+                    onChange={(e) => handleLogoUpload(e.target.files?.[0])}
+                    className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-slate-100"
+                  />
+                  {uploadingLogo && <div className="mt-1 text-xs text-slate-400">Uploading icon...</div>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-200 mb-1">Website URL</label>

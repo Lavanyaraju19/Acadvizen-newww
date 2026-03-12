@@ -78,8 +78,8 @@ export default function AdminLayoutClient({ children }) {
                       try {
                         await signOut('global')
                         await fetch('/api/admin/session', { method: 'DELETE' })
-                      } catch (err) {
-                        console.error('Logout failed', err)
+                      } catch {
+                        // noop
                       }
                       router.replace('/admin-login')
                     }}

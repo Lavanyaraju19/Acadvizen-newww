@@ -3,6 +3,9 @@ import Script from 'next/script'
 import Providers from './providers'
 import { siteConfig } from './lib/seo'
 import { blogs as localBlogs } from '../data/blogs'
+import { checkEnv } from '../lib/checkEnv'
+
+checkEnv()
 
 export const metadata = {
   metadataBase: new URL('https://acadvizen.com'),
@@ -29,6 +32,11 @@ export const metadata = {
   },
   alternates: {
     canonical: 'https://acadvizen.com',
+  },
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
   },
 }
 
@@ -161,7 +169,7 @@ function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', '${GA_ID}');`}
         </Script>
-        <Script id="meta-pixel" strategy="afterInteractive">
+        <Script id="meta-pixel" strategy="beforeInteractive">
           {`!function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -170,7 +178,7 @@ n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];
 s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '1399440611406421');
+fbq('init', '701671662939654');
 fbq('track', 'PageView');`}
         </Script>
         <noscript>
@@ -179,13 +187,6 @@ fbq('track', 'PageView');`}
             height="0"
             width="0"
             style={{ display: 'none', visibility: 'hidden' }}
-          />
-          <img
-            height="1"
-            width="1"
-            style={{ display: 'none' }}
-            alt=""
-            src="https://www.facebook.com/tr?id=1399440611406421&ev=PageView&noscript=1"
           />
         </noscript>
         <script

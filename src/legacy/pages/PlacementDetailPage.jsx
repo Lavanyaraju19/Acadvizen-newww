@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import Image from 'next/image'
-import { supabase } from '../../lib/supabaseClient'
+import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 
@@ -16,13 +16,9 @@ export function PlacementDetailPage() {
 
   async function loadPlacement() {
     setLoading(true)
-    const { data } = await supabase
-      .from('placements')
-      .select('*')
-      .eq('id', id)
-      .eq('is_active', true)
-      .single()
-    setPlacement(data || null)
+    const { data } = await fetchPublicData('placements', { id })
+    const placementRow = Array.isArray(data) ? data[0] : data
+    setPlacement(placementRow || null)
     setLoading(false)
   }
 
@@ -53,7 +49,7 @@ export function PlacementDetailPage() {
           <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Placement</div>
           <h1 className="mt-3 text-3xl md:text-5xl font-semibold tracking-tight text-slate-50">{placement.title}</h1>
           <p className="mt-3 text-slate-300">
-            {placement.company_name} · {placement.location}
+            {placement.company_name} - {placement.location}
           </p>
         </Container>
       </Section>

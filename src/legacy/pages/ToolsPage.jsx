@@ -3,9 +3,12 @@ import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import Image from 'next/image'
 import { supabase } from '../../lib/supabaseClient'
+import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 import { assetUrl } from '../../lib/assetUrl'
+import { subscribeToTable } from '../../../lib/realtime'
+import { buildInternalLinks } from '../../../lib/internalLinker'
 
 export function ToolsPage() {
   const [tools, setTools] = useState([])
@@ -13,43 +16,30 @@ export function ToolsPage() {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
   const [pageSections, setPageSections] = useState({})
+  const [internalLinks, setInternalLinks] = useState({ blogs: [], courses: [] })
 
   useEffect(() => {
     loadTools()
     loadPageSections()
-    const channel = supabase
-      .channel('public-tools')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tools_extended' }, loadTools)
-      .subscribe()
-    const pageChannel = supabase
-      .channel('public-page-tools')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'page_sections' }, loadPageSections)
-      .subscribe()
+    const channel = subscribeToTable('tools_extended', () => loadTools())
+    const pageChannel = subscribeToTable('page_sections', () => loadPageSections())
 
     return () => {
-      supabase.removeChannel(channel)
-      supabase.removeChannel(pageChannel)
+      if (channel) supabase?.removeChannel(channel)
+      if (pageChannel) supabase?.removeChannel(pageChannel)
     }
   }, [])
 
   async function loadTools() {
     setLoading(true)
-    const { data } = await supabase
-      .from('tools_extended')
-      .select('*')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
+    const { data } = await fetchPublicData('tools-extended')
     if (data) setTools(data)
+    if (data) await loadInternalLinks(data)
     setLoading(false)
   }
 
   async function loadPageSections() {
-    const { data } = await supabase
-      .from('page_sections')
-      .select('*')
-      .eq('page_slug', 'tools')
-      .eq('is_active', true)
-      .order('order_index', { ascending: true })
+    const { data } = await fetchPublicData('page-sections', { page: 'tools' })
     if (!data) return
     const next = {}
     data.forEach((section) => {
@@ -75,6 +65,28 @@ export function ToolsPage() {
   const emptySection = getSection('empty')
   const metaSection = getSection('meta')
   const metaCta = parseJson(metaSection.cta_json, {})
+
+  async function loadInternalLinks(toolData) {
+    const [blogRes, courseRes] = await Promise.all([
+      fetchPublicData('blog-posts', { limit: 8 }),
+      fetchPublicData('courses'),
+    ])
+
+    const blogs = Array.isArray(blogRes.data) ? blogRes.data : []
+    const courses = Array.isArray(courseRes.data) ? courseRes.data : []
+
+    const links = buildInternalLinks(
+      { title: heroSection.title || 'Tools' },
+      {
+        blogs: blogs.map((item) => ({ title: item.title, slug: item.slug, type: 'blog' })),
+        courses: courses.map((item) => ({ title: item.title, slug: item.slug, type: 'course' })),
+        tools: (toolData || []).map((item) => ({ title: item.name, slug: item.slug, type: 'tool' })),
+      },
+      4
+    )
+
+    setInternalLinks({ blogs: links.blogs, courses: links.courses })
+  }
 
   const categorySet = new Set(tools.map((t) => t.category).filter(Boolean))
   categorySet.delete('Gen AI')
@@ -191,6 +203,7 @@ export function ToolsPage() {
                                   alt={tool.name}
                                   width={48}
                                   height={48}
+                                  style={{ aspectRatio: '1/1' }}
                                   className="h-full w-full object-contain"
                                   onError={(e) => {
                                     const fallback = tool.logo_url || null
@@ -237,10 +250,46 @@ export function ToolsPage() {
           </div>
         </Container>
       </Section>
+
+      <Section className="py-10 md:py-12">
+        <Container>
+          <Surface className="p-6">
+            <h2 className="text-xl font-semibold text-slate-50">Recommended Resources</h2>
+            <div className="mt-5 grid gap-6 md:grid-cols-2">
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Courses</div>
+                <div className="mt-3 flex flex-col gap-2 text-sm">
+                  {internalLinks.courses.length ? (
+                    internalLinks.courses.map((item) => (
+                      <Link key={item.slug} to={`/courses/${item.slug}`} className="text-teal-300 hover:text-teal-200">
+                        {item.title}
+                      </Link>
+                    ))
+                  ) : (
+                    <span className="text-slate-400">Course updates coming soon.</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Blogs</div>
+                <div className="mt-3 flex flex-col gap-2 text-sm">
+                  {internalLinks.blogs.length ? (
+                    internalLinks.blogs.map((item) => (
+                      <Link key={item.slug} to={`/blog/${item.slug}`} className="text-teal-300 hover:text-teal-200">
+                        {item.title}
+                      </Link>
+                    ))
+                  ) : (
+                    <span className="text-slate-400">New blogs coming soon.</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Surface>
+        </Container>
+      </Section>
     </div>
   )
 }
 
 export default ToolsPage
-
-

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { supabase } from '../../lib/supabaseClient'
+import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 import { blogs as localBlogs } from '../../../data/blogs'
@@ -10,16 +11,30 @@ import { blogs as localBlogs } from '../../../data/blogs'
 export function BlogPage() {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
+  const pickFirstNonEmpty = (...values) => {
+    for (const value of values) {
+      if (value === null || value === undefined) continue
+      if (typeof value === 'string' && value.trim() === '') continue
+      return value
+    }
+    return null
+  }
   const mergeWithLocal = (post) => {
     const local = localBlogs.find((item) => item.slug === post.slug || item.id === post.id)
     return {
-      ...(local || {}),
       ...post,
-      title: post.title || local?.title,
-      excerpt: post.excerpt || local?.excerpt,
-      content: post.content || local?.content,
-      featured_image: post.featured_image || post.image || local?.image || '/blog-images/image1.jpg',
-      published_at: post.published_at || post.created_at || local?.created_at,
+      ...(local || {}),
+      title: pickFirstNonEmpty(local?.title, post.title),
+      excerpt: pickFirstNonEmpty(local?.excerpt, post.excerpt),
+      content: pickFirstNonEmpty(local?.content, post.content),
+      featured_image: pickFirstNonEmpty(
+        local?.image,
+        local?.featured_image,
+        post.featured_image,
+        post.image,
+        '/blog-images/image1.jpg'
+      ),
+      published_at: pickFirstNonEmpty(post.published_at, post.created_at, local?.created_at),
     }
   }
   const formatPublishedDate = (value) => {
@@ -35,33 +50,18 @@ export function BlogPage() {
   useEffect(() => {
     loadPosts()
     const channel = supabase
-      .channel('public-blog-posts')
+      ?.channel('public-blog-posts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'blog_posts' }, loadPosts)
       .subscribe()
     return () => {
-      supabase.removeChannel(channel)
+      if (channel) supabase?.removeChannel(channel)
     }
   }, [])
 
   async function loadPosts() {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('blog_posts')
-      .select('*')
-      .eq('is_published', true)
-      .order('published_at', { ascending: false })
-    let fetched = []
-    if (!error && data && data.length > 0) {
-      fetched = data.map(mergeWithLocal)
-    } else {
-      const blogsTableRes = await supabase
-        .from('blogs')
-        .select('*')
-        .order('created_at', { ascending: false })
-      if (!blogsTableRes.error && blogsTableRes.data && blogsTableRes.data.length > 0) {
-        fetched = blogsTableRes.data.map(mergeWithLocal)
-      }
-    }
+    const { data } = await fetchPublicData('blog-posts')
+    const fetched = Array.isArray(data) ? data.map(mergeWithLocal) : []
 
     const localFallback = localBlogs.map((post) =>
       mergeWithLocal({

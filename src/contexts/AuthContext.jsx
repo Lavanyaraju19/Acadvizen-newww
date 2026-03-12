@@ -10,6 +10,12 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let isMounted = true
+    if (!supabase) {
+      setLoading(false)
+      return () => {
+        isMounted = false
+      }
+    }
 
     const init = async () => {
       try {
@@ -23,12 +29,7 @@ export function AuthProvider({ children }) {
           setProfile(null)
         }
       } catch (err) {
-        const message = err?.message || ''
-        if (err?.name === 'AbortError' || message.includes('signal is aborted')) {
-          console.warn('[auth] Session fetch aborted; ignoring')
-        } else {
-          console.error('[auth] Session fetch error', err)
-        }
+        // ignore auth init errors silently
       } finally {
         if (isMounted) setLoading(false)
       }
@@ -46,12 +47,7 @@ export function AuthProvider({ children }) {
           setProfile(null)
         }
       } catch (err) {
-        const message = err?.message || ''
-        if (err?.name === 'AbortError' || message.includes('signal is aborted')) {
-          console.warn('[auth] Auth state update aborted; ignoring')
-        } else {
-          console.error('[auth] Auth state update error', err)
-        }
+        // ignore auth state errors silently
       } finally {
         if (isMounted) setLoading(false)
       }
