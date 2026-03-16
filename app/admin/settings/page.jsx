@@ -1,13 +1,8 @@
-﻿export const revalidate = 1;
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
 
-import AdminSectionShell from '../AdminSectionShell'
+import SettingsAdminClient from './SettingsAdminClient'
 
 export default function Page() {
-  return (
-    <AdminSectionShell
-      title="Settings"
-      subtitle="Configure global website settings and admin-level preferences."
-    />
-  )
+  return <SettingsAdminClient />
 }
-

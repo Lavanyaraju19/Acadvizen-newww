@@ -1,19 +1,21 @@
-﻿export const revalidate = 1;
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
 
+import DynamicPageRenderer from '../../../components/cms/DynamicPageRenderer'
+import { fetchCmsPageBySlug } from '../../../lib/cmsServer'
 import { HireFromUsClientPage } from '../../client-pages'
-import { buildMetadata } from '../../lib/seo'
+import { buildCmsPageMetadata } from '../../lib/cmsPageRoute'
+import { isPublicCmsEnabled } from '../../lib/publicCms'
 
-export const dynamic = 'force-static'
-
-export const metadata = buildMetadata({
-  title: 'Hire From Us',
-  description:
-    'Hire job-ready digital marketing talent from Acadvizen with practical project and placement-readiness training.',
-  path: '/hire-from-us',
-})
-
-export default function Page() {
-  return <HireFromUsClientPage />
+export async function generateMetadata() {
+  return buildCmsPageMetadata('hire-from-us', '/hire-from-us', {
+    title: 'Hire From Us',
+    description: 'Hire job-ready digital marketing talent with project and placement-readiness training.',
+  })
 }
 
-
+export default async function Page() {
+  if (!isPublicCmsEnabled()) return <HireFromUsClientPage />
+  const cmsPage = await fetchCmsPageBySlug('hire-from-us')
+  return cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <HireFromUsClientPage />
+}

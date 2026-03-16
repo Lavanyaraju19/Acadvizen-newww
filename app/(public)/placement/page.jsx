@@ -1,19 +1,21 @@
-﻿export const revalidate = 1;
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
 
+import DynamicPageRenderer from '../../../components/cms/DynamicPageRenderer'
+import { fetchCmsPageBySlug } from '../../../lib/cmsServer'
 import { PlacementClientPage } from '../../client-pages'
-import { buildMetadata } from '../../lib/seo'
+import { buildCmsPageMetadata } from '../../lib/cmsPageRoute'
+import { isPublicCmsEnabled } from '../../lib/publicCms'
 
-export const dynamic = 'force-static'
-
-export const metadata = buildMetadata({
-  title: 'Placement',
-  description:
-    'Placement support at Acadvizen with mock interviews, recruiter connects, and success stories from learners.',
-  path: '/placement',
-})
-
-export default function Page() {
-  return <PlacementClientPage />
+export async function generateMetadata() {
+  return buildCmsPageMetadata('placement', '/placement', {
+    title: 'Placement',
+    description: 'Placement support with mock interviews, recruiter connects, and success stories.',
+  })
 }
 
-
+export default async function Page() {
+  if (!isPublicCmsEnabled()) return <PlacementClientPage />
+  const cmsPage = await fetchCmsPageBySlug('placement')
+  return cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <PlacementClientPage />
+}

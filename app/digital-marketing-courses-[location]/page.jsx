@@ -1,5 +1,7 @@
 import { getServerSupabaseClient } from '../../lib/supabaseServer'
 import { buildInternalLinks } from '../../lib/internalLinker'
+import DynamicPageRenderer from '../../components/cms/DynamicPageRenderer'
+import { fetchLocationPageBySlug } from '../../lib/cmsServer'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,6 +32,23 @@ async function fetchLocationRecord(supabase, locationSlug) {
 
 export async function generateMetadata({ params }) {
   const locationSlug = params?.location || 'your-location'
+  const cmsPage = await fetchLocationPageBySlug(`digital-marketing-courses-${locationSlug}`)
+  if (cmsPage) {
+    return {
+      title: cmsPage.seo_title || cmsPage.title,
+      description: cmsPage.seo_description || cmsPage.description,
+      alternates: { canonical: cmsPage.canonical_url || `https://acadvizen.com/digital-marketing-courses-${locationSlug}` },
+      robots: cmsPage.noindex ? { index: false, follow: true } : undefined,
+      openGraph: {
+        title: cmsPage.seo_title || cmsPage.title,
+        description: cmsPage.seo_description || cmsPage.description,
+        url: cmsPage.canonical_url || `https://acadvizen.com/digital-marketing-courses-${locationSlug}`,
+        type: 'website',
+        images: cmsPage.og_image ? [{ url: cmsPage.og_image }] : undefined,
+      },
+    }
+  }
+
   const locationName = formatLocation(locationSlug)
   const supabase = getServerSupabaseClient()
   const locationRecord = await fetchLocationRecord(supabase, locationSlug)
@@ -58,6 +77,11 @@ export async function generateMetadata({ params }) {
 
 export default async function LocationCoursePage({ params }) {
   const locationSlug = params?.location || 'your-location'
+  const cmsPage = await fetchLocationPageBySlug(`digital-marketing-courses-${locationSlug}`)
+  if (cmsPage) {
+    return <DynamicPageRenderer page={cmsPage} />
+  }
+
   const locationName = formatLocation(locationSlug)
   const supabase = getServerSupabaseClient()
 

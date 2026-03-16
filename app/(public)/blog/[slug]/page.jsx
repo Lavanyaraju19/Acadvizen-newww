@@ -1,139 +1,136 @@
-export const revalidate = 1;
-
-import BlogLayout from '../../../../components/BlogLayout'
-import { buildMetadata } from '../../../lib/seo'
-import { blogs as localBlogs } from '../../../../data/blogs'
-import { getServerSupabaseClient } from '../../../../lib/supabaseServer'
-import { parseBlogContent } from '../../../../lib/blogContent'
-
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
 export const dynamicParams = true
 
-function pickFirstNonEmpty(...values) {
+import BlogLayout from '../../../../components/BlogLayout'
+import { buildTocFromBlocks, estimateReadingMinutes } from '../../../../components/blog/BlogBlocksRenderer'
+import { redirect } from 'next/navigation'
+import { buildMetadata } from '../../../lib/seo'
+import { parseBlogContent } from '../../../../lib/blogContent'
+import { getServerSupabaseClient } from '../../../../lib/supabaseServer'
+import { fetchCmsSiteData, fetchRedirectByPath } from '../../../../lib/cmsServer'
+import { blogs as localBlogs } from '../../../../data/blogs'
+
+function pickFirst(...values) {
   for (const value of values) {
     if (value === null || value === undefined) continue
-    if (typeof value === 'string' && value.trim() === '') continue
+    if (typeof value === 'string' && !value.trim()) continue
     return value
   }
   return null
 }
 
-async function fetchPublishedBlogs(supabase, table) {
-  let query = supabase.from(table).select('*').order('created_at', { ascending: false }).limit(50)
-  let { data, error } = await query.eq('status', 'published')
-  if (error && String(error.message || '').toLowerCase().includes('status')) {
-    query = supabase.from(table).select('*').order('created_at', { ascending: false }).limit(50)
-    ;({ data, error } = await query.eq('is_published', true))
-  }
-  if (error && String(error.message || '').toLowerCase().includes('is_published')) {
-    query = supabase.from(table).select('*').order('created_at', { ascending: false }).limit(50)
-    ;({ data, error } = await query)
-  }
-  if (error) return []
-  return Array.isArray(data) ? data : []
-}
+async function fetchRemoteBlog(slug) {
+  const supabase = getServerSupabaseClient()
+  if (!supabase || !slug) return null
 
-async function fetchSupabaseBlogs() {
-  let supabase
-  try {
-    supabase = getServerSupabaseClient()
-  } catch {
-    return []
+  const { data: blog, error } = await supabase
+    .from('blogs')
+    .select('*')
+    .eq('slug', slug)
+    .eq('status', 'published')
+    .maybeSingle()
+
+  if (error || !blog) return null
+
+  const [{ data: blocks }, { data: related }] = await Promise.all([
+    supabase.from('blog_content_blocks').select('*').eq('blog_id', blog.id).order('order_index', { ascending: true }),
+    supabase
+      .from('blogs')
+      .select('*')
+      .eq('status', 'published')
+      .neq('id', blog.id)
+      .order('published_at', { ascending: false })
+      .limit(3),
+  ])
+
+  return {
+    blog,
+    blocks: Array.isArray(blocks) ? blocks : [],
+    related: Array.isArray(related) ? related : [],
   }
-  if (!supabase) return []
-  const tables = ['blog_posts', 'blogs']
-  for (const table of tables) {
-    const rows = await fetchPublishedBlogs(supabase, table)
-    if (rows.length) {
-      return rows.map((row) => ({
-        ...row,
-        featured_image: row.featured_image || row.image,
-        published_at: row.published_at || row.created_at,
-      }))
-    }
-  }
-  return []
 }
 
 async function getBlogData(slug) {
-  const remote = await fetchSupabaseBlogs()
-  const merged = [...remote]
-  for (const local of localBlogs) {
-    if (!merged.some((item) => item.slug === local.slug || item.id === local.id)) {
-      merged.push({
-        ...local,
-        featured_image: local.image,
-        published_at: local.created_at,
-      })
+  const remote = await fetchRemoteBlog(slug)
+  if (remote?.blog) {
+    const parsed = parseBlogContent(remote.blog.content || '')
+    const tocFromBlocks = buildTocFromBlocks(remote.blocks)
+    return {
+      blog: {
+        ...remote.blog,
+        excerpt: remote.blog.description || '',
+        image: remote.blog.featured_image || '/blog-images/image1.jpg',
+      },
+      related: (remote.related || []).map((entry) => ({
+        ...entry,
+        featured_image: entry.featured_image || '/blog-images/image1.jpg',
+      })),
+      blocks: remote.blocks || [],
+      toc: tocFromBlocks.length ? tocFromBlocks : parsed.toc,
+      sections: parsed.sections,
+      readingMinutes: estimateReadingMinutes({ text: remote.blog.content, blocks: remote.blocks || [] }),
     }
   }
-  const blog =
-    merged.find((item) => item.slug === slug) ||
-    localBlogs.find((item) => item.slug === slug)
-  if (!blog) return { blog: null, related: [] }
 
-  const localMatch = localBlogs.find((item) => item.slug === blog.slug || item.id === blog.id)
-  const finalBlog = {
-    ...blog,
-    ...(localMatch || {}),
-    title: pickFirstNonEmpty(localMatch?.title, blog.title),
-    excerpt: pickFirstNonEmpty(localMatch?.excerpt, blog.excerpt),
-    content: pickFirstNonEmpty(localMatch?.content, blog.content),
-    meta_title: pickFirstNonEmpty(localMatch?.meta_title, blog.meta_title, blog.title),
-    meta_description: pickFirstNonEmpty(localMatch?.meta_description, blog.meta_description, blog.excerpt),
-    featured_image: pickFirstNonEmpty(
-      localMatch?.image,
-      localMatch?.featured_image,
-      blog.featured_image,
-      blog.image,
-      '/blog-images/image1.jpg'
-    ),
-    image: pickFirstNonEmpty(
-      localMatch?.image,
-      localMatch?.featured_image,
-      blog.image,
-      blog.featured_image,
-      '/blog-images/image1.jpg'
-    ),
-  }
-
-  const related = merged
-    .filter((item) => item.slug !== finalBlog.slug)
+  const local = localBlogs.find((entry) => entry.slug === slug)
+  if (!local) return { blog: null, related: [], blocks: [], toc: [], sections: [], readingMinutes: 1 }
+  const parsed = parseBlogContent(local.content || '')
+  const related = localBlogs
+    .filter((entry) => entry.slug !== slug)
     .slice(0, 3)
-    .map((item) => ({
-      ...item,
-      featured_image: item.featured_image || item.image || '/blog-images/image1.jpg',
-    }))
-
-  return { blog: finalBlog, related }
+    .map((entry) => ({ ...entry, featured_image: entry.image || entry.featured_image || '/blog-images/image1.jpg' }))
+  return {
+    blog: {
+      ...local,
+      featured_image: local.image || local.featured_image || '/blog-images/image1.jpg',
+      excerpt: local.excerpt || local.description || '',
+      seo_title: local.meta_title || local.title,
+      seo_description: local.meta_description || local.excerpt || '',
+      published_at: local.created_at,
+    },
+    related,
+    blocks: [],
+    toc: parsed.toc,
+    sections: parsed.sections,
+    readingMinutes: estimateReadingMinutes({ text: local.content }),
+  }
 }
 
 export async function generateStaticParams() {
-  const remote = await fetchSupabaseBlogs()
-  const remoteSlugs = remote.map((blog) => blog.slug).filter(Boolean)
-  const localSlugs = localBlogs.map((blog) => blog.slug)
-  return Array.from(new Set([...localSlugs, ...remoteSlugs])).map((slug) => ({ slug }))
+  return localBlogs.map((blog) => ({ slug: blog.slug })).filter((entry) => entry.slug)
 }
 
 export async function generateMetadata({ params }) {
-  const { blog } = await getBlogData(params?.slug)
+  const data = await getBlogData(params?.slug)
+  const blog = data.blog
   if (!blog) {
     return buildMetadata({
-      title: 'Blog Article',
-      description: 'In-depth article from Acadvizen on digital marketing trends, tools, and career growth.',
+      title: 'Blog',
+      description: 'Latest digital marketing insights from Acadvizen.',
       path: `/blog/${params?.slug || ''}`,
     })
   }
 
-  return buildMetadata({
-    title: blog.meta_title || blog.title,
-    description: blog.meta_description || blog.excerpt,
+  const metadata = buildMetadata({
+    title: pickFirst(blog.seo_title, blog.meta_title, blog.title),
+    description: pickFirst(blog.seo_description, blog.meta_description, blog.excerpt, 'Digital marketing insights from Acadvizen.'),
     path: `/blog/${blog.slug}`,
-    image: blog.featured_image || blog.image,
+    image: pickFirst(blog.og_image, blog.featured_image, blog.image, '/blog-images/image1.jpg'),
   })
+
+  if (blog.noindex) metadata.robots = { index: false, follow: true }
+  return metadata
 }
 
 export default async function Page({ params }) {
-  const { blog, related } = await getBlogData(params?.slug)
+  const redirectRule = await fetchRedirectByPath(`/blog/${params?.slug || ''}`)
+  if (redirectRule?.to_path) {
+    redirect(redirectRule.to_path)
+  }
+
+  const [data, siteData] = await Promise.all([getBlogData(params?.slug), fetchCmsSiteData()])
+  const blog = data.blog
   if (!blog) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -141,23 +138,36 @@ export default async function Page({ params }) {
       </div>
     )
   }
+  const companyName = siteData?.settings?.company_name || 'Acadvizen'
+  const uiCopy = siteData?.settings?.ui_copy && typeof siteData.settings.ui_copy === 'object'
+    ? siteData.settings.ui_copy
+    : {}
 
-  const { toc, sections } = parseBlogContent(blog.content || '')
+  const canonicalUrl = `https://acadvizen.com/blog/${blog.slug}`
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://acadvizen.com/' },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://acadvizen.com/blog' },
+      { '@type': 'ListItem', position: 3, name: blog.title, item: canonicalUrl },
+    ],
+  }
   const blogPostingSchema = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     headline: blog.title,
-    description: blog.meta_description || blog.excerpt,
-    image: blog.featured_image || blog.image || '/blog-images/image1.jpg',
+    description: blog.seo_description || blog.meta_description || blog.excerpt,
+    image: blog.og_image || blog.featured_image || blog.image || '/blog-images/image1.jpg',
     datePublished: blog.published_at || blog.created_at,
     dateModified: blog.updated_at || blog.published_at || blog.created_at,
     author: {
       '@type': 'Organization',
-      name: 'Acadvizen',
+      name: companyName,
     },
     publisher: {
       '@type': 'Organization',
-      name: 'Acadvizen',
+      name: companyName,
       logo: {
         '@type': 'ImageObject',
         url: 'https://acadvizen.com/logo.png',
@@ -165,18 +175,35 @@ export default async function Page({ params }) {
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://acadvizen.com/blog/${blog.slug}`,
+      '@id': canonicalUrl,
     },
   }
 
+  const faqSchema = blog.faq_schema && typeof blog.faq_schema === 'object' ? blog.faq_schema : null
+
   return (
     <>
-      <script
-        id="schema-blogposting"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingSchema) }}
+      <script id="schema-blog-breadcrumb" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script id="schema-blogposting" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingSchema) }} />
+      {faqSchema ? (
+        <script id="schema-blog-faq" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      ) : null}
+      <BlogLayout
+        blog={blog}
+        toc={data.toc}
+        contentBlocks={data.blocks}
+        contentSections={data.sections}
+        relatedBlogs={data.related}
+        readingMinutes={data.readingMinutes}
+        labels={{
+          shareLabel: uiCopy.blog_share_label,
+          tocTitle: uiCopy.blog_toc_title,
+          relatedTitle: uiCopy.blog_related_title,
+          readMoreLabel: uiCopy.blog_read_more_label,
+          readTimeSuffix: uiCopy.blog_read_time_suffix,
+          shareTitle: blog.title,
+        }}
       />
-      <BlogLayout blog={blog} toc={toc} contentSections={sections} relatedBlogs={related} />
     </>
   )
 }

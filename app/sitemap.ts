@@ -1,35 +1,36 @@
 import type { MetadataRoute } from 'next'
-import { blogs } from '../data/blogs'
+import { blogs as localBlogs } from '../data/blogs'
 import { getServerSupabaseClient } from '../lib/supabaseServer'
 
-export const revalidate = 1
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
 
-async function fetchSupabaseSlugs(table: string, slugField = 'slug') {
+const BASE_URL = 'https://acadvizen.com'
+
+async function fetchRows(table: string, fields = 'slug', filter?: { column: string; value: unknown }) {
   try {
     const supabase = getServerSupabaseClient()
     if (!supabase) return []
-    const { data, error } = await supabase
-      .from(table)
-      .select(slugField)
-      .order('created_at', { ascending: false })
+    let query = supabase.from(table).select(fields)
+    if (filter) query = query.eq(filter.column, filter.value)
+    const { data, error } = await query
     if (error) return []
-    return Array.isArray(data) ? data.map((row) => row?.[slugField]).filter(Boolean) : []
+    return Array.isArray(data) ? data : []
   } catch {
     return []
   }
 }
 
-const slugify = (value: string) =>
-  value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
+function toEntry(path: string, priority = 0.7, changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'] = 'weekly') {
+  return {
+    url: `${BASE_URL}${path}`,
+    lastModified: new Date(),
+    changeFrequency,
+    priority,
+  }
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://acadvizen.com'
-  const now = new Date()
-
   const staticRoutes = [
     '/',
     '/about',
@@ -50,66 +51,65 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/digital-marketing-internship-in-bangalore',
   ]
 
-  const staticEntries: MetadataRoute.Sitemap = staticRoutes.map((route) => ({
-    url: `${baseUrl}${route}`,
-    lastModified: now,
-    changeFrequency: (route === '/' ? 'daily' : 'weekly'),
-    priority: route === '/' ? 1 : 0.8,
-  }))
+  const [
+    pages,
+    locationPages,
+    blogs,
+    courses,
+    tools,
+    locations,
+    blogCategories,
+    blogTags,
+    authors,
+  ] = await Promise.all([
+    fetchRows('pages', 'slug', { column: 'status', value: 'published' }),
+    fetchRows('location_pages', 'slug', { column: 'status', value: 'published' }),
+    fetchRows('blogs', 'slug', { column: 'status', value: 'published' }),
+    fetchRows('courses', 'slug', { column: 'is_active', value: true }),
+    fetchRows('tools_extended', 'slug', { column: 'is_active', value: true }),
+    fetchRows('locations', 'slug'),
+    fetchRows('blog_categories', 'slug'),
+    fetchRows('blog_tags', 'slug'),
+    fetchRows('authors', 'slug'),
+  ])
 
-  const blogEntries: MetadataRoute.Sitemap = (blogs || [])
-    .filter((post) => post?.slug)
-    .map((post) => ({
-      url: `${baseUrl}/blog/${post.slug}`,
-      lastModified: post.updated_at || post.created_at || now,
-      changeFrequency: 'weekly' as const,
-      priority: 0.7,
-    }))
+  const localBlogSlugs = localBlogs.map((blog) => blog.slug).filter(Boolean)
 
-  const supabaseBlogSlugs = await fetchSupabaseSlugs('blog_posts')
-  const supabaseLegacyBlogSlugs = await fetchSupabaseSlugs('blogs')
-  const blogSlugs = Array.from(new Set([...supabaseBlogSlugs, ...supabaseLegacyBlogSlugs]))
-  const supabaseBlogEntries: MetadataRoute.Sitemap = blogSlugs.map((slug) => ({
-    url: `${baseUrl}/blog/${slug}`,
-    lastModified: now,
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
-  }))
-
-  const courseSlugs = await fetchSupabaseSlugs('courses')
-  const toolSlugs = await fetchSupabaseSlugs('tools_extended')
-  const locationSlugs = await fetchSupabaseSlugs('locations')
-  const locationNames = await fetchSupabaseSlugs('locations', 'name')
-  const normalizedLocationSlugs = locationSlugs.length
-    ? locationSlugs
-    : locationNames.map((name) => slugify(String(name)))
-  const courseEntries: MetadataRoute.Sitemap = courseSlugs.map((slug) => ({
-    url: `${baseUrl}/courses/${slug}`,
-    lastModified: now,
-    changeFrequency: 'weekly' as const,
-    priority: 0.8,
-  }))
-
-  const toolEntries: MetadataRoute.Sitemap = toolSlugs.map((slug) => ({
-    url: `${baseUrl}/tools/${slug}`,
-    lastModified: now,
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
-  }))
-
-  const locationEntries: MetadataRoute.Sitemap = normalizedLocationSlugs.map((slug) => ({
-    url: `${baseUrl}/digital-marketing-courses-${slug}`,
-    lastModified: now,
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
-  }))
-
-  return [
-    ...staticEntries,
-    ...blogEntries,
-    ...supabaseBlogEntries,
-    ...courseEntries,
-    ...toolEntries,
-    ...locationEntries,
+  const sitemapEntries: MetadataRoute.Sitemap = [
+    ...staticRoutes.map((route) => toEntry(route, route === '/' ? 1 : 0.8, route === '/' ? 'daily' : 'weekly')),
+    ...Array.from(new Set((pages as Array<{ slug?: string }>).map((row) => row.slug).filter(Boolean))).map((slug) =>
+      toEntry(`/${slug}`, 0.8, 'weekly')
+    ),
+    ...Array.from(new Set((locationPages as Array<{ slug?: string }>).map((row) => row.slug).filter(Boolean))).map((slug) =>
+      toEntry(`/${slug}`, 0.8, 'weekly')
+    ),
+    ...Array.from(
+      new Set([
+        ...(blogs as Array<{ slug?: string }>).map((row) => row.slug).filter(Boolean),
+        ...localBlogSlugs,
+      ])
+    ).map((slug) => toEntry(`/blog/${slug}`, 0.7, 'weekly')),
+    ...Array.from(new Set((courses as Array<{ slug?: string }>).map((row) => row.slug).filter(Boolean))).map((slug) =>
+      toEntry(`/courses/${slug}`, 0.8, 'weekly')
+    ),
+    ...Array.from(new Set((tools as Array<{ slug?: string }>).map((row) => row.slug).filter(Boolean))).map((slug) =>
+      toEntry(`/tools/${slug}`, 0.7, 'weekly')
+    ),
+    ...Array.from(new Set((locations as Array<{ slug?: string }>).map((row) => row.slug).filter(Boolean))).map((slug) =>
+      toEntry(`/digital-marketing-courses-${slug}`, 0.7, 'weekly')
+    ),
+    ...Array.from(new Set((blogCategories as Array<{ slug?: string }>).map((row) => row.slug).filter(Boolean))).map((slug) =>
+      toEntry(`/blog/category/${slug}`, 0.6, 'weekly')
+    ),
+    ...Array.from(new Set((blogTags as Array<{ slug?: string }>).map((row) => row.slug).filter(Boolean))).map((slug) =>
+      toEntry(`/blog/tag/${slug}`, 0.6, 'weekly')
+    ),
+    ...Array.from(new Set((authors as Array<{ slug?: string }>).map((row) => row.slug).filter(Boolean))).map((slug) =>
+      toEntry(`/blog/author/${slug}`, 0.5, 'weekly')
+    ),
   ]
+
+  const deduped = new Map<string, MetadataRoute.Sitemap[number]>()
+  for (const entry of sitemapEntries) deduped.set(entry.url, entry)
+  return Array.from(deduped.values())
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -14,22 +15,31 @@ import {
   School,
   Search,
   Settings,
+  MapPinned,
+  Handshake,
+  Inbox,
+  Tags,
 } from 'lucide-react'
 import { Surface } from '../../src/components/ui/Surface'
 import { CustomCursor } from '../../src/components/ui/CustomCursor'
 import { useAuth } from '../../src/contexts/AuthContext'
 import { ProtectedRoute } from '../../src/components/ProtectedRoute'
+import { supabase } from '../../lib/supabaseClient'
 
 const adminNav = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/admin/pages', label: 'Pages', icon: FileText },
   { path: '/admin/blogs', label: 'Blogs', icon: BookOpen },
+  { path: '/admin/blog-taxonomy', label: 'Blog Taxonomy', icon: Tags },
   { path: '/admin/courses', label: 'Courses', icon: GraduationCap },
   { path: '/admin/tools', label: 'Tools', icon: Wrench },
   { path: '/admin/companies', label: 'Companies', icon: Building2 },
   { path: '/admin/internships', label: 'Internships', icon: School },
   { path: '/admin/testimonials', label: 'Testimonials', icon: MessageSquare },
   { path: '/admin/media', label: 'Media', icon: ImageIcon },
+  { path: '/admin/trust', label: 'Trust & Conversion', icon: Handshake },
+  { path: '/admin/landing-seo', label: 'Landing SEO', icon: MapPinned },
+  { path: '/admin/leads', label: 'Leads', icon: Inbox },
   { path: '/admin/lms', label: 'LMS', icon: BookOpen },
   { path: '/admin/seo', label: 'SEO', icon: Search },
   { path: '/admin/settings', label: 'Settings', icon: Settings },
@@ -39,6 +49,49 @@ export default function AdminLayoutClient({ children }) {
   const pathname = usePathname()
   const router = useRouter()
   const { user, profile, signOut } = useAuth()
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const originalFetch = window.fetch.bind(window)
+
+    window.fetch = async (input, init) => {
+      const url =
+        typeof input === 'string'
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : input instanceof Request
+              ? input.url
+              : String(input)
+
+      const isCmsRequest = url.startsWith('/api/cms/') || url.includes('/api/cms/')
+      if (!isCmsRequest || !supabase?.auth) {
+        return originalFetch(input, init)
+      }
+
+      try {
+        const { data } = await supabase.auth.getSession()
+        const token = data?.session?.access_token
+        if (!token) return originalFetch(input, init)
+
+        const headers = new Headers(input instanceof Request ? input.headers : init?.headers)
+        headers.set('Authorization', `Bearer ${token}`)
+
+        if (input instanceof Request) {
+          return originalFetch(new Request(input, { headers }))
+        }
+
+        return originalFetch(input, { ...init, headers })
+      } catch {
+        return originalFetch(input, init)
+      }
+    }
+
+    return () => {
+      window.fetch = originalFetch
+    }
+  }, [])
 
   if (pathname === '/admin/login') {
     return children

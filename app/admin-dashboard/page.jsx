@@ -1,11 +1,11 @@
 ﻿export const revalidate = 1;
 
-import { AdminCmsClientPage } from '../client-pages'
+import { redirect } from 'next/navigation'
 import { buildMetadata } from '../lib/seo'
 
 export const metadata = buildMetadata({
-  title: 'Admin CMS Dashboard',
-  description: 'Acadvizen admin CMS dashboard for content and registrations.',
+  title: 'Admin Dashboard',
+  description: 'Acadvizen CMS admin dashboard.',
   path: '/admin-dashboard',
 })
 metadata.robots = {
@@ -14,6 +14,6 @@ metadata.robots = {
 }
 
 export default function Page() {
-  return <AdminCmsClientPage />
+  redirect('/admin')
 }
 

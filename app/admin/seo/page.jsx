@@ -1,14 +1,8 @@
-﻿export const revalidate = 1;
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
 
-import AdminSectionShell from '../AdminSectionShell'
+import SeoAdminClient from './SeoAdminClient'
 
 export default function Page() {
-  return (
-    <AdminSectionShell
-      title="SEO"
-      subtitle="Control metadata, canonical URLs, OpenGraph, Twitter tags, and schema."
-    />
-  )
+  return <SeoAdminClient />
 }
-
-

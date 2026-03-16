@@ -1,5 +1,7 @@
 import { getServerSupabaseClient } from '../../lib/supabaseServer'
 import { buildInternalLinks } from '../../lib/internalLinker'
+import DynamicPageRenderer from '../../components/cms/DynamicPageRenderer'
+import { fetchLocationPageBySlug } from '../../lib/cmsServer'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,6 +32,23 @@ async function fetchCityRecord(supabase, citySlug) {
 
 export async function generateMetadata({ params }) {
   const citySlug = params?.city || 'your-city'
+  const cmsPage = await fetchLocationPageBySlug(`digital-marketing-course-${citySlug}`)
+  if (cmsPage) {
+    return {
+      title: cmsPage.seo_title || cmsPage.title,
+      description: cmsPage.seo_description || cmsPage.description,
+      alternates: { canonical: cmsPage.canonical_url || `https://acadvizen.com/digital-marketing-course-${citySlug}` },
+      robots: cmsPage.noindex ? { index: false, follow: true } : undefined,
+      openGraph: {
+        title: cmsPage.seo_title || cmsPage.title,
+        description: cmsPage.seo_description || cmsPage.description,
+        url: cmsPage.canonical_url || `https://acadvizen.com/digital-marketing-course-${citySlug}`,
+        type: 'website',
+        images: cmsPage.og_image ? [{ url: cmsPage.og_image }] : undefined,
+      },
+    }
+  }
+
   const cityName = formatCity(citySlug)
   const title = `Digital Marketing Course in ${cityName} | Acadvizen`
   const description = `Master digital marketing in ${cityName} with hands-on training, live projects, and placement support.`
@@ -54,6 +73,11 @@ export async function generateMetadata({ params }) {
 
 export default async function CityCoursePage({ params }) {
   const citySlug = params?.city || 'your-city'
+  const cmsPage = await fetchLocationPageBySlug(`digital-marketing-course-${citySlug}`)
+  if (cmsPage) {
+    return <DynamicPageRenderer page={cmsPage} />
+  }
+
   const cityName = formatCity(citySlug)
   const supabase = getServerSupabaseClient()
 

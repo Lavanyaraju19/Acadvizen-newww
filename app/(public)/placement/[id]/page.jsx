@@ -1,4 +1,4 @@
-export const revalidate = 1;
+export const revalidate = 1
 
 import { PlacementDetailClientPage } from '../../../client-pages'
 import { buildMetadata } from '../../../lib/seo'

@@ -1,18 +1,25 @@
-﻿export const revalidate = 1;
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
 
+import DynamicPageRenderer from '../../../components/cms/DynamicPageRenderer'
+import { fetchCmsPageBySlug } from '../../../lib/cmsServer'
 import { HomeClientPage } from '../../client-pages'
-import { buildMetadata } from '../../lib/seo'
+import { buildCmsPageMetadata } from '../../lib/cmsPageRoute'
+import { isPublicCmsEnabled } from '../../lib/publicCms'
 
-export const dynamic = 'force-static'
-
-export const metadata = buildMetadata({
-  title: 'Digital Marketing Internship in Bangalore',
-  description:
-    'Get internship-driven digital marketing training in Bangalore with hands-on campaign execution and placement-focused mentoring.',
-  path: '/digital-marketing-internship-in-bangalore',
-})
-
-export default function Page() {
-  return <HomeClientPage />
+export async function generateMetadata() {
+  return buildCmsPageMetadata(
+    'digital-marketing-internship-in-bangalore',
+    '/digital-marketing-internship-in-bangalore',
+    {
+      title: 'Digital Marketing Internship in Bangalore',
+      description: 'Internship-driven digital marketing training with hands-on campaigns and placement mentoring.',
+    }
+  )
 }
 
+export default async function Page() {
+  if (!isPublicCmsEnabled()) return <HomeClientPage />
+  const cmsPage = await fetchCmsPageBySlug('digital-marketing-internship-in-bangalore')
+  return cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <HomeClientPage />
+}

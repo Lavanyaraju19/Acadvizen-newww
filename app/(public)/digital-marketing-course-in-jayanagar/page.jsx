@@ -1,19 +1,21 @@
-﻿export const revalidate = 1;
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
 
+import DynamicPageRenderer from '../../../components/cms/DynamicPageRenderer'
+import { fetchCmsPageBySlug } from '../../../lib/cmsServer'
 import { HomeClientPage } from '../../client-pages'
-import { buildMetadata } from '../../lib/seo'
+import { buildCmsPageMetadata } from '../../lib/cmsPageRoute'
+import { isPublicCmsEnabled } from '../../lib/publicCms'
 
-export const dynamic = 'force-static'
-
-export const metadata = buildMetadata({
-  title: 'Digital Marketing Course in Jayanagar',
-  description:
-    'Join Acadvizen in Jayanagar for hands-on digital marketing training with live projects, internship, and career support.',
-  path: '/digital-marketing-course-in-jayanagar',
-})
-
-export default function Page() {
-  return <HomeClientPage />
+export async function generateMetadata() {
+  return buildCmsPageMetadata('digital-marketing-course-in-jayanagar', '/digital-marketing-course-in-jayanagar', {
+    title: 'Digital Marketing Course in Jayanagar',
+    description: 'Hands-on digital marketing training with live projects, internship, and career support.',
+  })
 }
 
-
+export default async function Page() {
+  if (!isPublicCmsEnabled()) return <HomeClientPage />
+  const cmsPage = await fetchCmsPageBySlug('digital-marketing-course-in-jayanagar')
+  return cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <HomeClientPage />
+}

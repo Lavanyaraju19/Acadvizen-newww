@@ -1,15 +1,19 @@
 ﻿export const revalidate = 1;
 
 import Link from 'next/link'
-import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, Search } from 'lucide-react'
+import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, Search, Handshake, MapPinned, Inbox, Tags } from 'lucide-react'
 import { Surface } from '../../src/components/ui/Surface'
 
 export default function Page() {
   const quickLinks = [
     { href: '/admin/pages', label: 'Pages', icon: LayoutDashboard },
     { href: '/admin/blogs', label: 'Blogs', icon: BookOpen },
+    { href: '/admin/blog-taxonomy', label: 'Blog Taxonomy', icon: Tags },
     { href: '/admin/courses', label: 'Courses', icon: GraduationCap },
     { href: '/admin/media', label: 'Media Library', icon: ImageIcon },
+    { href: '/admin/trust', label: 'Trust & Conversion', icon: Handshake },
+    { href: '/admin/landing-seo', label: 'Landing SEO', icon: MapPinned },
+    { href: '/admin/leads', label: 'Leads', icon: Inbox },
     { href: '/admin/seo', label: 'SEO', icon: Search },
   ]
 

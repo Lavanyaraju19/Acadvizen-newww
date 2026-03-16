@@ -1,19 +1,21 @@
-﻿export const revalidate = 1;
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
 
+import DynamicPageRenderer from '../../../components/cms/DynamicPageRenderer'
+import { fetchCmsPageBySlug } from '../../../lib/cmsServer'
 import { HomeClientPage } from '../../client-pages'
-import { buildMetadata } from '../../lib/seo'
+import { buildCmsPageMetadata } from '../../lib/cmsPageRoute'
+import { isPublicCmsEnabled } from '../../lib/publicCms'
 
-export const dynamic = 'force-static'
-
-export const metadata = buildMetadata({
-  title: 'SEO Course in Bangalore',
-  description:
-    'Master technical SEO, on-page SEO, and content optimization with practical assignments and mentor support in Bangalore.',
-  path: '/seo-course-in-bangalore',
-})
-
-export default function Page() {
-  return <HomeClientPage />
+export async function generateMetadata() {
+  return buildCmsPageMetadata('seo-course-in-bangalore', '/seo-course-in-bangalore', {
+    title: 'SEO Course in Bangalore',
+    description: 'Master technical SEO, on-page SEO, and content optimization with practical assignments.',
+  })
 }
 
-
+export default async function Page() {
+  if (!isPublicCmsEnabled()) return <HomeClientPage />
+  const cmsPage = await fetchCmsPageBySlug('seo-course-in-bangalore')
+  return cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <HomeClientPage />
+}

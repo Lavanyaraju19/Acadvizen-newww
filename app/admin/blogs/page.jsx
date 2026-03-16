@@ -1,14 +1,8 @@
-﻿export const revalidate = 1;
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
 
-import AdminSectionShell from '../AdminSectionShell'
+import BlogManagerClient from './BlogManagerClient'
 
 export default function Page() {
-  return (
-    <AdminSectionShell
-      title="Blogs"
-      subtitle="Create, edit, publish, and manage blog content with SEO fields."
-    />
-  )
+  return <BlogManagerClient />
 }
-
-

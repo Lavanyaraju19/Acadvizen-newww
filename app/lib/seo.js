@@ -7,11 +7,17 @@ export function buildMetadata({
   description,
   path = '/',
   image = DEFAULT_IMAGE,
+  canonical,
+  noindex = false,
+  ogTitle,
+  ogDescription,
+  twitterTitle,
+  twitterDescription,
 }) {
-  const url = new URL(path, SITE_URL).toString()
+  const url = canonical || new URL(path, SITE_URL).toString()
   const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME
 
-  return {
+  const metadata = {
     title: fullTitle,
     description,
     alternates: {
@@ -20,18 +26,25 @@ export function buildMetadata({
     openGraph: {
       type: 'website',
       url,
-      title: fullTitle,
-      description,
+      title: ogTitle || fullTitle,
+      description: ogDescription || description,
       siteName: SITE_NAME,
       images: [{ url: image }],
     },
     twitter: {
       card: 'summary_large_image',
-      title: fullTitle,
-      description,
+      title: twitterTitle || fullTitle,
+      description: twitterDescription || description,
       images: [image],
     },
   }
+  if (noindex) {
+    metadata.robots = {
+      index: false,
+      follow: true,
+    }
+  }
+  return metadata
 }
 
 export const siteConfig = {

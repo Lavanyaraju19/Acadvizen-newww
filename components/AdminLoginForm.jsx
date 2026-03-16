@@ -89,7 +89,7 @@ export default function AdminLoginForm() {
       }
 
       await fetch('/api/admin/session', { method: 'POST' })
-      router.push('/admin-dashboard')
+      router.push('/admin')
       router.refresh()
     } catch (e) {
       setError(e?.message || 'Login failed. Please try again.')

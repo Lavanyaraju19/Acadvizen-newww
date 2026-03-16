@@ -1,19 +1,21 @@
-﻿export const revalidate = 1;
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
 
+import DynamicPageRenderer from '../../../components/cms/DynamicPageRenderer'
+import { fetchCmsPageBySlug } from '../../../lib/cmsServer'
 import { AboutClientPage } from '../../client-pages'
-import { buildMetadata } from '../../lib/seo'
+import { buildCmsPageMetadata } from '../../lib/cmsPageRoute'
+import { isPublicCmsEnabled } from '../../lib/publicCms'
 
-export const dynamic = 'force-static'
-
-export const metadata = buildMetadata({
-  title: 'About Us',
-  description:
-    'Learn about Acadvizen, our mission, industry mentors, and AI-enabled digital marketing training approach.',
-  path: '/about',
-})
-
-export default function Page() {
-  return <AboutClientPage />
+export async function generateMetadata() {
+  return buildCmsPageMetadata('about', '/about', {
+    title: 'About Us',
+    description: 'Learn about our mission, mentors, and digital marketing training approach.',
+  })
 }
 
-
+export default async function Page() {
+  if (!isPublicCmsEnabled()) return <AboutClientPage />
+  const cmsPage = await fetchCmsPageBySlug('about')
+  return cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <AboutClientPage />
+}

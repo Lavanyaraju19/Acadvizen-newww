@@ -1,9 +1,8 @@
-﻿export const revalidate = 1;
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
 
 import { ToolsClientPage } from '../../client-pages'
 import { buildMetadata } from '../../lib/seo'
-
-export const dynamic = 'force-static'
 
 export const metadata = buildMetadata({
   title: 'Tools',
@@ -15,5 +14,3 @@ export const metadata = buildMetadata({
 export default function Page() {
   return <ToolsClientPage />
 }
-
-
