@@ -31,7 +31,7 @@ export function Navbar() {
   const headerLinks = Array.isArray(menus?.header) && menus.header.length
     ? menus.header.filter((item) => !item.parent_id)
     : (uiFallbackLinks.length ? uiFallbackLinks : fallbackHeaderLinks)
-  const logoSrc = settings?.logo || '/logo.png'
+  const logoSrc = '/logo-mark.png'
   const brandLabel = String(uiCopy.nav_brand_label || settings?.company_name || 'Acadvizen')
   const dashboardLabel = String(uiCopy.nav_dashboard_label || 'Dashboard')
   const signOutLabel = String(uiCopy.nav_signout_label || 'Sign Out')
@@ -57,20 +57,22 @@ export function Navbar() {
     <header className="sticky top-0 z-50">
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center gap-2 group" data-cursor="hover">
-              <div className="relative">
-                <div className="absolute -inset-2 rounded-xl bg-teal-400/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="flex items-center min-w-0">
+            <Link to="/" className="flex items-center gap-3 group min-w-0" data-cursor="hover">
+              <div className="relative flex h-11 w-11 items-center justify-center overflow-visible sm:h-12 sm:w-12">
                 <Image
                   src={logoSrc}
                   alt={brandLabel}
-                  width={128}
-                  height={36}
-                  className="relative h-9 w-auto"
+                  width={48}
+                  height={48}
+                  className="h-11 w-auto shrink-0 object-contain sm:h-12"
                   style={{ width: 'auto', height: 'auto' }}
+                  priority
                 />
               </div>
-              <span className="font-semibold text-slate-100 hidden sm:inline tracking-tight">{brandLabel}</span>
+              <span className="truncate text-lg font-bold tracking-tight text-slate-50 sm:text-2xl">
+                {brandLabel}
+              </span>
             </Link>
           </div>
 

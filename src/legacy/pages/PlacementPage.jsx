@@ -2,13 +2,11 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
-import { supabase } from '../../lib/supabaseClient'
 import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 import WorldCareerMap from '../../../components/WorldCareerMap'
 import { assetUrl } from '../../lib/assetUrl'
-import { subscribeToTable } from '../../../lib/realtime'
 
 const hiringPartnerLogos = [
   { name: 'Accenture', file: 'accenture.png' },
@@ -76,14 +74,8 @@ export function PlacementPage() {
   const [pageSections, setPageSections] = useState({})
 
   useEffect(() => {
-    loadPlacements()
-    loadPageSections()
-    const channel = subscribeToTable('placements', () => loadPlacements())
-    const pageChannel = subscribeToTable('page_sections', () => loadPageSections())
-    return () => {
-      if (channel) supabase?.removeChannel(channel)
-      if (pageChannel) supabase?.removeChannel(pageChannel)
-    }
+    void loadPlacements()
+    void loadPageSections()
   }, [])
 
   async function loadPlacements() {

@@ -12,6 +12,14 @@ export async function generateMetadata({ params }) {
   const slug = params?.slug
   if (!slug) return buildMetadata({ title: 'Page', description: 'Acadvizen dynamic page.', path: '/' })
 
+  if (!isPublicCmsEnabled()) {
+    return buildMetadata({
+      title: 'Page Not Found',
+      description: 'This page does not exist.',
+      path: `/${slug}`,
+    })
+  }
+
   const [page, locationPage, seo] = await Promise.all([fetchCmsPageBySlug(slug), fetchLocationPageBySlug(slug), fetchSeoBySlug(slug)])
   const resolved = page || locationPage
   if (!resolved) {
@@ -35,17 +43,21 @@ export async function generateMetadata({ params }) {
 
 export default async function Page({ params }) {
   const slug = params?.slug
-  if (!isPublicCmsEnabled()) notFound()
   const pathname = slug ? `/${slug}` : '/'
-  const [redirectRule, page, locationPage, seo] = await Promise.all([
-    fetchRedirectByPath(pathname),
+  const redirectRule = await fetchRedirectByPath(pathname)
+  if (redirectRule?.to_path) {
+    redirect(redirectRule.to_path)
+  }
+
+  if (!isPublicCmsEnabled()) {
+    notFound()
+  }
+
+  const [page, locationPage, seo] = await Promise.all([
     fetchCmsPageBySlug(slug),
     fetchLocationPageBySlug(slug),
     fetchSeoBySlug(slug),
   ])
-  if (redirectRule?.to_path) {
-    redirect(redirectRule.to_path)
-  }
 
   const resolved = page || locationPage
   if (!resolved) notFound()

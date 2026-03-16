@@ -1,13 +1,18 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { Link } from 'react-router-dom'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
-import { CustomCursor } from '../ui/CustomCursor'
 import { Navbar } from '../Navbar'
-import { BottomDockNav } from '../BottomDockNav'
 import { Facebook, Instagram, Linkedin, Youtube } from 'lucide-react'
 import { useSiteCms } from '../../hooks/useSiteCms'
+
+const CustomCursor = dynamic(() => import('../ui/CustomCursor').then((mod) => mod.CustomCursor), {
+  ssr: false,
+})
+const BottomDockNav = dynamic(() => import('../BottomDockNav').then((mod) => mod.BottomDockNav), {
+  ssr: false,
+})
 
 function normalizeMenuItems(value = []) {
   if (!Array.isArray(value)) return []
@@ -123,13 +128,7 @@ export function PublicLayout({ children }) {
 
       <footer className="relative z-10 mt-8">
         <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-teal-400/40 to-transparent" />
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="border-t border-white/10 bg-white/[0.02] backdrop-blur"
-        >
+        <div className="border-t border-white/10 bg-white/[0.02] backdrop-blur">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="grid gap-10 md:grid-cols-4">
               <div>
@@ -252,7 +251,7 @@ export function PublicLayout({ children }) {
               {footerCopy}
             </div>
           </div>
-        </motion.div>
+        </div>
       </footer>
     </div>
   )

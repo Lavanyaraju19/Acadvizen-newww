@@ -1,5 +1,6 @@
 import { fetchCmsPageBySlug, fetchSeoBySlug } from '../../lib/cmsServer'
 import { buildMetadata } from './seo'
+import { isPublicCmsEnabled } from './publicCms'
 
 function firstNonEmpty(...values) {
   for (const value of values) {
@@ -11,6 +12,15 @@ function firstNonEmpty(...values) {
 }
 
 export async function buildCmsPageMetadata(slug, path, fallback = {}) {
+  if (!isPublicCmsEnabled()) {
+    return buildMetadata({
+      title: fallback.title || 'Page',
+      description: fallback.description || 'Digital marketing page.',
+      path,
+      image: fallback.image,
+    })
+  }
+
   const [page, seo] = await Promise.all([fetchCmsPageBySlug(slug), fetchSeoBySlug(slug)])
 
   return buildMetadata({

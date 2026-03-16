@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import DynamicPageRenderer from '../../../components/cms/DynamicPageRenderer'
 import { fetchCmsPageBySlug } from '../../../lib/cmsServer'
-import { HomeClientPage } from '../../client-pages'
+import HomeLegacyClient from '../../legacy-fallback/HomeLegacyClient'
 import { buildCmsPageMetadata } from '../../lib/cmsPageRoute'
 import { isPublicCmsEnabled } from '../../lib/publicCms'
 
@@ -15,7 +15,10 @@ export async function generateMetadata() {
 }
 
 export default async function Page() {
-  if (!isPublicCmsEnabled()) return <HomeClientPage />
+  if (!isPublicCmsEnabled()) {
+    return <HomeLegacyClient />
+  }
+
   const cmsPage = await fetchCmsPageBySlug('digital-marketing-course-in-jayanagar')
-  return cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <HomeClientPage />
+  return cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <HomeLegacyClient />
 }

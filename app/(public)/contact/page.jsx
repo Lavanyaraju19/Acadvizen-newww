@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import DynamicPageRenderer from '../../../components/cms/DynamicPageRenderer'
 import { fetchCmsPageBySlug } from '../../../lib/cmsServer'
-import { ContactClientPage } from '../../client-pages'
+import ContactLegacyClient from '../../legacy-fallback/ContactLegacyClient'
 import { buildCmsPageMetadata } from '../../lib/cmsPageRoute'
 import { isPublicCmsEnabled } from '../../lib/publicCms'
 
@@ -15,7 +15,10 @@ export async function generateMetadata() {
 }
 
 export default async function Page() {
-  if (!isPublicCmsEnabled()) return <ContactClientPage />
+  if (!isPublicCmsEnabled()) {
+    return <ContactLegacyClient />
+  }
+
   const cmsPage = await fetchCmsPageBySlug('contact')
-  return cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <ContactClientPage />
+  return cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <ContactLegacyClient />
 }

@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import DynamicPageRenderer from '../../../components/cms/DynamicPageRenderer'
 import { fetchCmsPageBySlug } from '../../../lib/cmsServer'
-import { PlacementClientPage } from '../../client-pages'
+import PlacementLegacyClient from '../../legacy-fallback/PlacementLegacyClient'
 import { buildCmsPageMetadata } from '../../lib/cmsPageRoute'
 import { isPublicCmsEnabled } from '../../lib/publicCms'
 
@@ -15,7 +15,10 @@ export async function generateMetadata() {
 }
 
 export default async function Page() {
-  if (!isPublicCmsEnabled()) return <PlacementClientPage />
+  if (!isPublicCmsEnabled()) {
+    return <PlacementLegacyClient />
+  }
+
   const cmsPage = await fetchCmsPageBySlug('placement')
-  return cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <PlacementClientPage />
+  return cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <PlacementLegacyClient />
 }

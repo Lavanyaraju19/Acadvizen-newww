@@ -15,7 +15,16 @@ import {
 export default function HeroSection({ section }) {
   const content = normalizeContent(section)
   const style = normalizeStyle(section)
-  const buttons = safeList(content.buttons)
+  const buttons = safeList(content.buttons).length
+    ? safeList(content.buttons)
+    : content.button
+      ? [content.button]
+      : []
+  const badges = safeList(content.badges).length
+    ? safeList(content.badges)
+    : content.badge
+      ? [{ label: content.badge }]
+      : []
   const bgImage = safeString(content.background_image)
   const inline = sectionInlineStyle(content, style)
 
@@ -30,10 +39,17 @@ export default function HeroSection({ section }) {
     >
       <div className="absolute inset-0 bg-slate-950/60" aria-hidden="true" />
       <div className={`relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 ${sectionAlignClass(content, style)}`}>
-        {content.badge ? (
-          <p className="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-1 text-xs uppercase tracking-[0.18em] text-teal-200">
-            {content.badge}
-          </p>
+        {badges.length ? (
+          <div className="flex flex-wrap gap-3">
+            {badges.map((badge, index) => (
+              <p
+                key={`${safeString(badge?.label || badge)}-${index}`}
+                className="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-1 text-xs uppercase tracking-[0.18em] text-teal-200"
+              >
+                {safeString(badge?.label || badge)}
+              </p>
+            ))}
+          </div>
         ) : null}
         <h1 className={`mt-4 font-semibold leading-tight text-slate-50 ${headingClass(style)}`}>
           {safeString(content.heading, section?.title || '')}

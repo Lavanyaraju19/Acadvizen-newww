@@ -1,16 +1,25 @@
 export const revalidate = 0
 export const dynamic = 'force-dynamic'
 
-import { ToolsClientPage } from '../../client-pages'
-import { buildMetadata } from '../../lib/seo'
+import DynamicPageRenderer from '../../../components/cms/DynamicPageRenderer'
+import { fetchCmsPageBySlug } from '../../../lib/cmsServer'
+import ToolsLegacyClient from '../../legacy-fallback/ToolsLegacyClient'
+import { buildCmsPageMetadata } from '../../lib/cmsPageRoute'
+import { isPublicCmsEnabled } from '../../lib/publicCms'
 
-export const metadata = buildMetadata({
-  title: 'Tools',
-  description:
-    'Browse AI and digital marketing tools covered in Acadvizen programs, with categories and practical use cases.',
-  path: '/tools',
-})
+export async function generateMetadata() {
+  return buildCmsPageMetadata('tools', '/tools', {
+    title: 'Tools',
+    description:
+      'Browse AI and digital marketing tools covered in Acadvizen programs, with categories and practical use cases.',
+  })
+}
 
-export default function Page() {
-  return <ToolsClientPage />
+export default async function Page() {
+  if (!isPublicCmsEnabled()) {
+    return <ToolsLegacyClient />
+  }
+
+  const cmsPage = await fetchCmsPageBySlug('tools')
+  return cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <ToolsLegacyClient />
 }

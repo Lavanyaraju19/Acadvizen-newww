@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { headingClass, imageStyle, normalizeContent, normalizeStyle, safeList, safeString, sectionInlineStyle, sectionPaddingClass, sectionVisibilityClass } from './sectionUtils'
+import { bodyClass, headingClass, imageStyle, normalizeContent, normalizeStyle, safeList, safeString, sectionInlineStyle, sectionPaddingClass, sectionVisibilityClass } from './sectionUtils'
 
 export default function GallerySection({ section }) {
   const content = normalizeContent(section)
@@ -12,6 +12,7 @@ export default function GallerySection({ section }) {
     <section className={`${sectionPaddingClass(content, style)} ${sectionVisibilityClass(content)}`} style={sectionInlineStyle(content, style)}>
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {content.heading ? <h2 className={`mb-6 font-semibold text-slate-50 ${headingClass(style)}`}>{safeString(content.heading)}</h2> : null}
+        {content.subheading ? <p className={`mb-8 max-w-3xl whitespace-pre-line text-slate-300 ${bodyClass(style)}`}>{safeString(content.subheading)}</p> : null}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item, index) => {
             if (!item?.src) return null
@@ -26,6 +27,7 @@ export default function GallerySection({ section }) {
                   style={galleryImageStyle}
                   sizes="(max-width: 1024px) 100vw, 33vw"
                 />
+                {item?.caption ? <p className="px-4 py-3 text-sm text-slate-300">{safeString(item.caption)}</p> : null}
               </div>
             )
           })}

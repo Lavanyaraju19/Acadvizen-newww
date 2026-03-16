@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { supabase } from '../../lib/supabaseClient'
+import Image from 'next/image'
 import { fetchPublicData } from '../../lib/apiClient'
 
 export function ContactPage() {
@@ -15,14 +15,7 @@ export function ContactPage() {
   const [pageSections, setPageSections] = useState({})
 
   useEffect(() => {
-    loadPageSections()
-    const pageChannel = supabase
-      ?.channel('public-page-contact')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'page_sections' }, loadPageSections)
-      .subscribe()
-    return () => {
-      if (pageChannel) supabase?.removeChannel(pageChannel)
-    }
+    void loadPageSections()
   }, [])
 
   async function loadPageSections() {
@@ -179,7 +172,13 @@ export function ContactPage() {
             <div className="grid gap-3 p-2 md:grid-cols-2">
               {officeImages.map((img, idx) => (
                 <div key={`${img}-${idx}`} className="relative h-48 overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]">
-                  <img src={img} alt="Acadvizen office" className="h-full w-full object-cover" />
+                  <Image
+                    src={img}
+                    alt="Acadvizen office"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="object-cover"
+                  />
                 </div>
               ))}
             </div>

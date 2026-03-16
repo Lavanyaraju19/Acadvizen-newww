@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
-import { supabase } from '../../lib/supabaseClient'
 import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
@@ -11,14 +10,7 @@ export function AboutPage() {
   const [pageSections, setPageSections] = useState({})
 
   useEffect(() => {
-    loadPageSections()
-    const pageChannel = supabase
-      ?.channel('public-page-about')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'page_sections' }, loadPageSections)
-      .subscribe()
-    return () => {
-      if (pageChannel) supabase?.removeChannel(pageChannel)
-    }
+    void loadPageSections()
   }, [])
 
   async function loadPageSections() {

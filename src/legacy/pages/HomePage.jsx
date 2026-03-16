@@ -7,14 +7,12 @@ import {
   Sparkles,
   ChevronDown,
 } from 'lucide-react'
-import { supabase } from '../../lib/supabaseClient'
 import { fetchPublicData } from '../../lib/apiClient'
 import { assetUrl } from '../../lib/assetUrl'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 import { BlogSection } from '../../components/BlogSection'
 import { blogs as localBlogs } from '../../../data/blogs'
-import { subscribeToTable } from '../../../lib/realtime'
 
 export default function HomePage() {
   const metaTitle = 'Best Digital Marketing Course In Bangalore'
@@ -80,8 +78,6 @@ export default function HomePage() {
       answer: 'Yes. The curriculum is beginner friendly and progresses toward industry-ready execution.',
     },
   ]
-  const [tools, setTools] = useState([])
-  const [testimonials, setTestimonials] = useState([])
   const [showPopup, setShowPopup] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [formError, setFormError] = useState('')
@@ -99,25 +95,11 @@ export default function HomePage() {
         published_at: post.created_at,
       }))
   )
-  const [partners, setPartners] = useState([])
-  const [partnersError, setPartnersError] = useState('')
-  const [toolsError, setToolsError] = useState('')
-  const [toolsCount, setToolsCount] = useState(null)
-  const [partnersCount, setPartnersCount] = useState(null)
   const [activeFaq, setActiveFaq] = useState(0)
-  const [startCounters, setStartCounters] = useState(false)
   const [heroVideoAvailable, setHeroVideoAvailable] = useState(true)
   const [heroVideoPlaying, setHeroVideoPlaying] = useState(false)
   const heroVideoRef = useRef(null)
-  const [toolsFallback] = useState([
-    { name: 'Google Ads', slug: 'google-ads', brand_color: '#4285F4' },
-    { name: 'Meta Ads', slug: 'meta-ads', brand_color: '#1877F2' },
-    { name: 'SEMrush', slug: 'semrush', brand_color: '#FF642D' },
-    { name: 'Ahrefs', slug: 'ahrefs', brand_color: '#0B1F2A' },
-    { name: 'Canva', slug: 'canva', brand_color: '#00C4CC' },
-    { name: 'ChatGPT', slug: 'chatgpt', brand_color: '#10A37F' },
-  ])
-  const [partnersFallback] = useState([
+  const partnersFallback = [
     { name: 'Google', logo_url: 'https://logo.clearbit.com/google.com', row_group: 'row_a' },
     { name: 'Amazon', logo_url: 'https://logo.clearbit.com/amazon.com', row_group: 'row_a' },
     { name: 'Microsoft', logo_url: 'https://logo.clearbit.com/microsoft.com', row_group: 'row_a' },
@@ -128,42 +110,8 @@ export default function HomePage() {
     { name: 'Dentsu', logo_url: 'https://logo.clearbit.com/dentsu.com', row_group: 'row_b' },
     { name: 'Flipkart', logo_url: 'https://logo.clearbit.com/flipkart.com', row_group: 'row_b' },
     { name: 'Yahoo', logo_url: 'https://logo.clearbit.com/yahoo.com', row_group: 'row_b' },
-  ])
-  const [testimonialShowcase] = useState([
-    {
-      id: 'showcase-accenture',
-      name: 'Acadvizen Learner',
-      role: 'Placed at Accenture',
-      quote: 'Hands-on project training helped me transition confidently into a digital marketing role.',
-      image_url: '/images/success/success2.jpg',
-    },
-    {
-      id: 'showcase-tcs',
-      name: 'Acadvizen Learner',
-      role: 'Placed at TCS',
-      quote: 'The structured curriculum and interview preparation made placement conversion much easier.',
-      image_url: '/images/success/success1.jpg',
-    },
-    {
-      id: 'showcase-ibm',
-      name: 'Acadvizen Learner',
-      role: 'Placed at IBM',
-      quote: 'Tool-based learning and live campaigns gave me practical confidence from day one.',
-      image_url: '/images/success/success.jpg',
-    },
-    {
-      id: 'showcase-cognizant',
-      name: 'Acadvizen Learner',
-      role: 'Placed at Cognizant',
-      quote: 'Portfolio guidance and mock interviews directly improved my hiring outcomes.',
-      image_url: '/images/success/success3.jpg',
-    },
-  ])
-  const [statCounts, setStatCounts] = useState({
-    careers: 0,
-    placed: 0,
-    partners: 0,
-  })
+  ]
+  const [partners, setPartners] = useState(partnersFallback)
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -173,100 +121,43 @@ export default function HomePage() {
   })
 
   useEffect(() => {
-    loadTools()
-    loadTestimonials()
-    loadBlogPosts()
-    loadHomeSections()
-    loadPartners()
-    loadCounts()
-    const handleScroll = () => setScrollY(window.scrollY)
+    const runDeferredLoads = () => {
+      void loadBlogPosts()
+      void loadHomeSections()
+      void loadPartners()
+    }
+    const usingIdleCallback = typeof window.requestIdleCallback === 'function'
+    const deferredHandle = usingIdleCallback
+      ? window.requestIdleCallback(runDeferredLoads, { timeout: 1200 })
+      : window.setTimeout(runDeferredLoads, 250)
+
+    let frameId = null
+    const handleScroll = () => {
+      if (frameId !== null) return
+      frameId = window.requestAnimationFrame(() => {
+        setScrollY(window.scrollY)
+        frameId = null
+      })
+    }
     window.addEventListener('scroll', handleScroll, { passive: true })
     const timer = setTimeout(() => {
       setScrollY(window.scrollY)
       setShowPopup(true)
     }, 90000)
 
-    const toolsChannel = subscribeToTable('tools_extended', () => loadTools())
-    const testimonialsChannel = subscribeToTable('testimonials', () => loadTestimonials())
-    const blogChannel = subscribeToTable('blog_posts', () => loadBlogPosts())
-    const homeSectionsChannel = subscribeToTable('home_sections', () => loadHomeSections())
-    const partnersChannel = subscribeToTable('hiring_partners', () => loadPartners())
-
     return () => {
       clearTimeout(timer)
       window.removeEventListener('scroll', handleScroll)
-      if (toolsChannel) supabase?.removeChannel(toolsChannel)
-      if (testimonialsChannel) supabase?.removeChannel(testimonialsChannel)
-      if (blogChannel) supabase?.removeChannel(blogChannel)
-      if (homeSectionsChannel) supabase?.removeChannel(homeSectionsChannel)
-      if (partnersChannel) supabase?.removeChannel(partnersChannel)
-    }
-  }, [])
-
-  useEffect(() => {
-    const el = document.getElementById('hero-counters')
-    if (!el) return undefined
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setStartCounters(true)
-          observer.disconnect()
-        }
-      },
-      { threshold: 0.3 }
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
-  useEffect(() => {
-    if (!startCounters) return undefined
-    const targets = { careers: 5000, placed: 3200, partners: 550 }
-    const duration = 1400
-    const start = performance.now()
-    let raf
-
-    const tick = (now) => {
-      const progress = Math.min((now - start) / duration, 1)
-      setStatCounts({
-        careers: Math.round(targets.careers * progress),
-        placed: Math.round(targets.placed * progress),
-        partners: Math.round(targets.partners * progress),
-      })
-      if (progress < 1) raf = requestAnimationFrame(tick)
-    }
-
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [startCounters])
-
-
-  async function loadTools() {
-    const { data, error } = await fetchPublicData('tools-extended')
-    if (error) {
-      const message = String(error || '')
-      if (error?.name === 'AbortError' || message.includes('signal is aborted')) {
-        setToolsError('')
-        setTools(toolsFallback)
-      } else {
-        setToolsError(message)
-        setTools([])
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId)
       }
-      return
+      if (usingIdleCallback && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(deferredHandle)
+      } else {
+        clearTimeout(deferredHandle)
+      }
     }
-    if (!data || data.length === 0) {
-      setToolsError('No tools found. Showing fallback list.')
-      setTools(toolsFallback)
-      return
-    }
-    setToolsError('')
-    if (data) setTools(data)
-  }
-
-  async function loadTestimonials() {
-    const { data } = await fetchPublicData('testimonials')
-    if (data) setTestimonials(data)
-  }
+  }, [])
 
   async function loadBlogPosts() {
     let { data, error } = await fetchPublicData('blog-posts', { limit: 6 })
@@ -330,32 +221,11 @@ export default function HomePage() {
 
   async function loadPartners() {
     const { data, error } = await fetchPublicData('hiring-partners')
-    if (error) {
-      const message = String(error || '')
-      if (error?.name === 'AbortError' || message.includes('signal is aborted')) {
-        setPartnersError('')
-        setPartners(partnersFallback)
-      } else {
-        setPartnersError(message)
-        setPartners([])
-      }
-      return
-    }
-    if (!data || data.length === 0) {
-      setPartnersError('')
+    if (error || !data || data.length === 0) {
       setPartners(partnersFallback)
       return
     }
-    setPartnersError('')
-    if (data) setPartners(data)
-  }
-
-  async function loadCounts() {
-    const { data: toolCount } = await fetchPublicData('tools-extended', { count: true })
-    if (toolCount?.count !== undefined) setToolsCount(toolCount.count ?? 0)
-
-    const { data: partnerCount } = await fetchPublicData('hiring-partners', { count: true })
-    if (partnerCount?.count !== undefined) setPartnersCount(partnerCount.count ?? 0)
+    setPartners(data)
   }
   async function loadHomeSections() {
     const { data } = await fetchPublicData('home-sections')
@@ -655,27 +525,12 @@ export default function HomePage() {
                 Build Your Own Learning Path with Guidance from Global Industry Experts
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
-                <span className="px-6 py-2 rounded-full border text-sm font-semibold border-white/25 text-slate-100 bg-white/[0.05]">
+                <span className="rounded-full border border-[#bfd5ff] bg-white px-4 py-2 text-sm font-semibold text-[#0B6CFF] shadow-sm">
                   6 Months Elite Program
                 </span>
-                <span className="px-6 py-2 rounded-full border text-sm font-semibold border-white/25 text-slate-100 bg-white/[0.05]">
+                <span className="rounded-full border border-[#bfd5ff] bg-white px-4 py-2 text-sm font-semibold text-[#0B6CFF] shadow-sm">
                   Includes 2 Months Internship
                 </span>
-              </div>
-              <div id="hero-counters" className="mt-8 grid gap-4 sm:grid-cols-3">
-                {[
-                  { label: 'Learners', value: statCounts.careers, suffix: '+' },
-                  { label: 'Placed', value: statCounts.placed, suffix: '+' },
-                  { label: 'Hiring Partners', value: statCounts.partners, suffix: '+' },
-                ].map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4">
-                    <div className="text-3xl font-bold text-teal-200">
-                      {item.value}
-                      {item.suffix}
-                    </div>
-                    <div className="mt-1 text-sm text-slate-300">{item.label}</div>
-                  </div>
-                ))}
               </div>
             </div>
             <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-3 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">

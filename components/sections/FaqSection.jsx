@@ -1,4 +1,5 @@
 import {
+  bodyClass,
   headingClass,
   normalizeContent,
   normalizeStyle,
@@ -19,6 +20,7 @@ export default function FaqSection({ section }) {
     <section className={`${sectionPaddingClass(content, style)} ${sectionVisibilityClass(content)}`} style={sectionInlineStyle(content, style)}>
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         {content.heading ? <h2 className={`mb-6 font-semibold text-slate-50 ${headingClass(style)}`}>{safeString(content.heading)}</h2> : null}
+        {content.subheading ? <p className={`mb-6 whitespace-pre-line text-slate-300 ${bodyClass(style)}`}>{safeString(content.subheading)}</p> : null}
         <div className="space-y-3">
           {items.map((faq, index) => (
             <details key={`${safeString(faq?.question)}-${index}`} className="rounded-xl border border-white/10 bg-[var(--section-card-bg,rgba(255,255,255,0.03))] p-4">
