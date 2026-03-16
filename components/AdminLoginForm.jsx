@@ -111,6 +111,7 @@ export default function AdminLoginForm() {
             </label>
             <input
               id="admin-email"
+              name="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -124,6 +125,7 @@ export default function AdminLoginForm() {
             </label>
             <input
               id="admin-password"
+              name="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

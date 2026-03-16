@@ -45,6 +45,53 @@ const adminNav = [
   { path: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
+function slugifyFieldLabel(value = '') {
+  return String(value)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
+}
+
+function ensureFormFieldAttributes(root) {
+  if (!root) return
+
+  const fields = root.querySelectorAll('input, textarea, select')
+  let counter = 0
+
+  fields.forEach((field) => {
+    if (!(field instanceof HTMLElement)) return
+
+    const existingId = field.getAttribute('id')
+    const existingName = field.getAttribute('name')
+    if (existingId && existingName) {
+      counter += 1
+      return
+    }
+
+    const labelEl = field.closest('label')
+    const labelText = slugifyFieldLabel(
+      labelEl?.firstChild?.textContent ||
+        labelEl?.textContent ||
+        field.getAttribute('placeholder') ||
+        field.getAttribute('aria-label') ||
+        field.getAttribute('type') ||
+        'field'
+    )
+
+    const fallbackId = `admin-${labelText || 'field'}-${counter + 1}`
+
+    field.setAttribute('id', existingId || fallbackId)
+    field.setAttribute('name', existingName || labelText || `field_${counter + 1}`)
+
+    if (labelEl && !labelEl.getAttribute('for')) {
+      labelEl.setAttribute('for', field.getAttribute('id') || fallbackId)
+    }
+
+    counter += 1
+  })
+}
+
 export default function AdminLayoutClient({ children }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -92,6 +139,23 @@ export default function AdminLayoutClient({ children }) {
       window.fetch = originalFetch
     }
   }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const root = document.querySelector('[data-admin-root]')
+    if (!root) return undefined
+
+    const scan = () => ensureFormFieldAttributes(root)
+    scan()
+
+    const observer = new MutationObserver(() => {
+      scan()
+    })
+
+    observer.observe(root, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [pathname])
 
   if (pathname === '/admin/login') {
     return children
@@ -170,7 +234,9 @@ export default function AdminLayoutClient({ children }) {
           </div>
         </div>
 
-        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">{children}</div>
+        <div data-admin-root className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+          {children}
+        </div>
       </div>
     </ProtectedRoute>
   )

@@ -75,6 +75,8 @@ export default function LeadFormSection({ section }) {
 
         <form onSubmit={submit} className="mt-5 grid gap-3 md:grid-cols-2">
           <input
+            id="lead-full-name"
+            name="full_name"
             value={form.full_name}
             onChange={(event) => setForm((prev) => ({ ...prev, full_name: event.target.value }))}
             placeholder={safeString(content.name_label, 'Your name')}
@@ -82,6 +84,8 @@ export default function LeadFormSection({ section }) {
             className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400"
           />
           <input
+            id="lead-email"
+            name="email"
             type="email"
             value={form.email}
             onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
@@ -90,6 +94,8 @@ export default function LeadFormSection({ section }) {
             className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400"
           />
           <input
+            id="lead-phone"
+            name="phone"
             value={form.phone}
             onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value }))}
             placeholder={safeString(content.phone_label, 'Phone number')}
@@ -97,6 +103,8 @@ export default function LeadFormSection({ section }) {
             className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 md:col-span-2"
           />
           <textarea
+            id="lead-message"
+            name="message"
             rows={4}
             value={form.message}
             onChange={(event) => setForm((prev) => ({ ...prev, message: event.target.value }))}

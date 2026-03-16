@@ -84,6 +84,7 @@ export function PublicLayout({ children }) {
     ? settings.social_links
     : {}
   const logoSrc = settings?.logo || '/logo.png'
+  const logoMarkSrc = '/logo-mark.png'
   const companyName = settings?.company_name || uiCopy.nav_brand_label || 'Acadvizen'
   const designTokens = settings?.design_tokens && typeof settings.design_tokens === 'object' ? settings.design_tokens : {}
   const footerNavHeading = String(uiCopy.footer_nav_heading || 'Academy Index')
@@ -134,14 +135,14 @@ export function PublicLayout({ children }) {
               <div>
                 <div className="flex items-center gap-2">
                   <Image
-                    src={logoSrc}
+                    src={logoMarkSrc}
                     alt={companyName}
-                    width={120}
-                    height={32}
-                    style={{ aspectRatio: '120/32', width: 'auto', height: 'auto' }}
-                    className="h-8 w-auto"
+                    width={56}
+                    height={56}
+                    style={{ width: 'auto', height: 'auto' }}
+                    className="h-12 w-auto shrink-0 object-contain"
                   />
-                  <span className="font-semibold text-slate-100">{companyName}</span>
+                  <span className="text-2xl font-bold text-slate-100">{companyName}</span>
                 </div>
                 <p className="mt-3 text-sm text-slate-400">
                   {settings?.footer_content || 'Premium academy for digital marketing mastery.'}

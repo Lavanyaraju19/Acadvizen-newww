@@ -1,10 +1,20 @@
 'use client'
 
+function fieldKey(label = '') {
+  return String(label)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '')
+}
+
 function InputField({ label, value, onChange, placeholder = '', type = 'text', className = '' }) {
+  const inputKey = fieldKey(label)
   return (
-    <label className={`text-xs text-slate-400 ${className}`}>
+    <label htmlFor={inputKey} className={`text-xs text-slate-400 ${className}`}>
       {label}
       <input
+        id={inputKey}
+        name={inputKey}
         type={type}
         value={value || ''}
         onChange={(event) => onChange(event.target.value)}
@@ -16,10 +26,13 @@ function InputField({ label, value, onChange, placeholder = '', type = 'text', c
 }
 
 function TextAreaField({ label, value, onChange, placeholder = '', rows = 4, className = '' }) {
+  const inputKey = fieldKey(label)
   return (
-    <label className={`text-xs text-slate-400 ${className}`}>
+    <label htmlFor={inputKey} className={`text-xs text-slate-400 ${className}`}>
       {label}
       <textarea
+        id={inputKey}
+        name={inputKey}
         rows={rows}
         value={value || ''}
         onChange={(event) => onChange(event.target.value)}

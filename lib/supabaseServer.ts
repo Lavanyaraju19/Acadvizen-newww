@@ -26,6 +26,14 @@ function keyMatchesProject(url: string, key: string) {
   return payload?.ref === projectRef
 }
 
+export function hasValidSupabaseAnonKey() {
+  return keyMatchesProject(SUPABASE_URL, SUPABASE_ANON_KEY)
+}
+
+export function hasValidSupabaseServiceRoleKey() {
+  return keyMatchesProject(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+}
+
 type ServerClientOptions = {
   authToken?: string | null
 }
@@ -36,10 +44,8 @@ export function getServerSupabaseClient(options: ServerClientOptions = {}) {
   }
 
   const authToken = options.authToken || null
-  const validAnonKey = keyMatchesProject(SUPABASE_URL, SUPABASE_ANON_KEY) ? SUPABASE_ANON_KEY : ''
-  const validServiceKey = keyMatchesProject(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-    ? SUPABASE_SERVICE_ROLE_KEY
-    : ''
+  const validAnonKey = hasValidSupabaseAnonKey() ? SUPABASE_ANON_KEY : ''
+  const validServiceKey = hasValidSupabaseServiceRoleKey() ? SUPABASE_SERVICE_ROLE_KEY : ''
   const serverKey = authToken ? validAnonKey : validServiceKey || validAnonKey
 
   if (!serverKey) {

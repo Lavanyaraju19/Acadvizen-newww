@@ -55,22 +55,22 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50">
-      <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <nav className="mx-auto max-w-7xl border-b border-slate-200 bg-white px-4 shadow-sm sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center min-w-0">
             <Link to="/" className="flex items-center gap-3 group min-w-0" data-cursor="hover">
-              <div className="relative flex h-11 w-11 items-center justify-center overflow-visible sm:h-12 sm:w-12">
+              <div className="relative flex h-12 w-12 items-center justify-center overflow-visible sm:h-14 sm:w-14">
                 <Image
                   src={logoSrc}
                   alt={brandLabel}
-                  width={48}
-                  height={48}
-                  className="h-11 w-auto shrink-0 object-contain sm:h-12"
+                  width={56}
+                  height={56}
+                  className="h-12 w-auto shrink-0 object-contain sm:h-14"
                   style={{ width: 'auto', height: 'auto' }}
                   priority
                 />
               </div>
-              <span className="truncate text-lg font-bold tracking-tight text-slate-50 sm:text-2xl">
+              <span className="truncate text-xl font-bold tracking-tight text-slate-900 sm:text-[2rem]">
                 {brandLabel}
               </span>
             </Link>
@@ -82,7 +82,7 @@ export function Navbar() {
                 key={`${item.title}-${item.url}`}
                 to={item.url}
                 target={item.target || '_self'}
-                className="text-slate-300 hover:text-white text-sm font-medium transition-colors"
+                className="text-slate-800 hover:text-slate-950 text-base font-semibold transition-colors"
               >
                 {item.title}
               </Link>
@@ -91,7 +91,7 @@ export function Navbar() {
 
           <div className="flex items-center gap-3">
             {!loading && user?.email && (
-              <span className="hidden sm:inline text-xs text-teal-300 bg-teal-500/10 px-3 py-1 rounded-full">
+              <span className="hidden sm:inline text-xs text-teal-700 bg-teal-100 px-3 py-1 rounded-full">
                 {profile?.role === 'admin' ? `${userAdminPrefix} ${user.email}` : `${userSignedInPrefix} ${user.email}`}
               </span>
             )}
@@ -99,13 +99,13 @@ export function Navbar() {
               <div className="flex items-center gap-2">
                 <Link
                   to={profile?.role === 'admin' ? '/admin' : '/dashboard'}
-                  className="rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-200 hover:bg-white/[0.05]"
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800 hover:bg-slate-50"
                 >
                   {dashboardLabel}
                 </Link>
                 <button
                   onClick={() => setShowConfirm(true)}
-                  className="rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-200 hover:bg-white/[0.05]"
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800 hover:bg-slate-50"
                 >
                   {signOutLabel}
                 </button>
@@ -114,19 +114,19 @@ export function Navbar() {
             <button
               onClick={() => setShowPanel(true)}
               data-cursor="hover"
-              className="inline-flex md:hidden items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-slate-200 hover:bg-white/[0.08]"
+              className="inline-flex md:hidden items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 hover:bg-slate-50"
             >
               <span className="sr-only">{menuLabel}</span>
               <div className="space-y-1">
-                <span className="block h-0.5 w-5 bg-slate-200" />
-                <span className="block h-0.5 w-5 bg-slate-200" />
-                <span className="block h-0.5 w-5 bg-slate-200" />
+                <span className="block h-0.5 w-5 bg-slate-800" />
+                <span className="block h-0.5 w-5 bg-slate-800" />
+                <span className="block h-0.5 w-5 bg-slate-800" />
               </div>
             </button>
           </div>
         </div>
 
-        <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
       </nav>
 
       {showPanel && (

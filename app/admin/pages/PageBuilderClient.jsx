@@ -245,10 +245,13 @@ function createEmptySectionForm(type = 'hero') {
 }
 
 function TextAreaField({ label, value, onChange, rows = 4, className = '' }) {
+  const inputKey = `pagebuilder-${toSlug(label) || 'field'}`
   return (
-    <label className={`text-xs text-slate-400 ${className}`}>
+    <label htmlFor={inputKey} className={`text-xs text-slate-400 ${className}`}>
       {label}
       <textarea
+        id={inputKey}
+        name={inputKey}
         rows={rows}
         value={value || ''}
         onChange={(event) => onChange(event.target.value)}
@@ -383,6 +386,13 @@ function describeSection(section) {
 
 function hasDraftContent(form) {
   return Object.keys(contentFromForm(form)).length > 0
+}
+
+function fieldAttrs(name) {
+  return {
+    id: name,
+    name,
+  }
 }
 
 export default function PageBuilderClient() {
@@ -793,6 +803,7 @@ export default function PageBuilderClient() {
         <aside className="space-y-5">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <h3 className="text-sm font-semibold text-slate-100">1. Select Page</h3>
+            <p className="mt-1 text-xs text-slate-400">Published pages stay editable here. You can update, unpublish, or delete them anytime.</p>
             <div className="mt-3 space-y-2">
               {loading && !bootstrapped ? (
                 <div className="text-xs text-slate-400">Syncing current website content...</div>
@@ -875,16 +886,16 @@ export default function PageBuilderClient() {
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <label className="text-xs text-slate-400">
                 Page Title
-                <input value={pageForm.title} onChange={(event) => setPageForm((prev) => ({ ...prev, title: event.target.value, slug: prev.slug || toSlug(event.target.value) }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+                <input {...fieldAttrs('page_title')} value={pageForm.title} onChange={(event) => setPageForm((prev) => ({ ...prev, title: event.target.value, slug: prev.slug || toSlug(event.target.value) }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
               </label>
               <label className="text-xs text-slate-400">
                 Slug
-                <input value={pageForm.slug} onChange={(event) => setPageForm((prev) => ({ ...prev, slug: toSlug(event.target.value) }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+                <input {...fieldAttrs('page_slug')} value={pageForm.slug} onChange={(event) => setPageForm((prev) => ({ ...prev, slug: toSlug(event.target.value) }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
               </label>
               <TextAreaField label="Page Description" value={pageForm.description} onChange={(value) => setPageForm((prev) => ({ ...prev, description: value }))} rows={3} />
               <label className="text-xs text-slate-400">
                 Publish Status
-                <select value={pageForm.status} onChange={(event) => setPageForm((prev) => ({ ...prev, status: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100">
+                <select {...fieldAttrs('page_status')} value={pageForm.status} onChange={(event) => setPageForm((prev) => ({ ...prev, status: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100">
                   {['draft', 'published'].map((value) => (
                     <option key={value} value={value} className="bg-[#07101b]">
                       {value}
@@ -894,7 +905,7 @@ export default function PageBuilderClient() {
               </label>
               <label className="text-xs text-slate-400">
                 SEO Title
-                <input value={pageForm.seo_title} onChange={(event) => setPageForm((prev) => ({ ...prev, seo_title: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+                <input {...fieldAttrs('page_seo_title')} value={pageForm.seo_title} onChange={(event) => setPageForm((prev) => ({ ...prev, seo_title: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
               </label>
               <TextAreaField label="SEO Description" value={pageForm.seo_description} onChange={(value) => setPageForm((prev) => ({ ...prev, seo_description: value }))} rows={3} />
             </div>
@@ -994,7 +1005,7 @@ export default function PageBuilderClient() {
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <label className="text-xs text-slate-400">
                   Section Type
-                  <select value={sectionForm.type} onChange={(event) => setSectionForm((prev) => ({ ...createEmptySectionForm(event.target.value), id: prev.id || '' }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100">
+                  <select {...fieldAttrs('section_type')} value={sectionForm.type} onChange={(event) => setSectionForm((prev) => ({ ...createEmptySectionForm(event.target.value), id: prev.id || '' }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100">
                     {SECTION_TYPES.map((type) => (
                       <option key={type} value={type} className="bg-[#07101b]">
                         {type}
@@ -1004,7 +1015,7 @@ export default function PageBuilderClient() {
                 </label>
                 <label className="text-xs text-slate-400">
                   Layout Variant
-                  <input value={sectionForm.layoutVariant} onChange={(event) => setSectionForm((prev) => ({ ...prev, layoutVariant: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+                  <input {...fieldAttrs('section_layout_variant')} value={sectionForm.layoutVariant} onChange={(event) => setSectionForm((prev) => ({ ...prev, layoutVariant: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
                 </label>
                 <TextAreaField label="Heading" value={sectionForm.heading} onChange={(value) => setSectionForm((prev) => ({ ...prev, heading: value }))} rows={2} />
                 <TextAreaField label="Subheading" value={sectionForm.subheading} onChange={(value) => setSectionForm((prev) => ({ ...prev, subheading: value }))} rows={3} />
@@ -1012,23 +1023,23 @@ export default function PageBuilderClient() {
                 <TextAreaField label="List / Bullet Items" value={sectionForm.listText} onChange={(value) => setSectionForm((prev) => ({ ...prev, listText: value }))} rows={5} className="md:col-span-2" />
                 <label className="text-xs text-slate-400">
                   Image URL
-                  <input value={sectionForm.imageSrc} onChange={(event) => setSectionForm((prev) => ({ ...prev, imageSrc: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+                  <input {...fieldAttrs('section_image_src')} value={sectionForm.imageSrc} onChange={(event) => setSectionForm((prev) => ({ ...prev, imageSrc: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
                 </label>
                 <label className="text-xs text-slate-400">
                   Image Alt
-                  <input value={sectionForm.imageAlt} onChange={(event) => setSectionForm((prev) => ({ ...prev, imageAlt: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+                  <input {...fieldAttrs('section_image_alt')} value={sectionForm.imageAlt} onChange={(event) => setSectionForm((prev) => ({ ...prev, imageAlt: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
                 </label>
                 <label className="text-xs text-slate-400 md:col-span-2">
                   Video URL / Embed URL
-                  <input value={sectionForm.videoUrl} onChange={(event) => setSectionForm((prev) => ({ ...prev, videoUrl: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+                  <input {...fieldAttrs('section_video_url')} value={sectionForm.videoUrl} onChange={(event) => setSectionForm((prev) => ({ ...prev, videoUrl: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
                 </label>
                 <label className="text-xs text-slate-400">
                   Single Button Text
-                  <input value={sectionForm.buttonLabel} onChange={(event) => setSectionForm((prev) => ({ ...prev, buttonLabel: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+                  <input {...fieldAttrs('section_button_label')} value={sectionForm.buttonLabel} onChange={(event) => setSectionForm((prev) => ({ ...prev, buttonLabel: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
                 </label>
                 <label className="text-xs text-slate-400">
                   Single Button URL
-                  <input value={sectionForm.buttonHref} onChange={(event) => setSectionForm((prev) => ({ ...prev, buttonHref: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+                  <input {...fieldAttrs('section_button_href')} value={sectionForm.buttonHref} onChange={(event) => setSectionForm((prev) => ({ ...prev, buttonHref: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
                 </label>
               </div>
 
