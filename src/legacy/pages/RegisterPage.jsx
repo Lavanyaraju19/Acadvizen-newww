@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { AuthShell } from '../../components/ui/AuthShell'
 import { supabase } from '../../lib/supabaseClient'
+import { trackLead } from '../../../lib/metaPixel'
 
 export function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -30,6 +31,14 @@ export function RegisterPage() {
           page: '/register',
         },
       ])
+      trackLead(
+        {
+          content_name: 'Register Page Form',
+          content_category: formData.learningMode,
+          page_path: '/register',
+        },
+        `register-page:${formData.email.trim().toLowerCase()}`
+      )
       navigate('/login', { state: { message: 'Registration successful! We will contact you soon.' } })
     } catch (err) {
       setError(err.message || 'Failed to register')

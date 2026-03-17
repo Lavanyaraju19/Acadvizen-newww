@@ -1,5 +1,5 @@
-import Image from 'next/image'
 import { bodyClass, headingClass, imageStyle, normalizeContent, normalizeStyle, safeList, safeString, sectionInlineStyle, sectionPaddingClass, sectionVisibilityClass } from './sectionUtils'
+import AdaptiveImage from '../media/AdaptiveImage'
 
 export default function GallerySection({ section }) {
   const content = normalizeContent(section)
@@ -18,14 +18,16 @@ export default function GallerySection({ section }) {
             if (!item?.src) return null
             return (
               <div key={`${item.src}-${index}`} className="overflow-hidden rounded-2xl border border-white/10 bg-[var(--section-card-bg,rgba(255,255,255,0.03))]">
-                <Image
+                <AdaptiveImage
                   src={safeString(item.src)}
                   alt={safeString(item.alt, `Gallery item ${index + 1}`)}
-                  width={640}
-                  height={420}
-                  className="h-56 w-full object-cover"
+                  variant="content"
+                  aspectRatio={item?.aspect_ratio || '4 / 3'}
                   style={galleryImageStyle}
                   sizes="(max-width: 1024px) 100vw, 33vw"
+                  wrapperClassName="w-full"
+                  borderClassName=""
+                  roundedClassName=""
                 />
                 {item?.caption ? <p className="px-4 py-3 text-sm text-slate-300">{safeString(item.caption)}</p> : null}
               </div>

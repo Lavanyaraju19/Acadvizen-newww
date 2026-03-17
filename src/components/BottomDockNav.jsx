@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { MessageCircle, Phone } from 'lucide-react'
 import { useSiteCms } from '../hooks/useSiteCms'
+import { trackContact } from '../../lib/metaPixel'
 
 const dockItems = [
   { label: 'Overview', to: '/' },
@@ -58,7 +59,12 @@ export function BottomDockNav() {
           <Link to="/register" className="dock-apply">
             {applyLabel}
           </Link>
-          <a href={`tel:${phoneNumber}`} className="dock-icon dock-phone" aria-label={callAriaLabel}>
+          <a
+            href={`tel:${phoneNumber}`}
+            className="dock-icon dock-phone"
+            aria-label={callAriaLabel}
+            onClick={() => trackContact({ content_name: 'Bottom Dock Call' }, `bottom-dock-call:${phoneNumber}`)}
+          >
             <Phone size={16} />
           </a>
           <a
@@ -67,6 +73,7 @@ export function BottomDockNav() {
             rel="noreferrer"
             className="dock-icon dock-whatsapp"
             aria-label={whatsappAriaLabel}
+            onClick={() => trackContact({ content_name: 'Bottom Dock WhatsApp' }, `bottom-dock-whatsapp:${whatsappNumber}`)}
           >
             <MessageCircle size={16} />
           </a>

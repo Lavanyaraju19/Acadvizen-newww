@@ -1,6 +1,6 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import { bodyClass, headingClass, imageStyle, normalizeContent, normalizeStyle, safeList, safeString, sectionInlineStyle, sectionPaddingClass, sectionVisibilityClass } from './sectionUtils'
+import AdaptiveImage from '../media/AdaptiveImage'
 
 export default function FeatureCardsSection({ section }) {
   const content = normalizeContent(section)
@@ -19,14 +19,17 @@ export default function FeatureCardsSection({ section }) {
             <article key={`${safeString(card?.title)}-${index}`} className="rounded-2xl border border-white/10 bg-[var(--section-card-bg,rgba(255,255,255,0.03))] p-5">
               {card?.src ? (
                 <div className="mb-4 overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]">
-                  <Image
+                  <AdaptiveImage
                     src={safeString(card.src)}
                     alt={safeString(card.alt, card.title || `Card ${index + 1}`)}
-                    width={640}
-                    height={420}
-                    className="h-44 w-full object-cover"
+                    variant="card"
+                    aspectRatio={card?.aspect_ratio || '16 / 10'}
+                    imageClassName=""
                     style={cardImageStyle}
                     sizes="(max-width: 1024px) 100vw, 33vw"
+                    wrapperClassName="w-full"
+                    borderClassName=""
+                    roundedClassName="rounded-xl"
                   />
                 </div>
               ) : null}

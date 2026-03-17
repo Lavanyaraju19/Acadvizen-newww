@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import Image from 'next/image'
 import { fetchPublicData } from '../../lib/apiClient'
+import AdaptiveImage from '../../../components/media/AdaptiveImage'
+import { trackContact, trackLead } from '../../../lib/metaPixel'
 
 export function ContactPage() {
   const [formData, setFormData] = useState({
@@ -48,6 +49,20 @@ export function ContactPage() {
 
   function handleSubmit(e) {
     e.preventDefault()
+    trackLead(
+      {
+        content_name: 'Contact Page Form',
+        page_path: '/contact',
+      },
+      `contact-form-lead:${formData.email.trim().toLowerCase() || formData.phone.trim()}`
+    )
+    trackContact(
+      {
+        content_name: 'Contact Page Form',
+        page_path: '/contact',
+      },
+      `contact-form-contact:${formData.email.trim().toLowerCase() || formData.phone.trim()}`
+    )
     setSubmitted(true)
     setTimeout(() => {
       setSubmitted(false)
@@ -171,15 +186,16 @@ export function ContactPage() {
           {officeImages.length > 0 && (
             <div className="grid gap-3 p-2 md:grid-cols-2">
               {officeImages.map((img, idx) => (
-                <div key={`${img}-${idx}`} className="relative h-48 overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]">
-                  <Image
-                    src={img}
-                    alt="Acadvizen office"
-                    fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    className="object-cover"
-                  />
-                </div>
+                <AdaptiveImage
+                  key={`${img}-${idx}`}
+                  src={img}
+                  alt="Acadvizen office"
+                  variant="content"
+                  aspectRatio="4 / 3"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  wrapperClassName="w-full"
+                  roundedClassName="rounded-xl"
+                />
               ))}
             </div>
           )}
@@ -195,6 +211,12 @@ export function ContactPage() {
             href="https://www.google.com/maps?q=Acadvizen+Institute+Jayanagar+Bengaluru"
             target="_blank"
             rel="noreferrer"
+            onClick={() =>
+              trackContact(
+                { content_name: 'Contact Directions Click', page_path: '/contact' },
+                'contact-directions-click'
+              )
+            }
             className="mt-3 inline-flex rounded-xl bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-200"
           >
             Get Directions

@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import Image from 'next/image'
 import { supabase } from '../../lib/supabaseClient'
 import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 import { subscribeToTable } from '../../../lib/realtime'
 import { buildInternalLinks } from '../../../lib/internalLinker'
+import AdaptiveImage from '../../../components/media/AdaptiveImage'
 
 export function CourseDetailPage() {
   const { slug } = useParams()
@@ -128,15 +128,16 @@ export function CourseDetailPage() {
             }}
           >
             {course.image_url && (
-              <div className="relative aspect-video overflow-hidden border-b border-white/10 bg-white/[0.02]">
-                <Image
-                  src={course.image_url}
-                  alt={course.title}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 960px"
-                  className="h-full w-full object-cover"
-                />
-              </div>
+              <AdaptiveImage
+                src={course.image_url}
+                alt={course.title}
+                variant="hero"
+                aspectRatio="16 / 9"
+                sizes="(max-width: 1024px) 100vw, 960px"
+                wrapperClassName="w-full border-b border-white/10"
+                borderClassName=""
+                roundedClassName=""
+              />
             )}
 
             <div className="p-7 md:p-10">

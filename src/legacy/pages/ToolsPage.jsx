@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import Image from 'next/image'
 import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
-import { assetUrl } from '../../lib/assetUrl'
 import { buildInternalLinks } from '../../../lib/internalLinker'
+import AdaptiveImage from '../../../components/media/AdaptiveImage'
+import { resolveToolLogoCandidates } from '../../../lib/toolMedia'
 
 export function ToolsPage() {
   const [tools, setTools] = useState([])
@@ -94,17 +94,6 @@ export function ToolsPage() {
     return matchSearch && matchCategory
   })
 
-  const normalizeToolKey = (value = '') =>
-    value
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '')
-      .trim()
-
-  const localLogoFor = (tool) => {
-    const key = normalizeToolKey(tool.slug || tool.name || '')
-    return key ? `/tools/${key}.png` : null
-  }
-
   return (
     <div className="min-h-screen">
       <Section className="pt-10 md:pt-14 pb-6 md:pb-10">
@@ -188,27 +177,17 @@ export function ToolsPage() {
                           </div>
                           <div className="relative flex items-start gap-4">
                             <div className="h-12 w-12 shrink-0 rounded-2xl border border-white/10 bg-white/[0.04] overflow-hidden flex items-center justify-center shadow-[0_18px_60px_rgba(0,0,0,0.45)]">
-                              {localLogoFor(tool) || tool.logo_url ? (
-                                <Image
-                                  src={localLogoFor(tool) ? assetUrl(localLogoFor(tool)) : assetUrl(tool.logo_url)}
-                                  alt={tool.name}
-                                  width={48}
-                                  height={48}
-                                  style={{ aspectRatio: '1/1' }}
-                                  className="h-full w-full object-contain"
-                                  onError={(e) => {
-                                    const fallback = tool.logo_url || null
-                                    if (fallback && e.currentTarget.src !== fallback) {
-                                      e.currentTarget.src = assetUrl(fallback)
-                                    } else {
-                                      e.currentTarget.onerror = null
-                                      e.currentTarget.src = assetUrl('/logo.png')
-                                    }
-                                  }}
-                                />
-                              ) : (
-                                <span className="text-teal-200 font-semibold">{tool.name?.charAt(0)}</span>
-                              )}
+                              <AdaptiveImage
+                                src={resolveToolLogoCandidates(tool)[0]}
+                                fallbackSrcs={resolveToolLogoCandidates(tool).slice(1)}
+                                alt={tool.name}
+                                variant="logo"
+                                aspectRatio="1 / 1"
+                                wrapperClassName="h-full w-full"
+                                borderClassName=""
+                                roundedClassName="rounded-2xl"
+                                sizes="48px"
+                              />
                             </div>
                             <div className="min-w-0">
                               <h3 className="text-lg font-semibold text-slate-50 truncate">{tool.name}</h3>

@@ -1,6 +1,6 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import BlogBlocksRenderer from './blog/BlogBlocksRenderer'
+import AdaptiveImage from './media/AdaptiveImage'
 
 export default function BlogLayout({
   blog,
@@ -43,16 +43,17 @@ export default function BlogLayout({
             </a>
           </div>
           <div className="mt-6 rounded-3xl overflow-hidden border border-white/10 bg-white/[0.02]">
-            <div className="relative h-[240px] sm:h-[340px] md:h-[420px] w-full">
-              <Image
-                src={blog.featured_image || '/blog-images/image1.jpg'}
-                alt={blog.title}
-                fill
-                priority
-                sizes="(max-width: 768px) 100vw, 1200px"
-                className="object-cover"
-              />
-            </div>
+            <AdaptiveImage
+              src={blog.featured_image || '/blog-images/image1.jpg'}
+              alt={blog.title}
+              variant="hero"
+              aspectRatio="16 / 9"
+              sizes="(max-width: 768px) 100vw, 1200px"
+              priority
+              wrapperClassName="w-full"
+              borderClassName=""
+              roundedClassName=""
+            />
           </div>
         </div>
       </section>
@@ -80,16 +81,17 @@ export default function BlogLayout({
               <div className="mt-5 grid gap-5 md:grid-cols-3">
                 {relatedBlogs.map((item) => (
                   <article key={item.slug} className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
-                    <div className="relative h-40 w-full">
-                      <Image
-                        src={item.featured_image || item.image || '/blog-images/image1.jpg'}
-                        alt={item.title}
-                        fill
-                        loading="lazy"
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                        className="object-cover"
-                      />
-                    </div>
+                    <AdaptiveImage
+                      src={item.featured_image || item.image || '/blog-images/image1.jpg'}
+                      alt={item.title}
+                      variant="card"
+                      aspectRatio="16 / 10"
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      loading="lazy"
+                      wrapperClassName="w-full"
+                      borderClassName=""
+                      roundedClassName=""
+                    />
                     <div className="p-4">
                       <h3 className="text-lg font-semibold text-slate-50">{item.title}</h3>
                       <Link href={`/blog/${item.slug}`} className="mt-3 inline-flex text-sm font-semibold text-teal-300">

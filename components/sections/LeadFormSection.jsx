@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { trackLead, trackContact } from '../../lib/metaPixel'
 import {
   bodyClass,
   headingClass,
@@ -53,6 +54,23 @@ export default function LeadFormSection({ section }) {
       const json = await res.json()
       if (!json?.success) throw new Error(json?.error || 'Failed to submit form.')
       setForm({ full_name: '', email: '', phone: '', message: '' })
+      trackLead(
+        {
+          content_name: safeString(content.heading, 'Lead Form'),
+          form_type: safeString(content.form_type, 'inquiry'),
+          page_slug: safeString(content.page_slug, ''),
+        },
+        `lead-form:${safeString(content.page_slug, 'unknown')}:${safeString(content.form_type, 'inquiry')}`
+      )
+      if (/contact/i.test(safeString(content.form_type, '')) || /contact/i.test(safeString(content.source, ''))) {
+        trackContact(
+          {
+            content_name: safeString(content.heading, 'Contact Form'),
+            page_slug: safeString(content.page_slug, ''),
+          },
+          `contact-form:${safeString(content.page_slug, 'unknown')}`
+        )
+      }
       setStatus({
         kind: 'success',
         text: safeString(content.success_message, 'Thanks, our team will contact you shortly.'),

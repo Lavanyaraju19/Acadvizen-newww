@@ -13,6 +13,9 @@ import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 import { BlogSection } from '../../components/BlogSection'
 import { blogs as localBlogs } from '../../../data/blogs'
+import AdaptiveImage from '../../../components/media/AdaptiveImage'
+import { resolveToolLogoCandidates } from '../../../lib/toolMedia'
+import { trackLead } from '../../../lib/metaPixel'
 
 export default function HomePage() {
   const metaTitle = 'Best Digital Marketing Course In Bangalore'
@@ -408,11 +411,6 @@ export default function HomePage() {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '')
-  const toolLogoSrc = (tool) => {
-    if (tool.logoSrc) return assetUrl(tool.logoSrc)
-    if (tool.logo_url) return assetUrl(tool.logo_url)
-    return null
-  }
   const scrollingTools = [
     { name: 'Ahrefs', slug: 'ahrefs', logoSrc: '/tools/ahrefs.png' },
     { name: 'SEMrush', slug: 'semrush', logoSrc: '/tools/semrush.png' },
@@ -489,6 +487,14 @@ export default function HomePage() {
           page: window.location.pathname,
         },
       ])
+      trackLead(
+        {
+          content_name: 'Homepage Quick Registration',
+          content_category: formData.mode,
+          page_path: window.location.pathname,
+        },
+        `homepage-quick-registration:${formData.email.trim().toLowerCase()}`
+      )
       setSubmitted(true)
       setTimeout(() => {
         closePopup()
@@ -670,25 +676,20 @@ export default function HomePage() {
                   to={`/tools/${tool.slug || toToolSlug(tool.name || '')}`}
                   className="tilt-card flex min-w-[220px] items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-4 transition hover:-translate-y-1 hover:border-teal-300/60"
                 >
-                  {tool.logoSrc || tool.logo_url ? (
-                    <Image
-                      src={toolLogoSrc(tool)}
+                  <div className="h-12 w-12 shrink-0 float">
+                    <AdaptiveImage
+                      src={tool.logoSrc || resolveToolLogoCandidates(tool)[0]}
+                      fallbackSrcs={resolveToolLogoCandidates(tool).slice(tool.logoSrc ? 0 : 1)}
                       alt={tool.name || tool.slug}
-                      width={48}
-                      height={48}
-                    className="h-12 w-auto object-contain float"
-                    style={{ width: 'auto', height: 'auto' }}
+                      variant="logo"
+                      aspectRatio="1 / 1"
+                      wrapperClassName="h-full w-full"
+                      borderClassName=""
+                      roundedClassName="rounded-2xl"
+                      sizes="48px"
                       loading="lazy"
-                      onError={(e) => {
-                        const fallback = tool.logo_url || null
-                        if (fallback && e.currentTarget.src !== fallback) {
-                          e.currentTarget.src = assetUrl(fallback)
-                        } else {
-                          e.currentTarget.style.display = 'none'
-                        }
-                      }}
                     />
-                  ) : null}
+                  </div>
                   <span className="text-sm font-semibold text-slate-200 whitespace-nowrap">{tool.name || tool.slug}</span>
                 </Link>
               ))}
@@ -700,25 +701,20 @@ export default function HomePage() {
                   to={`/tools/${tool.slug || toToolSlug(tool.name || '')}`}
                   className="tilt-card flex min-w-[220px] items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-4 transition hover:-translate-y-1 hover:border-teal-300/60"
                 >
-                  {tool.logoSrc || tool.logo_url ? (
-                    <Image
-                      src={toolLogoSrc(tool)}
+                  <div className="h-12 w-12 shrink-0 float">
+                    <AdaptiveImage
+                      src={tool.logoSrc || resolveToolLogoCandidates(tool)[0]}
+                      fallbackSrcs={resolveToolLogoCandidates(tool).slice(tool.logoSrc ? 0 : 1)}
                       alt={tool.name || tool.slug}
-                      width={48}
-                      height={48}
-                    className="h-12 w-auto object-contain float"
-                    style={{ width: 'auto', height: 'auto' }}
+                      variant="logo"
+                      aspectRatio="1 / 1"
+                      wrapperClassName="h-full w-full"
+                      borderClassName=""
+                      roundedClassName="rounded-2xl"
+                      sizes="48px"
                       loading="lazy"
-                      onError={(e) => {
-                        const fallback = tool.logo_url || null
-                        if (fallback && e.currentTarget.src !== fallback) {
-                          e.currentTarget.src = assetUrl(fallback)
-                        } else {
-                          e.currentTarget.style.display = 'none'
-                        }
-                      }}
                     />
-                  ) : null}
+                  </div>
                   <span className="text-sm font-semibold text-slate-200 whitespace-nowrap">{tool.name || tool.slug}</span>
                 </Link>
               ))}

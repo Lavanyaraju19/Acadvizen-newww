@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import Image from 'next/image'
 import { supabase } from '../../lib/supabaseClient'
 import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 import { blogs as localBlogs } from '../../../data/blogs'
+import AdaptiveImage from '../../../components/media/AdaptiveImage'
 
 export function BlogPage() {
   const [posts, setPosts] = useState([])
@@ -123,15 +123,16 @@ export function BlogPage() {
                   <Link to={`/blog/${post.slug}`} className="group block h-full">
                     <Surface className="h-full overflow-hidden transition-transform duration-200 group-hover:-translate-y-1">
                       {post.featured_image && (
-                        <div className="relative aspect-video overflow-hidden border-b border-white/10 bg-white/[0.02]">
-                          <Image
-                            src={post.featured_image}
-                            alt={post.title}
-                            fill
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                          />
-                        </div>
+                        <AdaptiveImage
+                          src={post.featured_image}
+                          alt={post.title}
+                          variant="card"
+                          aspectRatio="16 / 10"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          wrapperClassName="w-full border-b border-white/10"
+                          borderClassName=""
+                          roundedClassName=""
+                        />
                       )}
                       <div className="p-6">
                         <div className="text-xs uppercase tracking-[0.2em] text-slate-400">

@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
-import Image from 'next/image'
 import { Container, Section } from './ui/Section'
 import { Surface } from './ui/Surface'
-import { assetUrl } from '../lib/assetUrl'
+import AdaptiveImage from '../../components/media/AdaptiveImage'
+import { resolveToolLogoCandidates } from '../../lib/toolMedia'
 
 export function ToolsSection({ section, tools, categories, selectedCategory, onCategoryChange }) {
   const featuredTools = tools.slice(0, 12)
@@ -15,28 +15,6 @@ export function ToolsSection({ section, tools, categories, selectedCategory, onC
     if (selectedCategory === 'Digital Marketing') return t.category !== 'Gen AI'
     return t.category === selectedCategory
   })
-
-  const normalizeToolKey = (value = '') =>
-    value
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '')
-      .trim()
-
-  const localLogoFor = (tool) => {
-    const key = normalizeToolKey(tool.slug || tool.name || '')
-    return key ? `/tools/${key}.png` : null
-  }
-
-  const logoFor = (tool) => {
-    const local = localLogoFor(tool)
-    if (local) return assetUrl(local)
-    if (tool.logo_url) return assetUrl(tool.logo_url)
-    if (tool.website_url) {
-      const match = tool.website_url.match(/^https?:\/\/([^/]+)/i)
-      if (match?.[1]) return `https://logo.clearbit.com/${match[1]}`
-    }
-    return null
-  }
 
   return (
     <Section className="py-12 md:py-16" id="tools">
@@ -72,31 +50,19 @@ export function ToolsSection({ section, tools, categories, selectedCategory, onC
                   key={`${tool.slug}-featured-a-${idx}`}
                   className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-xs text-slate-200"
                 >
-                  {logoFor(tool) ? (
-                    <Image
-                      src={logoFor(tool)}
+                  <div className="h-6 w-6">
+                    <AdaptiveImage
+                      src={resolveToolLogoCandidates(tool)[0]}
+                      fallbackSrcs={resolveToolLogoCandidates(tool).slice(1)}
                       alt={tool.name}
-                      width={24}
-                      height={24}
-                      className="h-6 w-6 object-contain"
-                      onError={(e) => {
-                        const fallback = tool.logo_url || null
-                        if (fallback && e.currentTarget.src !== fallback) {
-                          e.currentTarget.src = fallback
-                        } else {
-                          e.currentTarget.onerror = null
-                          e.currentTarget.src = assetUrl('/logo.png')
-                        }
-                      }}
+                      variant="logo"
+                      aspectRatio="1 / 1"
+                      wrapperClassName="h-full w-full"
+                      borderClassName=""
+                      roundedClassName="rounded-full"
+                      sizes="24px"
                     />
-                  ) : (
-                    <div
-                      className="h-6 w-6 rounded-full flex items-center justify-center text-slate-950 text-xs font-bold"
-                      style={{ background: tool.brand_color || '#0ea5e9' }}
-                    >
-                      {tool.name?.charAt(0)}
-                    </div>
-                  )}
+                  </div>
                   <span className="whitespace-nowrap">{tool.name}</span>
                 </div>
               ))}
@@ -107,31 +73,19 @@ export function ToolsSection({ section, tools, categories, selectedCategory, onC
                   key={`${tool.slug}-featured-b-${idx}`}
                   className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-xs text-slate-200"
                 >
-                  {logoFor(tool) ? (
-                    <Image
-                      src={logoFor(tool)}
+                  <div className="h-6 w-6">
+                    <AdaptiveImage
+                      src={resolveToolLogoCandidates(tool)[0]}
+                      fallbackSrcs={resolveToolLogoCandidates(tool).slice(1)}
                       alt={tool.name}
-                      width={24}
-                      height={24}
-                      className="h-6 w-6 object-contain"
-                      onError={(e) => {
-                        const fallback = tool.logo_url || null
-                        if (fallback && e.currentTarget.src !== fallback) {
-                          e.currentTarget.src = fallback
-                        } else {
-                          e.currentTarget.onerror = null
-                          e.currentTarget.src = assetUrl('/logo.png')
-                        }
-                      }}
+                      variant="logo"
+                      aspectRatio="1 / 1"
+                      wrapperClassName="h-full w-full"
+                      borderClassName=""
+                      roundedClassName="rounded-full"
+                      sizes="24px"
                     />
-                  ) : (
-                    <div
-                      className="h-6 w-6 rounded-full flex items-center justify-center text-slate-950 text-xs font-bold"
-                      style={{ background: tool.brand_color || '#0ea5e9' }}
-                    >
-                      {tool.name?.charAt(0)}
-                    </div>
-                  )}
+                  </div>
                   <span className="whitespace-nowrap">{tool.name}</span>
                 </div>
               ))}
@@ -149,26 +103,17 @@ export function ToolsSection({ section, tools, categories, selectedCategory, onC
                 <div className="pointer-events-none absolute inset-0 rounded-2xl bg-black/35" />
                 <div className="relative flex flex-col items-center text-center">
                   <div className="h-16 w-16 rounded-2xl flex items-center justify-center bg-white/95 text-slate-950">
-                    {logoFor(tool) ? (
-                      <Image
-                        src={logoFor(tool)}
-                        alt={tool.name}
-                        width={40}
-                        height={40}
-                        className="h-10 w-10 object-contain"
-                        onError={(e) => {
-                          const fallback = tool.logo_url || null
-                          if (fallback && e.currentTarget.src !== fallback) {
-                            e.currentTarget.src = fallback
-                          } else {
-                            e.currentTarget.onerror = null
-                            e.currentTarget.src = assetUrl('/logo.png')
-                          }
-                        }}
-                      />
-                    ) : (
-                      <span className="text-xl font-bold">{tool.name?.charAt(0)}</span>
-                    )}
+                    <AdaptiveImage
+                      src={resolveToolLogoCandidates(tool)[0]}
+                      fallbackSrcs={resolveToolLogoCandidates(tool).slice(1)}
+                      alt={tool.name}
+                      variant="logo"
+                      aspectRatio="1 / 1"
+                      wrapperClassName="h-10 w-10"
+                      borderClassName=""
+                      roundedClassName="rounded-2xl"
+                      sizes="40px"
+                    />
                   </div>
                   <div className="mt-4 text-sm font-semibold text-white">{tool.name}</div>
                 </div>

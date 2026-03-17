@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import Image from 'next/image'
 import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 import { buildInternalLinks } from '../../../lib/internalLinker'
+import AdaptiveImage from '../../../components/media/AdaptiveImage'
 
 const courseHighlights = [
   { icon: 'S', label: 'Skill Tracks', value: '12' },
@@ -137,15 +137,16 @@ export function CoursesPage() {
                         <div className="h-full w-full rounded-[26px] bg-gradient-to-r from-teal-400/10 via-sky-400/8 to-indigo-400/10" />
                       </div>
                       {course.image_url && (
-                        <div className="relative aspect-video overflow-hidden border-b border-white/10 bg-white/[0.02]">
-                          <Image
-                            src={course.image_url}
-                            alt={course.title}
-                            fill
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                          />
-                        </div>
+                        <AdaptiveImage
+                          src={course.image_url}
+                          alt={course.title}
+                          variant="card"
+                          aspectRatio="16 / 10"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          wrapperClassName="w-full border-b border-white/10"
+                          borderClassName=""
+                          roundedClassName=""
+                        />
                       )}
                       <div className="relative p-6">
                         <h3 className="text-lg md:text-xl font-semibold text-slate-50 tracking-tight">

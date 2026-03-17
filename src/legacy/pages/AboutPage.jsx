@@ -5,6 +5,7 @@ import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 import { assetUrl } from '../../lib/assetUrl'
+import AdaptiveImage from '../../../components/media/AdaptiveImage'
 
 export function AboutPage() {
   const [pageSections, setPageSections] = useState({})
@@ -290,16 +291,16 @@ export function AboutPage() {
                   style={{ backgroundColor: trainerPalette[idx % trainerPalette.length] }}
                 >
                   <div className="relative mx-auto h-52 w-52 overflow-hidden rounded-2xl border border-white/20 bg-white/20">
-                    <Image
+                    <AdaptiveImage
                       src={assetUrl(person.image)}
+                      fallbackSrcs={[assetUrl('/about/tharii.jpg')]}
                       alt={person.name}
-                      fill
+                      variant="content"
+                      aspectRatio="1 / 1"
                       sizes="208px"
-                      className="h-full w-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null
-                        e.currentTarget.src = assetUrl('/about/tharii.jpg')
-                      }}
+                      wrapperClassName="h-full w-full"
+                      borderClassName=""
+                      roundedClassName="rounded-2xl"
                     />
                   </div>
                   <div className="mt-4 text-3xl font-bold text-slate-50">{person.name}</div>

@@ -1,12 +1,12 @@
 export const revalidate = 0
 export const dynamic = 'force-dynamic'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { getServerSupabaseClient } from '../../../lib/supabaseServer'
 import { fetchCmsSiteData } from '../../../lib/cmsServer'
 import { buildCmsPageMetadata } from '../../lib/cmsPageRoute'
 import { blogs as localBlogs } from '../../../data/blogs'
+import AdaptiveImage from '../../../components/media/AdaptiveImage'
 
 export async function generateMetadata() {
   return buildCmsPageMetadata('blog', '/blog', {
@@ -60,15 +60,16 @@ export default async function Page() {
         <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {merged.map((blog) => (
             <article key={blog.id || blog.slug} className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
-              <div className="relative h-44 w-full">
-                <Image
-                  src={blog.featured_image || '/blog-images/image1.jpg'}
-                  alt={blog.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 33vw"
-                  className="object-cover"
-                />
-              </div>
+              <AdaptiveImage
+                src={blog.featured_image || '/blog-images/image1.jpg'}
+                alt={blog.title}
+                variant="card"
+                aspectRatio="16 / 10"
+                sizes="(max-width: 768px) 100vw, 33vw"
+                wrapperClassName="w-full"
+                borderClassName=""
+                roundedClassName=""
+              />
               <div className="p-4">
                 <h2 className="text-lg font-semibold text-slate-50">{blog.title}</h2>
                 {blog.description ? <p className="mt-2 text-sm text-slate-300">{blog.description}</p> : null}

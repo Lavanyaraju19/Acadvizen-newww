@@ -1,12 +1,12 @@
 ﻿import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import Image from 'next/image'
 import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 import WorldCareerMap from '../../../components/WorldCareerMap'
 import { assetUrl } from '../../lib/assetUrl'
+import AdaptiveImage from '../../../components/media/AdaptiveImage'
 
 const hiringPartnerLogos = [
   { name: 'Accenture', file: 'accenture.png' },
@@ -258,20 +258,17 @@ export function PlacementPage() {
                     <Link to={`/placement/${placement.id}`} className="group block h-full">
                       <Surface className="h-full overflow-hidden transition-transform duration-200 group-hover:-translate-y-1">
                         {placement.featured_image && (
-                          <div className="relative aspect-video overflow-hidden border-b border-white/10 bg-white/[0.02]">
-                            <Image
-                              src={assetUrl(placement.featured_image)}
-                              alt={placement.title}
-                              fill
-                              sizes="(max-width: 768px) 100vw, 420px"
-                              style={{ aspectRatio: '16/9' }}
-                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                              onError={(e) => {
-                                e.currentTarget.onerror = null
-                                e.currentTarget.src = assetUrl('/images/success/success1.jpg')
-                              }}
-                            />
-                          </div>
+                          <AdaptiveImage
+                            src={assetUrl(placement.featured_image)}
+                            fallbackSrcs={[assetUrl('/images/success/success1.jpg')]}
+                            alt={placement.title}
+                            variant="card"
+                            aspectRatio="16 / 10"
+                            sizes="(max-width: 768px) 100vw, 420px"
+                            wrapperClassName="w-full border-b border-white/10"
+                            borderClassName=""
+                            roundedClassName=""
+                          />
                         )}
                         <div className="p-6">
                           <h3 className="text-lg font-semibold text-slate-50">{placement.role}</h3>
@@ -309,20 +306,18 @@ export function PlacementPage() {
           <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {placementStories.map((story) => (
               <Surface key={`${story.name}-${story.role}`} className="p-0 overflow-hidden tilt-card">
-                <div className="relative aspect-[4/3] overflow-hidden border-b border-white/10 bg-white/[0.02]">
-                  <Image
-                    src={assetUrl(story.image_url)}
-                    alt={story.name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 320px"
-                    className="object-cover rounded-xl"
-                    loading="lazy"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null
-                      e.currentTarget.src = assetUrl('/images/success/success.jpg')
-                    }}
-                  />
-                </div>
+                <AdaptiveImage
+                  src={assetUrl(story.image_url)}
+                  fallbackSrcs={[assetUrl('/images/success/success.jpg')]}
+                  alt={story.name}
+                  variant="content"
+                  aspectRatio="4 / 3"
+                  sizes="(max-width: 768px) 100vw, 320px"
+                  loading="lazy"
+                  wrapperClassName="w-full border-b border-white/10"
+                  borderClassName=""
+                  roundedClassName=""
+                />
                 <div className="p-5">
                   <div className="text-sm font-semibold text-slate-50">{story.name}</div>
                   <div className="text-xs text-slate-400">{story.role}</div>

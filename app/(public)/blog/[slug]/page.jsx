@@ -20,6 +20,20 @@ function pickFirst(...values) {
   return null
 }
 
+function shouldPreferLocalBlog(remote, local) {
+  if (!remote?.blog || !local) return false
+  const remoteBlockCount = Array.isArray(remote.blocks) ? remote.blocks.length : 0
+  if (remoteBlockCount > 0) return false
+
+  const remoteLength = String(remote.blog.content || '').trim().length
+  const localLength = String(local.content || '').trim().length
+
+  if (!remoteLength && localLength) return true
+  if (!localLength) return false
+
+  return localLength > remoteLength + 500
+}
+
 async function fetchRemoteBlog(slug) {
   const supabase = getServerSupabaseClient()
   if (!supabase || !slug) return null
@@ -53,6 +67,31 @@ async function fetchRemoteBlog(slug) {
 
 async function getBlogData(slug) {
   const remote = await fetchRemoteBlog(slug)
+  const local = localBlogs.find((entry) => entry.slug === slug)
+
+  if (shouldPreferLocalBlog(remote, local)) {
+    const parsed = parseBlogContent(local.content || '')
+    const related = localBlogs
+      .filter((entry) => entry.slug !== slug)
+      .slice(0, 3)
+      .map((entry) => ({ ...entry, featured_image: entry.image || entry.featured_image || '/blog-images/image1.jpg' }))
+    return {
+      blog: {
+        ...local,
+        featured_image: local.image || local.featured_image || '/blog-images/image1.jpg',
+        excerpt: local.excerpt || local.description || '',
+        seo_title: local.meta_title || local.title,
+        seo_description: local.meta_description || local.excerpt || '',
+        published_at: local.created_at,
+      },
+      related,
+      blocks: [],
+      toc: parsed.toc,
+      sections: parsed.sections,
+      readingMinutes: estimateReadingMinutes({ text: local.content }),
+    }
+  }
+
   if (remote?.blog) {
     const parsed = parseBlogContent(remote.blog.content || '')
     const tocFromBlocks = buildTocFromBlocks(remote.blocks)
@@ -73,7 +112,6 @@ async function getBlogData(slug) {
     }
   }
 
-  const local = localBlogs.find((entry) => entry.slug === slug)
   if (!local) return { blog: null, related: [], blocks: [], toc: [], sections: [], readingMinutes: 1 }
   const parsed = parseBlogContent(local.content || '')
   const related = localBlogs

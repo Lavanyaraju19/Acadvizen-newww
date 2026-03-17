@@ -1,4 +1,4 @@
-import Image from 'next/image'
+import AdaptiveImage from '../media/AdaptiveImage'
 
 function renderVideo(url, title) {
   if (!url) return null
@@ -93,18 +93,19 @@ export default function BlogBlocksRenderer({ blocks = [], fallbackSections = [] 
           if (type === 'image') {
             if (!content.src) return null
             return (
-              <figure key={id} className="rounded-2xl border border-white/10 bg-white/[0.02] p-2">
-                <div className="relative h-[230px] w-full overflow-hidden rounded-xl sm:h-[320px]">
-                  <Image
-                    src={content.src}
-                    alt={content.alt || 'Blog image'}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 900px"
-                    className="object-cover"
-                  />
-                </div>
-                {content.caption ? <figcaption className="px-2 pb-1 pt-3 text-xs text-slate-400">{content.caption}</figcaption> : null}
-              </figure>
+              <div key={id} className="rounded-2xl border border-white/10 bg-white/[0.02] p-2">
+                <AdaptiveImage
+                  src={content.src}
+                  alt={content.alt || 'Blog image'}
+                  caption={content.caption}
+                  variant="content"
+                  aspectRatio={content.aspect_ratio || '4 / 3'}
+                  sizes="(max-width: 768px) 100vw, 900px"
+                  wrapperClassName="w-full"
+                  borderClassName=""
+                  roundedClassName="rounded-xl"
+                />
+              </div>
             )
           }
 
@@ -148,16 +149,17 @@ export default function BlogBlocksRenderer({ blocks = [], fallbackSections = [] 
           ))}
           {section.image ? (
             <div className="rounded-2xl overflow-hidden border border-white/10 bg-white/[0.02]">
-              <div className="relative h-[230px] sm:h-[320px] w-full">
-                <Image
-                  src={section.image.src}
-                  alt={section.image.alt || section.heading || 'Blog image'}
-                  fill
-                  loading="lazy"
-                  sizes="(max-width: 768px) 100vw, 900px"
-                  className="object-cover"
-                />
-              </div>
+              <AdaptiveImage
+                src={section.image.src}
+                alt={section.image.alt || section.heading || 'Blog image'}
+                variant="content"
+                aspectRatio="4 / 3"
+                sizes="(max-width: 768px) 100vw, 900px"
+                loading="lazy"
+                wrapperClassName="w-full"
+                borderClassName=""
+                roundedClassName=""
+              />
             </div>
           ) : null}
         </section>

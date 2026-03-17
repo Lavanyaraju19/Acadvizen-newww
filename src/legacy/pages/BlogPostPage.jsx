@@ -10,6 +10,7 @@ import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 import { blogs as localBlogs } from '../../../data/blogs'
 import { parseBlogContent } from '../../../lib/blogContent'
+import AdaptiveImage from '../../../components/media/AdaptiveImage'
 
 function MbaVsDigitalMarketingBody() {
   return (
@@ -59,7 +60,7 @@ function MbaVsDigitalMarketingBody() {
         width={800}
         height={450}
         sizes="(max-width: 900px) 100vw, 800px"
-        className="w-full max-w-[800px] h-auto object-cover rounded-xl my-8 mx-auto"
+        className="w-full max-w-[800px] h-auto object-contain rounded-xl my-8 mx-auto"
         loading="lazy"
       />
       <p className="mt-6 mb-6 text-lg leading-relaxed text-gray-700">
@@ -80,7 +81,7 @@ function MbaVsDigitalMarketingBody() {
         width={800}
         height={450}
         sizes="(max-width: 900px) 100vw, 800px"
-        className="w-full max-w-[800px] h-auto object-cover rounded-xl my-8 mx-auto"
+        className="w-full max-w-[800px] h-auto object-contain rounded-xl my-8 mx-auto"
         loading="lazy"
       />
       <p className="mt-6 mb-6 text-lg leading-relaxed text-gray-700">
@@ -100,7 +101,7 @@ function MbaVsDigitalMarketingBody() {
         width={800}
         height={450}
         sizes="(max-width: 900px) 100vw, 800px"
-        className="w-full max-w-[800px] h-auto object-cover rounded-xl my-8 mx-auto"
+        className="w-full max-w-[800px] h-auto object-contain rounded-xl my-8 mx-auto"
         loading="lazy"
       />
       <p className="mt-6 mb-6 text-lg leading-relaxed text-gray-700">
@@ -121,7 +122,7 @@ function MbaVsDigitalMarketingBody() {
         width={800}
         height={450}
         sizes="(max-width: 900px) 100vw, 800px"
-        className="w-full max-w-[800px] h-auto object-cover rounded-xl my-8 mx-auto"
+        className="w-full max-w-[800px] h-auto object-contain rounded-xl my-8 mx-auto"
         loading="lazy"
       />
       <p className="mt-6 mb-6 text-lg leading-relaxed text-gray-700">
@@ -301,17 +302,16 @@ export function BlogPostPage() {
         <Section className="py-4">
           <Container className="max-w-4xl">
             <div className="rounded-3xl overflow-hidden border border-white/10 bg-white/[0.02]">
-              <Image
+              <AdaptiveImage
                 src={post.featured_image}
                 alt={post.title}
-                width={1200}
-                height={630}
+                fallbackSrcs={['/blog-images/image1.jpg']}
+                variant="hero"
+                aspectRatio="16 / 9"
                 sizes="(max-width: 1024px) 100vw, 900px"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.onerror = null
-                  e.currentTarget.src = '/blog-images/image1.jpg'
-                }}
+                wrapperClassName="w-full"
+                borderClassName=""
+                roundedClassName=""
               />
             </div>
           </Container>
@@ -336,13 +336,16 @@ export function BlogPostPage() {
                       </p>
                     ))}
                     {section.image?.src ? (
-                      <div className="relative my-8 h-[220px] w-full overflow-hidden rounded-xl border border-white/10 bg-white/[0.02] sm:h-[320px]">
-                        <Image
+                      <div className="my-8">
+                        <AdaptiveImage
                           src={section.image.src}
                           alt={section.image.alt || section.heading || post.title}
-                          fill
+                          fallbackSrcs={['/blog-images/image1.jpg']}
+                          variant="content"
+                          aspectRatio="4 / 3"
                           sizes="(max-width: 900px) 100vw, 800px"
-                          className="object-cover"
+                          wrapperClassName="w-full"
+                          roundedClassName="rounded-xl"
                         />
                       </div>
                     ) : null}

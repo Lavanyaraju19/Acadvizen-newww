@@ -1,26 +1,16 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import Image from 'next/image'
 import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
+import AdaptiveImage from '../../../components/media/AdaptiveImage'
+import { resolveToolLogoCandidates } from '../../../lib/toolMedia'
 
 export function ToolDetailsPage() {
   const { slug } = useParams()
   const [tool, setTool] = useState(null)
   const [related, setRelated] = useState([])
   const [loading, setLoading] = useState(true)
-
-  const normalizeToolKey = (value = '') =>
-    value
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '')
-      .trim()
-
-  const localLogoFor = (toolData) => {
-    const key = normalizeToolKey(toolData?.slug || toolData?.name || '')
-    return key ? `/tools/${key}.png` : null
-  }
 
   useEffect(() => {
     loadTool()
@@ -66,30 +56,19 @@ export function ToolDetailsPage() {
       <Section className="pt-10 md:pt-14 pb-6 md:pb-10">
         <Container className="max-w-4xl">
           <div className="flex flex-col md:flex-row gap-6 items-start">
-            <div
-              className="h-20 w-20 rounded-2xl flex items-center justify-center text-slate-950"
-              style={{ background: tool.brand_color || '#0ea5e9' }}
-            >
-              {localLogoFor(tool) || tool.logo_url ? (
-                <Image
-                  src={localLogoFor(tool) || tool.logo_url}
-                  alt={tool.name}
-                  width={48}
-                  height={48}
-                  style={{ aspectRatio: '1/1' }}
-                  className="h-12 w-12 object-contain"
-                  onError={(e) => {
-                    const fallback = tool.logo_url || null
-                    if (fallback && e.currentTarget.src !== fallback) {
-                      e.currentTarget.src = fallback
-                    } else {
-                      e.currentTarget.style.display = 'none'
-                    }
-                  }}
-                />
-              ) : (
-                <span className="text-xl font-bold">{tool.name?.charAt(0)}</span>
-              )}
+            <div className="h-20 w-20 rounded-2xl border border-white/10 bg-white/[0.04] p-2">
+              <AdaptiveImage
+                src={resolveToolLogoCandidates(tool)[0]}
+                fallbackSrcs={resolveToolLogoCandidates(tool).slice(1)}
+                alt={tool.name}
+                variant="logo"
+                aspectRatio="1 / 1"
+                wrapperClassName="h-full w-full"
+                borderClassName=""
+                roundedClassName="rounded-2xl"
+                sizes="80px"
+                priority
+              />
             </div>
             <div>
               <h1 className="text-3xl md:text-5xl font-semibold tracking-tight text-slate-50">{tool.name}</h1>

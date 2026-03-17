@@ -2,10 +2,10 @@
 
 import { useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import Image from 'next/image'
 import { Container, Section } from './ui/Section'
 import { Surface } from './ui/Surface'
 import { assetUrl } from '../lib/assetUrl'
+import AdaptiveImage from '../../components/media/AdaptiveImage'
 
 export function BlogSection({ section, posts }) {
   if (!section) return null
@@ -74,15 +74,16 @@ export function BlogSection({ section, posts }) {
                     className="group block min-w-[260px] sm:min-w-[320px] lg:min-w-[300px] xl:min-w-[320px] snap-start rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden transition hover:-translate-y-1"
                   >
                     {post.featured_image && (
-                      <div className="relative h-[220px] w-full overflow-hidden rounded-t-2xl">
-                        <Image
-                          src={assetUrl(post.featured_image)}
-                          alt={post.title}
-                          fill
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                          className="object-cover"
-                        />
-                      </div>
+                      <AdaptiveImage
+                        src={assetUrl(post.featured_image)}
+                        alt={post.title}
+                        variant="card"
+                        aspectRatio="16 / 10"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                        wrapperClassName="w-full"
+                        borderClassName=""
+                        roundedClassName="rounded-t-2xl"
+                      />
                     )}
                     <div className="p-4">
                       <p className="text-sm text-gray-400">
