@@ -6,6 +6,7 @@ import { Container, Section } from './ui/Section'
 import { Surface } from './ui/Surface'
 import { assetUrl } from '../lib/assetUrl'
 import AdaptiveImage from '../../components/media/AdaptiveImage'
+import { canonicalizeKnownBlogSlug } from '../../lib/blogSlugResolver'
 
 export function BlogSection({ section, posts }) {
   if (!section) return null
@@ -64,7 +65,7 @@ export function BlogSection({ section, posts }) {
               className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2"
             >
               {visiblePosts.map((post) => {
-                const postSlug = post.slug || String(post.id)
+                const postSlug = canonicalizeKnownBlogSlug(post.slug || String(post.id))
                 const preview = stripHtml(post.excerpt || post.summary || post.content || '')
 
                 return (

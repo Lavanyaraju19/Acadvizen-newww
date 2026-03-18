@@ -11,6 +11,7 @@ import { Surface } from '../../components/ui/Surface'
 import { blogs as localBlogs } from '../../../data/blogs'
 import { parseBlogContent } from '../../../lib/blogContent'
 import AdaptiveImage from '../../../components/media/AdaptiveImage'
+import { findLocalBlogBySlug, resolveBlogSlug } from '../../../lib/blogSlugResolver'
 
 function MbaVsDigitalMarketingBody() {
   return (
@@ -197,7 +198,8 @@ export function BlogPostPage() {
 
   async function loadPost() {
     setLoading(true)
-    const { data: bySlug } = await fetchPublicData('blog-posts', { slug })
+    const resolvedSlug = resolveBlogSlug(slug, localBlogs) || slug
+    const { data: bySlug } = await fetchPublicData('blog-posts', { slug: resolvedSlug })
     if (Array.isArray(bySlug) ? bySlug[0] : bySlug) {
       const row = Array.isArray(bySlug) ? bySlug[0] : bySlug
       const merged = mergeWithLocal(row)
@@ -207,7 +209,7 @@ export function BlogPostPage() {
       return
     }
 
-    const { data: byId } = await fetchPublicData('blog-posts', { id: slug })
+    const { data: byId } = await fetchPublicData('blog-posts', { id: resolvedSlug })
     if (Array.isArray(byId) ? byId[0] : byId) {
       const row = Array.isArray(byId) ? byId[0] : byId
       const merged = mergeWithLocal(row)
@@ -217,7 +219,7 @@ export function BlogPostPage() {
       return
     }
 
-    const fallbackPost = localBlogs.find((item) => item.slug === slug || item.id === slug)
+    const fallbackPost = findLocalBlogBySlug(slug, localBlogs) || localBlogs.find((item) => item.id === resolvedSlug)
     const mergedFallback = fallbackPost ? mergeWithLocal(fallbackPost) : null
     setPost(mergedFallback)
     if (mergedFallback) {

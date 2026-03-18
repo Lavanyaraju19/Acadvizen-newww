@@ -7,6 +7,7 @@ import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 import { blogs as localBlogs } from '../../../data/blogs'
 import AdaptiveImage from '../../../components/media/AdaptiveImage'
+import { canonicalizeKnownBlogSlug } from '../../../lib/blogSlugResolver'
 
 export function BlogPage() {
   const [posts, setPosts] = useState([])
@@ -20,9 +21,11 @@ export function BlogPage() {
     return null
   }
   const mergeWithLocal = (post) => {
-    const local = localBlogs.find((item) => item.slug === post.slug || item.id === post.id)
+    const canonicalSlug = canonicalizeKnownBlogSlug(post.slug)
+    const local = localBlogs.find((item) => item.slug === canonicalSlug || item.id === post.id)
     return {
       ...post,
+      slug: canonicalSlug || post.slug,
       ...(local || {}),
       title: pickFirstNonEmpty(local?.title, post.title),
       excerpt: pickFirstNonEmpty(local?.excerpt, post.excerpt),
@@ -77,7 +80,15 @@ export function BlogPage() {
         merged.push(post)
       }
     }
-    setPosts(merged)
+    const deduped = []
+    const seenSlugs = new Set()
+    for (const item of merged) {
+      const key = item.slug || item.id
+      if (!key || seenSlugs.has(key)) continue
+      seenSlugs.add(key)
+      deduped.push(item)
+    }
+    setPosts(deduped)
     setLoading(false)
   }
 

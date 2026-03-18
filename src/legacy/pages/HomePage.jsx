@@ -18,6 +18,7 @@ import AdaptiveImage from '../../../components/media/AdaptiveImage'
 import { resolveToolLogoCandidates } from '../../../lib/toolMedia'
 import { trackLead } from '../../../lib/metaPixel'
 import { supabase } from '../../lib/supabaseClient'
+import { canonicalizeKnownBlogSlug } from '../../../lib/blogSlugResolver'
 import {
   programOverview,
   skillBottomPlatforms,
@@ -32,11 +33,11 @@ export default function HomePage() {
     'best digital marketing training institute in bangalore, digital marketing institute in bangalore, digital marketing course with placement, digital marketing training institute in bangalore'
   const coursePrograms = []
   const learningValues = [
-    { label: 'Smart Classroom', accent: 'from-sky-400/25 to-cyan-400/10', border: 'border-sky-300/35', text: 'text-sky-100' },
-    { label: '100% Placement Support', accent: 'from-emerald-400/25 to-lime-400/10', border: 'border-emerald-300/35', text: 'text-emerald-100' },
-    { label: 'Paid Internship', accent: 'from-amber-400/25 to-yellow-400/10', border: 'border-amber-300/35', text: 'text-amber-100' },
-    { label: 'Integrated AI', accent: 'from-fuchsia-400/25 to-violet-400/10', border: 'border-fuchsia-300/35', text: 'text-fuchsia-100' },
-    { label: 'Case Studies', accent: 'from-teal-400/25 to-cyan-400/10', border: 'border-teal-300/35', text: 'text-teal-100' },
+    { label: 'Smart Classroom', solid: 'bg-[#1f6378]', border: 'border-[#3fa6c0]', text: 'text-sky-100' },
+    { label: '100% Placement Support', solid: 'bg-[#2a7a43]', border: 'border-[#57c173]', text: 'text-emerald-100' },
+    { label: 'Paid Internship', solid: 'bg-[#7b7812]', border: 'border-[#d3ca3d]', text: 'text-amber-100' },
+    { label: 'Integrated AI', solid: 'bg-[#75607d]', border: 'border-[#b793c4]', text: 'text-fuchsia-100' },
+    { label: 'Case Studies', solid: 'bg-[#4b7750]', border: 'border-[#80c18a]', text: 'text-teal-100' },
   ]
   const programHighlights = [
     'AI-ARCHITECT Mastery: Learn to manage 120+ AI tools to automate 80% of manual marketing tasks.',
@@ -318,9 +319,11 @@ export default function HomePage() {
     }
 
     const hydrated = data.map((post, idx) => {
-      const local = localBlogs.find((item) => item.slug === post.slug || item.id === post.id)
+      const canonicalSlug = canonicalizeKnownBlogSlug(post.slug)
+      const local = localBlogs.find((item) => item.slug === canonicalSlug || item.id === post.id)
       return {
         ...post,
+        slug: canonicalSlug || post.slug,
         ...(local || {}),
         title: pickFirstNonEmpty(local?.title, post.title),
         excerpt: pickFirstNonEmpty(local?.excerpt, post.excerpt),
@@ -813,7 +816,7 @@ export default function HomePage() {
 
       <Section className="py-12 md:py-16" id="learning-values">
         <Container>
-          <div className="rounded-3xl border border-emerald-700/50 bg-[linear-gradient(135deg,#14392f_0%,#183f30_48%,#514010_100%)] p-8 md:p-12 shadow-[0_18px_48px_rgba(8,15,20,0.3)]">
+          <div className="rounded-3xl border border-emerald-700/50 bg-[#1b4a37] p-8 md:p-12 shadow-[0_18px_48px_rgba(8,15,20,0.3)]">
             <p className="text-sm uppercase tracking-[0.25em] text-emerald-200 text-center">A Future-Ready Digital Marketing Institute</p>
             <h2 className="mt-3 text-4xl md:text-5xl font-bold text-slate-50 text-center">Our Learning Values</h2>
             <p className="mt-3 max-w-4xl mx-auto text-center text-lg text-emerald-50/90">
@@ -823,17 +826,7 @@ export default function HomePage() {
               {learningValues.map((item) => (
                 <div
                   key={item.label}
-                  className={`rounded-2xl border ${item.border} px-5 py-8 text-center ${
-                    item.label === 'Smart Classroom'
-                      ? 'bg-[#155765]'
-                      : item.label === '100% Placement Support'
-                      ? 'bg-[#26603a]'
-                      : item.label === 'Paid Internship'
-                      ? 'bg-[#656616]'
-                      : item.label === 'Integrated AI'
-                      ? 'bg-[#5e4d61]'
-                      : 'bg-[#3b5c3d]'
-                  }`}
+                  className={`rounded-2xl border ${item.border} ${item.solid} px-5 py-8 text-center shadow-[0_12px_24px_rgba(0,0,0,0.18)]`}
                 >
                   <div className={`text-lg font-extrabold uppercase tracking-[0.12em] ${item.text}`}>{item.label}</div>
                 </div>
@@ -1106,15 +1099,15 @@ export default function HomePage() {
                   key={`${card.title}-${idx}`}
                   className={`group rounded-[2rem] border p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl tilt-card ${
                     idx % 4 === 0
-                      ? 'border-sky-300/25 bg-[#103f5b]'
+                      ? 'border-[#43a8c7] bg-[#14546c]'
                       : idx % 4 === 1
-                      ? 'border-emerald-300/25 bg-[#114d52]'
+                      ? 'border-[#55c9c0] bg-[#15656a]'
                       : idx % 4 === 2
-                      ? 'border-amber-300/25 bg-[#4d3c30]'
-                      : 'border-violet-300/25 bg-[#45356f]'
+                      ? 'border-[#d1a55f] bg-[#6a4d32]'
+                      : 'border-[#a98de5] bg-[#5a438d]'
                   }`}
                 >
-                  <div className="mb-5 inline-flex h-28 w-28 items-center justify-center rounded-full bg-slate-950/55 text-sky-200">
+                  <div className="mb-5 inline-flex h-28 w-28 items-center justify-center rounded-full bg-[#10263d] text-sky-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
                     <Image
                       src={iconSrc}
                       alt={card.title}
@@ -1330,7 +1323,7 @@ export default function HomePage() {
 
       <Section className="py-12 md:py-16" id="skills-after-blog">
         <Container>
-          <div className="rounded-[2rem] border border-fuchsia-300/20 bg-[radial-gradient(circle_at_top,#4b1d72_0%,#221036_42%,#090f1e_100%)] px-5 py-8 shadow-[0_25px_70px_rgba(9,15,30,0.45)] md:px-8 md:py-10">
+          <div className="rounded-[2rem] border border-[#7840b8] bg-[#4c226f] px-5 py-8 shadow-[0_25px_70px_rgba(9,15,30,0.45)] md:px-8 md:py-10">
             <div className="mx-auto max-w-4xl text-center">
               <h2 className="text-4xl font-bold text-white md:text-5xl">
                 Master the Complete Digital Marketing Skill Set with SEO, AI &amp; Performance Marketing
@@ -1340,7 +1333,7 @@ export default function HomePage() {
               </p>
               <div className="mt-6 flex flex-wrap justify-center gap-2">
                 {skillTopPlatforms.map((label) => (
-                  <span key={label} className="rounded-full border border-white/10 bg-[#1d2b53] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100">
+                  <span key={label} className="rounded-full border border-[#4d678d] bg-[#213962] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100">
                     {label}
                   </span>
                 ))}
@@ -1374,7 +1367,7 @@ export default function HomePage() {
                       <h3 className="text-xl font-bold text-white">{group.title}</h3>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {group.items.map((item) => (
-                          <span key={`${group.title}-${item}`} className="rounded-full border border-white/10 bg-slate-950/35 px-3 py-1 text-sm text-slate-100">
+                          <span key={`${group.title}-${item}`} className="rounded-full border border-[#5e6e8d] bg-[#23172f] px-3 py-1 text-sm text-slate-100">
                             {item}
                           </span>
                         ))}
@@ -1388,7 +1381,7 @@ export default function HomePage() {
                           <Link
                             key={`${group.title}-${slug}`}
                             to={`/tools/${tool.slug || slug}`}
-                            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/35 px-3 py-2"
+                            className="inline-flex items-center gap-2 rounded-full border border-[#5e6e8d] bg-[#23172f] px-3 py-2"
                           >
                             <div className="h-6 w-6 shrink-0">
                               <AdaptiveImage
@@ -1427,7 +1420,7 @@ export default function HomePage() {
               </Link>
               <div className="mt-6 flex flex-wrap justify-center gap-2">
                 {skillBottomPlatforms.map((label) => (
-                  <span key={`footer-${label}`} className="rounded-full border border-white/10 bg-slate-950/35 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100">
+                  <span key={`footer-${label}`} className="rounded-full border border-[#5e6e8d] bg-[#213962] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100">
                     {label}
                   </span>
                 ))}

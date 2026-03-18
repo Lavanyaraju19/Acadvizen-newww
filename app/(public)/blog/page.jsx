@@ -7,6 +7,7 @@ import { fetchCmsSiteData } from '../../../lib/cmsServer'
 import { buildCmsPageMetadata } from '../../lib/cmsPageRoute'
 import { blogs as localBlogs } from '../../../data/blogs'
 import AdaptiveImage from '../../../components/media/AdaptiveImage'
+import { canonicalizeKnownBlogSlug } from '../../../lib/blogSlugResolver'
 
 export async function generateMetadata() {
   return buildCmsPageMetadata('blog', '/blog', {
@@ -30,6 +31,17 @@ async function fetchBlogs() {
 
 export default async function Page() {
   const [remote, siteData] = await Promise.all([fetchBlogs(), fetchCmsSiteData()])
+  const remoteBlogs = []
+  const seenRemoteSlugs = new Set()
+  for (const item of remote) {
+    const next = {
+      ...item,
+      slug: canonicalizeKnownBlogSlug(item.slug),
+    }
+    if (!next.slug || seenRemoteSlugs.has(next.slug)) continue
+    seenRemoteSlugs.add(next.slug)
+    remoteBlogs.push(next)
+  }
   const fallback = localBlogs.map((item) => ({
     id: item.id,
     slug: item.slug,
@@ -39,7 +51,7 @@ export default async function Page() {
     published_at: item.created_at,
     categories: item.categories || [],
   }))
-  const merged = [...remote]
+  const merged = [...remoteBlogs]
   for (const item of fallback) {
     if (!merged.some((entry) => entry.slug === item.slug)) merged.push(item)
   }

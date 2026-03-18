@@ -35,16 +35,28 @@ export const metadata = {
   alternates: {
     canonical: 'https://acadvizen.com',
   },
+  manifest: '/manifest.webmanifest',
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-    apple: '/favicon.ico',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/logo-mark.png', type: 'image/png', sizes: '512x512' },
+      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
+    ],
+    shortcut: [
+      { url: '/favicon.ico' },
+      { url: '/logo-mark.png', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: '/logo-mark.png', sizes: '512x512', type: 'image/png' },
+    ],
   },
 }
 
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#0d1d36',
 }
 
 export default function RootLayout({ children }) {

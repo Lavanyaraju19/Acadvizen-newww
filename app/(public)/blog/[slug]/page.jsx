@@ -10,6 +10,7 @@ import { parseBlogContent } from '../../../../lib/blogContent'
 import { getServerSupabaseClient } from '../../../../lib/supabaseServer'
 import { fetchCmsSiteData, fetchRedirectByPath } from '../../../../lib/cmsServer'
 import { blogs as localBlogs } from '../../../../data/blogs'
+import { findLocalBlogBySlug, resolveBlogSlug } from '../../../../lib/blogSlugResolver'
 
 function pickFirst(...values) {
   for (const value of values) {
@@ -66,8 +67,9 @@ async function fetchRemoteBlog(slug) {
 }
 
 async function getBlogData(slug) {
-  const remote = await fetchRemoteBlog(slug)
-  const local = localBlogs.find((entry) => entry.slug === slug)
+  const resolvedSlug = resolveBlogSlug(slug, localBlogs)
+  const remote = (await fetchRemoteBlog(slug)) || (resolvedSlug && resolvedSlug !== slug ? await fetchRemoteBlog(resolvedSlug) : null)
+  const local = findLocalBlogBySlug(slug, localBlogs)
 
   if (shouldPreferLocalBlog(remote, local)) {
     const parsed = parseBlogContent(local.content || '')
@@ -140,7 +142,8 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }) {
-  const data = await getBlogData(params?.slug)
+  const resolvedSlug = resolveBlogSlug(params?.slug, localBlogs)
+  const data = await getBlogData(resolvedSlug || params?.slug)
   const blog = data.blog
   if (!blog) {
     return buildMetadata({
@@ -162,12 +165,18 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function Page({ params }) {
-  const redirectRule = await fetchRedirectByPath(`/blog/${params?.slug || ''}`)
+  const requestedSlug = params?.slug || ''
+  const redirectRule = await fetchRedirectByPath(`/blog/${requestedSlug}`)
   if (redirectRule?.to_path) {
     redirect(redirectRule.to_path)
   }
 
-  const [data, siteData] = await Promise.all([getBlogData(params?.slug), fetchCmsSiteData()])
+  const resolvedSlug = resolveBlogSlug(requestedSlug, localBlogs)
+  if (resolvedSlug && resolvedSlug !== requestedSlug) {
+    redirect(`/blog/${resolvedSlug}`)
+  }
+
+  const [data, siteData] = await Promise.all([getBlogData(requestedSlug), fetchCmsSiteData()])
   const blog = data.blog
   if (!blog) {
     return (
