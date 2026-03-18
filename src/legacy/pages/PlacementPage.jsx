@@ -363,18 +363,17 @@ export function PlacementPage() {
                       key={partner.name}
                       className="flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] px-3 py-4"
                     >
-                      <Image
+                      <AdaptiveImage
                         src={assetUrl(`/logos/${partner.file}`)}
+                        fallbackSrcs={[assetUrl('/logo-mark.png'), '/logo-mark.png']}
                         alt={partner.name}
-                        width={120}
-                        height={40}
-                        className="h-10 w-auto object-contain"
-                        style={{ width: 'auto', height: 'auto' }}
+                        variant="logo"
+                        aspectRatio="3 / 1"
+                        sizes="120px"
                         loading="lazy"
-                        onError={(e) => {
-                          e.currentTarget.onerror = null
-                          e.currentTarget.src = assetUrl('/logo.png')
-                        }}
+                        wrapperClassName="h-10 w-full"
+                        borderClassName=""
+                        roundedClassName="rounded-none"
                       />
                     </div>
                   ))}

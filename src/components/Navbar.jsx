@@ -55,22 +55,22 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50">
-      <nav className="mx-auto max-w-7xl border-b border-slate-200 bg-white px-4 shadow-sm sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+      <nav className="w-full border-b border-white/10 bg-slate-950/92 shadow-[0_18px_60px_rgba(2,6,23,0.35)] backdrop-blur">
+        <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center min-w-0">
             <Link to="/" className="flex items-center gap-3 group min-w-0" data-cursor="hover">
-              <div className="relative flex h-12 w-12 items-center justify-center overflow-visible sm:h-14 sm:w-14">
+              <div className="relative flex h-14 w-14 items-center justify-center overflow-visible sm:h-16 sm:w-16">
                 <Image
                   src={logoSrc}
                   alt={brandLabel}
-                  width={56}
-                  height={56}
-                  className="h-12 w-auto shrink-0 object-contain sm:h-14"
+                  width={72}
+                  height={72}
+                  className="h-14 w-auto shrink-0 object-contain sm:h-16"
                   style={{ width: 'auto', height: 'auto' }}
                   priority
                 />
               </div>
-              <span className="truncate text-xl font-bold tracking-tight text-slate-900 sm:text-[2rem]">
+              <span className="truncate text-2xl font-bold tracking-tight text-white sm:text-[2.15rem]">
                 {brandLabel}
               </span>
             </Link>
@@ -82,7 +82,7 @@ export function Navbar() {
                 key={`${item.title}-${item.url}`}
                 to={item.url}
                 target={item.target || '_self'}
-                className="text-slate-800 hover:text-slate-950 text-base font-semibold transition-colors"
+                className="text-slate-200 hover:text-white text-base font-semibold transition-colors"
               >
                 {item.title}
               </Link>
@@ -91,7 +91,7 @@ export function Navbar() {
 
           <div className="flex items-center gap-3">
             {!loading && user?.email && (
-              <span className="hidden sm:inline text-xs text-teal-700 bg-teal-100 px-3 py-1 rounded-full">
+              <span className="hidden sm:inline text-xs text-teal-100 bg-teal-500/15 px-3 py-1 rounded-full border border-teal-400/20">
                 {profile?.role === 'admin' ? `${userAdminPrefix} ${user.email}` : `${userSignedInPrefix} ${user.email}`}
               </span>
             )}
@@ -99,13 +99,13 @@ export function Navbar() {
               <div className="flex items-center gap-2">
                 <Link
                   to={profile?.role === 'admin' ? '/admin' : '/dashboard'}
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800 hover:bg-slate-50"
+                  className="rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-100 hover:bg-white/5"
                 >
                   {dashboardLabel}
                 </Link>
                 <button
                   onClick={() => setShowConfirm(true)}
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800 hover:bg-slate-50"
+                  className="rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-100 hover:bg-white/5"
                 >
                   {signOutLabel}
                 </button>
@@ -114,19 +114,19 @@ export function Navbar() {
             <button
               onClick={() => setShowPanel(true)}
               data-cursor="hover"
-              className="inline-flex md:hidden items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 hover:bg-slate-50"
+              className="inline-flex md:hidden items-center justify-center rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-100 hover:bg-white/10"
             >
               <span className="sr-only">{menuLabel}</span>
               <div className="space-y-1">
-                <span className="block h-0.5 w-5 bg-slate-800" />
-                <span className="block h-0.5 w-5 bg-slate-800" />
-                <span className="block h-0.5 w-5 bg-slate-800" />
+                <span className="block h-0.5 w-5 bg-slate-100" />
+                <span className="block h-0.5 w-5 bg-slate-100" />
+                <span className="block h-0.5 w-5 bg-slate-100" />
               </div>
             </button>
           </div>
         </div>
 
-        <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+        <div className="mx-auto h-px w-full max-w-7xl bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       </nav>
 
       {showPanel && (

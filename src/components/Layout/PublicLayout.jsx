@@ -96,6 +96,37 @@ export function PublicLayout({ children }) {
   const footerCopy = footerCopyTemplate
     .replaceAll('{year}', String(new Date().getFullYear()))
     .replaceAll('{company}', companyName.toUpperCase())
+  const addressLine = contactAddress
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join(' | ')
+  const fixedSocialLinks = [
+    {
+      key: 'linkedin',
+      href: socialLinks.linkedin || 'https://www.linkedin.com/company/acadvizen-digital-marketing-institute/?viewAsMember=true',
+      label: 'LinkedIn',
+      icon: Linkedin,
+    },
+    {
+      key: 'instagram',
+      href: socialLinks.instagram || 'https://www.instagram.com/acadvizen/',
+      label: 'Instagram',
+      icon: Instagram,
+    },
+    {
+      key: 'facebook',
+      href: socialLinks.facebook || 'https://www.facebook.com/profile.php?id=61586987972331',
+      label: 'Facebook',
+      icon: Facebook,
+    },
+    {
+      key: 'youtube',
+      href: socialLinks.youtube || 'https://www.youtube.com/@Acadvizen',
+      label: 'YouTube',
+      icon: Youtube,
+    },
+  ]
   const layoutStyle = {
     '--brand-primary': designTokens.brand_primary || '#5eead4',
     '--brand-secondary': designTokens.brand_secondary || '#22d3ee',
@@ -124,6 +155,26 @@ export function PublicLayout({ children }) {
       <main className="flex-1 relative z-10 pb-28 md:pb-32">
         {children}
       </main>
+
+      <div className="fixed right-0 top-1/2 z-40 hidden -translate-y-1/2 md:flex">
+        <div className="mr-0 flex flex-col items-center gap-1 rounded-l-2xl border border-amber-300/80 bg-[#ffd21f] px-2 py-3 shadow-[0_16px_40px_rgba(15,23,42,0.35)]">
+          {fixedSocialLinks.map((item) => {
+            const Icon = item.icon
+            return (
+              <a
+                key={item.key}
+                href={item.href}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={item.label}
+                className="flex h-9 w-9 items-center justify-center rounded-full text-[#0f5f7a] transition hover:scale-105 hover:bg-black/10 hover:text-[#08384a]"
+              >
+                <Icon className="h-[15px] w-[15px]" strokeWidth={2.2} />
+              </a>
+            )
+          })}
+        </div>
+      </div>
 
       <BottomDockNav />
 
@@ -186,9 +237,7 @@ export function PublicLayout({ children }) {
 
                 <p className="mt-8 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{footerContactHeading}</p>
                 <div className="mt-4 space-y-2 text-sm text-slate-400">
-                  {contactAddress.split('\n').map((line, idx) => (
-                    <p key={`address-line-${idx}`}>{line}</p>
-                  ))}
+                  <p>{addressLine}</p>
                   <p>{contactPhone}</p>
                   <p>{contactEmail}</p>
                 </div>
