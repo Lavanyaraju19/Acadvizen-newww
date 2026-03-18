@@ -39,6 +39,11 @@ export default function HomePage() {
     { label: 'Integrated AI', solid: 'bg-[#75607d]', border: 'border-[#b793c4]', text: 'text-fuchsia-100' },
     { label: 'Case Studies', solid: 'bg-[#4b7750]', border: 'border-[#80c18a]', text: 'text-teal-100' },
   ]
+  const tealOrbPanelStyle = {
+    backgroundColor: '#07131d',
+    backgroundImage:
+      'radial-gradient(circle at -8% 118%, rgba(17,140,138,0.95) 0, rgba(17,140,138,0.95) 22%, rgba(7,19,29,0) 23%), radial-gradient(circle at -2% 110%, rgba(9,64,71,0.92) 0, rgba(9,64,71,0.92) 33%, rgba(7,19,29,0) 34%), radial-gradient(circle at 108% -6%, rgba(16,151,149,0.88) 0, rgba(16,151,149,0.88) 25%, rgba(7,19,29,0) 26%), radial-gradient(circle at 112% 8%, rgba(8,72,79,0.9) 0, rgba(8,72,79,0.9) 40%, rgba(7,19,29,0) 41%), linear-gradient(135deg, #06111a 0%, #081622 45%, #06101a 100%)',
+  }
   const programHighlights = [
     'AI-ARCHITECT Mastery: Learn to manage 120+ AI tools to automate 80% of manual marketing tasks.',
     'GEO & AEO Implementation: Rank beyond Google by getting your brand cited in ChatGPT, Gemini, and Perplexity answers.',
@@ -816,7 +821,10 @@ export default function HomePage() {
 
       <Section className="py-12 md:py-16" id="learning-values">
         <Container>
-          <div className="rounded-3xl border border-emerald-700/50 bg-[#1b4a37] p-8 md:p-12 shadow-[0_18px_48px_rgba(8,15,20,0.3)]">
+          <div
+            className="rounded-3xl border border-cyan-700/40 p-8 md:p-12 shadow-[0_18px_48px_rgba(8,15,20,0.3)]"
+            style={tealOrbPanelStyle}
+          >
             <p className="text-sm uppercase tracking-[0.25em] text-emerald-200 text-center">A Future-Ready Digital Marketing Institute</p>
             <h2 className="mt-3 text-4xl md:text-5xl font-bold text-slate-50 text-center">Our Learning Values</h2>
             <p className="mt-3 max-w-4xl mx-auto text-center text-lg text-emerald-50/90">
@@ -1323,7 +1331,10 @@ export default function HomePage() {
 
       <Section className="py-12 md:py-16" id="skills-after-blog">
         <Container>
-          <div className="rounded-[2rem] border border-[#7840b8] bg-[#4c226f] px-5 py-8 shadow-[0_25px_70px_rgba(9,15,30,0.45)] md:px-8 md:py-10">
+          <div
+            className="rounded-[2rem] border border-cyan-700/40 px-5 py-8 shadow-[0_25px_70px_rgba(9,15,30,0.45)] md:px-8 md:py-10"
+            style={tealOrbPanelStyle}
+          >
             <div className="mx-auto max-w-4xl text-center">
               <h2 className="text-4xl font-bold text-white md:text-5xl">
                 Master the Complete Digital Marketing Skill Set with SEO, AI &amp; Performance Marketing

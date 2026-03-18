@@ -11,17 +11,17 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#0d1d36',
     icons: [
       {
-        src: '/logo-mark.png',
+        src: '/site-icon-192.png',
+        sizes: '192x192',
+        type: 'image/png',
+      },
+      {
+        src: '/site-icon-512.png',
         sizes: '512x512',
         type: 'image/png',
       },
       {
-        src: '/icon.png',
-        sizes: '512x512',
-        type: 'image/png',
-      },
-      {
-        src: '/apple-icon.png',
+        src: '/site-icon-180.png',
         sizes: '180x180',
         type: 'image/png',
       },

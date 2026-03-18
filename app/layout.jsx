@@ -39,16 +39,16 @@ export const metadata = {
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
-      { url: '/logo-mark.png', type: 'image/png', sizes: '512x512' },
-      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
+      { url: '/site-icon-48.png', type: 'image/png', sizes: '48x48' },
+      { url: '/site-icon-192.png', type: 'image/png', sizes: '192x192' },
+      { url: '/site-icon-512.png', type: 'image/png', sizes: '512x512' },
     ],
     shortcut: [
       { url: '/favicon.ico' },
-      { url: '/logo-mark.png', type: 'image/png' },
+      { url: '/site-icon-48.png', type: 'image/png', sizes: '48x48' },
     ],
     apple: [
-      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
-      { url: '/logo-mark.png', sizes: '512x512', type: 'image/png' },
+      { url: '/site-icon-180.png', sizes: '180x180', type: 'image/png' },
     ],
   },
 }
