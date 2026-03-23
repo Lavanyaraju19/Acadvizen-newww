@@ -1,72 +1,30 @@
-import { useEffect, useState } from 'react'
+import { useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
-import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
-import { assetUrl } from '../../lib/assetUrl'
 import AdaptiveImage from '../../../components/media/AdaptiveImage'
+import TabbedFaqAccordion from '../../components/faq/TabbedFaqAccordion'
+import { aboutFaqExact, aboutTrainers, aboutWhyChoose } from '../../lib/sitePageContent'
+
+const faqTabs = []
+const trainerPalette = ['#74c7d8', '#f7df59', '#b7e08e', '#ff8f85', '#b884ff', '#8ad8ff']
+const trainerBackdrop = {
+  backgroundColor: '#070a23',
+  backgroundImage:
+    'radial-gradient(circle at 18% 24%, rgba(119, 249, 235, 0.18) 0, rgba(119, 249, 235, 0.02) 24%), radial-gradient(circle at 82% 20%, rgba(112, 202, 255, 0.18) 0, rgba(112, 202, 255, 0.02) 20%), radial-gradient(circle at 52% 62%, rgba(98, 255, 234, 0.14) 0, rgba(98, 255, 234, 0.01) 18%), linear-gradient(132deg, rgba(4, 9, 30, 0.98) 0%, rgba(7, 18, 48, 0.98) 42%, rgba(16, 74, 99, 0.76) 63%, rgba(4, 9, 30, 0.98) 100%)',
+}
 
 export function AboutPage() {
-  const [pageSections, setPageSections] = useState({})
+  const trainerSliderRef = useRef(null)
 
-  useEffect(() => {
-    void loadPageSections()
-  }, [])
-
-  async function loadPageSections() {
-    const { data } = await fetchPublicData('page-sections', { page: 'about' })
-    if (!data) return
-    const next = {}
-    data.forEach((section) => {
-      if (section.section_key) next[section.section_key] = section
-    })
-    setPageSections(next)
+  const scrollTrainerCards = (direction) => {
+    if (!trainerSliderRef.current) return
+    const amount = Math.max(trainerSliderRef.current.clientWidth * 0.82, 320)
+    trainerSliderRef.current.scrollBy({ left: direction * amount, behavior: 'smooth' })
   }
-
-  const parseJson = (value, fallback) => {
-    if (!value) return fallback
-    if (typeof value === 'string') {
-      try {
-        return JSON.parse(value)
-      } catch (err) {
-        return fallback
-      }
-    }
-    return value
-  }
-
-  const getSection = (key) => pageSections[key] || {}
-  const heroSection = getSection('hero')
-  const heroCta = parseJson(heroSection.cta_json, {})
-  const storySection = getSection('story')
-  const storyItems = parseJson(storySection.items_json, [
-    'Best academy for AI digital marketing.',
-    'Acadvizen is a leading AI-powered digital marketing learning institute.',
-  ])
-  const statsSection = getSection('stats')
-  const statsItems = parseJson(statsSection.items_json, [])
-  const highlightsSection = getSection('highlights')
-  const highlightsItems = parseJson(highlightsSection.items_json, [])
-  const highlightsCta = parseJson(highlightsSection.cta_json, {})
-  const missionSection = getSection('mission')
-  const missionItems = parseJson(missionSection.items_json, [])
-  const foundersSection = getSection('founders')
-  const founders = parseJson(foundersSection.items_json, [
-    {
-      name: 'Chandra',
-      image: '/team/chandra.jpg',
-    },
-    {
-      name: 'Manasvini',
-      image: '/team/manasvini.png',
-    },
-  ])
-  const sanitizedFounders = (Array.isArray(founders) ? founders : []).map((person) => ({
-    ...person,
-    image: person?.image || '/team/chandra.jpg',
-  }))
-  const trainerPalette = ['#2A9D3A', '#1D4ED8', '#EAB308']
 
   return (
     <div className="min-h-screen">
@@ -78,236 +36,169 @@ export function AboutPage() {
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             className="text-center"
           >
-            {heroCta?.badge && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs text-slate-300 backdrop-blur">
-                <span className="h-1.5 w-1.5 rounded-full bg-teal-300 shadow-[0_0_18px_rgba(0,191,255,0.45)]" />
-                {heroCta.badge}
-              </div>
-            )}
-            <h1 className="mt-6 text-3xl md:text-5xl font-semibold tracking-tight text-slate-50">
-              {heroSection.title || 'Best Academy for AI Digital Marketing'}
-            </h1>
-            <p className="mt-4 text-slate-300 max-w-2xl mx-auto">
-              {heroSection.subtitle || 'Acadvizen leading AI-powered digital marketing learning institute.'}
+            <h1 className="text-4xl md:text-6xl font-bold text-slate-50">Who We Are</h1>
+            <p className="mt-4 text-xl font-semibold text-teal-200">Best Academy for AI Digital Marketing in India</p>
+            <p className="mt-4 max-w-3xl mx-auto text-slate-300">
+              Acadvizen is rated as the top choice for students and working professionals seeking career growth in 2026.
             </p>
           </motion.div>
         </Container>
       </Section>
 
       <Section className="py-10 md:py-12">
-        <Container className="max-w-7xl">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-semibold text-slate-50 text-center">
-              Best Academy for AI Digital Marketing
-            </h2>
-            <p className="mt-3 text-center text-slate-300">
-              ACADVIZEN stands as the best digital marketing training institute in Bangalore, delivering practical,
-              career-driven education. As a top-rated digital marketing institute in Bangalore, we combine live
-              projects, expert mentorship, and real-time tools.
+        <Container className="max-w-6xl">
+          <div className="grid gap-8 lg:grid-cols-[1fr_1.2fr] items-center">
+            <Surface className="p-5">
+              <AdaptiveImage
+                src="/about/leadership/ceo-tharika.jpg"
+                fallbackSrcs={['/about/tharii.jpg']}
+                alt="Tharika Mam"
+                variant="content"
+                aspectRatio="4 / 5"
+                sizes="(max-width: 1024px) 100vw, 520px"
+                wrapperClassName="w-full"
+                borderClassName=""
+                roundedClassName="rounded-[1.6rem]"
+              />
+            </Surface>
+            <Surface className="p-7 md:p-9">
+              <h2 className="text-3xl font-bold text-slate-50">Founder&apos;s Note</h2>
+              <p className="mt-4 leading-8 text-slate-300">
+                With a Master&apos;s in Digital Marketing from Dublin Business School and a Bachelor&apos;s in Commerce from Jain University, I currently lead Acadvizen as its CEO and Founder. Our institute pioneers digital marketing education by designing customized, industry-focused learning pathways. Combining expertise in digital marketing strategy, performance marketing, and brand growth, I am committed to preparing students and professionals with globally relevant skills.
+              </p>
+              <p className="mt-4 leading-8 text-slate-300">
+                At Acadvizen, I collaborate with my team to develop innovative programs that emphasize live projects and tool-based execution. By fostering a culture of strategic thinking and practical learning, we empower learners to transition seamlessly into the digital marketing industry. My goal is to continue shaping the future of education with a focus on measurable outcomes, ensuring that every learner is equipped to thrive in the dynamic digital landscape.
+              </p>
+            </Surface>
+          </div>
+        </Container>
+      </Section>
+
+      <Section className="py-10 md:py-12">
+        <Container className="max-w-6xl">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Surface className="p-7 md:p-9">
+              <h2 className="text-3xl font-bold text-slate-50">About Acadvizen</h2>
+              <p className="mt-4 leading-8 text-slate-300">
+                Acadvizen is a premier digital marketing institute specializing in AI-integrated marketing strategies, SEO, and Paid Ads. We offer 100% practical training, 15+ global certifications (Google, Meta, HubSpot), and dedicated placement assistance. Located in Bangalore, Acadvizen is rated as the top choice for students and working professionals seeking career growth in 2026.
+              </p>
+            </Surface>
+            <Surface className="p-7 md:p-9">
+              <h2 className="text-3xl font-bold text-slate-50">Our Mission</h2>
+              <p className="mt-4 leading-8 text-slate-300">
+                Our mission is to bridge the skills gap in India&apos;s tech capital by providing the most advanced digital marketing course in Bangalore. We empower freshers and professionals to master AI-driven marketing strategies, including AEO, GEO, and programmatic advertising. Through 15+ live industry projects, we ensure our students do not just learn theory but execute high-impact campaigns that deliver a documented 4.5x ROAS for real-world brands.
+              </p>
+            </Surface>
+          </div>
+          <Surface className="mt-6 p-7 md:p-9">
+            <h2 className="text-3xl font-bold text-slate-50">Our Vision</h2>
+            <p className="mt-4 leading-8 text-slate-300">
+              To become the global benchmark for digital marketing excellence by 2030, transforming Bangalore into a hub for AI-integrated marketing talent. We envision a future where every Acadvizen graduate is a leader in data-driven growth hacking, setting new standards for digital ROI and innovative brand storytelling in an AI-first world.
             </p>
-            <div className="mt-10 grid gap-8 lg:grid-cols-[1.35fr_1.65fr] items-stretch">
-              <Surface className="p-5">
-                <div className="relative h-[500px] lg:h-[520px] w-full overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
-                  <Image
-                    src={assetUrl('/about/tharii.jpg')}
-                    alt="Tharika Chakrapani Raju - Co-Founder"
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 520px"
-                    className="object-cover object-top"
-                    loading="lazy"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null
-                      e.currentTarget.src = assetUrl('/about/chandar.jpg')
-                    }}
-                  />
-                </div>
-              </Surface>
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                <Surface className="p-7">
-                  <h3 className="text-3xl font-bold text-slate-50">Our Mission</h3>
-                  <p className="mt-3 text-lg text-slate-300">
-                    To combine creativity, data, and AI to train the next generation of digital marketers.
-                  </p>
-                </Surface>
-                <Surface className="p-7">
-                  <h3 className="text-3xl font-bold text-slate-50">Our Vision</h3>
-                  <p className="mt-3 text-lg text-slate-300">
-                    To shape future marketers using AI-driven strategies for tomorrow&apos;s digital economy.
-                  </p>
-                </Surface>
-                <Surface className="p-7">
-                  <h3 className="text-3xl font-bold text-slate-50">Why Choose Us</h3>
-                  <div className="mt-3 space-y-2 text-lg text-slate-300">
-                    {[
-                      'Industry mentors',
-                      'Live projects',
-                      'Placement assistance',
-                      'Soft skills training',
-                      'Tool-based learning',
-                    ].map((item) => (
-                      <div key={item} className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-3">
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-                </Surface>
-              </div>
-            </div>
-          </div>
-        </Container>
-      </Section>
-
-      <Section className="py-8 md:py-14">
-        <Container className="max-w-6xl">
-          <div className="grid lg:grid-cols-2 gap-6 items-stretch">
-            <Surface
-              className="p-7 md:p-10"
-              motionProps={{
-                initial: { opacity: 0, y: 12 },
-                whileInView: { opacity: 1, y: 0 },
-                viewport: { once: true, margin: '-80px' },
-                transition: { duration: 0.45 },
-              }}
-            >
-              <h2 className="text-2xl font-semibold text-slate-50 tracking-tight">
-                {storySection.title || 'Our Story'}
-              </h2>
-              {storyItems.map((paragraph, idx) => (
-                <p key={`${paragraph}-${idx}`} className="mt-4 text-slate-300 leading-relaxed">
-                  {paragraph}
-                </p>
-              ))}
-              <div className="mt-8 grid grid-cols-3 gap-3">
-                {statsItems.map((s, idx) => (
-                  <div
-                    key={`${s.v}-${idx}`}
-                    className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4 text-center"
-                  >
-                    <div className="text-lg font-semibold text-slate-50">{s.k}</div>
-                    <div className="mt-1 text-xs text-slate-400">{s.v}</div>
-                  </div>
-                ))}
-              </div>
-            </Surface>
-
-            {highlightsItems.length > 0 && (
-              <Surface
-                className="p-6 md:p-8 overflow-hidden"
-                motionProps={{
-                  initial: { opacity: 0, y: 12 },
-                  whileInView: { opacity: 1, y: 0 },
-                  viewport: { once: true, margin: '-80px' },
-                  transition: { duration: 0.45, delay: 0.05 },
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-slate-50">{highlightsSection.title}</h3>
-                  {highlightsCta?.scroll_label && (
-                    <span className="text-xs text-slate-400">{highlightsCta.scroll_label}</span>
-                  )}
-                </div>
-                <div className="mt-5 -mx-2 overflow-x-auto">
-                  <div className="flex gap-4 px-2 pb-2 min-w-max">
-                    {highlightsItems.map((card, idx) => (
-                      <motion.div
-                        key={`${card.title}-${idx}`}
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, margin: '-60px' }}
-                        transition={{ duration: 0.35, delay: idx * 0.06 }}
-                        className="w-[280px] sm:w-[320px] shrink-0"
-                      >
-                        <div className="group relative h-full rounded-2xl border border-white/10 bg-white/[0.03] p-5 overflow-hidden">
-                          <div className={`absolute inset-0 bg-gradient-to-br ${card.bg || ''}`} />
-                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div className="absolute -inset-12 rounded-full bg-teal-400/10 blur-3xl" />
-                          </div>
-                          <div className="relative">
-                            <div className="h-10 w-10 rounded-2xl border border-white/10 bg-white/[0.04]" />
-                            <div className="mt-4 text-sm font-semibold text-slate-50">{card.title}</div>
-                            <div className="mt-2 text-sm text-slate-300">{card.desc}</div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              </Surface>
-            )}
-          </div>
-        </Container>
-      </Section>
-
-      {(missionSection.title || missionSection.subtitle || missionItems.length > 0) && (
-        <Section className="py-10 md:py-16">
-          <Container className="max-w-5xl">
-            <Surface
-              className="p-8 md:p-12"
-              motionProps={{
-                initial: { opacity: 0, y: 12 },
-                whileInView: { opacity: 1, y: 0 },
-                viewport: { once: true, margin: '-80px' },
-                transition: { duration: 0.45 },
-              }}
-            >
-              {missionSection.title && (
-                <h2 className="text-2xl font-semibold text-slate-50 tracking-tight">{missionSection.title}</h2>
-              )}
-              {missionSection.subtitle && (
-                <p className="mt-4 text-slate-300 leading-relaxed">{missionSection.subtitle}</p>
-              )}
-              {missionItems.length > 0 && (
-                <div className="mt-8 grid md:grid-cols-3 gap-4">
-                  {missionItems.map((x) => (
-                    <div
-                      key={x.t}
-                      className="rounded-2xl border border-white/10 bg-white/[0.03] p-5"
-                    >
-                      <div className="text-sm font-semibold text-slate-50">{x.t}</div>
-                      <div className="mt-2 text-sm text-slate-300">{x.d}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Surface>
-          </Container>
-        </Section>
-      )}
-
-      <Section className="py-8 md:py-14">
-        <Container className="max-w-6xl">
-          <Surface className="p-8 md:p-12">
-            <h2 className="text-2xl font-semibold text-slate-50 tracking-tight">
-              {foundersSection.title || 'Our Trainers'}
-            </h2>
-            {foundersSection.subtitle && (
-              <p className="mt-3 text-slate-300">{foundersSection.subtitle}</p>
-            )}
-            <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {sanitizedFounders.map((person, idx) => (
-                <div
-                  key={person.name}
-                  className="rounded-2xl border border-white/10 p-6 text-center"
-                  style={{ backgroundColor: trainerPalette[idx % trainerPalette.length] }}
-                >
-                  <div className="relative mx-auto h-52 w-52 overflow-hidden rounded-2xl border border-white/20 bg-white/20">
-                    <AdaptiveImage
-                      src={assetUrl(person.image)}
-                      fallbackSrcs={[assetUrl('/about/tharii.jpg')]}
-                      alt={person.name}
-                      variant="content"
-                      aspectRatio="1 / 1"
-                      sizes="208px"
-                      wrapperClassName="h-full w-full"
-                      borderClassName=""
-                      roundedClassName="rounded-2xl"
-                    />
-                  </div>
-                  <div className="mt-4 text-3xl font-bold text-slate-50">{person.name}</div>
-                </div>
-              ))}
-            </div>
           </Surface>
+        </Container>
+      </Section>
+
+      <Section className="py-10 md:py-12">
+        <Container className="max-w-6xl">
+          <div className="max-w-3xl">
+            <h2 className="text-3xl md:text-5xl font-bold text-slate-50">Why Choose Us?</h2>
+          </div>
+          <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-5">
+            {aboutWhyChoose.map((item) => (
+              <Link key={item.title} to={item.to} className="block">
+                <Surface className="h-full p-6 transition-transform duration-200 hover:-translate-y-1">
+                  <div className="text-xl font-bold text-slate-50">{item.title}</div>
+                  <div className="mt-5 text-sm font-semibold text-teal-200">Explore →</div>
+                </Surface>
+              </Link>
+            ))}
+          </div>
+        </Container>
+      </Section>
+
+      <Section className="py-10 md:py-12">
+        <Container className="max-w-7xl">
+          <div
+            className="overflow-hidden rounded-[2.4rem] border border-cyan-300/15 px-6 py-10 shadow-[0_24px_70px_rgba(0,0,0,0.4)] md:px-8 md:py-12"
+            style={trainerBackdrop}
+          >
+            <div className="mx-auto max-w-4xl text-center">
+              <h2 className="text-4xl md:text-6xl font-bold italic text-slate-50">Our Trainers</h2>
+              <p className="mt-4 text-base leading-8 text-slate-200 md:text-lg">
+                Practical, portfolio-first mentoring from a team focused on modern digital marketing execution, live workflows, and industry-facing outcomes.
+              </p>
+            </div>
+
+            <div className="mt-8 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => scrollTrainerCards(-1)}
+                className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition hover:bg-white/18"
+                aria-label="Scroll trainer cards left"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollTrainerCards(1)}
+                className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition hover:bg-white/18"
+                aria-label="Scroll trainer cards right"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div
+              ref={trainerSliderRef}
+              className="mt-6 flex snap-x snap-mandatory gap-6 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {aboutTrainers.map((trainer, index) => (
+                <article
+                  key={trainer.name}
+                  className="min-w-[290px] snap-start overflow-hidden rounded-[1.8rem] border-[3px] border-black/70 shadow-[0_18px_32px_rgba(0,0,0,0.24)] sm:min-w-[330px] lg:min-w-[360px]"
+                  style={{ backgroundColor: trainerPalette[index % trainerPalette.length] }}
+                >
+                  <div className="relative h-[21rem] overflow-hidden">
+                    <div className="absolute inset-0 opacity-90">
+                      <div className="absolute -left-12 bottom-[-12%] h-44 w-44 rounded-full bg-black/10 blur-2xl" />
+                      <div className="absolute right-[-10%] top-8 h-32 w-32 rounded-full bg-white/12 blur-2xl" />
+                      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/10 via-black/5 to-transparent" />
+                    </div>
+                    <div className="absolute inset-x-0 bottom-0 mx-auto h-[92%] w-[92%]">
+                      <Image
+                        src={trainer.image}
+                        alt={trainer.name}
+                        fill
+                        sizes="(max-width: 768px) 86vw, 360px"
+                        className="object-contain object-bottom drop-shadow-[0_18px_30px_rgba(0,0,0,0.26)]"
+                        style={{ filter: 'contrast(1.04) saturate(1.03)' }}
+                      />
+                    </div>
+                  </div>
+                  <div className="px-6 pb-6 pt-4 text-slate-950">
+                    <h3 className="text-2xl font-bold text-slate-950">{trainer.name}</h3>
+                    <p className="mt-2 text-base text-slate-900/85">{trainer.designation}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </Container>
+      </Section>
+
+      <Section className="py-10 md:py-12">
+        <Container className="max-w-6xl">
+          <TabbedFaqAccordion
+            title="Frequently Asked Questions"
+            intro="These About page FAQs explain what Acadvizen is, how it teaches, why it focuses on AI-driven digital marketing, and how the learning approach is structured."
+            tabs={faqTabs}
+            items={aboutFaqExact}
+            panelClassName=""
+            tabInactiveClassName="border-slate-500 text-slate-100 bg-transparent"
+            cardClassName="rounded-[1.7rem] border border-white/10 bg-white/[0.04] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.18)]"
+            answerClassName="mt-4 text-base leading-8 text-slate-300"
+          />
         </Container>
       </Section>
     </div>
@@ -315,5 +206,3 @@ export function AboutPage() {
 }
 
 export default AboutPage
-
-

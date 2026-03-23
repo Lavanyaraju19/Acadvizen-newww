@@ -19,7 +19,7 @@ export const programHighlights = [
 export const courseModules = [
   {
     anchor: 'course-digital-3-aio',
-    title: 'Course 1: Digital 3.0 & AIO (AI Orchestration)',
+    title: 'Digital 3.0 & AIO (AI Orchestration)',
     duration: '120 Days',
     focus: 'Moving from manual labor to AI systems.',
     pillars: [
@@ -34,7 +34,7 @@ export const courseModules = [
   },
   {
     anchor: 'course-advanced-seo-5',
-    title: 'Course 2: Advanced SEO 5.0 (Search Intelligence)',
+    title: 'Advanced SEO 5.0 (Search Intelligence)',
     duration: '70 Days',
     focus: 'Ranking on Google, Perplexity, and ChatGPT Search.',
     pillars: [
@@ -49,7 +49,7 @@ export const courseModules = [
   },
   {
     anchor: 'course-viral-ecosystems',
-    title: 'Course 3: Viral Ecosystems & Content Intelligence',
+    title: 'Viral Ecosystems & Content Intelligence',
     duration: '60 Days',
     focus: 'Mastering the attention economy and viral algorithms.',
     pillars: [
@@ -64,7 +64,7 @@ export const courseModules = [
   },
   {
     anchor: 'course-performance-marketing',
-    title: 'Course 4: Performance Marketing & Ad-Tech Scaling',
+    title: 'Performance Marketing & Ad-Tech Scaling',
     duration: '90 Days',
     focus: 'High-budget management and profit scaling.',
     pillars: [
@@ -79,7 +79,7 @@ export const courseModules = [
   },
   {
     anchor: 'course-marketing-analytics',
-    title: 'Course 5: Marketing Analytics',
+    title: 'Marketing Analytics',
     duration: '45 Days',
     focus: 'Turning raw data into multi-million dollar decisions.',
     pillars: [
@@ -94,56 +94,56 @@ export const courseModules = [
   },
 ]
 
-export const skillTopPlatforms = ['Google', 'Meta', 'LinkedIn', 'Bing', 'Ahrefs', 'Google Analytics']
-export const skillBottomPlatforms = ['Google', 'Meta', 'LinkedIn', 'Bing', 'Ahrefs']
+export const skillTopPlatforms = ['Google', 'Meta', 'LinkedIn', 'Bing']
+export const skillBottomPlatforms = []
 
 export const skillGroups = [
   {
     title: 'Search Engine Optimization (SEO + AEO)',
     items: ['On-Page SEO', 'Technical SEO', 'Off-Page SEO', 'Keyword Research', 'Entity SEO', 'AEO', 'GEO', 'AIO'],
-    tools: ['ahrefs', 'semrush', 'screaming-frog'],
+    tools: [],
     theme: 'bg-[#3a1360] border-[#c77dff]/35',
   },
   {
     title: 'Paid Advertising & GEO Targeting',
     items: ['Google Ads', 'Meta Ads (Facebook & Instagram Ads)', 'LinkedIn Ads', 'Bing Ads'],
-    tools: ['google-ads', 'meta-ads'],
+    tools: [],
     theme: 'bg-[#1d2b6b] border-[#60a5fa]/35',
   },
   {
     title: 'Social Media Marketing',
     items: ['Instagram Marketing', 'Facebook Marketing', 'LinkedIn Marketing', 'Twitter (X) Marketing', 'YouTube Marketing', 'Email Marketing', 'WhatsApp Marketing'],
-    tools: ['metricool', 'buffer', 'hootsuite'],
+    tools: [],
     theme: 'bg-[#173d5a] border-[#67e8f9]/35',
   },
   {
     title: 'Content Marketing & Creative',
     items: ['Blog Writing', 'Copywriting', 'Ad Creatives', 'Storytelling', 'Content Strategy'],
-    tools: ['canva', 'jasper', 'midjourney'],
+    tools: [],
     theme: 'bg-[#5b2d11] border-[#fbbf24]/35',
   },
   {
     title: 'Performance Marketing & Analytics',
     items: ['Funnel Strategy', 'Lead Generation', 'CRO (Conversion Rate Optimization)', 'ROAS Optimization'],
-    tools: ['google-analytics', 'clarity', 'hotjar'],
+    tools: [],
     theme: 'bg-[#0f3c3a] border-[#5eead4]/35',
   },
   {
     title: 'Gen AI & Chatbots',
     items: ['AI Enhance Marketing', 'Smart AI', 'Copy.ai', 'Writesonic', 'Intercom', 'Drift'],
-    tools: ['chatgpt', 'synthesia', 'jasper'],
+    tools: [],
     theme: 'bg-[#43225e] border-[#e879f9]/35',
   },
   {
     title: 'Email Marketing Platforms',
     items: ['HubSpot', 'Mailchimp', 'ActiveCampaign'],
-    tools: ['hubspot', 'mailchimp', 'activecampaign'],
+    tools: [],
     theme: 'bg-[#163c32] border-[#86efac]/35',
   },
   {
     title: 'Website & Funnel Building',
     items: ['Wix ADI', 'Framer AI', 'Durable AI', 'Webflow'],
-    tools: ['webflow', 'canva'],
+    tools: [],
     theme: 'bg-[#1f335a] border-[#93c5fd]/35',
   },
 ]

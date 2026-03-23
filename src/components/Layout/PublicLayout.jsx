@@ -78,8 +78,7 @@ export function PublicLayout({ children }) {
   const contactPhone = settings?.phone_number || '+91 7411314848'
   const contactAddress =
     settings?.address || 'No 647-35/29 5th Block, Jayanagar\nBangalore, Karnataka 560078'
-  const announcementText =
-    settings?.announcement_bar || 'Starting from March 16 | Limited Seats Available | Admissions Open Now'
+  const announcementText = 'Starting batch from April 6th | Limited Seats Available | Admission Open Now'
   const socialLinks = settings?.social_links && typeof settings.social_links === 'object'
     ? settings.social_links
     : {}
@@ -145,7 +144,14 @@ export function PublicLayout({ children }) {
       <div className="sticky top-0 z-[55] w-full border-b border-[#1f7a34] bg-[#278f38]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2 text-center">
           <p className="text-xs sm:text-sm font-semibold text-[#c9ffe0]">
-            {announcementText}
+            {announcementText.includes('Admission Open Now') ? (
+              <>
+                Starting batch from April 6th | Limited Seats Available |{' '}
+                <span className="font-extrabold text-yellow-300">Admission Open Now</span>
+              </>
+            ) : (
+              announcementText
+            )}
           </p>
         </div>
       </div>
@@ -157,9 +163,17 @@ export function PublicLayout({ children }) {
       </main>
 
       <div className="fixed right-0 top-1/2 z-40 hidden -translate-y-1/2 md:flex">
-        <div className="mr-0 flex flex-col items-center gap-1 rounded-l-2xl border border-amber-300/80 bg-[#ffd21f] px-2 py-3 shadow-[0_16px_40px_rgba(15,23,42,0.35)]">
+        <div className="mr-0 flex flex-col items-center gap-2 rounded-l-2xl border border-cyan-300/30 bg-[#0b1830]/92 px-2 py-3 shadow-[0_16px_40px_rgba(15,23,42,0.35)] backdrop-blur">
           {fixedSocialLinks.map((item) => {
             const Icon = item.icon
+            const colorClass =
+              item.key === 'linkedin'
+                ? 'text-[#0a66c2]'
+                : item.key === 'instagram'
+                ? 'text-[#e1306c]'
+                : item.key === 'facebook'
+                ? 'text-[#1877f2]'
+                : 'text-[#ff0000]'
             return (
               <a
                 key={item.key}
@@ -167,7 +181,7 @@ export function PublicLayout({ children }) {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={item.label}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-[#0f5f7a] transition hover:scale-105 hover:bg-black/10 hover:text-[#08384a]"
+                className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:scale-105 hover:bg-white/5 ${colorClass}`}
               >
                 <Icon className="h-[15px] w-[15px]" strokeWidth={2.2} />
               </a>

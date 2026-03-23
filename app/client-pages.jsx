@@ -11,6 +11,9 @@ import { BlogPage } from '../src/legacy/pages/BlogPage'
 import { BlogPostPage } from '../src/legacy/pages/BlogPostPage'
 import { PlacementPage } from '../src/legacy/pages/PlacementPage'
 import { PlacementDetailPage } from '../src/legacy/pages/PlacementDetailPage'
+import { ProjectsPage } from '../src/legacy/pages/ProjectsPage'
+import { SoftSkillsPage } from '../src/legacy/pages/SoftSkillsPage'
+import { TestimonialsPage } from '../src/legacy/pages/TestimonialsPage'
 import { HireFromUsPage } from '../src/legacy/pages/HireFromUsPage'
 import { LoginPage } from '../src/legacy/pages/LoginPage'
 import { RegisterPage } from '../src/legacy/pages/RegisterPage'
@@ -70,6 +73,18 @@ export function PlacementClientPage() {
 
 export function PlacementDetailClientPage() {
   return <PlacementDetailPage />
+}
+
+export function TestimonialsClientPage() {
+  return <TestimonialsPage />
+}
+
+export function ProjectsClientPage() {
+  return <ProjectsPage />
+}
+
+export function SoftSkillsClientPage() {
+  return <SoftSkillsPage />
 }
 
 export function HireFromUsClientPage() {

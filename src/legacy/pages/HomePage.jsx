@@ -4,15 +4,20 @@ import { motion } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import {
+  BriefcaseBusiness,
+  Building2,
   Target,
   Sparkles,
   ChevronDown,
+  Laptop2,
+  Rocket,
 } from 'lucide-react'
 import { fetchPublicData } from '../../lib/apiClient'
 import { assetUrl } from '../../lib/assetUrl'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 import { BlogSection } from '../../components/BlogSection'
+import TabbedFaqAccordion from '../../components/faq/TabbedFaqAccordion'
 import { blogs as localBlogs } from '../../../data/blogs'
 import AdaptiveImage from '../../../components/media/AdaptiveImage'
 import { resolveToolLogoCandidates } from '../../../lib/toolMedia'
@@ -24,6 +29,7 @@ import {
   skillBottomPlatforms,
   skillTopPlatforms,
 } from '../../lib/marketingProgramContent'
+import { homepageFaqExact, homepageLearningValues } from '../../lib/sitePageContent'
 
 export default function HomePage() {
   const metaTitle = 'Best Digital Marketing Course In Bangalore'
@@ -32,17 +38,26 @@ export default function HomePage() {
   const metaKeywords =
     'best digital marketing training institute in bangalore, digital marketing institute in bangalore, digital marketing course with placement, digital marketing training institute in bangalore'
   const coursePrograms = []
-  const learningValues = [
-    { label: 'Smart Classroom', solid: 'bg-[#1f6378]', border: 'border-[#3fa6c0]', text: 'text-sky-100' },
-    { label: '100% Placement Support', solid: 'bg-[#2a7a43]', border: 'border-[#57c173]', text: 'text-emerald-100' },
-    { label: 'Paid Internship', solid: 'bg-[#7b7812]', border: 'border-[#d3ca3d]', text: 'text-amber-100' },
-    { label: 'Integrated AI', solid: 'bg-[#75607d]', border: 'border-[#b793c4]', text: 'text-fuchsia-100' },
-    { label: 'Case Studies', solid: 'bg-[#4b7750]', border: 'border-[#80c18a]', text: 'text-teal-100' },
+  const learningValuePalette = [
+    { solid: 'bg-[#1f6378]', border: 'border-[#3fa6c0]', text: 'text-sky-100' },
+    { solid: 'bg-[#2a7a43]', border: 'border-[#57c173]', text: 'text-emerald-100' },
+    { solid: 'bg-[#7b7812]', border: 'border-[#d3ca3d]', text: 'text-amber-100' },
+    { solid: 'bg-[#75607d]', border: 'border-[#b793c4]', text: 'text-fuchsia-100' },
+    { solid: 'bg-[#4b7750]', border: 'border-[#80c18a]', text: 'text-teal-100' },
   ]
+  const learningValues = homepageLearningValues.map((label, index) => ({
+    label,
+    ...learningValuePalette[index % learningValuePalette.length],
+  }))
   const tealOrbPanelStyle = {
     backgroundColor: '#07131d',
     backgroundImage:
       'radial-gradient(circle at -8% 118%, rgba(17,140,138,0.95) 0, rgba(17,140,138,0.95) 22%, rgba(7,19,29,0) 23%), radial-gradient(circle at -2% 110%, rgba(9,64,71,0.92) 0, rgba(9,64,71,0.92) 33%, rgba(7,19,29,0) 34%), radial-gradient(circle at 108% -6%, rgba(16,151,149,0.88) 0, rgba(16,151,149,0.88) 25%, rgba(7,19,29,0) 26%), radial-gradient(circle at 112% 8%, rgba(8,72,79,0.9) 0, rgba(8,72,79,0.9) 40%, rgba(7,19,29,0) 41%), linear-gradient(135deg, #06111a 0%, #081622 45%, #06101a 100%)',
+  }
+  const learningValuesPanelStyle = {
+    backgroundColor: '#071326',
+    backgroundImage:
+      'radial-gradient(circle at 16% 82%, rgba(110,214,213,0.28) 0, rgba(110,214,213,0.02) 18%), radial-gradient(circle at 72% 14%, rgba(98,198,203,0.18) 0, rgba(98,198,203,0.02) 16%), linear-gradient(140deg, rgba(6,17,40,0.98) 0%, rgba(6,17,40,0.98) 26%, rgba(81,182,187,0.14) 26.2%, rgba(7,19,38,0.98) 52%), linear-gradient(34deg, rgba(98,198,203,0.18) 0%, rgba(7,19,38,0) 34%), linear-gradient(215deg, rgba(93,210,214,0.18) 0%, rgba(7,19,38,0) 26%), linear-gradient(180deg, #08122a 0%, #071326 100%)',
   }
   const programHighlights = [
     'AI-ARCHITECT Mastery: Learn to manage 120+ AI tools to automate 80% of manual marketing tasks.',
@@ -56,7 +71,7 @@ export default function HomePage() {
   ]
   const courseModules = [
     {
-      title: 'Course 1: Digital 3.0 & AIO (AI Orchestration)',
+      title: 'Digital 3.0 & AIO (AI Orchestration)',
       duration: '120 Days',
       focus: 'Moving from manual labor to AI systems.',
       pillars: [
@@ -70,7 +85,7 @@ export default function HomePage() {
       ],
     },
     {
-      title: 'Course 2: Advanced SEO 5.0 (Search Intelligence)',
+      title: 'Advanced SEO 5.0 (Search Intelligence)',
       duration: '70 Days',
       focus: 'Ranking on Google, Perplexity, and ChatGPT Search.',
       pillars: [
@@ -84,7 +99,7 @@ export default function HomePage() {
       ],
     },
     {
-      title: 'Course 3: Viral Ecosystems & Content Intelligence',
+      title: 'Viral Ecosystems & Content Intelligence',
       duration: '60 Days',
       focus: 'Mastering the attention economy and viral algorithms.',
       pillars: [
@@ -98,7 +113,7 @@ export default function HomePage() {
       ],
     },
     {
-      title: 'Course 4: Performance Marketing & Ad-Tech Scaling',
+      title: 'Performance Marketing & Ad-Tech Scaling',
       duration: '90 Days',
       focus: 'High-budget management and profit scaling.',
       pillars: [
@@ -112,7 +127,7 @@ export default function HomePage() {
       ],
     },
     {
-      title: 'Course 5: Marketing Analytics',
+      title: 'Marketing Analytics',
       duration: '45 Days',
       focus: 'Turning raw data into multi-million dollar decisions.',
       pillars: [
@@ -217,6 +232,7 @@ export default function HomePage() {
       answer: 'Yes. You receive program completion recognition along with support toward global certifications including Google, Meta, and AcadVizen’s own advanced program recognition.',
     },
   ]
+  const faqTabs = []
   const [showPopup, setShowPopup] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [formError, setFormError] = useState('')
@@ -234,7 +250,8 @@ export default function HomePage() {
         published_at: post.created_at,
       }))
   )
-  const [activeFaq, setActiveFaq] = useState(0)
+  const [activeProgramPanel, setActiveProgramPanel] = useState('overview')
+  const [expandedWhoCard, setExpandedWhoCard] = useState(null)
   const [heroVideoAvailable, setHeroVideoAvailable] = useState(true)
   const [heroVideoPlaying, setHeroVideoPlaying] = useState(false)
   const heroVideoRef = useRef(null)
@@ -593,8 +610,8 @@ export default function HomePage() {
   const toolLookup = new Map(
     scrollingTools.map((tool) => [tool.slug || toToolSlug(tool.name || ''), tool])
   )
-  const marqueeRowA = []
-  const marqueeRowB = []
+  const marqueeRowA = scrollingTools.filter((_, index) => index % 2 === 0)
+  const marqueeRowB = scrollingTools.filter((_, index) => index % 2 === 1)
   const toolGroups = [
     {
       title: 'SEO Tools',
@@ -822,8 +839,8 @@ export default function HomePage() {
       <Section className="py-12 md:py-16" id="learning-values">
         <Container>
           <div
-            className="rounded-3xl border border-cyan-700/40 p-8 md:p-12 shadow-[0_18px_48px_rgba(8,15,20,0.3)]"
-            style={tealOrbPanelStyle}
+            className="rounded-3xl border border-cyan-700/30 p-8 md:p-12 shadow-[0_18px_48px_rgba(8,15,20,0.3)]"
+            style={learningValuesPanelStyle}
           >
             <p className="text-sm uppercase tracking-[0.25em] text-emerald-200 text-center">A Future-Ready Digital Marketing Institute</p>
             <h2 className="mt-3 text-4xl md:text-5xl font-bold text-slate-50 text-center">Our Learning Values</h2>
@@ -851,28 +868,80 @@ export default function HomePage() {
               <p className="text-sm uppercase tracking-[0.28em] text-emerald-200">Course Program</p>
               <h2 className="mt-3 text-4xl md:text-5xl font-bold text-slate-50">{programOverview.title}</h2>
               <h4 className="mt-4 text-lg md:text-2xl font-semibold text-slate-100">
-                Total Program Duration: <span className="text-amber-300">{programOverview.durationLabel}</span> | <span className="text-emerald-300">{programOverview.toolsLabel}</span> |{' '}
+                <span className="text-amber-300">{programOverview.durationLabel}</span> | <span className="text-emerald-300">{programOverview.toolsLabel}</span> |{' '}
                 <span className="text-amber-200">{programOverview.casesLabel}</span>
               </h4>
             </div>
-            <div className="mt-8 grid gap-4 md:grid-cols-2">
-              {programHighlights.map((item, idx) => (
-                <div
-                  key={item}
-                  className="rounded-2xl border border-white/10 bg-slate-950/55 px-5 py-5 text-slate-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+            <div className="mt-8 space-y-4">
+              <div className="overflow-hidden rounded-[1.7rem] border border-white/10 bg-slate-950/55">
+                <button
+                  type="button"
+                  onClick={() => setActiveProgramPanel(activeProgramPanel === 'overview' ? null : 'overview')}
+                  className="flex w-full items-center justify-between gap-4 px-5 py-5 text-left"
                 >
-                  <div className="flex items-start gap-3">
-                    <span className={`mt-0.5 h-2.5 w-2.5 rounded-full ${idx % 2 === 0 ? 'bg-amber-300' : 'bg-emerald-300'}`} />
-                    <p className="text-sm md:text-base leading-7">{item}</p>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-50 md:text-2xl">{programOverview.title}</h3>
+                    <p className="mt-2 text-sm font-semibold text-slate-300">
+                      {programOverview.durationLabel} | {programOverview.toolsLabel} | {programOverview.casesLabel}
+                    </p>
                   </div>
-                </div>
-              ))}
+                  <ChevronDown className={`h-5 w-5 shrink-0 text-slate-300 transition-transform ${activeProgramPanel === 'overview' ? 'rotate-180' : ''}`} />
+                </button>
+                {activeProgramPanel === 'overview' && (
+                  <div className="grid gap-4 border-t border-white/10 px-5 py-5 md:grid-cols-2">
+                    {programHighlights.map((item, idx) => (
+                      <div
+                        key={item}
+                        className="rounded-2xl border border-white/10 bg-[#111111] px-5 py-4 text-sm leading-7 text-slate-200"
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className={`mt-2 h-2.5 w-2.5 rounded-full ${idx % 2 === 0 ? 'bg-amber-300' : 'bg-emerald-300'}`} />
+                          <span>{item}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {courseModules.map((module) => {
+                const isOpen = activeProgramPanel === module.title
+                return (
+                  <div key={module.title} className="overflow-hidden rounded-[1.7rem] border border-white/10 bg-slate-950/55">
+                    <button
+                      type="button"
+                      onClick={() => setActiveProgramPanel(isOpen ? null : module.title)}
+                      className="flex w-full items-center justify-between gap-4 px-5 py-5 text-left"
+                    >
+                      <div>
+                        <h3 className="text-xl font-bold text-slate-50 md:text-2xl">{module.title}</h3>
+                        <p className="mt-2 text-sm font-semibold text-slate-300">
+                          {module.duration} | Focus: {module.focus}
+                        </p>
+                      </div>
+                      <ChevronDown className={`h-5 w-5 shrink-0 text-slate-300 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    {isOpen && (
+                      <div className="space-y-3 border-t border-white/10 px-5 py-5">
+                        {module.pillars.map((pillar, pillarIndex) => (
+                          <div key={`${module.title}-${pillar}`} className="flex gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm leading-7 text-slate-200">
+                            <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-400/15 text-xs font-semibold text-emerald-200">
+                              {pillarIndex + 1}
+                            </span>
+                            <span>{pillar}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         </Container>
       </Section>
 
-      <Section className="py-10 md:py-12" id="course-modules">
+      <Section className="hidden py-10 md:py-12" id="course-modules">
         <Container>
           <div className="text-center max-w-4xl mx-auto">
             <h2 className="text-3xl md:text-5xl font-bold text-slate-50">Course Modules Built for Modern Marketing Execution</h2>
@@ -977,7 +1046,7 @@ export default function HomePage() {
         </Container>
       </Section>
 
-      <Section className="py-10 md:py-12" id="tools-mastery">
+      <Section className="hidden py-10 md:py-12" id="tools-mastery">
         <Container>
           <div className="text-center max-w-3xl mx-auto">
             <h2 className="text-4xl md:text-5xl font-bold text-slate-50">Tools You Will Master</h2>
@@ -1026,13 +1095,10 @@ export default function HomePage() {
         </Container>
       </Section>
 
-      <Section className="hidden py-10 md:py-12" id="tools-marquee">
+      <Section className="py-10 md:py-12" id="tools-marquee">
         <Container>
           <div className="text-center max-w-3xl mx-auto">
             <h2 className="text-4xl md:text-5xl font-bold text-slate-50">Tools You Will Master</h2>
-            <p className="mt-3 text-base md:text-lg text-slate-300">
-              Explore the tools you will work with. Click any logo to view details.
-            </p>
           </div>
           <div className="mt-8 space-y-4 overflow-hidden">
             <div className="logo-scroll gap-6 min-w-max">
@@ -1095,13 +1161,14 @@ export default function HomePage() {
           <h2 className="text-4xl md:text-5xl font-bold text-slate-50 text-center">{whoSection.title}</h2>
           <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {whoItems.map((card, idx) => {
-              const whoImages = [
-                '/who-for/freshers.png',
-                '/who-for/working-professionals.jpg',
-                '/who-for/business-owners.png',
-                '/who-for/freelancers.webp',
+              const iconMap = [
+                Rocket,
+                BriefcaseBusiness,
+                Building2,
+                Laptop2,
               ]
-              const iconSrc = whoImages[idx % whoImages.length]
+              const Icon = iconMap[idx % iconMap.length]
+              const isExpanded = expandedWhoCard === idx
               return (
                 <div
                   key={`${card.title}-${idx}`}
@@ -1115,17 +1182,19 @@ export default function HomePage() {
                       : 'border-[#a98de5] bg-[#5a438d]'
                   }`}
                 >
-                  <div className="mb-5 inline-flex h-28 w-28 items-center justify-center rounded-full bg-[#10263d] text-sky-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-                    <Image
-                      src={iconSrc}
-                      alt={card.title}
-                      width={96}
-                      height={96}
-                      className="h-24 w-24 object-contain float"
-                    />
+                  <div className="mb-5 inline-flex h-20 w-20 items-center justify-center rounded-[1.4rem] bg-[#10263d] text-sky-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                    <Icon className="h-10 w-10" strokeWidth={1.9} />
                   </div>
                   <div className="text-xl font-bold text-slate-50">{card.title}</div>
-                  <p className="mt-3 text-base leading-8 text-slate-100/95">{card.desc}</p>
+                  <p className={`mt-3 text-base leading-8 text-slate-100/95 ${isExpanded ? '' : 'line-clamp-6'}`}>{card.desc}</p>
+                  <button
+                    type="button"
+                    onClick={() => setExpandedWhoCard(isExpanded ? null : idx)}
+                    className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white"
+                  >
+                    {isExpanded ? 'Read less' : 'Read more'}
+                    <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                  </button>
                 </div>
               )
             })}
@@ -1373,45 +1442,14 @@ export default function HomePage() {
                       : 'border-[#93c5fd]/35 bg-[#1f335a]'
                   }`}
                 >
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="max-w-3xl">
-                      <h3 className="text-xl font-bold text-white">{group.title}</h3>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {group.items.map((item) => (
-                          <span key={`${group.title}-${item}`} className="rounded-full border border-[#5e6e8d] bg-[#23172f] px-3 py-1 text-sm text-slate-100">
-                            {item}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2 lg:max-w-sm lg:justify-end">
-                      {group.tools.map((slug) => {
-                        const tool = toolLookup.get(slug)
-                        if (!tool) return null
-                        return (
-                          <Link
-                            key={`${group.title}-${slug}`}
-                            to={`/tools/${tool.slug || slug}`}
-                            className="inline-flex items-center gap-2 rounded-full border border-[#5e6e8d] bg-[#23172f] px-3 py-2"
-                          >
-                            <div className="h-6 w-6 shrink-0">
-                              <AdaptiveImage
-                                src={tool.logoSrc || resolveToolLogoCandidates(tool)[0]}
-                                fallbackSrcs={resolveToolLogoCandidates(tool).slice(tool.logoSrc ? 0 : 1)}
-                                alt={tool.name || slug}
-                                variant="logo"
-                                aspectRatio="1 / 1"
-                                wrapperClassName="h-full w-full"
-                                borderClassName=""
-                                roundedClassName="rounded-full"
-                                sizes="24px"
-                                loading="lazy"
-                              />
-                            </div>
-                            <span className="text-xs font-semibold text-slate-100">{tool.name || slug}</span>
-                          </Link>
-                        )
-                      })}
+                  <div className="max-w-4xl">
+                    <h3 className="text-xl font-bold text-white">{group.title}</h3>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {group.items.map((item) => (
+                        <span key={`${group.title}-${item}`} className="rounded-full border border-[#5e6e8d] bg-[#23172f] px-3 py-1 text-sm text-slate-100">
+                          {item}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -1419,23 +1457,12 @@ export default function HomePage() {
             </div>
 
             <div className="mt-10 text-center">
-              <h3 className="text-2xl font-bold text-white">What Tools Are Used in Digital Marketing?</h3>
-              <p className="mt-3 text-sm leading-7 text-slate-200 md:text-base">
-                Digital marketing uses tools like SEO platforms, Google Ads, Meta Ads, analytics tools, and AI-based automation tools.
-              </p>
               <Link
                 to="/courses"
                 className="mt-6 inline-flex items-center justify-center rounded-full border border-teal-200/40 bg-teal-300 px-6 py-3 text-sm font-bold text-slate-950 shadow-[0_14px_40px_rgba(94,234,212,0.25)] transition hover:-translate-y-0.5 hover:bg-teal-200"
               >
                 Explore Curriculum
               </Link>
-              <div className="mt-6 flex flex-wrap justify-center gap-2">
-                {skillBottomPlatforms.map((label) => (
-                  <span key={`footer-${label}`} className="rounded-full border border-[#5e6e8d] bg-[#213962] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100">
-                    {label}
-                  </span>
-                ))}
-              </div>
             </div>
           </div>
         </Container>
@@ -1444,11 +1471,11 @@ export default function HomePage() {
       <Section className="py-12 md:py-16" id="comparison-after-blog">
         <Container>
           <div className="max-w-6xl mx-auto text-center">
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-50">What Makes AcadVizen Different</h2>
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-50">What Makes Acadvizen Different</h2>
           </div>
           <div className="mt-8 overflow-hidden rounded-[2rem] border border-cyan-300/15 bg-[linear-gradient(180deg,rgba(10,16,29,0.96),rgba(3,7,18,0.96))] shadow-[0_20px_60px_rgba(15,23,42,0.28)]">
             <div className="grid grid-cols-3 border-b border-white/10 bg-slate-900/90">
-              {['Key Feature', 'Traditional Digital Marketing Institutes', 'AcadVizen: The AI-Orchestrated Legend™'].map((label) => (
+              {['Key Feature', 'Traditional Digital Marketing Institutes', 'Acadvizen: The AI-Orchestrated Legend™'].map((label) => (
                 <div key={label} className="border-r border-white/10 px-4 py-4 text-lg font-bold text-slate-100 last:border-r-0">
                   {label}
                 </div>
@@ -1475,26 +1502,16 @@ export default function HomePage() {
 
       <Section className="py-10 md:py-12" id="faq">
         <Container>
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-50">FAQ</h2>
-          </div>
-          <div className="mt-8 max-w-4xl mx-auto space-y-3">
-            {faqItems.map((item, idx) => {
-              const isOpen = activeFaq === idx
-              return (
-                <Surface key={item.question} className="p-0 overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setActiveFaq(isOpen ? null : idx)}
-                    className="w-full px-5 py-4 text-left flex items-center justify-between"
-                  >
-                    <span className="text-lg font-bold text-slate-100">{item.question}</span>
-                    <ChevronDown className={`h-5 w-5 text-slate-300 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  {isOpen && <div className="border-t border-white/10 px-5 py-4 text-base text-slate-300">{item.answer}</div>}
-                </Surface>
-              )
-            })}
+          <div className="mx-auto max-w-5xl">
+            <TabbedFaqAccordion
+              title="FAQ"
+              intro="Homepage FAQs cover program depth, AI-first learning, placements, working-professional flexibility, and certification outcomes."
+              tabs={faqTabs}
+              items={homepageFaqExact}
+              tabInactiveClassName="border-white/15 bg-transparent text-slate-100"
+              cardClassName="rounded-[1.7rem] border border-white/10 bg-[#102039] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.18)]"
+              answerClassName="mt-4 text-base leading-8 text-slate-300"
+            />
           </div>
         </Container>
       </Section>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 90" role="img" aria-labelledby="title">
+  <title>Sagility</title>
+  <rect width="320" height="90" rx="14" fill="#e8f7ff"/>
+  <path d="M34 18c10 0 19 7 21 17-9 5-15 9-21 13-8 5-13 10-13 17 0 4 2 8 5 10l-8 0c-7-3-12-10-12-18 0-12 8-21 21-28 3-2 6-4 7-5-2-4-5-6-10-6h10z" fill="#1bd1c4"/>
+  <path d="M50 14c7 3 12 10 12 18 0 12-8 21-21 28-3 2-6 4-7 5 2 4 5 6 10 6H34c-10 0-19-7-21-17 9-5 15-9 21-13 8-5 13-10 13-17 0-4-2-8-5-10h8z" fill="#0dbcb0"/>
+  <text x="86" y="58" fill="#18387c" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="500">sagility</text>
+</svg>

@@ -59,13 +59,13 @@ export function Navbar() {
         <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center min-w-0">
             <Link to="/" className="flex items-center gap-3 group min-w-0" data-cursor="hover">
-              <div className="relative flex h-14 w-14 items-center justify-center overflow-visible sm:h-16 sm:w-16">
+              <div className="relative flex h-14 w-14 items-center justify-center overflow-visible rounded-2xl bg-white p-1.5 shadow-[0_10px_26px_rgba(255,255,255,0.12)] sm:h-16 sm:w-16">
                 <Image
                   src={logoSrc}
                   alt={brandLabel}
                   width={72}
                   height={72}
-                  className="h-14 w-auto shrink-0 object-contain sm:h-16"
+                  className="h-11 w-auto shrink-0 object-contain sm:h-12"
                   style={{ width: 'auto', height: 'auto' }}
                   priority
                 />

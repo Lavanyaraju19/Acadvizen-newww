@@ -9,7 +9,7 @@ const dockItems = [
   { label: 'Success Stories', to: '/placement#success-stories' },
   { label: 'About Us', to: '/about' },
   { label: 'Curriculum', to: '/courses#curriculum' },
-  { label: 'Projects', to: '/courses#projects' },
+  { label: 'Projects', to: '/projects' },
 ]
 
 export function BottomDockNav() {
