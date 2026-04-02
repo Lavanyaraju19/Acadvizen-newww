@@ -3,6 +3,8 @@ import {
   getSupabaseClientOrResponse,
   jsonError,
   jsonOk,
+  revalidateAllCmsPages,
+  revalidateCmsPaths,
   readJsonBody,
 } from '../../_utils'
 
@@ -95,6 +97,8 @@ export async function PATCH(request, { params }) {
     .eq('blog_id', id)
     .order('order_index', { ascending: true })
 
+  revalidateCmsPaths(['/blog', `/blog/${data?.slug || ''}`])
+  revalidateAllCmsPages(['/blog'])
   return jsonOk({ ...data, blocks: blocks || [] })
 }
 
@@ -108,7 +112,10 @@ export async function DELETE(request, { params }) {
   const id = params?.id
   if (!id) return jsonError('Blog id is required.', 400)
 
+  const { data: blog } = await supabase.from('blogs').select('slug').eq('id', id).maybeSingle()
   const { error } = await supabase.from('blogs').delete().eq('id', id)
   if (error) return jsonError(`Failed to delete blog: ${error.message}`, 200)
+  revalidateCmsPaths(['/blog', `/blog/${blog?.slug || ''}`])
+  revalidateAllCmsPages(['/blog'])
   return jsonOk({ id, deleted: true })
 }

@@ -2,50 +2,56 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabaseClient'
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from '../lib/env'
+import { useAuth } from '../src/contexts/AuthContext'
+
+const LOGIN_TIMEOUT_MS = 18000
 
 export default function AdminLoginForm() {
   const router = useRouter()
+  const { refreshProfile } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  async function getSupabaseForLogin() {
-    if (supabase?.auth) return supabase
-
-    let url = SUPABASE_URL
-    let anonKey = SUPABASE_ANON_KEY
-
-    if (!url || !anonKey) {
-      try {
-        const response = await fetch('/api/public-config', { cache: 'no-store' })
-        const payload = await response.json()
-        url = payload?.data?.url || ''
-        anonKey = payload?.data?.anonKey || ''
-      } catch {
-        // fall through to validation below
+  async function signInWithRetry(client, payload, retries = 2) {
+    try {
+      return await client.auth.signInWithPassword(payload)
+    } catch (err) {
+      const message = err?.message || ''
+      if ((err?.name === 'AbortError' || message.includes('signal is aborted')) && retries > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 800))
+        return signInWithRetry(client, payload, retries - 1)
       }
+      throw err
+    }
+  }
+
+  async function manualPasswordSignIn(emailValue, passwordValue) {
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !supabase?.auth) {
+      throw new Error('Supabase configuration is unavailable. Contact support if this persists.')
     }
 
-    if (!url || !anonKey) {
-      throw new Error(
-        'Supabase configuration is unavailable. Contact support if this persists.'
-      )
-    }
-
-    return createClient(url, anonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
       },
-      realtime: {
-        params: {},
-      },
+      body: JSON.stringify({ email: emailValue, password: passwordValue }),
     })
+    const data = await res.json()
+    if (!res.ok) {
+      throw new Error(data?.error_description || data?.msg || 'Unable to sign in.')
+    }
+    await supabase.auth.setSession({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+    })
+    return { user: data.user }
   }
 
   const handleLogin = async (event) => {
@@ -59,11 +65,38 @@ export default function AdminLoginForm() {
 
     try {
       setLoading(true)
-      const client = await getSupabaseForLogin()
-      const { data, error: loginError } = await client.auth.signInWithPassword({
-        email: email.trim(),
-        password: password.trim(),
-      })
+      const client = supabase
+
+      if (!client?.auth || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        throw new Error('Supabase configuration is unavailable. Contact support if this persists.')
+      }
+
+      const hardTimeout = setTimeout(() => {
+        setLoading(false)
+        setError('Sign-in timed out. Please try again.')
+      }, LOGIN_TIMEOUT_MS)
+
+      await client.auth.signOut({ scope: 'local' })
+
+      let data
+      let loginError = null
+      try {
+        const response = await signInWithRetry(client, {
+          email: email.trim(),
+          password: password.trim(),
+        })
+        data = response?.data
+        loginError = response?.error || null
+      } catch (signInError) {
+        try {
+          const manual = await manualPasswordSignIn(email.trim(), password.trim())
+          data = { user: manual.user }
+        } catch (manualError) {
+          loginError = manualError
+        }
+      }
+
+      clearTimeout(hardTimeout)
 
       if (loginError) {
         setError(loginError.message)
@@ -78,9 +111,9 @@ export default function AdminLoginForm() {
 
       const { data: profile, error: profileError } = await client
         .from('profiles')
-        .select('role')
+        .select('*')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
       if (profileError || profile?.role !== 'admin') {
         setError('Access denied: not an admin')
@@ -88,6 +121,7 @@ export default function AdminLoginForm() {
         return
       }
 
+      await refreshProfile(user.id, { silent: true })
       await fetch('/api/admin/session', { method: 'POST' })
       router.push('/admin')
       router.refresh()

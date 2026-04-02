@@ -3,6 +3,7 @@ import {
   getSupabaseClientOrResponse,
   jsonError,
   jsonOk,
+  revalidateAllCmsPages,
   readJsonBody,
 } from '../../../_utils'
 import { getEntityConfig, sanitizeEntityPayload } from '../../../../../../lib/cmsEntities'
@@ -30,6 +31,7 @@ export async function PATCH(request, { params }) {
 
   const { data, error } = await supabase.from(config.table).update(payload).eq('id', id).select('*').single()
   if (error) return jsonError(`Failed to update record: ${error.message}`, 200)
+  revalidateAllCmsPages()
   return jsonOk(data)
 }
 
@@ -48,5 +50,6 @@ export async function DELETE(request, { params }) {
 
   const { error } = await supabase.from(config.table).delete().eq('id', id)
   if (error) return jsonError(`Failed to delete record: ${error.message}`, 200)
+  revalidateAllCmsPages()
   return jsonOk({ id, deleted: true })
 }

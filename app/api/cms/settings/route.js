@@ -3,6 +3,7 @@ import {
   getSupabaseClientOrResponse,
   jsonError,
   jsonOk,
+  revalidateAllCmsPages,
   readJsonBody,
 } from '../_utils'
 
@@ -59,5 +60,6 @@ export async function PUT(request) {
     .single()
 
   if (error) return jsonError(`Failed to save site settings: ${error.message}`, 200)
+  revalidateAllCmsPages()
   return jsonOk(data)
 }

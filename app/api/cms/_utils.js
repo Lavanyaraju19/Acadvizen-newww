@@ -1,6 +1,21 @@
 import { NextResponse } from 'next/server'
 import { cookies, headers } from 'next/headers'
+import { revalidatePath } from 'next/cache'
 import { getServerSupabaseClient } from '../../../lib/supabaseServer'
+
+const CMS_PUBLIC_PATHS = [
+  '/',
+  '/about',
+  '/contact',
+  '/courses',
+  '/placement',
+  '/testimonials',
+  '/projects',
+  '/soft-skills',
+  '/hire-from-us',
+  '/tools',
+  '/blog',
+]
 
 export function jsonOk(data = null, extra = {}) {
   return NextResponse.json({ success: true, data, error: null, ...extra }, { status: 200 })
@@ -78,4 +93,32 @@ export function parsePositiveInt(value, fallback = 0) {
   const parsed = Number(value)
   if (!Number.isFinite(parsed) || parsed < 0) return fallback
   return Math.floor(parsed)
+}
+
+export function normalizePagePath(slug = '') {
+  const trimmed = String(slug || '').trim().replace(/^\/+|\/+$/g, '')
+  if (!trimmed || trimmed === 'home') return '/'
+  return `/${trimmed}`
+}
+
+export function revalidateCmsPaths(paths = []) {
+  const unique = Array.from(
+    new Set(
+      paths
+        .map((value) => String(value || '').trim())
+        .filter((value) => value.startsWith('/'))
+    )
+  )
+
+  unique.forEach((path) => {
+    try {
+      revalidatePath(path)
+    } catch {
+      // ignore revalidation failures so the write action itself can still succeed
+    }
+  })
+}
+
+export function revalidateAllCmsPages(extraPaths = []) {
+  revalidateCmsPaths([...CMS_PUBLIC_PATHS, ...extraPaths])
 }

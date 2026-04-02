@@ -4,6 +4,8 @@ import {
   isAdminRequest,
   jsonError,
   jsonOk,
+  revalidateAllCmsPages,
+  revalidateCmsPaths,
   parsePositiveInt,
   readJsonBody,
 } from '../_utils'
@@ -132,5 +134,7 @@ export async function POST(request) {
     await replaceBlogBlocks(supabase, data.id, normalizedBlocks)
   }
   const [withBlocks] = await attachBlocks(supabase, [data], true)
+  revalidateCmsPaths(['/blog', `/blog/${data?.slug || payload.slug}`])
+  revalidateAllCmsPages(['/blog'])
   return jsonOk(withBlocks || data)
 }

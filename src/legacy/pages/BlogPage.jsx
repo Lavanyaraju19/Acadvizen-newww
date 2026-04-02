@@ -122,30 +122,34 @@ export function BlogPage() {
           ) : posts.length === 0 ? (
             <Surface className="p-10 text-center text-slate-400">No blog posts yet.</Surface>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {posts.map((post, idx) => (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 lg:auto-rows-[minmax(0,1fr)]">
+              {posts.map((post, idx) => {
+                const isFeatured = idx % 6 === 1
+                return (
                 <motion.div
                   key={post.id}
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-80px' }}
                   transition={{ delay: idx * 0.05, duration: 0.35 }}
+                  className={isFeatured ? 'lg:col-span-2 lg:row-span-2' : ''}
                 >
                   <Link to={`/blog/${post.slug}`} className="group block h-full">
-                    <Surface className="h-full overflow-hidden transition-transform duration-200 group-hover:-translate-y-1">
+                    <Surface className="flex h-full flex-col overflow-hidden transition-transform duration-200 group-hover:-translate-y-1">
                       {post.featured_image && (
                         <AdaptiveImage
                           src={post.featured_image}
                           alt={post.title}
-                          variant="card"
-                          aspectRatio="16 / 10"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          variant="cover"
+                          aspectRatio={isFeatured ? '16 / 9' : '4 / 3'}
+                          sizes={isFeatured ? '(max-width: 768px) 100vw, 66vw' : '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'}
                           wrapperClassName="w-full border-b border-white/10"
                           borderClassName=""
                           roundedClassName=""
+                          loading="lazy"
                         />
                       )}
-                      <div className="p-6">
+                      <div className="flex flex-1 flex-col p-6">
                         <div className="text-xs uppercase tracking-[0.2em] text-slate-400">
                           {formatPublishedDate(post.published_at)}
                         </div>
@@ -158,7 +162,8 @@ export function BlogPage() {
                     </Surface>
                   </Link>
                 </motion.div>
-              ))}
+                )
+              })}
             </div>
           )}
         </Container>

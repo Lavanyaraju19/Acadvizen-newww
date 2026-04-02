@@ -5,6 +5,7 @@ import {
   jsonError,
   jsonOk,
   parsePositiveInt,
+  revalidateAllCmsPages,
   readJsonBody,
 } from '../../_utils'
 import { applyEntityOrdering, getEntityConfig, sanitizeEntityPayload } from '../../../../../lib/cmsEntities'
@@ -98,6 +99,7 @@ export async function POST(request, { params }) {
 
     const { data, error } = await supabase.from(config.table).insert(duplicate).select('*').single()
     if (error) return jsonError(`Failed to duplicate record: ${error.message}`, 200)
+    revalidateAllCmsPages()
     return jsonOk(data)
   }
 
@@ -116,5 +118,6 @@ export async function POST(request, { params }) {
     .single()
 
   if (error) return jsonError(`Failed to save record: ${error.message}`, 200)
+  revalidateAllCmsPages()
   return jsonOk(data)
 }

@@ -4,7 +4,10 @@ import {
   isAdminRequest,
   jsonError,
   jsonOk,
+  normalizePagePath,
   parsePositiveInt,
+  revalidateAllCmsPages,
+  revalidateCmsPaths,
   readJsonBody,
 } from '../_utils'
 
@@ -79,5 +82,7 @@ export async function POST(request) {
     .single()
 
   if (error) return jsonError(`Failed to save page: ${error.message}`, 200)
+  revalidateCmsPaths([normalizePagePath(data?.slug)])
+  revalidateAllCmsPages()
   return jsonOk(data)
 }

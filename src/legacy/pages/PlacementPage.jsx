@@ -10,20 +10,17 @@ import {
   placementStats,
   placementStories,
 } from '../../lib/sitePageContent'
+import { neonBlueprintPanelStyle, solidPublicPanelClass, techGridPanelStyle, wavePanelStyle } from '../../lib/publicVisualStyles'
 
 const faqTabs = []
 
-const solidPanel = 'rounded-[2rem] border border-white/10 bg-[#0b1020] shadow-[0_20px_50px_rgba(0,0,0,0.32)]'
+const solidPanel = 'rounded-[2rem] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.32)]'
 
-const faqBackground = {
-  backgroundColor: '#071326',
-  backgroundImage:
-    'radial-gradient(circle at 18% 22%, rgba(39,186,197,0.22) 0, rgba(39,186,197,0.02) 20%), linear-gradient(138deg, rgba(7,19,38,0.98) 0%, rgba(13,40,63,0.96) 48%, rgba(31,171,184,0.16) 48.2%, rgba(7,19,38,0.98) 100%)',
-}
+const faqBackground = wavePanelStyle
 
 function StoryCard({ story }) {
   return (
-    <article className="rounded-[1.8rem] border border-white/10 bg-[#0d1424] p-6 shadow-[0_18px_38px_rgba(0,0,0,0.28)]">
+    <article className={`${solidPublicPanelClass} p-6`} style={faqBackground}>
       <div className="inline-flex rounded-full border border-amber-300/25 bg-amber-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
         {story.tag}
       </div>
@@ -43,7 +40,7 @@ function StoryCard({ story }) {
 
 function CtaBanner() {
   return (
-    <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,#0f1830_0%,#132340_45%,#18355a_100%)] px-6 py-8 text-center shadow-[0_18px_42px_rgba(0,0,0,0.3)]">
+    <div className={`${solidPublicPanelClass} px-6 py-8 text-center`} style={wavePanelStyle}>
       <h3 className="text-2xl font-bold text-slate-50 md:text-3xl">Ready to be our next Success Story?</h3>
       <p className="mx-auto mt-4 max-w-3xl text-base leading-8 text-slate-300">
         Join Acadvizen to learn digital marketing in Bangalore with hands-on tool exposure, live project execution,
@@ -94,6 +91,7 @@ export function PlacementPage() {
                 key={item.label}
                 className={`${solidPanel} px-6 py-7 text-center`}
                 style={{
+                  ...faqBackground,
                   boxShadow:
                     index === 0
                       ? '0 18px 40px rgba(0,0,0,0.28), inset 0 1px 0 rgba(89,200,255,0.12)'
@@ -165,8 +163,8 @@ export function PlacementPage() {
             </p>
           </div>
 
-          <div className="mt-8 overflow-hidden rounded-[2rem] border border-white/10 bg-[#0b1020] shadow-[0_20px_50px_rgba(0,0,0,0.32)]">
-            <div className="hidden grid-cols-4 border-b border-white/10 bg-white/[0.04] md:grid">
+          <div className={`${solidPublicPanelClass} mt-8 overflow-hidden`} style={wavePanelStyle}>
+            <div className="hidden grid-cols-4 border-b border-white/10 bg-transparent md:grid">
               {['Career Path', 'Top Recruiters (Entities)', 'Average Entry Salary (2026)', 'Key Skill Focus'].map((label) => (
                 <div key={label} className="px-4 py-4 text-sm font-bold text-slate-100">
                   {label}
@@ -220,8 +218,8 @@ export function PlacementPage() {
       <Section className="py-10 md:py-12" id="faq">
         <Container className="max-w-6xl">
           <div
-            className="overflow-hidden rounded-[2rem] border border-cyan-300/20 px-6 py-8 shadow-[0_18px_50px_rgba(2,10,27,0.35)]"
-            style={faqBackground}
+            className={`${solidPublicPanelClass} overflow-hidden px-6 py-8`}
+            style={wavePanelStyle}
           >
             <TabbedFaqAccordion
               title="FAQ"

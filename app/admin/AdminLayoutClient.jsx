@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -23,7 +23,6 @@ import {
 import { Surface } from '../../src/components/ui/Surface'
 import { CustomCursor } from '../../src/components/ui/CustomCursor'
 import { useAuth } from '../../src/contexts/AuthContext'
-import { ProtectedRoute } from '../../src/components/ProtectedRoute'
 import { supabase } from '../../lib/supabaseClient'
 
 const adminNav = [
@@ -95,7 +94,15 @@ function ensureFormFieldAttributes(root) {
 export default function AdminLayoutClient({ children }) {
   const pathname = usePathname()
   const router = useRouter()
-  const { user, profile, signOut } = useAuth()
+  const { user, profile, loading, authError, refreshProfile, signOut } = useAuth()
+  const [guardTimedOut, setGuardTimedOut] = useState(false)
+  const isLoginLikePath = pathname === '/admin/login' || pathname === '/admin-login'
+  const guardMessage = useMemo(() => {
+    if (authError) return authError
+    if (guardTimedOut) return 'Admin authentication is taking longer than expected.'
+    if (user && !profile) return 'Loading your admin profile...'
+    return 'Checking admin access...'
+  }, [authError, guardTimedOut, profile, user])
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
@@ -142,6 +149,7 @@ export default function AdminLayoutClient({ children }) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
+    if (isLoginLikePath) return undefined
 
     const root = document.querySelector('[data-admin-root]')
     if (!root) return undefined
@@ -155,89 +163,168 @@ export default function AdminLayoutClient({ children }) {
 
     observer.observe(root, { childList: true, subtree: true })
     return () => observer.disconnect()
-  }, [pathname])
+  }, [isLoginLikePath, pathname])
 
-  if (pathname === '/admin/login') {
+  useEffect(() => {
+    if (isLoginLikePath) return undefined
+
+    const timer = setTimeout(() => {
+      setGuardTimedOut(true)
+    }, 12000)
+
+    if (!loading) {
+      clearTimeout(timer)
+      setGuardTimedOut(false)
+    }
+
+    return () => clearTimeout(timer)
+  }, [isLoginLikePath, loading])
+
+  useEffect(() => {
+    if (isLoginLikePath || loading) return
+
+    if (!user) {
+      router.replace('/admin-login')
+      return
+    }
+
+    if (!profile) {
+      refreshProfile(user.id, { silent: true })
+      return
+    }
+
+    if (profile.role !== 'admin') {
+      ;(async () => {
+        try {
+          await signOut('local')
+          await fetch('/api/admin/session', { method: 'DELETE' })
+        } catch {
+          // noop
+        }
+        router.replace('/admin-login')
+      })()
+    }
+  }, [isLoginLikePath, loading, profile, refreshProfile, router, signOut, user])
+
+  if (isLoginLikePath) {
     return children
   }
 
-  return (
-    <ProtectedRoute allowedRoles={['admin']}>
+  if (loading || !user || !profile || profile.role !== 'admin') {
+    return (
       <div className="min-h-screen acadvizen-noise">
-        <CustomCursor />
-
-        <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 advz-animated-bg">
-          <div className="absolute -top-40 left-[-10%] h-[520px] w-[520px] rounded-full bg-teal-400/10 blur-3xl" />
-          <div className="absolute top-16 right-[-10%] h-[520px] w-[520px] rounded-full bg-sky-400/10 blur-3xl" />
-          <div className="absolute bottom-[-240px] left-[30%] h-[620px] w-[620px] rounded-full bg-indigo-500/10 blur-3xl" />
-        </div>
-
-        <div className="sticky top-0 z-50">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
-            <Surface className="px-5 py-4">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <h1 className="text-lg md:text-xl font-semibold text-slate-50 tracking-tight">Admin Dashboard</h1>
-                  <p className="text-xs text-slate-400">Manage courses, tools, resources and students</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  {user?.email && (
-                    <span className="text-xs text-slate-400">
-                      {profile?.role === 'admin' ? `Admin: ${user.email}` : user.email}
-                    </span>
-                  )}
-                  <Link href="/" className="text-sm font-semibold text-teal-300 hover:text-teal-200 transition-colors">
-                    {'<-'} Back to Site
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        await signOut('global')
-                        await fetch('/api/admin/session', { method: 'DELETE' })
-                      } catch {
-                        // noop
-                      }
-                      router.replace('/admin-login')
-                    }}
-                    className="text-sm font-semibold text-rose-200 hover:text-rose-100 transition-colors"
-                  >
-                    Logout
-                  </button>
-                </div>
+        <div className="mx-auto flex min-h-screen max-w-2xl items-center justify-center px-6">
+          <Surface className="w-full p-8 text-center">
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-teal-300/70" />
+            <h2 className="mt-5 text-xl font-semibold text-slate-50">Opening admin dashboard</h2>
+            <p className="mt-2 text-sm text-slate-300">{guardMessage}</p>
+            {(guardTimedOut || authError) ? (
+              <div className="mt-5 flex flex-wrap justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="rounded-xl bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-200"
+                >
+                  Retry
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await signOut('local')
+                      await fetch('/api/admin/session', { method: 'DELETE' })
+                    } catch {
+                      // noop
+                    }
+                    router.replace('/admin-login')
+                  }}
+                  className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05]"
+                >
+                  Back to Login
+                </button>
               </div>
-              <div className="mt-4 h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-              <nav className="mt-3 flex flex-wrap gap-2">
-                {adminNav.map((nav) => {
-                  const active = pathname === nav.path
-                  const Icon = nav.icon
-
-                  return (
-                    <Link
-                      key={nav.path}
-                      href={nav.path}
-                      className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                        active
-                          ? 'bg-teal-300 text-slate-950'
-                          : 'border border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.05]'
-                      }`}
-                    >
-                      <span className="inline-flex items-center gap-2">
-                        <Icon className="h-4 w-4" />
-                        {nav.label}
-                      </span>
-                    </Link>
-                  )
-                })}
-              </nav>
-            </Surface>
-          </div>
-        </div>
-
-        <div data-admin-root className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-          {children}
+            ) : null}
+          </Surface>
         </div>
       </div>
-    </ProtectedRoute>
+    )
+  }
+
+  return (
+    <div className="min-h-screen acadvizen-noise">
+      <CustomCursor />
+
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 advz-animated-bg">
+        <div className="absolute -top-40 left-[-10%] h-[520px] w-[520px] rounded-full bg-teal-400/10 blur-3xl" />
+        <div className="absolute top-16 right-[-10%] h-[520px] w-[520px] rounded-full bg-sky-400/10 blur-3xl" />
+        <div className="absolute bottom-[-240px] left-[30%] h-[620px] w-[620px] rounded-full bg-indigo-500/10 blur-3xl" />
+      </div>
+
+      <div className="sticky top-0 z-50">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
+          <Surface className="px-5 py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h1 className="text-lg md:text-xl font-semibold text-slate-50 tracking-tight">Admin Dashboard</h1>
+                <p className="text-xs text-slate-400">Manage courses, tools, resources and students</p>
+              </div>
+              <div className="flex items-center gap-4">
+                {user?.email && (
+                  <span className="text-xs text-slate-400">
+                    {profile?.role === 'admin' ? `Admin: ${user.email}` : user.email}
+                  </span>
+                )}
+                <Link href="/" className="text-sm font-semibold text-teal-300 hover:text-teal-200 transition-colors">
+                  {'<-'} Back to Site
+                </Link>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await signOut('global')
+                      await fetch('/api/admin/session', { method: 'DELETE' })
+                    } catch {
+                      // noop
+                    }
+                    router.replace('/admin-login')
+                  }}
+                  className="text-sm font-semibold text-rose-200 hover:text-rose-100 transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+            <div className="mt-4 h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            <nav className="mt-3 flex flex-wrap gap-2">
+              {adminNav.map((nav) => {
+                const active = pathname === nav.path
+                const Icon = nav.icon
+
+                return (
+                  <Link
+                    key={nav.path}
+                    href={nav.path}
+                    className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                      active
+                        ? 'bg-teal-300 text-slate-950'
+                        : 'border border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.05]'
+                    }`}
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <Icon className="h-4 w-4" />
+                      {nav.label}
+                    </span>
+                  </Link>
+                )
+              })}
+            </nav>
+          </Surface>
+        </div>
+      </div>
+
+      <div data-admin-root className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        {children}
+      </div>
+    </div>
   )
 }

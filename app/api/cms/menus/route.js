@@ -4,6 +4,7 @@ import {
   jsonError,
   jsonOk,
   parsePositiveInt,
+  revalidateAllCmsPages,
   readJsonBody,
 } from '../_utils'
 
@@ -61,5 +62,6 @@ export async function POST(request) {
     .single()
 
   if (error) return jsonError(`Failed to save menu item: ${error.message}`, 200)
+  revalidateAllCmsPages()
   return jsonOk(data)
 }

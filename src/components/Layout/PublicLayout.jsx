@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Image from 'next/image'
 import { Navbar } from '../Navbar'
@@ -38,6 +39,8 @@ function normalizeStringList(value = []) {
 }
 
 export function PublicLayout({ children }) {
+  const [headerVisible, setHeaderVisible] = useState(true)
+  const lastScrollYRef = useRef(0)
   const { settings, menus } = useSiteCms()
   const uiCopy = settings?.ui_copy && typeof settings.ui_copy === 'object' ? settings.ui_copy : {}
   const defaultLocationLinks = [
@@ -131,6 +134,36 @@ export function PublicLayout({ children }) {
     '--brand-secondary': designTokens.brand_secondary || '#22d3ee',
   }
 
+  useEffect(() => {
+    const threshold = 16
+    const topThreshold = 32
+
+    const onScroll = () => {
+      const currentY = window.scrollY
+      const delta = currentY - lastScrollYRef.current
+
+      if (currentY <= topThreshold) {
+        setHeaderVisible(true)
+        lastScrollYRef.current = currentY
+        return
+      }
+
+      if (Math.abs(delta) < threshold) return
+
+      if (delta > 0) {
+        setHeaderVisible(false)
+      } else {
+        setHeaderVisible(true)
+      }
+
+      lastScrollYRef.current = currentY
+    }
+
+    lastScrollYRef.current = window.scrollY
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   return (
     <div className="min-h-screen flex flex-col acadvizen-noise" style={layoutStyle}>
       <CustomCursor />
@@ -141,29 +174,37 @@ export function PublicLayout({ children }) {
         <div className="absolute bottom-[-240px] left-[30%] h-[620px] w-[620px] rounded-full bg-indigo-500/10 blur-3xl" />
       </div>
 
-      <div className="sticky top-0 z-[55] w-full border-b border-[#1f7a34] bg-[#278f38]">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2 text-center">
-          <p className="text-xs sm:text-sm font-semibold text-[#c9ffe0]">
-            {announcementText.includes('Admission Open Now') ? (
-              <>
-                Starting batch from April 6th | Limited Seats Available |{' '}
-                <span className="font-extrabold text-yellow-300">Admission Open Now</span>
-              </>
-            ) : (
-              announcementText
-            )}
-          </p>
+      <div
+        className={`fixed inset-x-0 top-0 z-[55] transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${
+          headerVisible ? 'translate-y-0 opacity-100' : '-translate-y-[110%] opacity-0 pointer-events-none'
+        }`}
+      >
+        <div className="w-full border-b border-[#1f7a34] bg-[#278f38]">
+          <div className="mx-auto max-w-7xl px-4 py-2 text-center sm:px-6 lg:px-8">
+            <p className="text-xs font-semibold text-[#c9ffe0] sm:text-sm">
+              {announcementText.includes('Admission Open Now') ? (
+                <>
+                  Starting batch from April 6th | Limited Seats Available |{' '}
+                  <span className="font-extrabold text-yellow-300">Admission Open Now</span>
+                </>
+              ) : (
+                announcementText
+              )}
+            </p>
+          </div>
         </div>
+
+        <Navbar />
       </div>
 
-      <Navbar />
+      <div className="h-[110px] sm:h-[112px]" />
 
       <main className="flex-1 relative z-10 pb-28 md:pb-32">
         {children}
       </main>
 
       <div className="fixed right-0 top-1/2 z-40 hidden -translate-y-1/2 md:flex">
-        <div className="mr-0 flex flex-col items-center gap-2 rounded-l-2xl border border-cyan-300/30 bg-[#0b1830]/92 px-2 py-3 shadow-[0_16px_40px_rgba(15,23,42,0.35)] backdrop-blur">
+        <div className="mr-0 flex flex-col items-center gap-4 rounded-l-2xl border border-white/15 bg-black/55 px-3 py-4 shadow-[0_18px_44px_rgba(2,6,23,0.45)] backdrop-blur">
           {fixedSocialLinks.map((item) => {
             const Icon = item.icon
             const colorClass =
@@ -181,9 +222,9 @@ export function PublicLayout({ children }) {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={item.label}
-                className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:scale-105 hover:bg-white/5 ${colorClass}`}
+                className={`flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-black/45 text-2xl transition hover:scale-105 hover:bg-black/60 ${colorClass}`}
               >
-                <Icon className="h-[15px] w-[15px]" strokeWidth={2.2} />
+                <Icon className="h-6 w-6" strokeWidth={2.2} />
               </a>
             )
           })}
@@ -194,19 +235,21 @@ export function PublicLayout({ children }) {
 
       <footer className="relative z-10 mt-8">
         <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-teal-400/40 to-transparent" />
-        <div className="border-t border-white/10 bg-white/[0.02] backdrop-blur">
+        <div className="border-t border-white/10 bg-[#040d19]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="grid gap-10 md:grid-cols-4">
+            <div className="grid gap-8 md:grid-cols-3">
               <div>
-                <div className="flex items-center gap-2">
-                  <Image
-                    src={logoMarkSrc}
-                    alt={companyName}
-                    width={56}
-                    height={56}
-                    style={{ width: 'auto', height: 'auto' }}
-                    className="h-12 w-auto shrink-0 object-contain"
-                  />
+                <div className="flex items-center gap-3">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white p-2 shadow-[0_12px_30px_rgba(0,0,0,0.28)]">
+                    <Image
+                      src={logoMarkSrc}
+                      alt={companyName}
+                      width={56}
+                      height={56}
+                      style={{ width: 'auto', height: 'auto' }}
+                      className="h-10 w-auto shrink-0 object-contain"
+                    />
+                  </div>
                   <span className="text-2xl font-bold text-slate-100">{companyName}</span>
                 </div>
                 <p className="mt-3 text-sm text-slate-400">
@@ -297,9 +340,9 @@ export function PublicLayout({ children }) {
             </div>
 
             <div className="mt-10 border-t border-white/10 pt-6">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4 text-left">
+              <div className="px-2 text-left">
                 <h4 className="text-xl font-semibold text-slate-100">{footerLocationsTitle}</h4>
-                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-slate-300 leading-relaxed">
+                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm leading-relaxed text-slate-300">
                   {locationLinks.map((label, idx) => (
                     <span key={label} className="inline-flex items-center gap-3">
                       {idx > 0 && <span className="text-slate-500">|</span>}

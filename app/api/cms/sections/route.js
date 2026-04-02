@@ -4,7 +4,10 @@ import {
   isAdminRequest,
   jsonError,
   jsonOk,
+  normalizePagePath,
   parsePositiveInt,
+  revalidateAllCmsPages,
+  revalidateCmsPaths,
   readJsonBody,
 } from '../_utils'
 
@@ -65,6 +68,9 @@ export async function POST(request) {
     }
     const { data, error } = await supabase.from('sections').insert(duplicate).select('*').single()
     if (error) return jsonError(`Failed to duplicate section: ${error.message}`, 200)
+    const { data: page } = await supabase.from('pages').select('slug').eq('id', source.page_id).maybeSingle()
+    revalidateCmsPaths([normalizePagePath(page?.slug)])
+    revalidateAllCmsPages()
     return jsonOk(data)
   }
 
@@ -88,5 +94,8 @@ export async function POST(request) {
     .single()
 
   if (error) return jsonError(`Failed to create section: ${error.message}`, 200)
+  const { data: page } = await supabase.from('pages').select('slug').eq('id', payload.page_id).maybeSingle()
+  revalidateCmsPaths([normalizePagePath(page?.slug)])
+  revalidateAllCmsPages()
   return jsonOk(data)
 }

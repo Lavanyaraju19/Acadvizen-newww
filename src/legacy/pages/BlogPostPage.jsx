@@ -322,23 +322,23 @@ export function BlogPostPage() {
 
       <Section className="py-8">
         <Container className="max-w-3xl">
-          <div className="prose prose-invert max-w-none text-slate-200">
+          <div className="prose prose-invert max-w-none text-slate-200 leading-relaxed">
             {isMbaVsDigitalMarketingPost ? (
               <MbaVsDigitalMarketingBody />
             ) : (
-              <div className="space-y-8">
+              <div className="space-y-10">
                 {parsedContent.sections.map((section, index) => (
-                  <section key={`${section.id}-${index}`} className="space-y-4">
+                  <section key={`${section.id}-${index}`} className="space-y-6">
                     {section.heading ? (
-                      <h2 className="text-2xl font-semibold text-slate-100">{section.heading}</h2>
+                      <h2 className="text-2xl font-semibold text-slate-100 md:text-3xl">{section.heading}</h2>
                     ) : null}
                     {section.paragraphs.map((paragraph, paragraphIndex) => (
-                      <p key={`${section.id}-p-${paragraphIndex}`} className="whitespace-pre-line leading-relaxed text-slate-300">
+                      <p key={`${section.id}-p-${paragraphIndex}`} className="whitespace-pre-line text-base leading-8 text-slate-300 md:text-lg">
                         {paragraph}
                       </p>
                     ))}
                     {section.image?.src ? (
-                      <div className="my-8">
+                      <figure className="my-10 space-y-3">
                         <AdaptiveImage
                           src={section.image.src}
                           alt={section.image.alt || section.heading || post.title}
@@ -346,10 +346,16 @@ export function BlogPostPage() {
                           variant="content"
                           aspectRatio="4 / 3"
                           sizes="(max-width: 900px) 100vw, 800px"
-                          wrapperClassName="w-full"
-                          roundedClassName="rounded-xl"
+                          wrapperClassName="mx-auto w-full max-w-[900px]"
+                          borderClassName="border border-white/12"
+                          roundedClassName="rounded-2xl"
+                          imageClassName="object-contain p-3"
+                          loading="lazy"
                         />
-                      </div>
+                        {section.image?.alt ? (
+                          <figcaption className="text-xs text-slate-400">{section.image.alt}</figcaption>
+                        ) : null}
+                      </figure>
                     ) : null}
                   </section>
                 ))}

@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   BookOpen,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   ChevronDown,
   CirclePlay,
   ClipboardList,
@@ -23,6 +25,8 @@ import AdaptiveImage from '../../../components/media/AdaptiveImage'
 import TabbedFaqAccordion from '../../components/faq/TabbedFaqAccordion'
 import { courseModules, programHighlights, programOverview } from '../../lib/marketingProgramContent'
 import { courseCaseStudies, courseProjects, coursesFaqExact } from '../../lib/sitePageContent'
+import { neonBlueprintPanelStyle, solidPublicPanelClass, techGridPanelStyle, wavePanelStyle } from '../../lib/publicVisualStyles'
+import ShowcaseWideCard from '../../components/marketing/ShowcaseWideCard'
 
 const courseHighlights = [
   { icon: CalendarDays, iconClass: 'text-[#9ff0c0]', label: 'Course Duration', value: '6 Months' },
@@ -40,11 +44,43 @@ const courseHighlights = [
 ]
 
 const faqTabs = []
+const projectTabs = ['Projects', 'AI Search', 'Performance Ads', 'Analytics']
+
+const docsCardStyle = {
+  backgroundColor: '#dfeae6',
+  backgroundImage:
+    'linear-gradient(135deg, rgba(223,234,230,0.98) 0%, rgba(207,221,214,0.98) 70%)',
+}
+
+function sliderScroll(ref, direction) {
+  if (!ref.current) return
+  const amount = Math.max(ref.current.clientWidth * 0.7, 320)
+  ref.current.scrollBy({ left: direction * amount, behavior: 'smooth' })
+}
+
+function SliderArrows({ onPrev, onNext, dark = false }) {
+  const buttonClass = dark
+    ? 'inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition hover:bg-white/18'
+    : 'inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-950 transition hover:bg-slate-50'
+
+  return (
+    <div className="mt-7 flex items-center justify-center gap-3">
+      <button type="button" onClick={onPrev} className={buttonClass} aria-label="Scroll left">
+        <ChevronLeft className="h-5 w-5" />
+      </button>
+      <button type="button" onClick={onNext} className={buttonClass} aria-label="Scroll right">
+        <ChevronRight className="h-5 w-5" />
+      </button>
+    </div>
+  )
+}
 
 export function CoursesPage() {
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeAccordion, setActiveAccordion] = useState('overview')
+  const projectSliderRef = useRef(null)
+  const caseStudySliderRef = useRef(null)
 
   useEffect(() => {
     void loadCourses()
@@ -122,31 +158,17 @@ export function CoursesPage() {
         </Container>
       </Section>
 
-      <Section className="py-6 md:py-10" id="course-highlights">
+      <Section className="scroll-mt-32 pt-0 pb-6 md:pb-10" id="course-highlights">
         <Container>
-          <div className="relative overflow-hidden rounded-[2rem] border border-cyan-300/10 bg-[#071326] p-6 shadow-[0_22px_60px_rgba(0,0,0,0.35)] md:p-8">
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 opacity-95"
-              style={{
-                background: `
-                  linear-gradient(145deg, rgba(2,10,28,0.98) 0%, rgba(2,10,28,0.98) 28%, transparent 28.2%),
-                  linear-gradient(208deg, transparent 0%, transparent 51%, rgba(20,197,197,0.55) 51.4%, rgba(6,36,53,0.0) 76%),
-                  linear-gradient(122deg, transparent 0%, transparent 63%, rgba(23,174,179,0.72) 63.4%, rgba(3,14,31,0.0) 88%),
-                  linear-gradient(332deg, rgba(8,18,39,0.98) 0%, rgba(8,18,39,0.98) 36%, transparent 36.2%),
-                  linear-gradient(18deg, transparent 0%, transparent 72%, rgba(37,219,217,0.62) 72.4%, rgba(4,17,35,0.0) 88%),
-                  linear-gradient(180deg, #071326 0%, #071326 100%)
-                `,
-              }}
-            />
-            <div className="relative">
+          <div className={`${solidPublicPanelClass} relative overflow-hidden p-6 md:p-8`} style={wavePanelStyle}>
+            <div className="relative z-10">
               <h2 className="text-3xl font-bold italic tracking-tight text-white md:text-4xl">Course Highlights</h2>
               <p className="mt-2 text-sm italic text-slate-200 md:text-base">
                 A Snapshot of What Makes Our E-Commerce Marketing Course a Game-Changer
               </p>
               <div className="mt-6 grid gap-3 md:grid-cols-4">
                 {courseHighlights.map((item) => (
-                  <article key={item.label} className="rounded-[0.8rem] border border-white/5 bg-[#141414] px-4 py-4">
+                  <article key={item.label} className="rounded-[0.8rem] border border-[#1f3650] bg-[#171717] px-4 py-4 shadow-[0_16px_30px_rgba(0,0,0,0.2)]">
                     <div className="flex items-start gap-3">
                       <span className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[#222222]">
                         <item.icon className={`h-5 w-5 ${item.iconClass}`} strokeWidth={2.2} />
@@ -166,7 +188,7 @@ export function CoursesPage() {
 
       <Section className="py-10 md:py-12" id="course-program">
         <Container className="max-w-6xl">
-          <div className="rounded-[2rem] border border-emerald-700/30 bg-[linear-gradient(135deg,#050b12_0%,#0d1724_55%,#1c2d16_100%)] p-8 md:p-12 shadow-[0_24px_70px_rgba(0,0,0,0.35)]">
+          <div className={`${solidPublicPanelClass} p-8 md:p-12`} style={wavePanelStyle}>
             <div className="mx-auto max-w-4xl text-center">
               <p className="text-sm uppercase tracking-[0.28em] text-emerald-200">Course Program</p>
               <h2 className="mt-3 text-4xl md:text-5xl font-bold text-slate-50">{programOverview.title}</h2>
@@ -181,7 +203,7 @@ export function CoursesPage() {
               {accordionItems.map((item) => {
                 const isOpen = activeAccordion === item.key
                 return (
-                  <div key={item.key} className="overflow-hidden rounded-[1.7rem] border border-white/10 bg-slate-950/50">
+                  <div key={item.key} className="overflow-hidden rounded-[1.7rem] border border-[#1c3550] bg-[#081423]">
                     <button
                       type="button"
                       onClick={() => setActiveAccordion(isOpen ? null : item.key)}
@@ -219,7 +241,10 @@ export function CoursesPage() {
                   transition={{ delay: idx * 0.05, duration: 0.35 }}
                 >
                   <Link to={`/courses/${course.slug}`} className="group block h-full">
-                    <Surface className="h-full overflow-hidden transition-transform duration-200 group-hover:-translate-y-1">
+                    <div
+                      className={`${solidPublicPanelClass} h-full overflow-hidden transition-transform duration-200 group-hover:-translate-y-1`}
+                      style={idx % 2 === 0 ? techGridPanelStyle : neonBlueprintPanelStyle}
+                    >
                       {course.image_url && (
                         <AdaptiveImage
                           src={course.image_url}
@@ -238,7 +263,7 @@ export function CoursesPage() {
                           <p className="mt-2 line-clamp-3 text-sm text-slate-300">{course.short_description}</p>
                         )}
                       </div>
-                    </Surface>
+                    </div>
                   </Link>
                 </motion.div>
               ))}
@@ -249,7 +274,8 @@ export function CoursesPage() {
 
       <Section className="py-10 md:py-12" id="projects">
         <Container className="max-w-6xl">
-          <div className="max-w-4xl">
+          <div className={`${solidPublicPanelClass} relative overflow-hidden px-6 py-8 md:px-8 md:py-10`}>
+          <div className="relative z-10 max-w-4xl rounded-[1.8rem] border border-white/12 bg-[#08120e]/62 px-5 py-5 shadow-[0_20px_55px_rgba(0,0,0,0.22)] backdrop-blur-md md:px-6">
             <p className="text-sm uppercase tracking-[0.28em] text-teal-200">Projects</p>
             <h2 className="mt-3 text-4xl font-bold text-slate-50 md:text-5xl">Solving Digital Growth in 2026</h2>
             <h3 className="mt-3 text-2xl font-semibold text-slate-100">15+ Projects in AI-Search &amp; Performance Ads</h3>
@@ -257,45 +283,55 @@ export function CoursesPage() {
               Master AIO (AI Overview), Semantic Search, and Performance Ads through hands-on execution.
             </p>
           </div>
-          <div className="mt-8 grid gap-5 lg:grid-cols-2">
-            {courseProjects.slice(0, 5).map((project) => (
-              <Surface key={project.title} className="p-6">
-                <div className="flex items-center justify-between gap-4">
-                  <h3 className="text-xl font-bold text-slate-50">{project.title}</h3>
-                  <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-200">
-                    {project.weeks}
-                  </span>
-                </div>
-                <p className="mt-4 text-sm leading-7 text-slate-300">
-                  <span className="font-bold text-slate-100">The Problem:</span> {project.problem}
-                </p>
-                <div className="mt-4 space-y-2">
-                  {project.solutions.map((solution) => (
-                    <div key={solution} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-200">
-                      {solution}
-                    </div>
-                  ))}
-                </div>
-                <p className="mt-4 text-sm leading-7 text-slate-300">
-                  <span className="font-bold text-slate-100">What You Learn:</span> {project.learn}
-                </p>
-              </Surface>
+          <div className="relative z-10 mt-6 flex flex-wrap items-center gap-2">
+            {projectTabs.map((tab) => (
+              <span
+                key={tab}
+                className="rounded-full border border-white/15 bg-white/8 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-100"
+              >
+                {tab}
+              </span>
             ))}
           </div>
-          <div className="mt-8">
+
+          <div
+            ref={projectSliderRef}
+            className="relative z-10 mt-8 flex snap-x snap-mandatory gap-6 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {courseProjects.slice(0, 5).map((project) => (
+              <ShowcaseWideCard
+                key={project.title}
+                type="project"
+                label={project.projectLabel}
+                title={project.title}
+                duration={project.duration}
+                problem={project.problem}
+                learn={project.learn}
+                solutions={project.solutions}
+              />
+            ))}
+          </div>
+
+          <div className="relative z-10">
+            <SliderArrows onPrev={() => sliderScroll(projectSliderRef, -1)} onNext={() => sliderScroll(projectSliderRef, 1)} dark />
+          </div>
+          <div className="relative z-10 mt-9 flex justify-start">
             <Link
               to="/projects"
-              className="inline-flex items-center gap-2 rounded-full border border-teal-300/35 bg-teal-300 px-6 py-3 text-sm font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-teal-200"
+              className="inline-flex min-w-[240px] items-center justify-center gap-2 rounded-full border border-teal-300/35 bg-teal-300 px-6 py-3 text-sm font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-teal-200"
             >
               Explore Real-Time Projects <span aria-hidden="true">→</span>
             </Link>
+          </div>
           </div>
         </Container>
       </Section>
 
       <Section className="py-10 md:py-12" id="case-studies">
         <Container className="max-w-6xl">
-          <div className="max-w-4xl">
+          <div className={`${solidPublicPanelClass} relative overflow-hidden px-6 py-8 md:px-8 md:py-10`} style={wavePanelStyle}>
+          <div className="absolute inset-0 bg-[#04110d]/36 backdrop-blur-[2px]" />
+          <div className="relative z-10 max-w-5xl rounded-[2.2rem] border border-white/18 bg-[linear-gradient(135deg,rgba(8,43,35,0.74),rgba(15,88,74,0.34))] px-6 py-8 shadow-[0_26px_60px_rgba(0,0,0,0.24)] backdrop-blur-[18px] md:px-8 md:py-10">
             <p className="text-sm uppercase tracking-[0.28em] text-amber-200">Case Studies</p>
             <h2 className="mt-3 text-4xl font-bold text-slate-50 md:text-5xl">Explore Our Performance Case Studies</h2>
             <h3 className="mt-3 text-2xl font-semibold text-slate-100">
@@ -305,30 +341,34 @@ export function CoursesPage() {
               Our portfolio of detailed case studies focuses on measurable growth. Master the AIO frameworks and Performance Marketing 3.0 strategies that consistently deliver high-scale ROI in the Indian landscape.
             </p>
           </div>
-          <div className="mt-8 grid gap-5 lg:grid-cols-3">
-            {courseCaseStudies.slice(0, 3).map((item) => (
-              <Surface key={item.title} className="p-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">{item.focus}</p>
-                <h3 className="mt-3 text-xl font-bold text-slate-50">{item.title}</h3>
-                <p className="mt-4 text-sm leading-7 text-slate-300">
-                  <span className="font-bold text-slate-100">The Problem:</span> {item.problem}
-                </p>
-                <p className="mt-4 text-sm leading-7 text-slate-300">
-                  <span className="font-bold text-slate-100">SEO Keywords:</span> {item.keywords.join(', ')}
-                </p>
-                <p className="mt-4 text-sm leading-7 text-slate-300">
-                  <span className="font-bold text-slate-100">The Result:</span> {item.result}
-                </p>
-              </Surface>
-            ))}
+          <div className="relative z-10 mt-8 overflow-hidden rounded-[1.8rem] border border-white/10 bg-[#07120d]/16 px-6 py-7 backdrop-blur-[2px]">
+            <div
+              ref={caseStudySliderRef}
+              className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {courseCaseStudies.slice(0, 3).map((item) => (
+                <ShowcaseWideCard
+                  key={item.title}
+                  type="case-study"
+                  label={item.caseStudyLabel}
+                  title={item.title}
+                  problem={item.problem}
+                  keywords={item.keywordsText}
+                  result={item.result}
+                  skills={item.skills}
+                />
+              ))}
+            </div>
+            <SliderArrows onPrev={() => sliderScroll(caseStudySliderRef, -1)} onNext={() => sliderScroll(caseStudySliderRef, 1)} />
           </div>
-          <div className="mt-8">
+          <div className="relative z-10 mt-9 flex justify-start">
             <Link
               to="/projects#case-studies"
-              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white px-6 py-3 text-sm font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-slate-100"
+              className="inline-flex min-w-[220px] items-center justify-center gap-2 rounded-full border border-white/15 bg-white px-6 py-3 text-sm font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-slate-100"
             >
               Get More Details <span aria-hidden="true">→</span>
             </Link>
+          </div>
           </div>
         </Container>
       </Section>
@@ -341,7 +381,7 @@ export function CoursesPage() {
             tabs={faqTabs}
             items={coursesFaqExact}
             tabInactiveClassName="border-white/15 bg-transparent text-slate-100"
-            cardClassName="rounded-[1.7rem] border border-white/10 bg-[#102039] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.18)]"
+            cardClassName="rounded-[1.7rem] border border-[#1b3551] bg-[#091a2d] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.18)]"
             answerClassName="mt-4 text-base leading-8 text-slate-300"
           />
         </Container>

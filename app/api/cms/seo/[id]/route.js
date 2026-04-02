@@ -3,6 +3,9 @@ import {
   getSupabaseClientOrResponse,
   jsonError,
   jsonOk,
+  normalizePagePath,
+  revalidateAllCmsPages,
+  revalidateCmsPaths,
   readJsonBody,
 } from '../../_utils'
 
@@ -46,6 +49,8 @@ export async function PATCH(request, { params }) {
 
   const { data, error } = await supabase.from('seo_metadata').update(update).eq('id', id).select('*').single()
   if (error) return jsonError(`Failed to update SEO metadata: ${error.message}`, 200)
+  revalidateCmsPaths([normalizePagePath(data?.page_slug)])
+  revalidateAllCmsPages()
   return jsonOk(data)
 }
 
@@ -59,7 +64,10 @@ export async function DELETE(request, { params }) {
   const id = params?.id
   if (!id) return jsonError('SEO metadata id is required.', 400)
 
+  const { data: seo } = await supabase.from('seo_metadata').select('page_slug').eq('id', id).maybeSingle()
   const { error } = await supabase.from('seo_metadata').delete().eq('id', id)
   if (error) return jsonError(`Failed to delete SEO metadata: ${error.message}`, 200)
+  revalidateCmsPaths([normalizePagePath(seo?.page_slug)])
+  revalidateAllCmsPages()
   return jsonOk({ id, deleted: true })
 }

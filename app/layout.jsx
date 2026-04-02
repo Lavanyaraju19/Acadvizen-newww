@@ -60,7 +60,8 @@ export const viewport = {
 }
 
 export default function RootLayout({ children }) {
-  const GA_ID = process.env.NEXT_PUBLIC_GA_ID || 'G-XXXXXXXXXX'
+  const GA_ID = 'G-XHHL082QEE'
+  const GTM_ID = 'GTM-T6Q5DK5C'
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -170,7 +171,7 @@ export default function RootLayout({ children }) {
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-T6Q5DK5C');`}
+})(window,document,'script','dataLayer','${GTM_ID}');`}
         </Script>
         <Script
           id="ga-loader"
@@ -185,7 +186,7 @@ gtag('config', '${GA_ID}');`}
         </Script>
         <noscript>
           <iframe
-            src="https://www.googletagmanager.com/ns.html?id=GTM-T6Q5DK5C"
+            src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
             height="0"
             width="0"
             style={{ display: 'none', visibility: 'hidden' }}

@@ -1,14 +1,16 @@
 import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import Image from 'next/image'
 import { Container } from '../ui/Section'
 import AdaptiveImage from '../../../components/media/AdaptiveImage'
+import ConsistentPortraitMedia from '../shared/ConsistentPortraitMedia'
 
 const showcaseBackground = {
-  backgroundColor: '#070a23',
+  backgroundColor: '#041117',
   backgroundImage:
-    'radial-gradient(circle at 14% 26%, rgba(119, 249, 235, 0.2) 0, rgba(119, 249, 235, 0.02) 24%), radial-gradient(circle at 86% 22%, rgba(113, 201, 255, 0.18) 0, rgba(113, 201, 255, 0.02) 20%), radial-gradient(circle at 50% 58%, rgba(98, 255, 234, 0.16) 0, rgba(98, 255, 234, 0.02) 18%), linear-gradient(132deg, rgba(3, 8, 28, 0.98) 0%, rgba(9, 18, 53, 0.98) 40%, rgba(16, 74, 99, 0.78) 63%, rgba(6, 11, 33, 0.98) 100%)',
+    "linear-gradient(135deg, rgba(3,10,12,0.7) 0%, rgba(4,12,16,0.82) 55%, rgba(2,6,8,0.88) 100%), url('/textures/green-marble.jpg')",
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
 }
 
 export function AlumniShowcaseSection({
@@ -64,50 +66,36 @@ export function AlumniShowcaseSection({
 
           <div
             ref={sliderRef}
-            className="mt-6 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="mt-6 flex snap-x snap-mandatory gap-5 overflow-x-auto px-1 pb-3 [scrollbar-width:none] sm:gap-6 [&::-webkit-scrollbar]:hidden"
           >
             {students.map((student) => (
               <article
                 key={`${student.name}-${student.image}`}
-                className="min-w-[280px] snap-start overflow-hidden rounded-[1.8rem] border-[3px] border-black/70 shadow-[0_18px_32px_rgba(0,0,0,0.24)] sm:min-w-[320px] lg:min-w-[340px]"
-                style={{ backgroundColor: student.accent }}
+                className="flex min-h-[31rem] min-w-[250px] snap-start flex-col overflow-hidden rounded-[1.8rem] border-[3px] border-black/70 bg-white shadow-[0_22px_38px_rgba(0,0,0,0.24)] sm:min-w-[280px] lg:min-w-[295px]"
               >
-                <div className="relative h-[20rem] overflow-hidden">
-                  <div className="absolute inset-0 opacity-90">
-                    <div className="absolute -left-12 bottom-[-12%] h-44 w-44 rounded-full bg-black/10 blur-2xl" />
-                    <div className="absolute right-[-10%] top-8 h-32 w-32 rounded-full bg-white/12 blur-2xl" />
-                    <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/10 via-black/5 to-transparent" />
-                  </div>
-                  <div className="absolute inset-x-0 bottom-0 mx-auto h-[92%] w-[92%]">
-                    <Image
-                      src={student.image}
-                      alt={student.name}
-                      fill
-                      sizes="(max-width: 768px) 86vw, 340px"
-                      className={`${
-                        student.image.includes('-cutout')
-                          ? 'object-contain object-bottom drop-shadow-[0_18px_30px_rgba(0,0,0,0.26)]'
-                          : 'object-cover object-top'
-                      }`}
-                      style={{ filter: 'contrast(1.04) saturate(1.03)' }}
-                    />
-                  </div>
+                <div style={{ backgroundColor: student.accent }}>
+                  <ConsistentPortraitMedia src={student.image} alt={student.name} />
                 </div>
-                <div className="px-5 pb-5 pt-4 text-slate-950">
+                <div className="flex flex-1 flex-col justify-between bg-white px-4 pb-5 pt-4 text-slate-950 sm:px-5">
                   <div className="min-w-0">
-                    <h3 className="text-2xl font-bold leading-tight">{student.name}</h3>
-                    {student.companyLogo ? (
-                      <div className="mt-3 w-[92px] rounded-2xl bg-white/92 px-2 py-1.5 shadow-[0_8px_20px_rgba(0,0,0,0.1)]">
-                        <AdaptiveImage
-                          src={student.companyLogo}
-                          alt={student.company || `${student.name} company`}
-                          variant="logo"
-                          aspectRatio="16 / 9"
-                          sizes="88px"
-                          wrapperClassName="w-full bg-transparent"
-                          borderClassName=""
-                          roundedClassName="rounded-none"
-                        />
+                    <h3 className="text-[1.15rem] font-bold leading-tight tracking-tight sm:text-[1.35rem]">{student.name}</h3>
+                    {student.company || student.companyLogo ? (
+                      <div className="mt-3">
+                        {student.companyLogo ? (
+                          <div className="w-[150px] sm:w-[170px]">
+                            <AdaptiveImage
+                              src={student.companyLogo}
+                              alt={student.company || `${student.name} company`}
+                              variant="logo"
+                              aspectRatio="16 / 9"
+                              sizes="170px"
+                              wrapperClassName="w-full bg-transparent"
+                              borderClassName=""
+                              roundedClassName="rounded-none"
+                            />
+                          </div>
+                        ) : null}
+                        {student.company ? <p className="mt-2 text-base font-bold text-slate-950">{student.company}</p> : null}
                       </div>
                     ) : null}
                   </div>
@@ -116,11 +104,11 @@ export function AlumniShowcaseSection({
             ))}
           </div>
 
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
             {primaryCta ? (
               <Link
                 to={primaryCta.to}
-                className="rounded-full border-2 border-[#0b0b0f] bg-[#f3263f] px-7 py-4 text-base font-bold text-white shadow-[0_14px_30px_rgba(243,38,63,0.28)]"
+                className="inline-flex min-w-[230px] items-center justify-center rounded-full border-2 border-[#0b0b0f] bg-[#f3263f] px-7 py-4 text-base font-bold text-white shadow-[0_14px_30px_rgba(243,38,63,0.28)]"
               >
                 {primaryCta.label}
               </Link>
@@ -128,7 +116,7 @@ export function AlumniShowcaseSection({
             {secondaryCta ? (
               <Link
                 to={secondaryCta.to}
-                className="rounded-full border border-white/20 bg-white px-6 py-4 text-base font-bold text-slate-950"
+                className="inline-flex min-w-[230px] items-center justify-center rounded-full border border-white/20 bg-white px-6 py-4 text-base font-bold text-slate-950"
               >
                 {secondaryCta.label}
               </Link>

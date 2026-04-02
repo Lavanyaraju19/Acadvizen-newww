@@ -35,6 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes = [
     '/',
     '/about',
+    '/achievements',
     '/contact',
     '/blog',
     '/courses',
@@ -77,7 +78,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     fetchRows('authors', 'slug'),
   ])
 
-  const localBlogSlugs = localBlogs.map((blog) => blog.slug).filter(Boolean)
+  const localBlogSlugs = localBlogs
+    .map((blog) => blog?.slug)
+    .filter((slug): slug is string => Boolean(slug))
 
   const sitemapEntries: MetadataRoute.Sitemap = [
     ...staticRoutes.map((route) => toEntry(route, route === '/' ? 1 : 0.8, route === '/' ? 'daily' : 'weekly')),

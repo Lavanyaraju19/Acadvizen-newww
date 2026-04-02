@@ -2,34 +2,92 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
 const AuthContext = createContext(null)
+const AUTH_TIMEOUT_MS = 12000
+
+function withTimeout(promise, timeoutMs, label) {
+  let timeoutId
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(label)), timeoutMs)
+  })
+
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timeoutId) clearTimeout(timeoutId)
+  })
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [authError, setAuthError] = useState('')
+
+  async function fetchProfile(userId, { silent = false } = {}) {
+    if (!supabase || !userId) {
+      setProfile(null)
+      return null
+    }
+
+    try {
+      const { data, error } = await withTimeout(
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle(),
+        AUTH_TIMEOUT_MS,
+        'Profile lookup timed out.'
+      )
+
+      if (error) throw error
+      setProfile(data || null)
+      if (!silent) setAuthError('')
+      return data || null
+    } catch (error) {
+      setProfile(null)
+      if (!silent) setAuthError(error?.message || 'Unable to load account profile.')
+      return null
+    }
+  }
 
   useEffect(() => {
     let isMounted = true
     if (!supabase) {
+      setAuthError('Supabase browser client is unavailable.')
       setLoading(false)
       return () => {
         isMounted = false
       }
     }
 
+    const applySession = async (session) => {
+      setUser(session?.user ?? null)
+      if (session?.user) {
+        await fetchProfile(session.user.id)
+      } else {
+        setProfile(null)
+        setAuthError('')
+      }
+    }
+
     const init = async () => {
       try {
         setLoading(true)
-        const { data: { session } } = await supabase.auth.getSession()
+        setAuthError('')
+        const {
+          data: { session },
+        } = await withTimeout(
+          supabase.auth.getSession(),
+          AUTH_TIMEOUT_MS,
+          'Session initialization timed out.'
+        )
         if (!isMounted) return
-        setUser(session?.user ?? null)
-        if (session?.user) {
-          await fetchProfile(session.user.id)
-        } else {
-          setProfile(null)
-        }
+        await applySession(session)
       } catch (err) {
-        // ignore auth init errors silently
+        if (isMounted) {
+          setUser(null)
+          setProfile(null)
+          setAuthError(err?.message || 'Unable to initialize authentication.')
+        }
       } finally {
         if (isMounted) setLoading(false)
       }
@@ -40,14 +98,13 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       try {
         setLoading(true)
-        setUser(session?.user ?? null)
-        if (session?.user) {
-          await fetchProfile(session.user.id)
-        } else {
-          setProfile(null)
-        }
+        await applySession(session)
       } catch (err) {
-        // ignore auth state errors silently
+        if (isMounted) {
+          setUser(null)
+          setProfile(null)
+          setAuthError(err?.message || 'Unable to refresh authentication state.')
+        }
       } finally {
         if (isMounted) setLoading(false)
       }
@@ -58,16 +115,6 @@ export function AuthProvider({ children }) {
       subscription.unsubscribe()
     }
   }, [])
-
-  async function fetchProfile(userId) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
-    if (!error) setProfile(data)
-    else setProfile(null)
-  }
 
   async function signUp(email, password, fullName) {
     const { data, error } = await supabase.auth.signUp({
@@ -82,6 +129,7 @@ export function AuthProvider({ children }) {
   async function signIn(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
+    setUser(data?.user ?? null)
     await fetchProfile(data.user.id)
     return data
   }
@@ -93,6 +141,7 @@ export function AuthProvider({ children }) {
     }
     setUser(null)
     setProfile(null)
+    setAuthError('')
     if (error && scope === 'local') throw error
   }
 
@@ -107,6 +156,8 @@ export function AuthProvider({ children }) {
     user,
     profile,
     loading,
+    authError,
+    refreshProfile: fetchProfile,
     signUp,
     signIn,
     signOut,

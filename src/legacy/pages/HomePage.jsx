@@ -4,13 +4,11 @@ import { motion } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import {
-  BriefcaseBusiness,
-  Building2,
   Target,
   Sparkles,
   ChevronDown,
-  Laptop2,
-  Rocket,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import { fetchPublicData } from '../../lib/apiClient'
 import { assetUrl } from '../../lib/assetUrl'
@@ -29,7 +27,9 @@ import {
   skillBottomPlatforms,
   skillTopPlatforms,
 } from '../../lib/marketingProgramContent'
-import { homepageFaqExact, homepageLearningValues } from '../../lib/sitePageContent'
+import { courseCaseStudies, homepageFaqExact, homepageLearningValues } from '../../lib/sitePageContent'
+import ShowcaseWideCard from '../../components/marketing/ShowcaseWideCard'
+import { neonBlueprintPanelStyle, solidPublicPanelClass, techGridPanelStyle, wavePanelStyle } from '../../lib/publicVisualStyles'
 
 export default function HomePage() {
   const metaTitle = 'Best Digital Marketing Course In Bangalore'
@@ -59,6 +59,8 @@ export default function HomePage() {
     backgroundImage:
       'radial-gradient(circle at 16% 82%, rgba(110,214,213,0.28) 0, rgba(110,214,213,0.02) 18%), radial-gradient(circle at 72% 14%, rgba(98,198,203,0.18) 0, rgba(98,198,203,0.02) 16%), linear-gradient(140deg, rgba(6,17,40,0.98) 0%, rgba(6,17,40,0.98) 26%, rgba(81,182,187,0.14) 26.2%, rgba(7,19,38,0.98) 52%), linear-gradient(34deg, rgba(98,198,203,0.18) 0%, rgba(7,19,38,0) 34%), linear-gradient(215deg, rgba(93,210,214,0.18) 0%, rgba(7,19,38,0) 26%), linear-gradient(180deg, #08122a 0%, #071326 100%)',
   }
+  const shimmerDustPanelStyle = techGridPanelStyle
+  const techPanelStyle = wavePanelStyle
   const programHighlights = [
     'AI-ARCHITECT Mastery: Learn to manage 120+ AI tools to automate 80% of manual marketing tasks.',
     'GEO & AEO Implementation: Rank beyond Google by getting your brand cited in ChatGPT, Gemini, and Perplexity answers.',
@@ -255,6 +257,7 @@ export default function HomePage() {
   const [heroVideoAvailable, setHeroVideoAvailable] = useState(true)
   const [heroVideoPlaying, setHeroVideoPlaying] = useState(false)
   const heroVideoRef = useRef(null)
+  const caseStudiesPreviewRef = useRef(null)
   const partnersFallback = [
     { name: 'Google', logo_url: 'https://logo.clearbit.com/google.com', row_group: 'row_a' },
     { name: 'Amazon', logo_url: 'https://logo.clearbit.com/amazon.com', row_group: 'row_a' },
@@ -275,6 +278,12 @@ export default function HomePage() {
     mode: 'online',
     consent: false,
   })
+
+  const scrollCaseStudiesPreview = (direction) => {
+    if (!caseStudiesPreviewRef.current) return
+    const amount = Math.max(caseStudiesPreviewRef.current.clientWidth * 0.7, 280)
+    caseStudiesPreviewRef.current.scrollBy({ left: direction * amount, behavior: 'smooth' })
+  }
 
   useEffect(() => {
     const runDeferredLoads = () => {
@@ -445,6 +454,12 @@ export default function HomePage() {
       desc: preferLongerText(item?.desc, fallback.desc),
     }
   })
+  const whoIllustrationByTitle = {
+    Freshers: '/who-is-this-for/freshers-professionals.jpg',
+    'Working Professionals': '/who-is-this-for/it-professionals.jpg',
+    'Business Owners': '/who-is-this-for/freshers-professionals.jpg',
+    Freelancers: '/who-is-this-for/it-professionals.jpg',
+  }
   const blogSection = getSection('blog_section', {
     title: 'From the Blog',
     subtitle: 'Latest insights from Acadvizen.',
@@ -1097,59 +1112,61 @@ export default function HomePage() {
 
       <Section className="py-10 md:py-12" id="tools-marquee">
         <Container>
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-50">Tools You Will Master</h2>
-          </div>
-          <div className="mt-8 space-y-4 overflow-hidden">
-            <div className="logo-scroll gap-6 min-w-max">
+          <div className="px-2 py-2 md:px-4 md:py-4">
+            <div className="text-center max-w-3xl mx-auto">
+              <h2 className="text-4xl md:text-5xl font-bold text-slate-50">Tools You Will Master</h2>
+            </div>
+            <div className="mt-8 space-y-6 overflow-hidden">
+              <div className="logo-scroll gap-8 min-w-max">
               {[...marqueeRowA, ...marqueeRowA].map((tool, idx) => (
                 <Link
                   key={`${tool.slug || tool.name}-row-a-${idx}`}
                   to={`/tools/${tool.slug || toToolSlug(tool.name || '')}`}
-                  className="tilt-card flex min-w-[220px] items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-4 transition hover:-translate-y-1 hover:border-teal-300/60"
+                  className="flex min-w-[148px] flex-col items-center justify-center py-3 text-center transition hover:-translate-y-1"
                 >
-                  <div className="h-12 w-12 shrink-0 float">
+                  <div className="h-[68px] w-[156px] shrink-0">
                     <AdaptiveImage
                       src={tool.logoSrc || resolveToolLogoCandidates(tool)[0]}
                       fallbackSrcs={resolveToolLogoCandidates(tool).slice(tool.logoSrc ? 0 : 1)}
                       alt={tool.name || tool.slug}
                       variant="logo"
-                      aspectRatio="1 / 1"
-                      wrapperClassName="h-full w-full"
+                      aspectRatio="4 / 3"
+                      wrapperClassName="h-full w-full bg-transparent"
                       borderClassName=""
-                      roundedClassName="rounded-2xl"
-                      sizes="48px"
+                      roundedClassName="rounded-none"
+                      sizes="156px"
                       loading="lazy"
                     />
                   </div>
-                  <span className="text-sm font-semibold text-slate-200 whitespace-nowrap">{tool.name || tool.slug}</span>
+                  <span className="mt-2 text-sm font-semibold text-slate-100 whitespace-nowrap">{tool.name || tool.slug}</span>
                 </Link>
               ))}
-            </div>
-            <div className="logo-scroll-reverse gap-6 min-w-max">
+              </div>
+              <div className="logo-scroll-reverse gap-8 min-w-max">
               {[...marqueeRowB, ...marqueeRowB].map((tool, idx) => (
                 <Link
                   key={`${tool.slug || tool.name}-row-b-${idx}`}
                   to={`/tools/${tool.slug || toToolSlug(tool.name || '')}`}
-                  className="tilt-card flex min-w-[220px] items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-4 transition hover:-translate-y-1 hover:border-teal-300/60"
+                  className="flex min-w-[148px] flex-col items-center justify-center py-3 text-center transition hover:-translate-y-1"
                 >
-                  <div className="h-12 w-12 shrink-0 float">
+                  <div className="h-[68px] w-[156px] shrink-0">
                     <AdaptiveImage
                       src={tool.logoSrc || resolveToolLogoCandidates(tool)[0]}
                       fallbackSrcs={resolveToolLogoCandidates(tool).slice(tool.logoSrc ? 0 : 1)}
                       alt={tool.name || tool.slug}
                       variant="logo"
-                      aspectRatio="1 / 1"
-                      wrapperClassName="h-full w-full"
+                      aspectRatio="4 / 3"
+                      wrapperClassName="h-full w-full bg-transparent"
                       borderClassName=""
-                      roundedClassName="rounded-2xl"
-                      sizes="48px"
+                      roundedClassName="rounded-none"
+                      sizes="156px"
                       loading="lazy"
                     />
                   </div>
-                  <span className="text-sm font-semibold text-slate-200 whitespace-nowrap">{tool.name || tool.slug}</span>
+                  <span className="mt-2 text-sm font-semibold text-slate-100 whitespace-nowrap">{tool.name || tool.slug}</span>
                 </Link>
               ))}
+              </div>
             </div>
           </div>
         </Container>
@@ -1161,29 +1178,26 @@ export default function HomePage() {
           <h2 className="text-4xl md:text-5xl font-bold text-slate-50 text-center">{whoSection.title}</h2>
           <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {whoItems.map((card, idx) => {
-              const iconMap = [
-                Rocket,
-                BriefcaseBusiness,
-                Building2,
-                Laptop2,
-              ]
-              const Icon = iconMap[idx % iconMap.length]
+              const illustrationSrc =
+                whoIllustrationByTitle[card.title] ||
+                (idx % 2 === 0
+                  ? '/who-is-this-for/freshers-professionals.jpg'
+                  : '/who-is-this-for/it-professionals.jpg')
               const isExpanded = expandedWhoCard === idx
               return (
                 <div
                   key={`${card.title}-${idx}`}
-                  className={`group rounded-[2rem] border p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl tilt-card ${
-                    idx % 4 === 0
-                      ? 'border-[#43a8c7] bg-[#14546c]'
-                      : idx % 4 === 1
-                      ? 'border-[#55c9c0] bg-[#15656a]'
-                      : idx % 4 === 2
-                      ? 'border-[#d1a55f] bg-[#6a4d32]'
-                      : 'border-[#a98de5] bg-[#5a438d]'
-                  }`}
+                  className={`group ${solidPublicPanelClass} p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl tilt-card`}
+                  style={idx % 2 === 0 ? neonBlueprintPanelStyle : techGridPanelStyle}
                 >
-                  <div className="mb-5 inline-flex h-20 w-20 items-center justify-center rounded-[1.4rem] bg-[#10263d] text-sky-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-                    <Icon className="h-10 w-10" strokeWidth={1.9} />
+                  <div className="mb-3 flex h-[138px] items-center justify-center overflow-hidden">
+                    <Image
+                      src={illustrationSrc}
+                      alt={card.title}
+                      width={180}
+                      height={140}
+                      className="h-[138px] w-full object-contain"
+                    />
                   </div>
                   <div className="text-xl font-bold text-slate-50">{card.title}</div>
                   <p className={`mt-3 text-base leading-8 text-slate-100/95 ${isExpanded ? '' : 'line-clamp-6'}`}>{card.desc}</p>
@@ -1473,8 +1487,8 @@ export default function HomePage() {
           <div className="max-w-6xl mx-auto text-center">
             <h2 className="text-4xl md:text-5xl font-bold text-slate-50">What Makes Acadvizen Different</h2>
           </div>
-          <div className="mt-8 overflow-hidden rounded-[2rem] border border-cyan-300/15 bg-[linear-gradient(180deg,rgba(10,16,29,0.96),rgba(3,7,18,0.96))] shadow-[0_20px_60px_rgba(15,23,42,0.28)]">
-            <div className="grid grid-cols-3 border-b border-white/10 bg-slate-900/90">
+          <div className={`mt-8 overflow-hidden ${solidPublicPanelClass}`} style={techPanelStyle}>
+            <div className="grid grid-cols-3 border-b border-white/10 bg-transparent">
               {['Key Feature', 'Traditional Digital Marketing Institutes', 'Acadvizen: The AI-Orchestrated Legend™'].map((label) => (
                 <div key={label} className="border-r border-white/10 px-4 py-4 text-lg font-bold text-slate-100 last:border-r-0">
                   {label}
@@ -1484,17 +1498,83 @@ export default function HomePage() {
             <div className="divide-y divide-white/10">
               {comparisonRows.map(([feature, traditional, acadvizen]) => (
                 <div key={`after-${feature}`} className="grid grid-cols-3">
-                  <div className="border-r border-white/10 bg-slate-900/65 px-4 py-5 text-base font-bold text-slate-100">
+                  <div className="border-r border-white/10 bg-transparent px-4 py-5 text-base font-bold text-slate-100">
                     {feature}
                   </div>
-                  <div className="border-r border-white/10 px-4 py-5 text-base leading-7 text-slate-300">
+                  <div className="border-r border-white/10 bg-transparent px-4 py-5 text-base leading-7 text-slate-300">
                     {traditional}
                   </div>
-                  <div className="bg-emerald-500/8 px-4 py-5 text-base leading-7 text-emerald-100">
+                  <div className="bg-transparent px-4 py-5 text-base leading-7 text-emerald-100">
                     {acadvizen}
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </Container>
+      </Section>
+
+      <Section className="py-12 md:py-16" id="homepage-case-studies-preview">
+        <Container>
+          <div className={`${solidPublicPanelClass} overflow-hidden px-6 py-11 md:px-8 md:py-12`}>
+            <div className="mx-auto max-w-4xl text-center">
+              <p className="text-sm font-black uppercase tracking-[0.28em] text-cyan-100/80">Case Studies</p>
+              <h2 className="mt-4 text-4xl font-extrabold tracking-tight text-white md:text-5xl">
+                Explore Our Performance Case Studies
+              </h2>
+              <h3 className="mt-4 text-2xl font-bold text-slate-100">
+                35+ AI-Driven Case Studies &amp; 4.5x ROAS Mastery Beyond Traditional SEO
+              </h3>
+              <p className="mt-4 text-lg leading-8 text-slate-200">
+                Our portfolio of detailed case studies focuses on measurable growth. Master the AIO frameworks and Performance Marketing 3.0 strategies that consistently deliver high-scale ROI in the Indian landscape.
+              </p>
+            </div>
+
+            <div className="mt-9">
+            <div
+              ref={caseStudiesPreviewRef}
+              className="flex snap-x snap-mandatory gap-6 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {courseCaseStudies.slice(0, 3).map((item) => (
+                <ShowcaseWideCard
+                  key={item.title}
+                  type="case-study"
+                  label={item.caseStudyLabel}
+                  title={item.title}
+                  problem={item.problem}
+                  keywords={item.keywordsText}
+                  result={item.result}
+                  skills={item.skills}
+                />
+              ))}
+            </div>
+            <div className="mt-7 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => scrollCaseStudiesPreview(-1)}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition hover:bg-white/18"
+                aria-label="Scroll case studies left"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollCaseStudiesPreview(1)}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition hover:bg-white/18"
+                aria-label="Scroll case studies right"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+            </div>
+
+            <div className="mt-10 flex justify-center md:mt-11">
+              <Link
+                to="/projects#case-studies"
+                className="inline-flex min-w-[240px] items-center justify-center gap-2 rounded-full border border-white/10 bg-[#F5D90A] px-7 py-4 text-sm font-black uppercase tracking-[0.16em] text-slate-950 transition hover:-translate-y-0.5"
+              >
+                View All Case Studies <span aria-hidden="true">→</span>
+              </Link>
             </div>
           </div>
         </Container>
@@ -1509,7 +1589,7 @@ export default function HomePage() {
               tabs={faqTabs}
               items={homepageFaqExact}
               tabInactiveClassName="border-white/15 bg-transparent text-slate-100"
-              cardClassName="rounded-[1.7rem] border border-white/10 bg-[#102039] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.18)]"
+              cardClassName="rounded-[1.7rem] border border-[#1b3551] bg-[#091a2d] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.18)]"
               answerClassName="mt-4 text-base leading-8 text-slate-300"
             />
           </div>
@@ -1521,8 +1601,8 @@ export default function HomePage() {
       </div>
 
       {showPopup && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center px-4">
-          <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-slate-950 p-6 md:p-8">
+        <div className="fixed inset-0 z-[1000] bg-[#020916]/78 backdrop-blur-0 flex items-center justify-center px-4">
+          <div className={`w-full max-w-lg rounded-3xl border border-[#1b3551] p-6 md:p-8`} style={techGridPanelStyle}>
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-semibold text-slate-50">{popupSection.title}</h3>
@@ -1541,7 +1621,7 @@ export default function HomePage() {
                   placeholder="Full Name"
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-100"
+                  className="w-full rounded-xl border border-[#20415f] bg-[#0b2036] px-4 py-3 text-sm text-slate-100"
                 />
                 <input
                   id="quick-email"
@@ -1550,7 +1630,7 @@ export default function HomePage() {
                   placeholder="Email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-100"
+                  className="w-full rounded-xl border border-[#20415f] bg-[#0b2036] px-4 py-3 text-sm text-slate-100"
                 />
               </div>
               <input
@@ -1560,7 +1640,7 @@ export default function HomePage() {
                 placeholder="Mobile Number (+91)"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-100"
+                className="w-full rounded-xl border border-[#20415f] bg-[#0b2036] px-4 py-3 text-sm text-slate-100"
               />
               <div className="grid gap-3 md:grid-cols-2">
                 {['online', 'classroom'].map((mode) => (
@@ -1571,7 +1651,7 @@ export default function HomePage() {
                     className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
                       formData.mode === mode
                         ? 'border-teal-300 bg-teal-300/20 text-teal-100'
-                        : 'border-white/10 bg-white/[0.03] text-slate-300'
+                        : 'border-[#20415f] bg-[#0b2036] text-slate-300'
                     }`}
                   >
                     {mode === 'online' ? 'Online' : 'Classroom'}

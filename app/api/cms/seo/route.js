@@ -3,7 +3,10 @@ import {
   getSupabaseClientOrResponse,
   jsonError,
   jsonOk,
+  normalizePagePath,
   parsePositiveInt,
+  revalidateAllCmsPages,
+  revalidateCmsPaths,
   readJsonBody,
 } from '../_utils'
 
@@ -62,5 +65,7 @@ export async function POST(request) {
     .single()
 
   if (error) return jsonError(`Failed to save SEO metadata: ${error.message}`, 200)
+  revalidateCmsPaths([normalizePagePath(data?.page_slug)])
+  revalidateAllCmsPages()
   return jsonOk(data)
 }

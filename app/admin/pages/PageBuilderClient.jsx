@@ -404,7 +404,6 @@ export default function PageBuilderClient() {
   const [pageForm, setPageForm] = useState(EMPTY_PAGE_FORM)
   const [sectionForm, setSectionForm] = useState(createEmptySectionForm())
   const [draggingId, setDraggingId] = useState('')
-  const [bootstrapped, setBootstrapped] = useState(false)
 
   const selectedPage = useMemo(() => pages.find((page) => page.id === selectedPageId) || null, [pages, selectedPageId])
   const sections = useMemo(
@@ -469,9 +468,15 @@ export default function PageBuilderClient() {
 
   useEffect(() => {
     async function bootstrap() {
-      setLoading(true)
-      setStatus('Syncing current website content into the editor...')
+      setStatus('')
       try {
+        const pages = await loadPages()
+        if (pages.length) {
+          setStatus('Loaded existing CMS pages.')
+          return
+        }
+
+        setStatus('No CMS pages found yet. Importing the current website structure once...')
         const res = await fetch('/api/cms/import-live-pages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -481,14 +486,12 @@ export default function PageBuilderClient() {
           }),
         })
         const json = await res.json()
-        if (!json?.success) throw new Error(json?.error || 'Failed to sync live website content.')
+        if (!json?.success) throw new Error(json?.error || 'Failed to seed the CMS from the current website.')
         await loadPages()
-        setStatus('Loaded the current live website content into the editor.')
+        setStatus('Imported the current website structure into the CMS.')
       } catch (error) {
         await loadPages()
-        setStatus(error?.message || 'Loaded CMS pages, but live sync could not be completed.')
-      } finally {
-        setBootstrapped(true)
+        setStatus(error?.message || 'Loaded CMS pages, but automatic sync could not be completed.')
       }
     }
 

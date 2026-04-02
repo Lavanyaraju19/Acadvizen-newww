@@ -4,6 +4,29 @@ import Image from 'next/image'
 import { useAuth } from '../contexts/AuthContext'
 import { useSiteCms } from '../hooks/useSiteCms'
 
+function ensureAchievementsLink(items = []) {
+  const normalized = Array.isArray(items) ? items.filter(Boolean) : []
+  const hasAchievements = normalized.some((item) => {
+    const title = String(item?.title || '').trim().toLowerCase()
+    const url = String(item?.url || '').trim().toLowerCase()
+    return title === 'achievements' || url === '/achievements'
+  })
+
+  if (hasAchievements) return normalized
+
+  const blogIndex = normalized.findIndex((item) => String(item?.url || '').trim().toLowerCase() === '/blog')
+  const nextItems = [...normalized]
+  const achievementsItem = { title: 'Achievements', url: '/achievements', target: '_self' }
+
+  if (blogIndex >= 0) {
+    nextItems.splice(blogIndex, 0, achievementsItem)
+    return nextItems
+  }
+
+  nextItems.push(achievementsItem)
+  return nextItems
+}
+
 export function Navbar() {
   const { user, profile, signOut, loading } = useAuth()
   const { menus, settings } = useSiteCms()
@@ -25,12 +48,13 @@ export function Navbar() {
   const fallbackHeaderLinks = [
     { title: 'Courses', url: '/courses', target: '_self' },
     { title: 'Placement', url: '/placement', target: '_self' },
+    { title: 'Achievements', url: '/achievements', target: '_self' },
     { title: 'Blog', url: '/blog', target: '_self' },
     { title: 'Contact', url: '/contact', target: '_self' },
   ]
-  const headerLinks = Array.isArray(menus?.header) && menus.header.length
+  const headerLinks = ensureAchievementsLink(Array.isArray(menus?.header) && menus.header.length
     ? menus.header.filter((item) => !item.parent_id)
-    : (uiFallbackLinks.length ? uiFallbackLinks : fallbackHeaderLinks)
+    : (uiFallbackLinks.length ? uiFallbackLinks : fallbackHeaderLinks))
   const logoSrc = '/logo-mark.png'
   const brandLabel = String(uiCopy.nav_brand_label || settings?.company_name || 'Acadvizen')
   const dashboardLabel = String(uiCopy.nav_dashboard_label || 'Dashboard')
@@ -54,7 +78,7 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50">
+    <header className="relative z-50">
       <nav className="w-full border-b border-white/10 bg-slate-950/92 shadow-[0_18px_60px_rgba(2,6,23,0.35)] backdrop-blur">
         <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center min-w-0">

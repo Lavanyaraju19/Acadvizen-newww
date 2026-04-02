@@ -3,6 +3,7 @@ import {
   getSupabaseClientOrResponse,
   jsonError,
   jsonOk,
+  revalidateAllCmsPages,
   readJsonBody,
 } from '../../_utils'
 
@@ -29,6 +30,7 @@ export async function PATCH(request, { params }) {
 
   const { data, error } = await supabase.from('menus').update(update).eq('id', id).select('*').single()
   if (error) return jsonError(`Failed to update menu item: ${error.message}`, 200)
+  revalidateAllCmsPages()
   return jsonOk(data)
 }
 
@@ -44,5 +46,6 @@ export async function DELETE(request, { params }) {
 
   const { error } = await supabase.from('menus').delete().eq('id', id)
   if (error) return jsonError(`Failed to delete menu item: ${error.message}`, 200)
+  revalidateAllCmsPages()
   return jsonOk({ id, deleted: true })
 }

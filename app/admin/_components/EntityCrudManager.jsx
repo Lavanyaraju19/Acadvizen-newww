@@ -212,7 +212,7 @@ export default function EntityCrudManager({
                     : 'border border-white/10 bg-white/[0.02] text-slate-200 hover:bg-white/[0.05]'
                 }`}
               >
-                {item.title || item.name || item.label || item.slug || item.key || 'Untitled'}
+                {item.title || item.name || item.company_name || item.label || item.slug || item.key || 'Untitled'}
               </button>
             ))
           ) : (
