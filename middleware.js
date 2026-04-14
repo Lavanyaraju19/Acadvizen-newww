@@ -14,12 +14,6 @@ export function middleware(request) {
     return NextResponse.redirect(url)
   }
 
-  if (pathname === '/admin-login' && adminSession) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/admin'
-    return NextResponse.redirect(url)
-  }
-
   return NextResponse.next()
 }
 

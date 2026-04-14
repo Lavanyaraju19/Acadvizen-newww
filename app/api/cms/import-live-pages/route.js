@@ -7,7 +7,7 @@ import { hasValidSupabaseServiceRoleKey } from '../../../../lib/supabaseServer'
 export const dynamic = 'force-dynamic'
 
 export async function POST(request) {
-  const unauthorized = ensureAdmin(request)
+  const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
   const hasBearerToken = Boolean(request?.headers?.get?.('authorization')?.toLowerCase?.().startsWith('bearer '))
@@ -19,7 +19,7 @@ export async function POST(request) {
     )
   }
 
-  const { supabase, response } = getSupabaseClientOrResponse(request)
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await readJsonBody(request)

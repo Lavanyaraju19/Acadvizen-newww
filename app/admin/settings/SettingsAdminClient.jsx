@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Surface } from '../../../src/components/ui/Surface'
+import { adminApiFetch } from '../../../lib/adminApiClient'
 
 const MENU_LOCATIONS = ['header', 'footer', 'bottom_dock', 'legal']
 
@@ -101,43 +102,39 @@ export default function SettingsAdminClient() {
 
   async function loadData() {
     setStatus('')
-    const [settingsRes, menusRes] = await Promise.all([
-      fetch('/api/cms/settings', { cache: 'no-store' }).then((res) => res.json()),
-      fetch('/api/cms/menus?include_inactive=1&limit=500', { cache: 'no-store' }).then((res) => res.json()),
-    ])
+    try {
+      const [settingsRes, menusRes] = await Promise.all([
+        adminApiFetch('/api/cms/settings', { cache: 'no-store' }),
+        adminApiFetch('/api/cms/menus?include_inactive=1&limit=500', { cache: 'no-store' }),
+      ])
 
-    if (!settingsRes?.success) {
-      setStatus(settingsRes?.error || 'Failed to load settings.')
+      setSettings((prev) => ({
+        ...prev,
+        ...(settingsRes.data || {}),
+        social_links: {
+          ...prev.social_links,
+          ...((settingsRes.data?.social_links && typeof settingsRes.data.social_links === 'object')
+            ? settingsRes.data.social_links
+            : {}),
+        },
+        design_tokens: {
+          ...prev.design_tokens,
+          ...((settingsRes.data?.design_tokens && typeof settingsRes.data.design_tokens === 'object')
+            ? settingsRes.data.design_tokens
+            : {}),
+        },
+        ui_copy: {
+          ...prev.ui_copy,
+          ...((settingsRes.data?.ui_copy && typeof settingsRes.data.ui_copy === 'object')
+            ? settingsRes.data.ui_copy
+            : {}),
+        },
+      }))
+      setMenus(Array.isArray(menusRes.data) ? menusRes.data : [])
+    } catch (error) {
+      setStatus(error?.message || 'Failed to load settings.')
       return
     }
-    if (!menusRes?.success) {
-      setStatus(menusRes?.error || 'Failed to load menus.')
-      return
-    }
-
-    setSettings((prev) => ({
-      ...prev,
-      ...(settingsRes.data || {}),
-      social_links: {
-        ...prev.social_links,
-        ...((settingsRes.data?.social_links && typeof settingsRes.data.social_links === 'object')
-          ? settingsRes.data.social_links
-          : {}),
-      },
-      design_tokens: {
-        ...prev.design_tokens,
-        ...((settingsRes.data?.design_tokens && typeof settingsRes.data.design_tokens === 'object')
-          ? settingsRes.data.design_tokens
-          : {}),
-      },
-      ui_copy: {
-        ...prev.ui_copy,
-        ...((settingsRes.data?.ui_copy && typeof settingsRes.data.ui_copy === 'object')
-          ? settingsRes.data.ui_copy
-          : {}),
-      },
-    }))
-    setMenus(Array.isArray(menusRes.data) ? menusRes.data : [])
   }
 
   useEffect(() => {
@@ -149,13 +146,10 @@ export default function SettingsAdminClient() {
     setSaving(true)
     setStatus('')
     try {
-      const res = await fetch('/api/cms/settings', {
+      await adminApiFetch('/api/cms/settings', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
+        body: settings,
       })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to save settings.')
       setStatus('Site settings saved.')
     } catch (error) {
       setStatus(error?.message || 'Failed to save settings.')
@@ -179,13 +173,10 @@ export default function SettingsAdminClient() {
         order_index: Number(menuForm.order_index) || 0,
         parent_id: menuForm.parent_id || null,
       }
-      const res = await fetch('/api/cms/menus', {
+      await adminApiFetch('/api/cms/menus', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: payload,
       })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to save menu item.')
       setMenuForm({
         id: '',
         menu_location: 'header',
@@ -210,9 +201,7 @@ export default function SettingsAdminClient() {
     setSaving(true)
     setStatus('')
     try {
-      const res = await fetch(`/api/cms/menus/${id}`, { method: 'DELETE' })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to delete menu item.')
+      await adminApiFetch(`/api/cms/menus/${id}`, { method: 'DELETE' })
       await loadData()
       setStatus('Menu item deleted.')
     } catch (error) {

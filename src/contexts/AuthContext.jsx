@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
 const AuthContext = createContext(null)
@@ -19,34 +19,49 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [profileLoading, setProfileLoading] = useState(false)
   const [authError, setAuthError] = useState('')
+  const inFlightProfileRef = useRef(new Map())
 
   async function fetchProfile(userId, { silent = false } = {}) {
     if (!supabase || !userId) {
       setProfile(null)
+      setProfileLoading(false)
       return null
     }
 
-    try {
-      const { data, error } = await withTimeout(
-        supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .maybeSingle(),
-        AUTH_TIMEOUT_MS,
-        'Profile lookup timed out.'
-      )
+    const existing = inFlightProfileRef.current.get(userId)
+    if (existing) return existing
 
-      if (error) throw error
-      setProfile(data || null)
-      if (!silent) setAuthError('')
-      return data || null
-    } catch (error) {
-      setProfile(null)
-      if (!silent) setAuthError(error?.message || 'Unable to load account profile.')
-      return null
-    }
+    const request = (async () => {
+      setProfileLoading(true)
+      try {
+        const { data, error } = await withTimeout(
+          supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .maybeSingle(),
+          AUTH_TIMEOUT_MS,
+          'Profile lookup timed out.'
+        )
+
+        if (error) throw error
+        setProfile(data || null)
+        if (!silent) setAuthError('')
+        return data || null
+      } catch (error) {
+        setProfile(null)
+        if (!silent) setAuthError(error?.message || 'Unable to load account profile.')
+        return null
+      } finally {
+        inFlightProfileRef.current.delete(userId)
+        setProfileLoading(false)
+      }
+    })()
+
+    inFlightProfileRef.current.set(userId, request)
+    return request
   }
 
   useEffect(() => {
@@ -59,12 +74,13 @@ export function AuthProvider({ children }) {
       }
     }
 
-    const applySession = async (session) => {
+    const applySession = (session, { silentProfile = false } = {}) => {
       setUser(session?.user ?? null)
       if (session?.user) {
-        await fetchProfile(session.user.id)
+        void fetchProfile(session.user.id, { silent: silentProfile })
       } else {
         setProfile(null)
+        setProfileLoading(false)
         setAuthError('')
       }
     }
@@ -81,11 +97,12 @@ export function AuthProvider({ children }) {
           'Session initialization timed out.'
         )
         if (!isMounted) return
-        await applySession(session)
+        applySession(session, { silentProfile: true })
       } catch (err) {
         if (isMounted) {
           setUser(null)
           setProfile(null)
+          setProfileLoading(false)
           setAuthError(err?.message || 'Unable to initialize authentication.')
         }
       } finally {
@@ -98,11 +115,12 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       try {
         setLoading(true)
-        await applySession(session)
+        applySession(session, { silentProfile: true })
       } catch (err) {
         if (isMounted) {
           setUser(null)
           setProfile(null)
+          setProfileLoading(false)
           setAuthError(err?.message || 'Unable to refresh authentication state.')
         }
       } finally {
@@ -156,6 +174,7 @@ export function AuthProvider({ children }) {
     user,
     profile,
     loading,
+    profileLoading,
     authError,
     refreshProfile: fetchProfile,
     signUp,

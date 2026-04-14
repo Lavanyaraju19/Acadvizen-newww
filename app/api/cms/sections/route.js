@@ -21,13 +21,13 @@ async function resolvePageId(supabase, pageSlug) {
 }
 
 export async function GET(request) {
-  const { supabase, response } = getSupabaseClientOrResponse()
+  const { searchParams } = new URL(request.url)
+  const includeHidden = searchParams.get('include_hidden') === '1' && isAdminRequest(request)
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: includeHidden })
   if (response) return response
 
-  const { searchParams } = new URL(request.url)
   const pageId = searchParams.get('page_id')
   const pageSlug = searchParams.get('page_slug')
-  const includeHidden = searchParams.get('include_hidden') === '1' && isAdminRequest(request)
   const limit = parsePositiveInt(searchParams.get('limit'), 500)
 
   let resolvedPageId = pageId
@@ -45,10 +45,10 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const unauthorized = ensureAdmin(request)
+  const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse()
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await readJsonBody(request)

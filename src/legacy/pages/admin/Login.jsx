@@ -4,6 +4,7 @@ import { Surface } from '../../../components/ui/Surface'
 import { useAuth } from '../../../contexts/AuthContext'
 import { supabase } from '../../../lib/supabaseClient'
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from '../../../../lib/env'
+import { adminApiFetch } from '../../../../lib/adminApiClient'
 
 export function AdminLogin() {
   const navigate = useNavigate()
@@ -131,18 +132,13 @@ export function AdminLogin() {
       }
 
       if (data?.user?.id) {
-        const { data: roleData, error: roleError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.user.id)
-          .single()
-
-        if (roleError || roleData?.role !== 'admin') {
+        try {
+          await adminApiFetch('/api/admin/session', { method: 'POST' })
+        } catch (sessionError) {
           await supabase.auth.signOut()
-          setError('This account does not have admin access.')
+          setError(sessionError?.message || 'This account does not have admin access.')
           return
         }
-        await fetch('/api/admin/session', { method: 'POST' })
         navigate('/admin', { replace: true })
         return
       }

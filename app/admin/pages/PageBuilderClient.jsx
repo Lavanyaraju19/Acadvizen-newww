@@ -6,6 +6,7 @@ import DynamicSectionRenderer from '../../../components/sections/DynamicSectionR
 import { Surface } from '../../../src/components/ui/Surface'
 import PrecisionSectionFields from './PrecisionSectionFields'
 import { LIVE_SYNC_TARGETS } from '../../../lib/livePageTargets'
+import { adminApiFetch } from '../../../lib/adminApiClient'
 
 const SECTION_TYPES = [
   'hero',
@@ -434,9 +435,7 @@ export default function PageBuilderClient() {
   async function loadPages(nextSelectedId) {
     setLoading(true)
     try {
-      const res = await fetch('/api/cms/pages?include_drafts=1&include_sections=1', { cache: 'no-store' })
-      const payload = await res.json()
-      if (!payload?.success) throw new Error(payload?.error || 'Failed to load pages.')
+      const payload = await adminApiFetch('/api/cms/pages?include_drafts=1&include_sections=1', { cache: 'no-store' })
       const nextPages = Array.isArray(payload.data) ? payload.data : []
       setPages(nextPages)
       const selectedId = nextSelectedId || selectedPageId || nextPages[0]?.id || ''
@@ -477,16 +476,13 @@ export default function PageBuilderClient() {
         }
 
         setStatus('No CMS pages found yet. Importing the current website structure once...')
-        const res = await fetch('/api/cms/import-live-pages', {
+        await adminApiFetch('/api/cms/import-live-pages', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          body: {
             replace_sections: true,
             slugs: LIVE_SYNC_TARGETS.map((target) => target.slug),
-          }),
+          },
         })
-        const json = await res.json()
-        if (!json?.success) throw new Error(json?.error || 'Failed to seed the CMS from the current website.')
         await loadPages()
         setStatus('Imported the current website structure into the CMS.')
       } catch (error) {
@@ -534,13 +530,10 @@ export default function PageBuilderClient() {
   }
 
   async function persistPage(nextForm, successMessage) {
-    const res = await fetch('/api/cms/pages', {
+    const json = await adminApiFetch('/api/cms/pages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...nextForm, slug: nextForm.slug?.trim() || toSlug(nextForm.title) }),
+      body: { ...nextForm, slug: nextForm.slug?.trim() || toSlug(nextForm.title) },
     })
-    const json = await res.json()
-    if (!json?.success) throw new Error(json?.error || 'Failed to save page.')
     await loadPages(json.data?.id)
     setStatus(successMessage)
     return json.data
@@ -587,9 +580,7 @@ export default function PageBuilderClient() {
     setSaving(true)
     setStatus('')
     try {
-      const res = await fetch(`/api/cms/pages/${pageForm.id}`, { method: 'DELETE' })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to delete page.')
+      await adminApiFetch(`/api/cms/pages/${pageForm.id}`, { method: 'DELETE' })
       beginCreatePage()
       await loadPages('')
       setStatus('Page deleted.')
@@ -617,13 +608,10 @@ export default function PageBuilderClient() {
         style_json: styleFromForm(sectionForm),
         visibility: sectionForm.isVisible !== false,
       }
-      const res = await fetch(sectionForm.id ? `/api/cms/sections/${sectionForm.id}` : '/api/cms/sections', {
+      await adminApiFetch(sectionForm.id ? `/api/cms/sections/${sectionForm.id}` : '/api/cms/sections', {
         method: sectionForm.id ? 'PATCH' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: payload,
       })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to save section.')
       await loadPages(selectedPageId)
       setStatus(sectionForm.id ? 'Section updated.' : 'Section added.')
     } catch (error) {
@@ -638,9 +626,7 @@ export default function PageBuilderClient() {
     setSaving(true)
     setStatus('')
     try {
-      const res = await fetch(`/api/cms/sections/${id}`, { method: 'DELETE' })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to delete section.')
+      await adminApiFetch(`/api/cms/sections/${id}`, { method: 'DELETE' })
       if (sectionForm.id === id) resetSectionForm()
       await loadPages(selectedPageId)
       setStatus('Section deleted.')
@@ -655,13 +641,10 @@ export default function PageBuilderClient() {
     setSaving(true)
     setStatus('')
     try {
-      const res = await fetch('/api/cms/sections', {
+      await adminApiFetch('/api/cms/sections', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'duplicate', id }),
+        body: { action: 'duplicate', id },
       })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to duplicate section.')
       await loadPages(selectedPageId)
       setStatus('Section duplicated.')
     } catch (error) {
@@ -675,13 +658,10 @@ export default function PageBuilderClient() {
     setSaving(true)
     setStatus('')
     try {
-      const res = await fetch(`/api/cms/sections/${section.id}`, {
+      await adminApiFetch(`/api/cms/sections/${section.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ visibility: !section.visibility }),
+        body: { visibility: !section.visibility },
       })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to update visibility.')
       await loadPages(selectedPageId)
       setStatus('Section visibility updated.')
     } catch (error) {
@@ -697,10 +677,9 @@ export default function PageBuilderClient() {
     try {
       await Promise.all(
         nextSections.map((section, index) =>
-          fetch(`/api/cms/sections/${section.id}`, {
+          adminApiFetch(`/api/cms/sections/${section.id}`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ order_index: index }),
+            body: { order_index: index },
           })
         )
       )
@@ -733,19 +712,16 @@ export default function PageBuilderClient() {
     setSaving(true)
     setStatus('')
     try {
-      const res = await fetch('/api/cms/entities/reusable_blocks', {
+      await adminApiFetch('/api/cms/entities/reusable_blocks', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           name: `${sectionForm.type}-${Date.now()}`,
           type: sectionForm.type,
           content_json: contentFromForm(sectionForm),
           style_json: styleFromForm(sectionForm),
           status: 'draft',
-        }),
+        },
       })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to save reusable block.')
       setStatus('Reusable block saved.')
     } catch (error) {
       setStatus(error?.message || 'Failed to save reusable block.')
@@ -763,13 +739,10 @@ export default function PageBuilderClient() {
     setSaving(true)
     setStatus('')
     try {
-      const res = await fetch('/api/cms/import-live-pages', {
+      const json = await adminApiFetch('/api/cms/import-live-pages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ replace_sections: true, slugs: options.slugs || undefined }),
+        body: { replace_sections: true, slugs: options.slugs || undefined },
       })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to import live pages.')
       const syncedSlug = options.slugs?.[0]
       const refreshedPages = await loadPages(selectedPageId)
       if (syncedSlug) {

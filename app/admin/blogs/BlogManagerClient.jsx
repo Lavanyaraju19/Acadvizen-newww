@@ -1,11 +1,35 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Surface } from '../../../src/components/ui/Surface'
+import { convertPlainTextToBlocks, normalizeInlineImages } from '../../../lib/blogContent'
 import { uploadFile } from '../../../lib/storageUpload'
+import { adminApiFetch } from '../../../lib/adminApiClient'
+import BlogBlocksRenderer from '../../../components/blog/BlogBlocksRenderer'
+import AdaptiveImage from '../../../components/media/AdaptiveImage'
 
 const BLOCK_TYPES = ['heading', 'paragraph', 'list', 'quote', 'image', 'video', 'link']
+const INLINE_IMAGE_FIELDS = Array.from({ length: 6 }, (_, index) => ({
+  key: index,
+  label: `Inline Image ${index + 1}`,
+  marker: `[IMAGE_${index + 1}]`,
+}))
+
+function ensureMinimumInlineImages(value, minimum = 6) {
+  const normalized = normalizeInlineImages(value)
+  const next = normalized.slice()
+  while (next.length < minimum) next.push('')
+  return next
+}
+
+function buildAutoMetaDescription(value = '') {
+  return String(value || '')
+    .replace(/\[IMAGE_\d+\]/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 160)
+}
 
 function toSlug(value = '') {
   return String(value)
@@ -64,26 +88,33 @@ function parseList(value) {
 }
 
 async function registerMedia(url, bucket, file) {
-  await fetch('/api/cms/media', {
+  await adminApiFetch('/api/cms/media', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       url,
       bucket,
       type: file.type?.startsWith('video/') ? 'video' : 'image',
       size: file.size,
       alt_text: '',
       caption: '',
-    }),
+    },
   })
 }
 
+function createEmptyInlineImages() {
+  return ensureMinimumInlineImages([])
+}
+
 export default function BlogManagerClient() {
+  const contentTextareaRef = useRef(null)
   const [items, setItems] = useState([])
   const [selectedId, setSelectedId] = useState('')
   const [blocks, setBlocks] = useState([])
+  const [editorMode, setEditorMode] = useState('simple')
   const [status, setStatus] = useState('')
   const [saving, setSaving] = useState(false)
+  const [dragActive, setDragActive] = useState(false)
+  const [showImageInsertPanel, setShowImageInsertPanel] = useState(false)
   const [mediaItems, setMediaItems] = useState([])
   const [mediaPicker, setMediaPicker] = useState({ open: false, type: 'image', target: null })
   const [form, setForm] = useState({
@@ -93,6 +124,7 @@ export default function BlogManagerClient() {
     description: '',
     content: '',
     featured_image: '',
+    inline_images: createEmptyInlineImages(),
     seo_title: '',
     seo_description: '',
     tags: '',
@@ -105,23 +137,39 @@ export default function BlogManagerClient() {
   })
 
   const selected = useMemo(() => items.find((item) => item.id === selectedId) || null, [items, selectedId])
+  const generatedSimpleBlocks = useMemo(
+    () => convertPlainTextToBlocks(form.content || '', { inlineImages: form.inline_images || [] }),
+    [form.content, form.inline_images]
+  )
+  const previewBlocks = useMemo(
+    () =>
+      editorMode === 'simple'
+        ? generatedSimpleBlocks
+        : blocks.map((block) => ({ ...block, content_json: block.content_json || {} })),
+    [blocks, editorMode, generatedSimpleBlocks]
+  )
+  const derivedSeoTitle = useMemo(() => String(form.seo_title || '').trim() || String(form.title || '').trim(), [form.seo_title, form.title])
+  const derivedSeoDescription = useMemo(
+    () => String(form.seo_description || '').trim() || buildAutoMetaDescription(form.content || form.description || ''),
+    [form.content, form.description, form.seo_description]
+  )
 
   async function loadBlogs(nextId) {
-    const res = await fetch('/api/cms/blogs?include_drafts=1&include_blocks=1&limit=300', { cache: 'no-store' })
-    const json = await res.json()
-    if (!json?.success) {
-      setStatus(json?.error || 'Failed to load blogs.')
+    try {
+      const json = await adminApiFetch('/api/cms/blogs?include_drafts=1&include_blocks=1&limit=300', { cache: 'no-store' })
+      const rows = Array.isArray(json.data) ? json.data : []
+      setItems(rows)
+      const id = nextId || selectedId || rows[0]?.id || ''
+      setSelectedId(id)
+      if (id) {
+        const row = rows.find((entry) => entry.id === id)
+        if (row) syncForm(row)
+      } else {
+        resetForm()
+      }
+    } catch (error) {
+      setStatus(error?.message || 'Failed to load blogs.')
       return
-    }
-    const rows = Array.isArray(json.data) ? json.data : []
-    setItems(rows)
-    const id = nextId || selectedId || rows[0]?.id || ''
-    setSelectedId(id)
-    if (id) {
-      const row = rows.find((entry) => entry.id === id)
-      if (row) syncForm(row)
-    } else {
-      resetForm()
     }
   }
 
@@ -131,6 +179,8 @@ export default function BlogManagerClient() {
   }, [])
 
   function syncForm(item) {
+    const sourceBlocks = item.blocks?.length ? item.blocks : item.content_json?.blocks || []
+    const inlineImages = ensureMinimumInlineImages(item.content_json?.inline_images || [])
     setForm({
       id: item.id || '',
       title: item.title || '',
@@ -138,6 +188,7 @@ export default function BlogManagerClient() {
       description: item.description || '',
       content: item.content || '',
       featured_image: item.featured_image || '',
+      inline_images: inlineImages,
       seo_title: item.seo_title || '',
       seo_description: item.seo_description || '',
       tags: toComma(item.tags),
@@ -148,11 +199,12 @@ export default function BlogManagerClient() {
       noindex: item.noindex === true,
       faq_schema: item.faq_schema ? JSON.stringify(item.faq_schema, null, 2) : '{}',
     })
-    const sourceBlocks = item.blocks?.length ? item.blocks : item.content_json?.blocks || []
+    setEditorMode(sourceBlocks.length && !item.content ? 'advanced' : 'simple')
     setBlocks(normalizeBlocks(sourceBlocks))
   }
 
   function resetForm() {
+    setEditorMode('simple')
     setForm({
       id: '',
       title: '',
@@ -160,6 +212,7 @@ export default function BlogManagerClient() {
       description: '',
       content: '',
       featured_image: '',
+      inline_images: createEmptyInlineImages(),
       seo_title: '',
       seo_description: '',
       tags: '',
@@ -205,10 +258,8 @@ export default function BlogManagerClient() {
   }
 
   function openMediaPicker(target, type) {
-    fetch(`/api/cms/media?limit=500&type=${type}`, { cache: 'no-store' })
-      .then((res) => res.json())
+    adminApiFetch(`/api/cms/media?limit=500&type=${type}`, { cache: 'no-store' })
       .then((json) => {
-        if (!json?.success) throw new Error(json?.error || 'Failed to load media.')
         setMediaItems(Array.isArray(json.data) ? json.data : [])
         setMediaPicker({ open: true, type, target })
       })
@@ -220,6 +271,16 @@ export default function BlogManagerClient() {
     if (!target) return
     if (target.type === 'featured') setForm((prev) => ({ ...prev, featured_image: url }))
     if (target.type === 'og') setForm((prev) => ({ ...prev, og_image: url }))
+    if (target.type === 'inline-image') {
+      setForm((prev) => {
+        const nextInlineImages = ensureMinimumInlineImages(prev.inline_images || [])
+        nextInlineImages[target.index] = url
+        return { ...prev, inline_images: nextInlineImages }
+      })
+    }
+    if (target.type === 'inline-library-append') {
+      appendInlineImage(url)
+    }
     if (target.type === 'block-image') {
       updateBlockContent(target.index, {
         src: url,
@@ -248,23 +309,115 @@ export default function BlogManagerClient() {
     }
   }
 
+  function insertTextAtCursor(text) {
+    const textarea = contentTextareaRef.current
+    const currentValue = String(form.content || '')
+    if (!textarea) {
+      setForm((prev) => ({ ...prev, content: `${currentValue}\n\n${text}\n\n`.trim() }))
+      return
+    }
+
+    const start = textarea.selectionStart ?? currentValue.length
+    const end = textarea.selectionEnd ?? currentValue.length
+    const nextValue = `${currentValue.slice(0, start)}${text}${currentValue.slice(end)}`
+    setForm((prev) => ({ ...prev, content: nextValue }))
+
+    requestAnimationFrame(() => {
+      textarea.focus()
+      const caret = start + text.length
+      textarea.setSelectionRange(caret, caret)
+    })
+  }
+
+  function insertInlineImageAtCursor(index) {
+    insertTextAtCursor(`\n\n[IMAGE_${index + 1}]\n\n`)
+    setShowImageInsertPanel(false)
+  }
+
+  function setInlineImageAt(index, value) {
+    setForm((prev) => {
+      const nextInlineImages = ensureMinimumInlineImages(prev.inline_images || [])
+      nextInlineImages[index] = value
+      return { ...prev, inline_images: nextInlineImages }
+    })
+  }
+
+  function appendInlineImage(url) {
+    setForm((prev) => ({
+      ...prev,
+      inline_images: [...ensureMinimumInlineImages(prev.inline_images || []), url],
+    }))
+  }
+
+  function removeInlineImage(index) {
+    setForm((prev) => {
+      const nextInlineImages = [...ensureMinimumInlineImages(prev.inline_images || [])]
+      nextInlineImages.splice(index, 1)
+      return { ...prev, inline_images: ensureMinimumInlineImages(nextInlineImages) }
+    })
+  }
+
+  async function uploadInlineImages(files) {
+    const validFiles = Array.from(files || []).filter(Boolean)
+    if (!validFiles.length) return
+
+    setSaving(true)
+    setStatus(`Uploading ${validFiles.length} image${validFiles.length > 1 ? 's' : ''}...`)
+
+    try {
+      const uploadedUrls = []
+      for (const file of validFiles) {
+        const url = await uploadFile(file, 'blog-images')
+        await registerMedia(url, 'blog-images', file)
+        uploadedUrls.push(url)
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        inline_images: [...ensureMinimumInlineImages(prev.inline_images || []), ...uploadedUrls],
+      }))
+      setStatus(`${uploadedUrls.length} inline image${uploadedUrls.length > 1 ? 's' : ''} uploaded.`)
+    } catch (error) {
+      setStatus(error?.message || 'Inline image upload failed.')
+    } finally {
+      setSaving(false)
+      setDragActive(false)
+    }
+  }
+
   async function saveBlog(event) {
     event.preventDefault()
     if (!form.title.trim()) return setStatus('Blog title is required.')
+    if (editorMode === 'simple' && !String(form.content || '').trim()) {
+      return setStatus('Full Blog Content is required in Simple Copy-Paste mode.')
+    }
     setSaving(true)
     setStatus('')
     try {
       let faqSchema = null
       if (String(form.faq_schema || '').trim()) faqSchema = JSON.parse(form.faq_schema)
+      const contentBlocks = editorMode === 'simple'
+        ? generatedSimpleBlocks.map((block, index) => ({
+            block_type: block.block_type,
+            order_index: index,
+            content_json: block.content_json || {},
+          }))
+        : blocks.map((block, index) => ({
+            block_type: block.block_type,
+            order_index: index,
+            content_json: block.content_json || {},
+          }))
       const payload = {
         id: form.id || undefined,
         title: form.title.trim(),
         slug: form.slug?.trim() || toSlug(form.title),
         description: form.description || null,
+        excerpt: form.description || null,
         content: form.content || null,
         featured_image: form.featured_image || null,
-        seo_title: form.seo_title || null,
-        seo_description: form.seo_description || null,
+        inline_images: normalizeInlineImages(form.inline_images || []),
+        seo_title: derivedSeoTitle || null,
+        seo_description: derivedSeoDescription || null,
         tags: splitComma(form.tags),
         categories: splitComma(form.categories),
         status: form.status === 'published' ? 'published' : 'draft',
@@ -272,21 +425,15 @@ export default function BlogManagerClient() {
         og_image: form.og_image || null,
         noindex: Boolean(form.noindex),
         faq_schema: faqSchema,
-        blocks: blocks.map((block, index) => ({
-          block_type: block.block_type,
-          order_index: index,
-          content_json: block.content_json || {},
-        })),
+        blocks: contentBlocks,
+        auto_generate_blocks: editorMode === 'simple',
       }
-      const res = await fetch('/api/cms/blogs', {
+      const json = await adminApiFetch('/api/cms/blogs', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: payload,
       })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to save blog.')
       await loadBlogs(json.data?.id)
-      setStatus('Blog saved.')
+      setStatus(editorMode === 'simple' ? 'Blog saved from Simple Copy-Paste mode.' : 'Blog saved.')
     } catch (error) {
       setStatus(error?.message || 'Failed to save blog.')
     } finally {
@@ -299,9 +446,7 @@ export default function BlogManagerClient() {
     if (!window.confirm('Delete this blog post?')) return
     setSaving(true)
     try {
-      const res = await fetch(`/api/cms/blogs/${form.id}`, { method: 'DELETE' })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to delete blog.')
+      await adminApiFetch(`/api/cms/blogs/${form.id}`, { method: 'DELETE' })
       setSelectedId('')
       resetForm()
       await loadBlogs('')
@@ -362,6 +507,34 @@ export default function BlogManagerClient() {
         </aside>
 
         <form onSubmit={saveBlog} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+          <div className="mb-5 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <h3 className="text-base font-semibold text-slate-100">Editor Mode</h3>
+                <p className="mt-1 text-sm text-slate-300">
+                  Use <span className="text-slate-100">Simple Copy-Paste</span> to paste the full blog into one field. Use
+                  <span className="text-slate-100"> Advanced Blocks</span> only when you want to place manual paragraph, list, image, or video blocks.
+                </p>
+              </div>
+              <div className="flex rounded-xl border border-white/10 bg-black/20 p-1">
+                <button
+                  type="button"
+                  onClick={() => setEditorMode('simple')}
+                  className={`rounded-lg px-3 py-2 text-sm ${editorMode === 'simple' ? 'bg-teal-300 font-semibold text-slate-950' : 'text-slate-200'}`}
+                >
+                  Simple Copy-Paste
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditorMode('advanced')}
+                  className={`rounded-lg px-3 py-2 text-sm ${editorMode === 'advanced' ? 'bg-teal-300 font-semibold text-slate-950' : 'text-slate-200'}`}
+                >
+                  Advanced Blocks
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="grid gap-4 md:grid-cols-2">
             <label className="text-xs text-slate-400">
               Title
@@ -373,6 +546,9 @@ export default function BlogManagerClient() {
             </label>
             <label className="text-xs text-slate-400">
               Slug
+              <span className="mt-1 block text-[11px] text-slate-500">
+                Auto-generated from the title when left empty.
+              </span>
               <input
                 value={form.slug}
                 onChange={(event) => setForm((prev) => ({ ...prev, slug: toSlug(event.target.value) }))}
@@ -389,15 +565,255 @@ export default function BlogManagerClient() {
               />
             </label>
             <label className="text-xs text-slate-400 md:col-span-2">
-              Plain Text Fallback
+              Full Blog Content
+              <span className="mt-1 block text-[11px] text-slate-500">
+                Paste the complete article here in one go. Paragraphs, headings, list lines, and inline image markers like
+                <span className="text-slate-300"> [IMAGE_1]</span> will be structured automatically when you save.
+              </span>
+              {editorMode === 'simple' ? (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowImageInsertPanel((prev) => !prev)}
+                    className="rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-200"
+                  >
+                    Insert Image
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openMediaPicker({ type: 'inline-library-append' }, 'image')}
+                    className="rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-200"
+                  >
+                    Add From Media Library
+                  </button>
+                </div>
+              ) : null}
               <textarea
-                rows={6}
+                ref={contentTextareaRef}
+                rows={editorMode === 'simple' ? 18 : 8}
                 value={form.content}
                 onChange={(event) => setForm((prev) => ({ ...prev, content: event.target.value }))}
+                onClick={() => setShowImageInsertPanel(false)}
+                onKeyUp={() => setShowImageInsertPanel(false)}
                 className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
               />
+
+              {editorMode === 'simple' && showImageInsertPanel ? (
+                <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-100">Insert Image At Cursor</p>
+                      <p className="mt-1 text-xs text-slate-400">
+                        Click an image below and the editor will insert the matching image position automatically.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {ensureMinimumInlineImages(form.inline_images || []).map((imageUrl, index) => (
+                      imageUrl ? (
+                        <button
+                          key={`insert-inline-${index}`}
+                          type="button"
+                          onClick={() => insertInlineImageAtCursor(index)}
+                          className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-left hover:bg-white/[0.05]"
+                        >
+                          <AdaptiveImage
+                            src={imageUrl}
+                            alt={`Inline image ${index + 1}`}
+                            variant="content"
+                            aspectRatio="4 / 3"
+                            sizes="(max-width: 768px) 100vw, 240px"
+                            wrapperClassName="w-full"
+                            borderClassName=""
+                            roundedClassName="rounded-xl"
+                            loading="lazy"
+                          />
+                          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-teal-300">
+                            [IMAGE_{index + 1}]
+                          </p>
+                        </button>
+                      ) : null
+                    ))}
+                    {!ensureMinimumInlineImages(form.inline_images || []).some(Boolean) ? (
+                      <p className="text-xs text-slate-500">Upload or add inline images first.</p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
             </label>
 
+            {editorMode === 'simple' ? (
+              <>
+                <div className="md:col-span-2 grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+                  <div className="space-y-4">
+                    <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/5 p-4">
+                      <p className="text-sm font-semibold text-slate-100">Simple Editor</p>
+                      <p className="mt-1 text-sm text-slate-300">
+                        Paste your blog, upload inline images, then click any thumbnail to insert it at the cursor position.
+                        Old marker syntax still works for backward compatibility, but you do not need to type it manually.
+                      </p>
+                      <p className="mt-2 text-xs uppercase tracking-[0.16em] text-slate-400">
+                        Auto-detected blocks: {generatedSimpleBlocks.length}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <h4 className="text-sm font-semibold text-slate-100">Inline Image Library</h4>
+                          <p className="mt-1 text-xs text-slate-400">
+                            Drag and drop images here, upload them, then use Insert Image to place them visually inside the article.
+                          </p>
+                        </div>
+                        <label className="rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-200">
+                          Upload Images
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            multiple
+                            onChange={(event) => uploadInlineImages(event.target.files)}
+                          />
+                        </label>
+                      </div>
+
+                      <div
+                        onDragOver={(event) => {
+                          event.preventDefault()
+                          setDragActive(true)
+                        }}
+                        onDragLeave={(event) => {
+                          event.preventDefault()
+                          setDragActive(false)
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault()
+                          setDragActive(false)
+                          uploadInlineImages(event.dataTransfer.files)
+                        }}
+                        className={`mt-4 rounded-2xl border border-dashed px-4 py-8 text-center text-sm transition ${
+                          dragActive
+                            ? 'border-teal-300 bg-teal-300/10 text-slate-100'
+                            : 'border-white/10 bg-black/10 text-slate-400'
+                        }`}
+                      >
+                        Drag & drop blog images here, or use Upload Images.
+                      </div>
+
+                      <div className="mt-4 grid gap-3 md:grid-cols-2">
+                        {ensureMinimumInlineImages(form.inline_images || []).map((imageUrl, index) => (
+                          <div key={`library-inline-${index}`} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                            <div className="flex items-center justify-between gap-2">
+                              <div>
+                                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">
+                                  {index < INLINE_IMAGE_FIELDS.length ? INLINE_IMAGE_FIELDS[index].label : `Inline Image ${index + 1}`}
+                                </p>
+                                <p className="mt-1 text-[11px] text-teal-300">[IMAGE_{index + 1}]</p>
+                              </div>
+                              {imageUrl ? (
+                                <button
+                                  type="button"
+                                  onClick={() => removeInlineImage(index)}
+                                  className="rounded border border-rose-400/30 px-2 py-1 text-[11px] text-rose-200"
+                                >
+                                  Remove
+                                </button>
+                              ) : null}
+                            </div>
+                            <input
+                              value={imageUrl || ''}
+                              onChange={(event) => setInlineImageAt(index, event.target.value)}
+                              placeholder={`Paste image URL for [IMAGE_${index + 1}]`}
+                              className="mt-3 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
+                            />
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openMediaPicker({ type: 'inline-image', index }, 'image')}
+                                className="rounded border border-white/10 px-2 py-2 text-xs text-slate-200"
+                              >
+                                Pick Media
+                              </button>
+                              <label className="rounded border border-white/10 px-2 py-2 text-xs text-slate-200">
+                                Upload
+                                <input
+                                  type="file"
+                                  className="hidden"
+                                  accept="image/*"
+                                  onChange={(event) => uploadAndApply(event.target.files?.[0], { type: 'inline-image', index }, 'blog-images')}
+                                />
+                              </label>
+                              {imageUrl ? (
+                                <button
+                                  type="button"
+                                  onClick={() => insertInlineImageAtCursor(index)}
+                                  className="rounded border border-teal-400/30 px-2 py-2 text-xs text-teal-200"
+                                >
+                                  Insert
+                                </button>
+                              ) : null}
+                            </div>
+                            {imageUrl ? (
+                              <div className="mt-3">
+                                <AdaptiveImage
+                                  src={imageUrl}
+                                  alt={`Inline image ${index + 1}`}
+                                  variant="content"
+                                  aspectRatio="4 / 3"
+                                  sizes="(max-width: 768px) 100vw, 260px"
+                                  wrapperClassName="w-full"
+                                  borderClassName=""
+                                  roundedClassName="rounded-xl"
+                                  loading="lazy"
+                                />
+                              </div>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <h4 className="text-sm font-semibold text-slate-100">Live Preview</h4>
+                        <p className="mt-1 text-xs text-slate-400">
+                          Uses the same structured block rendering path as the public blog page.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/70">
+                      <div className="border-b border-white/10 px-5 py-4">
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-teal-300">Preview</p>
+                        <h3 className="mt-2 text-2xl font-semibold text-slate-50">
+                          {form.title || 'Blog title preview'}
+                        </h3>
+                        <p className="mt-3 text-sm text-slate-300">
+                          {form.description || 'Excerpt preview will appear here.'}
+                        </p>
+                      </div>
+                      <div className="px-5 py-5">
+                        <AdaptiveImage
+                          src={form.featured_image || '/blog-images/image1.jpg'}
+                          alt={form.title || 'Featured image preview'}
+                          variant="hero"
+                          aspectRatio="16 / 9"
+                          sizes="(max-width: 768px) 100vw, 720px"
+                          wrapperClassName="w-full"
+                          borderClassName=""
+                          roundedClassName="rounded-2xl"
+                        />
+                        <div className="mt-6">
+                          <BlogBlocksRenderer blocks={previewBlocks} fallbackSections={[]} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
             <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
               <div className="mb-3 flex flex-wrap gap-2">
                 {BLOCK_TYPES.map((type) => (
@@ -569,6 +985,7 @@ export default function BlogManagerClient() {
                 {!blocks.length ? <p className="text-xs text-slate-500">No content blocks yet.</p> : null}
               </div>
             </div>
+            )}
 
             <label className="text-xs text-slate-400">
               Featured Image URL
@@ -602,7 +1019,15 @@ export default function BlogManagerClient() {
             </label>
             <label className="text-xs text-slate-400">
               SEO Title
-              <input value={form.seo_title} onChange={(event) => setForm((prev) => ({ ...prev, seo_title: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+              <span className="mt-1 block text-[11px] text-slate-500">
+                Defaults to the Title if you leave this blank.
+              </span>
+              <input
+                value={form.seo_title}
+                placeholder={form.title || 'Auto from title'}
+                onChange={(event) => setForm((prev) => ({ ...prev, seo_title: event.target.value }))}
+                className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
+              />
             </label>
             <label className="text-xs text-slate-400">
               Status
@@ -621,8 +1046,22 @@ export default function BlogManagerClient() {
             </label>
             <label className="text-xs text-slate-400 md:col-span-2">
               SEO Description
-              <textarea rows={3} value={form.seo_description} onChange={(event) => setForm((prev) => ({ ...prev, seo_description: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+              <span className="mt-1 block text-[11px] text-slate-500">
+                Defaults to the first 150-160 characters of the blog content if left blank.
+              </span>
+              <textarea
+                rows={3}
+                value={form.seo_description}
+                placeholder={buildAutoMetaDescription(form.content || form.description || '')}
+                onChange={(event) => setForm((prev) => ({ ...prev, seo_description: event.target.value }))}
+                className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
+              />
             </label>
+            <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">Effective SEO Preview</p>
+              <p className="mt-2 text-sm font-semibold text-slate-100">{derivedSeoTitle || 'Title will appear here'}</p>
+              <p className="mt-2 text-sm text-slate-400">{derivedSeoDescription || 'Meta description will appear here'}</p>
+            </div>
             <label className="text-xs text-slate-400 md:col-span-2">
               FAQ Schema JSON
               <textarea rows={4} value={form.faq_schema} onChange={(event) => setForm((prev) => ({ ...prev, faq_schema: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-xs text-slate-100" />

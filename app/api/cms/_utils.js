@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 import { cookies, headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
-import { getServerSupabaseClient } from '../../../lib/supabaseServer'
+import { getServerSupabaseClient, hasValidSupabaseServiceRoleKey } from '../../../lib/supabaseServer'
 
 const CMS_PUBLIC_PATHS = [
   '/',
   '/about',
+  '/achievements',
   '/contact',
   '/courses',
   '/placement',
@@ -26,6 +27,17 @@ export function jsonError(error, status = 200, data = null) {
     { success: false, data, error: typeof error === 'string' ? error : error?.message || 'Request failed.' },
     { status }
   )
+}
+
+function withTimeout(promise, timeoutMs, message) {
+  let timeoutId
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs)
+  })
+
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timeoutId) clearTimeout(timeoutId)
+  })
 }
 
 function readAuthorizationHeader(request) {
@@ -54,9 +66,12 @@ function getBearerToken(request) {
   return authorization.slice(7).trim()
 }
 
-export function getSupabaseClientOrResponse(request) {
+export function getSupabaseClientOrResponse(request, options = {}) {
   const authToken = getBearerToken(request)
-  const supabase = getServerSupabaseClient({ authToken: authToken || null })
+  const preferServiceRole = options?.preferServiceRole === true && hasValidSupabaseServiceRoleKey()
+  const supabase = preferServiceRole
+    ? getServerSupabaseClient()
+    : getServerSupabaseClient({ authToken: authToken || null })
   if (!supabase) {
     return {
       supabase: null,
@@ -71,12 +86,85 @@ export function getSupabaseClientOrResponse(request) {
 }
 
 export function isAdminRequest(request) {
-  return readAdminCookie(request) === '1' || Boolean(getBearerToken(request))
+  return Boolean(getBearerToken(request))
 }
 
-export function ensureAdmin(request) {
-  if (!isAdminRequest(request)) {
-    return jsonError('Unauthorized admin request.', 401, null)
+export async function resolveAdminContext(request) {
+  const authToken = getBearerToken(request)
+  if (!authToken) {
+    return { ok: false, status: 401, error: 'Admin session expired. Please sign in again.' }
+  }
+
+  const authSupabase = getServerSupabaseClient({ authToken })
+  const serviceSupabase = hasValidSupabaseServiceRoleKey() ? getServerSupabaseClient() : null
+  const verifier = serviceSupabase || authSupabase
+
+  if (!verifier) {
+    return {
+      ok: false,
+      status: 500,
+      error: 'Supabase server configuration is invalid. Check SUPABASE_SERVICE_ROLE_KEY or sign in again as admin.',
+    }
+  }
+
+  try {
+    const { data: authData, error: authError } = await withTimeout(
+      verifier.auth.getUser(authToken),
+      7000,
+      'Admin session lookup timed out.'
+    )
+
+    if (authError || !authData?.user?.id) {
+      return { ok: false, status: 401, error: authError?.message || 'Admin session is invalid. Please sign in again.' }
+    }
+
+    const profileClient = serviceSupabase || authSupabase
+    if (!profileClient) {
+      return { ok: false, status: 500, error: 'Admin profile lookup is unavailable.' }
+    }
+
+    const { data: profile, error: profileError } = await withTimeout(
+      profileClient
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .maybeSingle(),
+      7000,
+      'Admin profile lookup timed out.'
+    )
+
+    if (profileError) {
+      return { ok: false, status: 401, error: profileError.message || 'Unable to verify the admin profile.' }
+    }
+
+    if (!profile) {
+      return { ok: false, status: 403, error: 'Admin profile is missing for this account.' }
+    }
+
+    if (profile.role !== 'admin') {
+      return { ok: false, status: 403, error: 'This account does not have admin access.' }
+    }
+
+    return {
+      ok: true,
+      status: 200,
+      authToken,
+      user: authData.user,
+      profile,
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      status: 500,
+      error: error?.message || 'Unable to verify the admin session.',
+    }
+  }
+}
+
+export async function ensureAdmin(request) {
+  const result = await resolveAdminContext(request)
+  if (!result.ok) {
+    return jsonError(result.error, result.status || 401, null)
   }
   return null
 }

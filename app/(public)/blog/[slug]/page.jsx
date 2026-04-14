@@ -3,10 +3,10 @@ export const dynamic = 'force-dynamic'
 export const dynamicParams = true
 
 import BlogLayout from '../../../../components/BlogLayout'
-import { buildTocFromBlocks, estimateReadingMinutes } from '../../../../components/blog/BlogBlocksRenderer'
 import { redirect } from 'next/navigation'
 import { buildMetadata } from '../../../lib/seo'
-import { parseBlogContent } from '../../../../lib/blogContent'
+import { buildTocFromBlocks, estimateReadingMinutes } from '../../../../lib/blogBlockUtils'
+import { convertPlainTextToBlocks, parseBlogContent } from '../../../../lib/blogContent'
 import { getServerSupabaseClient } from '../../../../lib/supabaseServer'
 import { fetchCmsSiteData, fetchRedirectByPath } from '../../../../lib/cmsServer'
 import { blogs as localBlogs } from '../../../../data/blogs'
@@ -19,20 +19,6 @@ function pickFirst(...values) {
     return value
   }
   return null
-}
-
-function shouldPreferLocalBlog(remote, local) {
-  if (!remote?.blog || !local) return false
-  const remoteBlockCount = Array.isArray(remote.blocks) ? remote.blocks.length : 0
-  if (remoteBlockCount > 0) return false
-
-  const remoteLength = String(remote.blog.content || '').trim().length
-  const localLength = String(local.content || '').trim().length
-
-  if (!remoteLength && localLength) return true
-  if (!localLength) return false
-
-  return localLength > remoteLength + 500
 }
 
 async function fetchRemoteBlog(slug) {
@@ -71,32 +57,16 @@ async function getBlogData(slug) {
   const remote = (await fetchRemoteBlog(slug)) || (resolvedSlug && resolvedSlug !== slug ? await fetchRemoteBlog(resolvedSlug) : null)
   const local = findLocalBlogBySlug(slug, localBlogs)
 
-  if (shouldPreferLocalBlog(remote, local)) {
-    const parsed = parseBlogContent(local.content || '')
-    const related = localBlogs
-      .filter((entry) => entry.slug !== slug)
-      .slice(0, 3)
-      .map((entry) => ({ ...entry, featured_image: entry.image || entry.featured_image || '/blog-images/image1.jpg' }))
-    return {
-      blog: {
-        ...local,
-        featured_image: local.image || local.featured_image || '/blog-images/image1.jpg',
-        excerpt: local.excerpt || local.description || '',
-        seo_title: local.meta_title || local.title,
-        seo_description: local.meta_description || local.excerpt || '',
-        published_at: local.created_at,
-      },
-      related,
-      blocks: [],
-      toc: parsed.toc,
-      sections: parsed.sections,
-      readingMinutes: estimateReadingMinutes({ text: local.content }),
-    }
-  }
-
   if (remote?.blog) {
-    const parsed = parseBlogContent(remote.blog.content || '')
-    const tocFromBlocks = buildTocFromBlocks(remote.blocks)
+    const inlineImages = Array.isArray(remote.blog?.content_json?.inline_images) ? remote.blog.content_json.inline_images : []
+    const parsed = parseBlogContent(remote.blog.content || '', { inlineImages })
+    const contentJsonBlocks = Array.isArray(remote.blog?.content_json?.blocks) ? remote.blog.content_json.blocks : []
+    const generatedBlocks = Array.isArray(remote.blocks) && remote.blocks.length
+      ? remote.blocks
+      : contentJsonBlocks.length
+        ? contentJsonBlocks
+      : convertPlainTextToBlocks(remote.blog.content || '', { inlineImages })
+    const tocFromBlocks = buildTocFromBlocks(generatedBlocks)
     return {
       blog: {
         ...remote.blog,
@@ -107,15 +77,17 @@ async function getBlogData(slug) {
         ...entry,
         featured_image: entry.featured_image || '/blog-images/image1.jpg',
       })),
-      blocks: remote.blocks || [],
+      blocks: generatedBlocks,
       toc: tocFromBlocks.length ? tocFromBlocks : parsed.toc,
       sections: parsed.sections,
-      readingMinutes: estimateReadingMinutes({ text: remote.blog.content, blocks: remote.blocks || [] }),
+      readingMinutes: estimateReadingMinutes({ text: remote.blog.content, blocks: generatedBlocks }),
     }
   }
 
   if (!local) return { blog: null, related: [], blocks: [], toc: [], sections: [], readingMinutes: 1 }
   const parsed = parseBlogContent(local.content || '')
+  const localGeneratedBlocks = convertPlainTextToBlocks(local.content || '')
+  const localTocFromBlocks = buildTocFromBlocks(localGeneratedBlocks)
   const related = localBlogs
     .filter((entry) => entry.slug !== slug)
     .slice(0, 3)
@@ -130,10 +102,10 @@ async function getBlogData(slug) {
       published_at: local.created_at,
     },
     related,
-    blocks: [],
-    toc: parsed.toc,
+    blocks: localGeneratedBlocks,
+    toc: localTocFromBlocks.length ? localTocFromBlocks : parsed.toc,
     sections: parsed.sections,
-    readingMinutes: estimateReadingMinutes({ text: local.content }),
+    readingMinutes: estimateReadingMinutes({ text: local.content, blocks: localGeneratedBlocks }),
   }
 }
 

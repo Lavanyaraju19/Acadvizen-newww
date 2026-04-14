@@ -56,12 +56,11 @@ export async function GET(request, { params }) {
   const config = getEntityConfig(params?.entity)
   if (!config) return jsonError('Unknown CMS entity.', 404, [])
 
-  const { supabase, response } = getSupabaseClientOrResponse()
-  if (response) return response
-
   const { searchParams } = new URL(request.url)
   const limit = parsePositiveInt(searchParams.get('limit'), 250)
   const isAdmin = isAdminRequest(request)
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: isAdmin })
+  if (response) return response
 
   let query = supabase.from(config.table).select('*').limit(limit || 250)
   query = applyEntityOrdering(query, config)
@@ -73,13 +72,13 @@ export async function GET(request, { params }) {
 }
 
 export async function POST(request, { params }) {
-  const unauthorized = ensureAdmin(request)
+  const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
   const config = getEntityConfig(params?.entity)
   if (!config) return jsonError('Unknown CMS entity.', 404)
 
-  const { supabase, response } = getSupabaseClientOrResponse()
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await readJsonBody(request)

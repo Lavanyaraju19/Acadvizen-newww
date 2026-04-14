@@ -23,10 +23,60 @@ function normalizeLeadPayload(input = {}) {
   }
 }
 
+function moveMissingColumnIntoPayload(record, column) {
+  if (!column || !(column in record)) return record
+
+  const next = { ...record }
+  if (column === 'payload') {
+    delete next.payload
+    return next
+  }
+
+  const payload = next.payload && typeof next.payload === 'object' ? { ...next.payload } : {}
+
+  if (next[column] !== null && next[column] !== undefined && payload[column] === undefined) {
+    payload[column] = next[column]
+  }
+
+  delete next[column]
+  next.payload = payload
+  return next
+}
+
+async function insertLeadWithSchemaFallback(supabase, record) {
+  let nextRecord = { ...record }
+  const removedColumns = []
+  let lastError = null
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const result = await supabase.from('leads').insert(nextRecord).select('*').single()
+    if (!result.error) {
+      return { ...result, removedColumns }
+    }
+
+    lastError = result.error
+    const missingColumnMatch = result.error.message?.match(/Could not find the '([^']+)' column/i)
+    const missingColumn = missingColumnMatch?.[1]
+
+    if (!missingColumn || !(missingColumn in nextRecord)) {
+      return { ...result, removedColumns }
+    }
+
+    removedColumns.push(missingColumn)
+    nextRecord = moveMissingColumnIntoPayload(nextRecord, missingColumn)
+  }
+
+  return {
+    data: null,
+    error: lastError || { message: 'Lead insert failed after schema fallback attempts.' },
+    removedColumns,
+  }
+}
+
 export async function GET(request) {
   if (!isAdminRequest(request)) return jsonError('Unauthorized admin request.', 401, [])
 
-  const { supabase, response } = getSupabaseClientOrResponse()
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const { searchParams } = new URL(request.url)
@@ -53,7 +103,7 @@ export async function POST(request) {
     return jsonError('Please provide at least name, email, or phone.', 400)
   }
 
-  const { data, error } = await supabase.from('leads').insert(payload).select('*').single()
+  const { data, error } = await insertLeadWithSchemaFallback(supabase, payload)
   if (error) return jsonError(`Failed to save lead: ${error.message}`, 200)
   return jsonOk(data)
 }

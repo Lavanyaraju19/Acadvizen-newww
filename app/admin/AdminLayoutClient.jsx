@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -23,7 +23,7 @@ import {
 import { Surface } from '../../src/components/ui/Surface'
 import { CustomCursor } from '../../src/components/ui/CustomCursor'
 import { useAuth } from '../../src/contexts/AuthContext'
-import { supabase } from '../../lib/supabaseClient'
+import { fetchAdminSession, getAdminAccessToken } from '../../lib/adminApiClient'
 
 const adminNav = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -94,15 +94,73 @@ function ensureFormFieldAttributes(root) {
 export default function AdminLayoutClient({ children }) {
   const pathname = usePathname()
   const router = useRouter()
-  const { user, profile, loading, authError, refreshProfile, signOut } = useAuth()
+  const { signOut } = useAuth()
   const [guardTimedOut, setGuardTimedOut] = useState(false)
+  const [retryNonce, setRetryNonce] = useState(0)
+  const [adminState, setAdminState] = useState({
+    loading: true,
+    error: '',
+    user: null,
+    profile: null,
+    accessToken: '',
+  })
   const isLoginLikePath = pathname === '/admin/login' || pathname === '/admin-login'
+  const user = adminState.user
+  const profile = adminState.profile
   const guardMessage = useMemo(() => {
-    if (authError) return authError
+    if (adminState.error) return adminState.error
     if (guardTimedOut) return 'Admin authentication is taking longer than expected.'
     if (user && !profile) return 'Loading your admin profile...'
     return 'Checking admin access...'
-  }, [authError, guardTimedOut, profile, user])
+  }, [adminState.error, guardTimedOut, profile, user])
+
+  const clearAdminSession = useCallback(async () => {
+    try {
+      await signOut('local')
+    } catch {
+      // noop
+    }
+
+    try {
+      await fetch('/api/admin/session', { method: 'DELETE' })
+    } catch {
+      // noop
+    }
+  }, [signOut])
+
+  const verifyAdminAccess = useCallback(async () => {
+    if (isLoginLikePath) return
+
+    setAdminState((prev) => ({
+      ...prev,
+      loading: true,
+      error: '',
+    }))
+
+    try {
+      const payload = await fetchAdminSession()
+      const accessToken = await getAdminAccessToken()
+
+      setAdminState({
+        loading: false,
+        error: '',
+        user: payload?.data?.user || null,
+        profile: payload?.data?.profile || null,
+        accessToken,
+      })
+      setGuardTimedOut(false)
+    } catch (error) {
+      const message = error?.message || 'Unable to open the admin dashboard.'
+      await clearAdminSession()
+      setAdminState({
+        loading: false,
+        error: message,
+        user: null,
+        profile: null,
+        accessToken: '',
+      })
+    }
+  }, [clearAdminSession, isLoginLikePath])
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
@@ -120,17 +178,13 @@ export default function AdminLayoutClient({ children }) {
               : String(input)
 
       const isCmsRequest = url.startsWith('/api/cms/') || url.includes('/api/cms/')
-      if (!isCmsRequest || !supabase?.auth) {
+      if (!isCmsRequest || !adminState.accessToken) {
         return originalFetch(input, init)
       }
 
       try {
-        const { data } = await supabase.auth.getSession()
-        const token = data?.session?.access_token
-        if (!token) return originalFetch(input, init)
-
         const headers = new Headers(input instanceof Request ? input.headers : init?.headers)
-        headers.set('Authorization', `Bearer ${token}`)
+        headers.set('Authorization', `Bearer ${adminState.accessToken}`)
 
         if (input instanceof Request) {
           return originalFetch(new Request(input, { headers }))
@@ -145,7 +199,7 @@ export default function AdminLayoutClient({ children }) {
     return () => {
       window.fetch = originalFetch
     }
-  }, [])
+  }, [adminState.accessToken])
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
@@ -172,45 +226,29 @@ export default function AdminLayoutClient({ children }) {
       setGuardTimedOut(true)
     }, 12000)
 
-    if (!loading) {
+    if (!adminState.loading) {
       clearTimeout(timer)
       setGuardTimedOut(false)
     }
 
     return () => clearTimeout(timer)
-  }, [isLoginLikePath, loading])
+  }, [adminState.loading, isLoginLikePath])
 
   useEffect(() => {
-    if (isLoginLikePath || loading) return
+    if (isLoginLikePath) return
+    void verifyAdminAccess()
+  }, [isLoginLikePath, pathname, retryNonce, verifyAdminAccess])
 
-    if (!user) {
-      router.replace('/admin-login')
-      return
-    }
-
-    if (!profile) {
-      refreshProfile(user.id, { silent: true })
-      return
-    }
-
-    if (profile.role !== 'admin') {
-      ;(async () => {
-        try {
-          await signOut('local')
-          await fetch('/api/admin/session', { method: 'DELETE' })
-        } catch {
-          // noop
-        }
-        router.replace('/admin-login')
-      })()
-    }
-  }, [isLoginLikePath, loading, profile, refreshProfile, router, signOut, user])
+  const openLogin = useCallback(async () => {
+    await clearAdminSession()
+    router.replace('/admin-login')
+  }, [clearAdminSession, router])
 
   if (isLoginLikePath) {
     return children
   }
 
-  if (loading || !user || !profile || profile.role !== 'admin') {
+  if (adminState.loading) {
     return (
       <div className="min-h-screen acadvizen-noise">
         <div className="mx-auto flex min-h-screen max-w-2xl items-center justify-center px-6">
@@ -218,32 +256,58 @@ export default function AdminLayoutClient({ children }) {
             <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-teal-300/70" />
             <h2 className="mt-5 text-xl font-semibold text-slate-50">Opening admin dashboard</h2>
             <p className="mt-2 text-sm text-slate-300">{guardMessage}</p>
-            {(guardTimedOut || authError) ? (
+            {guardTimedOut ? (
               <div className="mt-5 flex flex-wrap justify-center gap-3">
                 <button
                   type="button"
-                  onClick={() => window.location.reload()}
+                  onClick={() => setRetryNonce((value) => value + 1)}
                   className="rounded-xl bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-200"
                 >
                   Retry
                 </button>
                 <button
                   type="button"
-                  onClick={async () => {
-                    try {
-                      await signOut('local')
-                      await fetch('/api/admin/session', { method: 'DELETE' })
-                    } catch {
-                      // noop
-                    }
-                    router.replace('/admin-login')
-                  }}
+                  onClick={openLogin}
                   className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05]"
                 >
                   Back to Login
                 </button>
               </div>
             ) : null}
+          </Surface>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user || !profile || profile.role !== 'admin') {
+    return (
+      <div className="min-h-screen acadvizen-noise">
+        <div className="mx-auto flex min-h-screen max-w-2xl items-center justify-center px-6">
+          <Surface className="w-full p-8 text-center">
+            <div className="mx-auto rounded-full border border-rose-300/30 bg-rose-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-rose-200">
+              Admin Access Error
+            </div>
+            <h2 className="mt-5 text-xl font-semibold text-slate-50">Unable to open the admin dashboard</h2>
+            <p className="mt-2 text-sm text-slate-300">
+              {adminState.error || 'This account could not be verified as an admin user.'}
+            </p>
+            <div className="mt-5 flex flex-wrap justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setRetryNonce((value) => value + 1)}
+                className="rounded-xl bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-200"
+              >
+                Retry
+              </button>
+              <button
+                type="button"
+                onClick={openLogin}
+                className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05]"
+              >
+                Back to Login
+              </button>
+            </div>
           </Surface>
         </div>
       </div>
@@ -282,10 +346,10 @@ export default function AdminLayoutClient({ children }) {
                   onClick={async () => {
                     try {
                       await signOut('global')
-                      await fetch('/api/admin/session', { method: 'DELETE' })
                     } catch {
                       // noop
                     }
+                    await clearAdminSession()
                     router.replace('/admin-login')
                   }}
                   className="text-sm font-semibold text-rose-200 hover:text-rose-100 transition-colors"

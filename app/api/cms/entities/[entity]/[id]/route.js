@@ -11,7 +11,7 @@ import { getEntityConfig, sanitizeEntityPayload } from '../../../../../../lib/cm
 export const dynamic = 'force-dynamic'
 
 export async function PATCH(request, { params }) {
-  const unauthorized = ensureAdmin(request)
+  const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
   const config = getEntityConfig(params?.entity)
@@ -20,7 +20,7 @@ export async function PATCH(request, { params }) {
   const id = params?.id
   if (!id) return jsonError('Record id is required.', 400)
 
-  const { supabase, response } = getSupabaseClientOrResponse()
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await readJsonBody(request)
@@ -36,7 +36,7 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  const unauthorized = ensureAdmin(request)
+  const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
   const config = getEntityConfig(params?.entity)
@@ -45,7 +45,7 @@ export async function DELETE(request, { params }) {
   const id = params?.id
   if (!id) return jsonError('Record id is required.', 400)
 
-  const { supabase, response } = getSupabaseClientOrResponse()
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const { error } = await supabase.from(config.table).delete().eq('id', id)

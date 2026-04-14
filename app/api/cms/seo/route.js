@@ -33,10 +33,10 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const unauthorized = ensureAdmin(request)
+  const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse()
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await readJsonBody(request)

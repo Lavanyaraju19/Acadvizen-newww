@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { adminApiFetch } from '../../../lib/adminApiClient'
 
 const typeDefaults = {
   text: '',
@@ -76,27 +77,27 @@ export default function EntityCrudManager({
 
   async function load(nextId) {
     setStatus('')
-    const res = await fetch(`/api/cms/entities/${entity}?limit=500${filterQuery ? `&${filterQuery}` : ''}`, { cache: 'no-store' })
-    const json = await res.json()
-    if (!json?.success) {
-      setStatus(json?.error || `Failed to load ${title}.`)
-      return
-    }
-    const rows = Array.isArray(json.data) ? json.data : []
-    setItems(rows)
-    const id = nextId || selectedId || rows[0]?.id || ''
-    setSelectedId(id)
-    if (id) {
-      const row = rows.find((entry) => entry.id === id)
-      if (row) {
-        const next = {}
-        for (const field of fields) {
-          next[field.key] = normalizeInputValue(field, row[field.key])
+    try {
+      const json = await adminApiFetch(`/api/cms/entities/${entity}?limit=500${filterQuery ? `&${filterQuery}` : ''}`, { cache: 'no-store' })
+      const rows = Array.isArray(json.data) ? json.data : []
+      setItems(rows)
+      const id = nextId || selectedId || rows[0]?.id || ''
+      setSelectedId(id)
+      if (id) {
+        const row = rows.find((entry) => entry.id === id)
+        if (row) {
+          const next = {}
+          for (const field of fields) {
+            next[field.key] = normalizeInputValue(field, row[field.key])
+          }
+          setForm(next)
         }
-        setForm(next)
+      } else {
+        setForm(buildDefaultForm(fields))
       }
-    } else {
-      setForm(buildDefaultForm(fields))
+    } catch (error) {
+      setStatus(error?.message || `Failed to load ${title}.`)
+      return
     }
   }
 
@@ -117,13 +118,10 @@ export default function EntityCrudManager({
     try {
       const payload = toPayload(fields, form)
       if (selectedId) payload.id = selectedId
-      const res = await fetch(`/api/cms/entities/${entity}`, {
+      const json = await adminApiFetch(`/api/cms/entities/${entity}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: payload,
       })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || `Failed to save ${title}.`)
       await load(json.data?.id)
       setStatus('Saved.')
     } catch (error) {
@@ -139,9 +137,7 @@ export default function EntityCrudManager({
     setSaving(true)
     setStatus('')
     try {
-      const res = await fetch(`/api/cms/entities/${entity}/${selectedId}`, { method: 'DELETE' })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to delete item.')
+      await adminApiFetch(`/api/cms/entities/${entity}/${selectedId}`, { method: 'DELETE' })
       beginCreate()
       await load('')
       setStatus('Deleted.')
@@ -157,13 +153,10 @@ export default function EntityCrudManager({
     setSaving(true)
     setStatus('')
     try {
-      const res = await fetch(`/api/cms/entities/${entity}`, {
+      const json = await adminApiFetch(`/api/cms/entities/${entity}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'duplicate', id: selectedId }),
+        body: { action: 'duplicate', id: selectedId },
       })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to duplicate item.')
       await load(json.data?.id)
       setStatus('Duplicated.')
     } catch (error) {

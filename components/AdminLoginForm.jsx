@@ -4,13 +4,12 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabaseClient'
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from '../lib/env'
-import { useAuth } from '../src/contexts/AuthContext'
+import { adminApiFetch } from '../lib/adminApiClient'
 
 const LOGIN_TIMEOUT_MS = 18000
 
 export default function AdminLoginForm() {
   const router = useRouter()
-  const { refreshProfile } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -109,20 +108,14 @@ export default function AdminLoginForm() {
         return
       }
 
-      const { data: profile, error: profileError } = await client
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle()
-
-      if (profileError || profile?.role !== 'admin') {
-        setError('Access denied: not an admin')
+      try {
+        await adminApiFetch('/api/admin/session', { method: 'POST' })
+      } catch (sessionError) {
         await client.auth.signOut()
+        setError(sessionError?.message || 'Access denied: not an admin')
         return
       }
 
-      await refreshProfile(user.id, { silent: true })
-      await fetch('/api/admin/session', { method: 'POST' })
       router.push('/admin')
       router.refresh()
     } catch (e) {

@@ -1,6 +1,7 @@
 import {
   ensureAdmin,
   getSupabaseClientOrResponse,
+  isAdminRequest,
   jsonError,
   jsonOk,
   parsePositiveInt,
@@ -11,13 +12,12 @@ import {
 export const dynamic = 'force-dynamic'
 
 export async function GET(request) {
-  const { supabase, response } = getSupabaseClientOrResponse()
-  if (response) return response
-
   const { searchParams } = new URL(request.url)
   const location = searchParams.get('location')
-  const includeInactive = searchParams.get('include_inactive') === '1'
+  const includeInactive = searchParams.get('include_inactive') === '1' && isAdminRequest(request)
   const limit = parsePositiveInt(searchParams.get('limit'), 500)
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: includeInactive })
+  if (response) return response
 
   let query = supabase
     .from('menus')
@@ -35,10 +35,10 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const unauthorized = ensureAdmin(request)
+  const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse()
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await readJsonBody(request)

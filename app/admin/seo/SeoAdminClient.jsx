@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Surface } from '../../../src/components/ui/Surface'
+import { adminApiFetch } from '../../../lib/adminApiClient'
 
 export default function SeoAdminClient() {
   const [items, setItems] = useState([])
@@ -25,13 +26,13 @@ export default function SeoAdminClient() {
 
   async function loadSeo() {
     setStatus('')
-    const res = await fetch('/api/cms/seo?limit=500', { cache: 'no-store' })
-    const json = await res.json()
-    if (!json?.success) {
-      setStatus(json?.error || 'Failed to load SEO metadata.')
+    try {
+      const json = await adminApiFetch('/api/cms/seo?limit=500', { cache: 'no-store' })
+      setItems(Array.isArray(json.data) ? json.data : [])
+    } catch (error) {
+      setStatus(error?.message || 'Failed to load SEO metadata.')
       return
     }
-    setItems(Array.isArray(json.data) ? json.data : [])
   }
 
   useEffect(() => {
@@ -102,13 +103,10 @@ export default function SeoAdminClient() {
         noindex: Boolean(form.noindex),
         schema_json: schemaJson,
       }
-      const res = await fetch('/api/cms/seo', {
+      const json = await adminApiFetch('/api/cms/seo', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: payload,
       })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to save SEO metadata.')
       await loadSeo()
       syncForm(json.data)
       setStatus('SEO metadata saved.')
@@ -124,9 +122,7 @@ export default function SeoAdminClient() {
     setSaving(true)
     setStatus('')
     try {
-      const res = await fetch(`/api/cms/seo/${id}`, { method: 'DELETE' })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to delete SEO metadata.')
+      await adminApiFetch(`/api/cms/seo/${id}`, { method: 'DELETE' })
       if (form.id === id) resetForm()
       await loadSeo()
       setStatus('SEO metadata deleted.')

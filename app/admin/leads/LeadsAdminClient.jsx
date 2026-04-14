@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Surface } from '../../../src/components/ui/Surface'
+import { adminApiFetch } from '../../../lib/adminApiClient'
 
 const statusOptions = ['new', 'contacted', 'qualified', 'closed']
 
@@ -15,9 +16,7 @@ export default function LeadsAdminClient() {
     setLoading(true)
     setStatus('')
     try {
-      const res = await fetch('/api/cms/leads?limit=1000', { cache: 'no-store' })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to load leads.')
+      const json = await adminApiFetch('/api/cms/leads?limit=1000', { cache: 'no-store' })
       setItems(Array.isArray(json.data) ? json.data : [])
     } catch (error) {
       setStatus(error?.message || 'Failed to load leads.')
@@ -34,13 +33,10 @@ export default function LeadsAdminClient() {
     setSavingId(lead.id)
     setStatus('')
     try {
-      const res = await fetch(`/api/cms/leads/${lead.id}`, {
+      await adminApiFetch(`/api/cms/leads/${lead.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: lead.status }),
+        body: { status: lead.status },
       })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to update lead.')
       setStatus('Lead updated.')
     } catch (error) {
       setStatus(error?.message || 'Failed to update lead.')

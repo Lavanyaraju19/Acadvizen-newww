@@ -9,6 +9,7 @@ import {
   parsePositiveInt,
   readJsonBody,
 } from '../_utils'
+import { convertPlainTextToBlocks, normalizeInlineImages } from '../../../../lib/blogContent'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,7 +41,10 @@ async function attachBlocks(supabase, blogs, includeBlocks) {
     .order('order_index', { ascending: true })
 
   if (error) {
-    return blogs.map((blog) => ({ ...blog, blocks: [] }))
+    return blogs.map((blog) => ({
+      ...blog,
+      blocks: Array.isArray(blog?.content_json?.blocks) ? blog.content_json.blocks : [],
+    }))
   }
 
   const grouped = (blocks || []).reduce((acc, block) => {
@@ -49,7 +53,10 @@ async function attachBlocks(supabase, blogs, includeBlocks) {
     return acc
   }, {})
 
-  return blogs.map((blog) => ({ ...blog, blocks: grouped[blog.id] || [] }))
+  return blogs.map((blog) => ({
+    ...blog,
+    blocks: grouped[blog.id] || (Array.isArray(blog?.content_json?.blocks) ? blog.content_json.blocks : []),
+  }))
 }
 
 async function replaceBlogBlocks(supabase, blogId, blocks) {
@@ -66,14 +73,14 @@ async function replaceBlogBlocks(supabase, blogId, blocks) {
 }
 
 export async function GET(request) {
-  const { supabase, response } = getSupabaseClientOrResponse()
+  const { searchParams } = new URL(request.url)
+  const includeDrafts = searchParams.get('include_drafts') === '1' && isAdminRequest(request)
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: includeDrafts })
   if (response) return response
 
-  const { searchParams } = new URL(request.url)
   const slug = searchParams.get('slug')
   const id = searchParams.get('id')
   const includeBlocks = searchParams.get('include_blocks') === '1' || Boolean(slug || id)
-  const includeDrafts = searchParams.get('include_drafts') === '1' && isAdminRequest(request)
   const limit = parsePositiveInt(searchParams.get('limit'), 100)
 
   let query = supabase.from('blogs').select('*').order('updated_at', { ascending: false }).limit(limit || 100)
@@ -89,27 +96,45 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const unauthorized = ensureAdmin(request)
+  const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse()
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await readJsonBody(request)
   if (!body?.title || !body?.slug) return jsonError('title and slug are required.', 400)
 
-  const normalizedBlocks = normalizeBlocks(body.blocks)
+  const shouldAutoGenerateBlocks = body.auto_generate_blocks === true
+  const inlineImages = normalizeInlineImages(body.inline_images || [])
+  const normalizedBlocks = shouldAutoGenerateBlocks
+    ? normalizeBlocks(convertPlainTextToBlocks(body.content || '', { inlineImages }))
+    : normalizeBlocks(body.blocks)
   const status = body.status === 'published' ? 'published' : 'draft'
+  const contentJson =
+    body.content_json && typeof body.content_json === 'object'
+      ? { ...body.content_json }
+      : {}
+
+  if (inlineImages.some(Boolean)) {
+    contentJson.inline_images = inlineImages
+  } else if ('inline_images' in contentJson) {
+    delete contentJson.inline_images
+  }
+
+  if (normalizedBlocks.length) {
+    contentJson.blocks = normalizedBlocks
+  } else if ('blocks' in contentJson) {
+    delete contentJson.blocks
+  }
+
   const payload = {
     id: body.id || undefined,
     title: String(body.title).trim(),
     slug: String(body.slug).trim(),
-    description: body.description || null,
+    description: body.description || body.excerpt || null,
     content: body.content || null,
-    content_json:
-      body.content_json && typeof body.content_json === 'object'
-        ? body.content_json
-        : (normalizedBlocks.length ? { blocks: normalizedBlocks } : null),
+    content_json: Object.keys(contentJson).length ? contentJson : null,
     featured_image: body.featured_image || null,
     seo_title: body.seo_title || null,
     seo_description: body.seo_description || null,
@@ -130,7 +155,7 @@ export async function POST(request) {
     .single()
 
   if (error) return jsonError(`Failed to save blog: ${error.message}`, 200)
-  if (Array.isArray(body.blocks)) {
+  if (Array.isArray(body.blocks) || shouldAutoGenerateBlocks) {
     await replaceBlogBlocks(supabase, data.id, normalizedBlocks)
   }
   const [withBlocks] = await attachBlocks(supabase, [data], true)

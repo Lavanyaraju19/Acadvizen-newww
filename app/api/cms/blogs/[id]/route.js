@@ -7,6 +7,7 @@ import {
   revalidateCmsPaths,
   readJsonBody,
 } from '../../_utils'
+import { convertPlainTextToBlocks, normalizeInlineImages } from '../../../../../lib/blogContent'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,10 +41,10 @@ async function replaceBlogBlocks(supabase, blogId, blocks) {
 }
 
 export async function PATCH(request, { params }) {
-  const unauthorized = ensureAdmin(request)
+  const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse()
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const id = params?.id
@@ -51,9 +52,14 @@ export async function PATCH(request, { params }) {
 
   const body = await readJsonBody(request)
   if (!body) return jsonError('Invalid request body.', 400)
+  const { data: existingBlog } = await supabase.from('blogs').select('content_json').eq('id', id).maybeSingle()
 
   const update = {}
-  const normalizedBlocks = Array.isArray(body?.blocks) ? normalizeBlocks(body.blocks) : null
+  const shouldAutoGenerateBlocks = body.auto_generate_blocks === true
+  const inlineImages = 'inline_images' in body ? normalizeInlineImages(body.inline_images || []) : null
+  const normalizedBlocks = shouldAutoGenerateBlocks
+    ? normalizeBlocks(convertPlainTextToBlocks(body.content || '', { inlineImages: inlineImages || [] }))
+    : (Array.isArray(body?.blocks) ? normalizeBlocks(body.blocks) : null)
   const allowed = [
     'title',
     'slug',
@@ -73,6 +79,7 @@ export async function PATCH(request, { params }) {
   for (const key of allowed) {
     if (key in body) update[key] = body[key]
   }
+  if ('excerpt' in body && !('description' in update)) update.description = body.excerpt || null
   if ('status' in update) update.status = update.status === 'published' ? 'published' : 'draft'
   if ('content_json' in update && (!update.content_json || typeof update.content_json !== 'object')) {
     update.content_json = null
@@ -83,7 +90,22 @@ export async function PATCH(request, { params }) {
   if ('noindex' in update) update.noindex = Boolean(update.noindex)
   if ('tags' in body) update.tags = normalizeList(body.tags)
   if ('categories' in body) update.categories = normalizeList(body.categories)
-  if (normalizedBlocks) update.content_json = { blocks: normalizedBlocks }
+  if (normalizedBlocks || inlineImages) {
+    const mergedContentJson = existingBlog?.content_json && typeof existingBlog.content_json === 'object'
+      ? { ...existingBlog.content_json }
+      : {}
+
+    if (normalizedBlocks) {
+      mergedContentJson.blocks = normalizedBlocks
+    }
+
+    if (inlineImages) {
+      if (inlineImages.some(Boolean)) mergedContentJson.inline_images = inlineImages
+      else delete mergedContentJson.inline_images
+    }
+
+    update.content_json = Object.keys(mergedContentJson).length ? mergedContentJson : null
+  }
 
   const { data, error } = await supabase.from('blogs').update(update).eq('id', id).select('*').single()
   if (error) return jsonError(`Failed to update blog: ${error.message}`, 200)
@@ -99,14 +121,19 @@ export async function PATCH(request, { params }) {
 
   revalidateCmsPaths(['/blog', `/blog/${data?.slug || ''}`])
   revalidateAllCmsPages(['/blog'])
-  return jsonOk({ ...data, blocks: blocks || [] })
+  return jsonOk({
+    ...data,
+    blocks: Array.isArray(blocks) && blocks.length
+      ? blocks
+      : (Array.isArray(data?.content_json?.blocks) ? data.content_json.blocks : []),
+  })
 }
 
 export async function DELETE(request, { params }) {
-  const unauthorized = ensureAdmin(request)
+  const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse()
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const id = params?.id

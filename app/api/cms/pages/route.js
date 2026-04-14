@@ -14,14 +14,14 @@ import {
 export const dynamic = 'force-dynamic'
 
 export async function GET(request) {
-  const { supabase, response } = getSupabaseClientOrResponse()
+  const { searchParams } = new URL(request.url)
+  const includeDrafts = searchParams.get('include_drafts') === '1' && isAdminRequest(request)
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: includeDrafts })
   if (response) return response
 
-  const { searchParams } = new URL(request.url)
   const slug = searchParams.get('slug')
   const id = searchParams.get('id')
   const includeSections = searchParams.get('include_sections') === '1'
-  const includeDrafts = searchParams.get('include_drafts') === '1' && isAdminRequest(request)
   const limit = parsePositiveInt(searchParams.get('limit'), 100)
 
   let query = supabase.from('pages').select('*').order('updated_at', { ascending: false }).limit(limit || 100)
@@ -54,10 +54,10 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const unauthorized = ensureAdmin(request)
+  const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse()
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await readJsonBody(request)

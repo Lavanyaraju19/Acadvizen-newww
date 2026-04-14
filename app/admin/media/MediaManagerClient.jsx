@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { Surface } from '../../../src/components/ui/Surface'
 import { supabase } from '../../../lib/supabaseClient'
 import { uploadFile } from '../../../lib/storageUpload'
+import { adminApiFetch } from '../../../lib/adminApiClient'
 
 const buckets = [
   'blog-images',
@@ -46,13 +47,13 @@ export default function MediaManagerClient() {
   const [items, setItems] = useState([])
 
   async function loadMedia() {
-    const res = await fetch('/api/cms/media?limit=500', { cache: 'no-store' })
-    const payload = await res.json()
-    if (!payload?.success) {
-      setStatus(payload?.error || 'Failed to load media library.')
+    try {
+      const payload = await adminApiFetch('/api/cms/media?limit=500', { cache: 'no-store' })
+      setItems(Array.isArray(payload.data) ? payload.data : [])
+    } catch (error) {
+      setStatus(error?.message || 'Failed to load media library.')
       return
     }
-    setItems(Array.isArray(payload.data) ? payload.data : [])
   }
 
   useEffect(() => {
@@ -77,13 +78,10 @@ export default function MediaManagerClient() {
         alt_text: '',
         caption: '',
       }
-      const res = await fetch('/api/cms/media', {
+      await adminApiFetch('/api/cms/media', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: payload,
       })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to store media metadata.')
       setStatus('Upload complete.')
       await loadMedia()
     } catch (error) {
@@ -97,16 +95,13 @@ export default function MediaManagerClient() {
     setSaving(true)
     setStatus('')
     try {
-      const res = await fetch(`/api/cms/media/${item.id}`, {
+      await adminApiFetch(`/api/cms/media/${item.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           alt_text: item.alt_text || '',
           caption: item.caption || '',
-        }),
+        },
       })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to update media metadata.')
       setStatus('Media metadata updated.')
     } catch (error) {
       setStatus(error?.message || 'Failed to update media.')
@@ -123,9 +118,7 @@ export default function MediaManagerClient() {
       if (item.bucket && item.path) {
         await supabase.storage.from(item.bucket).remove([item.path])
       }
-      const res = await fetch(`/api/cms/media/${item.id}`, { method: 'DELETE' })
-      const json = await res.json()
-      if (!json?.success) throw new Error(json?.error || 'Failed to delete media metadata.')
+      await adminApiFetch(`/api/cms/media/${item.id}`, { method: 'DELETE' })
       setItems((prev) => prev.filter((entry) => entry.id !== item.id))
       setStatus('Media deleted.')
     } catch (error) {
