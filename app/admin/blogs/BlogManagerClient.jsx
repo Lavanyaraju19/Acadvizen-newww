@@ -15,6 +15,7 @@ const INLINE_IMAGE_FIELDS = Array.from({ length: 6 }, (_, index) => ({
   label: `Inline Image ${index + 1}`,
   marker: `[IMAGE_${index + 1}]`,
 }))
+const BLOG_EDITOR_DRAFT_KEY = 'acadvizen-blog-editor-draft-v1'
 
 function ensureMinimumInlineImages(value, minimum = 6) {
   const normalized = normalizeInlineImages(value)
@@ -105,19 +106,8 @@ function createEmptyInlineImages() {
   return ensureMinimumInlineImages([])
 }
 
-export default function BlogManagerClient() {
-  const contentTextareaRef = useRef(null)
-  const [items, setItems] = useState([])
-  const [selectedId, setSelectedId] = useState('')
-  const [blocks, setBlocks] = useState([])
-  const [editorMode, setEditorMode] = useState('simple')
-  const [status, setStatus] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [dragActive, setDragActive] = useState(false)
-  const [showImageInsertPanel, setShowImageInsertPanel] = useState(false)
-  const [mediaItems, setMediaItems] = useState([])
-  const [mediaPicker, setMediaPicker] = useState({ open: false, type: 'image', target: null })
-  const [form, setForm] = useState({
+function createEmptyFormState() {
+  return {
     id: '',
     title: '',
     slug: '',
@@ -134,7 +124,119 @@ export default function BlogManagerClient() {
     og_image: '',
     noindex: false,
     faq_schema: '{}',
+  }
+}
+
+function hasMeaningfulEditorState(form, blocks = []) {
+  const inlineImages = ensureMinimumInlineImages(form?.inline_images || [])
+  return Boolean(
+    String(form?.title || '').trim() ||
+      String(form?.slug || '').trim() ||
+      String(form?.description || '').trim() ||
+      String(form?.content || '').trim() ||
+      String(form?.featured_image || '').trim() ||
+      String(form?.seo_title || '').trim() ||
+      String(form?.seo_description || '').trim() ||
+      String(form?.tags || '').trim() ||
+      String(form?.categories || '').trim() ||
+      String(form?.og_image || '').trim() ||
+      inlineImages.some(Boolean) ||
+      (Array.isArray(blocks) && blocks.length)
+  )
+}
+
+function normalizeDraftForm(form = {}) {
+  return {
+    ...createEmptyFormState(),
+    ...form,
+    inline_images: ensureMinimumInlineImages(form.inline_images || []),
+    faq_schema: typeof form.faq_schema === 'string' ? form.faq_schema : '{}',
+  }
+}
+
+function mergeInlineImages(existing = [], incoming = []) {
+  const next = ensureMinimumInlineImages(existing || [])
+  const additions = normalizeInlineImages(incoming || []).filter(Boolean)
+
+  additions.forEach((url) => {
+    const emptyIndex = next.findIndex((entry) => !String(entry || '').trim())
+    if (emptyIndex >= 0) {
+      next[emptyIndex] = url
+    } else {
+      next.push(url)
+    }
   })
+
+  return next
+}
+
+function createComparableBlock(block = {}) {
+  return {
+    block_type: block.block_type || 'paragraph',
+    content_json: block.content_json && typeof block.content_json === 'object' ? block.content_json : {},
+  }
+}
+
+function createEditorSnapshot({ form, blocks, editorMode, selectedId }) {
+  return JSON.stringify({
+    selectedId: selectedId || '',
+    editorMode: editorMode === 'advanced' ? 'advanced' : 'simple',
+    form: {
+      ...normalizeDraftForm(form || {}),
+      inline_images: ensureMinimumInlineImages(form?.inline_images || []),
+    },
+    blocks: Array.isArray(blocks) ? blocks.map(createComparableBlock) : [],
+  })
+}
+
+function readSavedDraft() {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem(BLOG_EDITOR_DRAFT_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') return null
+    return {
+      selectedId: typeof parsed.selectedId === 'string' ? parsed.selectedId : '',
+      editorMode: parsed.editorMode === 'advanced' ? 'advanced' : 'simple',
+      form: normalizeDraftForm(parsed.form || {}),
+      blocks: normalizeBlocks(parsed.blocks || []),
+    }
+  } catch {
+    return null
+  }
+}
+
+function clearSavedDraft() {
+  if (typeof window === 'undefined') return
+  window.localStorage.removeItem(BLOG_EDITOR_DRAFT_KEY)
+}
+
+export default function BlogManagerClient() {
+  const contentTextareaRef = useRef(null)
+  const restoredDraftRef = useRef(false)
+  const blogLoadRequestRef = useRef(0)
+  const userEditingIntentRef = useRef(false)
+  const [items, setItems] = useState([])
+  const [selectedId, setSelectedId] = useState('')
+  const [blocks, setBlocks] = useState([])
+  const [editorMode, setEditorMode] = useState('simple')
+  const [status, setStatus] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [loadingBlogs, setLoadingBlogs] = useState(true)
+  const [dragActive, setDragActive] = useState(false)
+  const [showImageInsertPanel, setShowImageInsertPanel] = useState(false)
+  const [mediaItems, setMediaItems] = useState([])
+  const [mediaPicker, setMediaPicker] = useState({ open: false, type: 'image', target: null })
+  const [savedSnapshot, setSavedSnapshot] = useState(() =>
+    createEditorSnapshot({
+      form: createEmptyFormState(),
+      blocks: [],
+      editorMode: 'simple',
+      selectedId: '',
+    })
+  )
+  const [form, setForm] = useState(createEmptyFormState)
 
   const selected = useMemo(() => items.find((item) => item.id === selectedId) || null, [items, selectedId])
   const generatedSimpleBlocks = useMemo(
@@ -153,12 +255,30 @@ export default function BlogManagerClient() {
     () => String(form.seo_description || '').trim() || buildAutoMetaDescription(form.content || form.description || ''),
     [form.content, form.description, form.seo_description]
   )
+  const currentSnapshot = useMemo(
+    () => createEditorSnapshot({ form, blocks, editorMode, selectedId }),
+    [blocks, editorMode, form, selectedId]
+  )
+  const hasUnsavedChanges = currentSnapshot !== savedSnapshot
 
-  async function loadBlogs(nextId) {
+  function confirmDiscardChanges() {
+    if (!hasUnsavedChanges) return true
+    return window.confirm('You have unsaved blog changes. Do you want to leave this editor and lose those unsaved changes?')
+  }
+
+  async function loadBlogs(nextId, options = {}) {
+    const requestId = blogLoadRequestRef.current + 1
+    blogLoadRequestRef.current = requestId
+    setLoadingBlogs(true)
     try {
       const json = await adminApiFetch('/api/cms/blogs?include_drafts=1&include_blocks=1&limit=300', { cache: 'no-store' })
+      if (blogLoadRequestRef.current !== requestId) return
       const rows = Array.isArray(json.data) ? json.data : []
       setItems(rows)
+      if (options.preserveEditorState || (userEditingIntentRef.current && !options.forceSelection)) {
+        if (options.restoredSelectedId) setSelectedId(options.restoredSelectedId)
+        return
+      }
       const id = nextId || selectedId || rows[0]?.id || ''
       setSelectedId(id)
       if (id) {
@@ -170,18 +290,67 @@ export default function BlogManagerClient() {
     } catch (error) {
       setStatus(error?.message || 'Failed to load blogs.')
       return
+    } finally {
+      if (blogLoadRequestRef.current === requestId) {
+        setLoadingBlogs(false)
+      }
     }
   }
 
   useEffect(() => {
-    loadBlogs()
+    const savedDraft = readSavedDraft()
+    if (savedDraft && hasMeaningfulEditorState(savedDraft.form, savedDraft.blocks)) {
+      restoredDraftRef.current = true
+      userEditingIntentRef.current = true
+      setSelectedId(savedDraft.selectedId || '')
+      setEditorMode(savedDraft.editorMode)
+      setForm(savedDraft.form)
+      setBlocks(savedDraft.blocks)
+      setStatus('Recovered your unsaved blog draft.')
+    }
+    loadBlogs(undefined, {
+      preserveEditorState: restoredDraftRef.current,
+      restoredSelectedId: savedDraft?.selectedId || '',
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!hasMeaningfulEditorState(form, blocks)) {
+      clearSavedDraft()
+      return
+    }
+    const payload = {
+      selectedId,
+      editorMode,
+      form: {
+        ...form,
+        inline_images: ensureMinimumInlineImages(form.inline_images || []),
+      },
+      blocks,
+      savedAt: new Date().toISOString(),
+    }
+    window.localStorage.setItem(BLOG_EDITOR_DRAFT_KEY, JSON.stringify(payload))
+  }, [blocks, editorMode, form, selectedId])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !hasUnsavedChanges) return undefined
+
+    const handleBeforeUnload = (event) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [hasUnsavedChanges])
+
   function syncForm(item) {
+    userEditingIntentRef.current = false
     const sourceBlocks = item.blocks?.length ? item.blocks : item.content_json?.blocks || []
     const inlineImages = ensureMinimumInlineImages(item.content_json?.inline_images || [])
-    setForm({
+    const nextForm = {
       id: item.id || '',
       title: item.title || '',
       slug: item.slug || '',
@@ -198,32 +367,37 @@ export default function BlogManagerClient() {
       og_image: item.og_image || '',
       noindex: item.noindex === true,
       faq_schema: item.faq_schema ? JSON.stringify(item.faq_schema, null, 2) : '{}',
-    })
-    setEditorMode(sourceBlocks.length && !item.content ? 'advanced' : 'simple')
-    setBlocks(normalizeBlocks(sourceBlocks))
+    }
+    const nextEditorMode = sourceBlocks.length && !item.content ? 'advanced' : 'simple'
+    const nextBlocks = normalizeBlocks(sourceBlocks)
+    setForm(nextForm)
+    setEditorMode(nextEditorMode)
+    setBlocks(nextBlocks)
+    setSavedSnapshot(
+      createEditorSnapshot({
+        form: nextForm,
+        blocks: nextBlocks,
+        editorMode: nextEditorMode,
+        selectedId: item.id || '',
+      })
+    )
   }
 
   function resetForm() {
+    const emptyForm = createEmptyFormState()
+    userEditingIntentRef.current = false
     setEditorMode('simple')
-    setForm({
-      id: '',
-      title: '',
-      slug: '',
-      description: '',
-      content: '',
-      featured_image: '',
-      inline_images: createEmptyInlineImages(),
-      seo_title: '',
-      seo_description: '',
-      tags: '',
-      categories: '',
-      status: 'draft',
-      author_id: '',
-      og_image: '',
-      noindex: false,
-      faq_schema: '{}',
-    })
+    setForm(emptyForm)
     setBlocks([])
+    setSavedSnapshot(
+      createEditorSnapshot({
+        form: emptyForm,
+        blocks: [],
+        editorMode: 'simple',
+        selectedId: '',
+      })
+    )
+    clearSavedDraft()
   }
 
   function addBlock(type, afterIndex = null) {
@@ -267,6 +441,7 @@ export default function BlogManagerClient() {
   }
 
   function applyMedia(url, media, explicitTarget = null) {
+    userEditingIntentRef.current = true
     const target = explicitTarget || mediaPicker.target
     if (!target) return
     if (target.type === 'featured') setForm((prev) => ({ ...prev, featured_image: url }))
@@ -296,6 +471,7 @@ export default function BlogManagerClient() {
 
   async function uploadAndApply(file, target, bucket = 'blog-images') {
     if (!file) return
+    userEditingIntentRef.current = true
     setSaving(true)
     try {
       const url = await uploadFile(file, bucket)
@@ -310,6 +486,7 @@ export default function BlogManagerClient() {
   }
 
   function insertTextAtCursor(text) {
+    userEditingIntentRef.current = true
     const textarea = contentTextareaRef.current
     const currentValue = String(form.content || '')
     if (!textarea) {
@@ -335,6 +512,7 @@ export default function BlogManagerClient() {
   }
 
   function setInlineImageAt(index, value) {
+    userEditingIntentRef.current = true
     setForm((prev) => {
       const nextInlineImages = ensureMinimumInlineImages(prev.inline_images || [])
       nextInlineImages[index] = value
@@ -343,13 +521,15 @@ export default function BlogManagerClient() {
   }
 
   function appendInlineImage(url) {
+    userEditingIntentRef.current = true
     setForm((prev) => ({
       ...prev,
-      inline_images: [...ensureMinimumInlineImages(prev.inline_images || []), url],
+      inline_images: mergeInlineImages(prev.inline_images || [], [url]),
     }))
   }
 
   function removeInlineImage(index) {
+    userEditingIntentRef.current = true
     setForm((prev) => {
       const nextInlineImages = [...ensureMinimumInlineImages(prev.inline_images || [])]
       nextInlineImages.splice(index, 1)
@@ -361,6 +541,7 @@ export default function BlogManagerClient() {
     const validFiles = Array.from(files || []).filter(Boolean)
     if (!validFiles.length) return
 
+    userEditingIntentRef.current = true
     setSaving(true)
     setStatus(`Uploading ${validFiles.length} image${validFiles.length > 1 ? 's' : ''}...`)
 
@@ -374,7 +555,7 @@ export default function BlogManagerClient() {
 
       setForm((prev) => ({
         ...prev,
-        inline_images: [...ensureMinimumInlineImages(prev.inline_images || []), ...uploadedUrls],
+        inline_images: mergeInlineImages(prev.inline_images || [], uploadedUrls),
       }))
       setStatus(`${uploadedUrls.length} inline image${uploadedUrls.length > 1 ? 's' : ''} uploaded.`)
     } catch (error) {
@@ -391,6 +572,7 @@ export default function BlogManagerClient() {
     if (editorMode === 'simple' && !String(form.content || '').trim()) {
       return setStatus('Full Blog Content is required in Simple Copy-Paste mode.')
     }
+    userEditingIntentRef.current = false
     setSaving(true)
     setStatus('')
     try {
@@ -432,7 +614,7 @@ export default function BlogManagerClient() {
         method: 'POST',
         body: payload,
       })
-      await loadBlogs(json.data?.id)
+      await loadBlogs(json.data?.id, { forceSelection: true })
       setStatus(editorMode === 'simple' ? 'Blog saved from Simple Copy-Paste mode.' : 'Blog saved.')
     } catch (error) {
       setStatus(error?.message || 'Failed to save blog.')
@@ -444,6 +626,7 @@ export default function BlogManagerClient() {
   async function deleteBlog() {
     if (!form.id) return
     if (!window.confirm('Delete this blog post?')) return
+    userEditingIntentRef.current = false
     setSaving(true)
     try {
       await adminApiFetch(`/api/cms/blogs/${form.id}`, { method: 'DELETE' })
@@ -470,12 +653,16 @@ export default function BlogManagerClient() {
         <button
           type="button"
           onClick={() => {
+            if (!confirmDiscardChanges()) return
+            userEditingIntentRef.current = true
             setSelectedId('')
             resetForm()
+            userEditingIntentRef.current = true
           }}
+          disabled={loadingBlogs}
           className="rounded-xl bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-200"
         >
-          New Blog
+          {loadingBlogs ? 'Loading Blogs...' : 'New Blog'}
         </button>
       </div>
 
@@ -488,9 +675,12 @@ export default function BlogManagerClient() {
                 key={item.id}
                 type="button"
                 onClick={() => {
+                  if (item.id !== selectedId && !confirmDiscardChanges()) return
+                  userEditingIntentRef.current = false
                   setSelectedId(item.id)
                   syncForm(item)
                 }}
+                disabled={loadingBlogs}
                 className={`w-full rounded-lg px-3 py-2 text-left ${
                   selectedId === item.id
                     ? 'bg-teal-300 text-slate-950'
@@ -540,7 +730,10 @@ export default function BlogManagerClient() {
               Title
               <input
                 value={form.title}
-                onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value, slug: prev.slug || toSlug(event.target.value) }))}
+                onChange={(event) => {
+                  userEditingIntentRef.current = true
+                  setForm((prev) => ({ ...prev, title: event.target.value, slug: prev.slug || toSlug(event.target.value) }))
+                }}
                 className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
               />
             </label>
@@ -551,7 +744,10 @@ export default function BlogManagerClient() {
               </span>
               <input
                 value={form.slug}
-                onChange={(event) => setForm((prev) => ({ ...prev, slug: toSlug(event.target.value) }))}
+                onChange={(event) => {
+                  userEditingIntentRef.current = true
+                  setForm((prev) => ({ ...prev, slug: toSlug(event.target.value) }))
+                }}
                 className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
               />
             </label>
@@ -560,7 +756,10 @@ export default function BlogManagerClient() {
               <textarea
                 rows={3}
                 value={form.description}
-                onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
+                onChange={(event) => {
+                  userEditingIntentRef.current = true
+                  setForm((prev) => ({ ...prev, description: event.target.value }))
+                }}
                 className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
               />
             </label>
@@ -592,7 +791,10 @@ export default function BlogManagerClient() {
                 ref={contentTextareaRef}
                 rows={editorMode === 'simple' ? 18 : 8}
                 value={form.content}
-                onChange={(event) => setForm((prev) => ({ ...prev, content: event.target.value }))}
+                onChange={(event) => {
+                  userEditingIntentRef.current = true
+                  setForm((prev) => ({ ...prev, content: event.target.value }))
+                }}
                 onClick={() => setShowImageInsertPanel(false)}
                 onKeyUp={() => setShowImageInsertPanel(false)}
                 className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
@@ -1069,7 +1271,7 @@ export default function BlogManagerClient() {
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <button type="submit" disabled={saving} className="rounded-xl bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-200 disabled:opacity-70">
+            <button type="submit" disabled={saving || loadingBlogs} className="rounded-xl bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-200 disabled:opacity-70">
               {saving ? 'Saving...' : 'Save Blog'}
             </button>
             {form.id ? (
