@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getServerSupabaseClient } from '../../../lib/supabaseServer'
+import { isPublicBlogVisible } from '../../../lib/blogVisibility'
 
-const BLOG_TABLES = ['blog_posts', 'blogs']
+const BLOG_TABLES = ['blogs', 'blog_posts']
 
 async function fetchBlogTable(supabase, table, { slug, id, limit }) {
   let query = supabase.from(table).select('*')
@@ -48,7 +49,10 @@ export async function GET(req) {
     for (const table of BLOG_TABLES) {
       const { data, error } = await fetchPublishedBlogPosts(supabase, table, { slug, id, limit })
       if (!error && data && (Array.isArray(data) ? data.length > 0 : true)) {
-        return NextResponse.json({ success: true, data, error: null }, { status: 200 })
+        const normalized = Array.isArray(data)
+          ? data.filter(isPublicBlogVisible)
+          : (isPublicBlogVisible(data) ? data : null)
+        return NextResponse.json({ success: true, data: normalized || [], error: null }, { status: 200 })
       }
       if (error) {
         const message = String(error.message || '')

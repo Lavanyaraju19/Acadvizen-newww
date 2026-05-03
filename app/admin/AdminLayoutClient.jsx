@@ -97,6 +97,7 @@ export default function AdminLayoutClient({ children }) {
   const { signOut } = useAuth()
   const [guardTimedOut, setGuardTimedOut] = useState(false)
   const [retryNonce, setRetryNonce] = useState(0)
+  const [verifiedOnce, setVerifiedOnce] = useState(false)
   const [adminState, setAdminState] = useState({
     loading: true,
     error: '',
@@ -131,11 +132,20 @@ export default function AdminLayoutClient({ children }) {
   const verifyAdminAccess = useCallback(async () => {
     if (isLoginLikePath) return
 
-    setAdminState((prev) => ({
-      ...prev,
-      loading: true,
-      error: '',
-    }))
+    const shouldBlockRender = !verifiedOnce || !adminState.user || !adminState.profile
+
+    if (shouldBlockRender) {
+      setAdminState((prev) => ({
+        ...prev,
+        loading: true,
+        error: '',
+      }))
+    } else {
+      setAdminState((prev) => ({
+        ...prev,
+        error: '',
+      }))
+    }
 
     try {
       const payload = await fetchAdminSession()
@@ -148,10 +158,12 @@ export default function AdminLayoutClient({ children }) {
         profile: payload?.data?.profile || null,
         accessToken,
       })
+      setVerifiedOnce(true)
       setGuardTimedOut(false)
     } catch (error) {
       const message = error?.message || 'Unable to open the admin dashboard.'
       await clearAdminSession()
+      setVerifiedOnce(false)
       setAdminState({
         loading: false,
         error: message,
@@ -160,7 +172,7 @@ export default function AdminLayoutClient({ children }) {
         accessToken: '',
       })
     }
-  }, [clearAdminSession, isLoginLikePath])
+  }, [adminState.profile, adminState.user, clearAdminSession, isLoginLikePath, verifiedOnce])
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
@@ -237,7 +249,7 @@ export default function AdminLayoutClient({ children }) {
   useEffect(() => {
     if (isLoginLikePath) return
     void verifyAdminAccess()
-  }, [isLoginLikePath, pathname, retryNonce, verifyAdminAccess])
+  }, [isLoginLikePath, retryNonce, verifyAdminAccess])
 
   const openLogin = useCallback(async () => {
     await clearAdminSession()

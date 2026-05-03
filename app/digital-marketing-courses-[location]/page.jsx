@@ -99,7 +99,7 @@ export default async function LocationCoursePage({ params }) {
     []
   )
   const blogs = await safeQuery(
-    supabase.from('blog_posts').select('title, slug').order('published_at', { ascending: false }).limit(6),
+    supabase.from('blogs').select('title, slug').eq('status', 'published').order('published_at', { ascending: false }).limit(6),
     []
   )
   const tools = await safeQuery(

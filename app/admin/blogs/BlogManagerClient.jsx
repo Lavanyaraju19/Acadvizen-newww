@@ -16,6 +16,7 @@ const INLINE_IMAGE_FIELDS = Array.from({ length: 6 }, (_, index) => ({
   marker: `[IMAGE_${index + 1}]`,
 }))
 const BLOG_EDITOR_DRAFT_KEY = 'acadvizen-blog-editor-draft-v1'
+const BLOG_EDITOR_DRAFT_SESSION_KEY = 'acadvizen-blog-editor-draft-v1-session'
 
 function ensureMinimumInlineImages(value, minimum = 6) {
   const normalized = normalizeInlineImages(value)
@@ -127,6 +128,37 @@ function createEmptyFormState() {
   }
 }
 
+function createEditorStateFromItem(item) {
+  const sourceBlocks = item?.blocks?.length ? item.blocks : item?.content_json?.blocks || []
+  const inlineImages = ensureMinimumInlineImages(item?.content_json?.inline_images || [])
+  const nextForm = {
+    id: item?.id || '',
+    title: item?.title || '',
+    slug: item?.slug || '',
+    description: item?.description || '',
+    content: item?.content || '',
+    featured_image: item?.featured_image || '',
+    inline_images: inlineImages,
+    seo_title: item?.seo_title || '',
+    seo_description: item?.seo_description || '',
+    tags: toComma(item?.tags),
+    categories: toComma(item?.categories),
+    status: item?.status || 'draft',
+    author_id: item?.author_id || '',
+    og_image: item?.og_image || '',
+    noindex: item?.noindex === true,
+    faq_schema: item?.faq_schema ? JSON.stringify(item.faq_schema, null, 2) : '{}',
+  }
+  const nextEditorMode = sourceBlocks.length && !item?.content ? 'advanced' : 'simple'
+  const nextBlocks = normalizeBlocks(sourceBlocks)
+
+  return {
+    form: nextForm,
+    editorMode: nextEditorMode,
+    blocks: nextBlocks,
+  }
+}
+
 function hasMeaningfulEditorState(form, blocks = []) {
   const inlineImages = ensureMinimumInlineImages(form?.inline_images || [])
   return Boolean(
@@ -192,7 +224,9 @@ function createEditorSnapshot({ form, blocks, editorMode, selectedId }) {
 function readSavedDraft() {
   if (typeof window === 'undefined') return null
   try {
-    const raw = window.localStorage.getItem(BLOG_EDITOR_DRAFT_KEY)
+    const raw =
+      window.localStorage.getItem(BLOG_EDITOR_DRAFT_KEY) ||
+      window.sessionStorage.getItem(BLOG_EDITOR_DRAFT_SESSION_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw)
     if (!parsed || typeof parsed !== 'object') return null
@@ -210,6 +244,30 @@ function readSavedDraft() {
 function clearSavedDraft() {
   if (typeof window === 'undefined') return
   window.localStorage.removeItem(BLOG_EDITOR_DRAFT_KEY)
+  window.sessionStorage.removeItem(BLOG_EDITOR_DRAFT_SESSION_KEY)
+}
+
+function persistSavedDraft(payload) {
+  if (typeof window === 'undefined') return false
+
+  const normalizedPayload = {
+    ...payload,
+    form: normalizeDraftForm(payload?.form || {}),
+    blocks: Array.isArray(payload?.blocks) ? payload.blocks.map(createComparableBlock) : [],
+  }
+
+  try {
+    window.localStorage.setItem(BLOG_EDITOR_DRAFT_KEY, JSON.stringify(normalizedPayload))
+    window.sessionStorage.removeItem(BLOG_EDITOR_DRAFT_SESSION_KEY)
+    return true
+  } catch {
+    try {
+      window.sessionStorage.setItem(BLOG_EDITOR_DRAFT_SESSION_KEY, JSON.stringify(normalizedPayload))
+      return true
+    } catch {
+      return false
+    }
+  }
 }
 
 export default function BlogManagerClient() {
@@ -217,6 +275,7 @@ export default function BlogManagerClient() {
   const restoredDraftRef = useRef(false)
   const blogLoadRequestRef = useRef(0)
   const userEditingIntentRef = useRef(false)
+  const selectedIdRef = useRef('')
   const [items, setItems] = useState([])
   const [selectedId, setSelectedId] = useState('')
   const [blocks, setBlocks] = useState([])
@@ -261,6 +320,10 @@ export default function BlogManagerClient() {
   )
   const hasUnsavedChanges = currentSnapshot !== savedSnapshot
 
+  useEffect(() => {
+    selectedIdRef.current = selectedId
+  }, [selectedId])
+
   function confirmDiscardChanges() {
     if (!hasUnsavedChanges) return true
     return window.confirm('You have unsaved blog changes. Do you want to leave this editor and lose those unsaved changes?')
@@ -279,7 +342,7 @@ export default function BlogManagerClient() {
         if (options.restoredSelectedId) setSelectedId(options.restoredSelectedId)
         return
       }
-      const id = nextId || selectedId || rows[0]?.id || ''
+      const id = nextId || selectedIdRef.current || rows[0]?.id || ''
       setSelectedId(id)
       if (id) {
         const row = rows.find((entry) => entry.id === id)
@@ -317,7 +380,7 @@ export default function BlogManagerClient() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    if (!hasMeaningfulEditorState(form, blocks)) {
+    if (!hasUnsavedChanges || !hasMeaningfulEditorState(form, blocks)) {
       clearSavedDraft()
       return
     }
@@ -331,8 +394,8 @@ export default function BlogManagerClient() {
       blocks,
       savedAt: new Date().toISOString(),
     }
-    window.localStorage.setItem(BLOG_EDITOR_DRAFT_KEY, JSON.stringify(payload))
-  }, [blocks, editorMode, form, selectedId])
+    persistSavedDraft(payload)
+  }, [blocks, editorMode, form, hasUnsavedChanges, selectedId])
 
   useEffect(() => {
     if (typeof window === 'undefined' || !hasUnsavedChanges) return undefined
@@ -348,28 +411,7 @@ export default function BlogManagerClient() {
 
   function syncForm(item) {
     userEditingIntentRef.current = false
-    const sourceBlocks = item.blocks?.length ? item.blocks : item.content_json?.blocks || []
-    const inlineImages = ensureMinimumInlineImages(item.content_json?.inline_images || [])
-    const nextForm = {
-      id: item.id || '',
-      title: item.title || '',
-      slug: item.slug || '',
-      description: item.description || '',
-      content: item.content || '',
-      featured_image: item.featured_image || '',
-      inline_images: inlineImages,
-      seo_title: item.seo_title || '',
-      seo_description: item.seo_description || '',
-      tags: toComma(item.tags),
-      categories: toComma(item.categories),
-      status: item.status || 'draft',
-      author_id: item.author_id || '',
-      og_image: item.og_image || '',
-      noindex: item.noindex === true,
-      faq_schema: item.faq_schema ? JSON.stringify(item.faq_schema, null, 2) : '{}',
-    }
-    const nextEditorMode = sourceBlocks.length && !item.content ? 'advanced' : 'simple'
-    const nextBlocks = normalizeBlocks(sourceBlocks)
+    const { form: nextForm, editorMode: nextEditorMode, blocks: nextBlocks } = createEditorStateFromItem(item)
     setForm(nextForm)
     setEditorMode(nextEditorMode)
     setBlocks(nextBlocks)
@@ -381,6 +423,7 @@ export default function BlogManagerClient() {
         selectedId: item.id || '',
       })
     )
+    clearSavedDraft()
   }
 
   function resetForm() {
@@ -590,7 +633,6 @@ export default function BlogManagerClient() {
             content_json: block.content_json || {},
           }))
       const payload = {
-        id: form.id || undefined,
         title: form.title.trim(),
         slug: form.slug?.trim() || toSlug(form.title),
         description: form.description || null,
@@ -610,11 +652,22 @@ export default function BlogManagerClient() {
         blocks: contentBlocks,
         auto_generate_blocks: editorMode === 'simple',
       }
-      const json = await adminApiFetch('/api/cms/blogs', {
-        method: 'POST',
+      const json = await adminApiFetch(form.id ? `/api/cms/blogs/${form.id}` : '/api/cms/blogs', {
+        method: form.id ? 'PATCH' : 'POST',
         body: payload,
       })
-      await loadBlogs(json.data?.id, { forceSelection: true })
+      const savedBlog = json.data
+      const savedId = savedBlog?.id || form.id
+      if (savedBlog) {
+        setItems((prev) => {
+          const remaining = prev.filter((item) => item.id !== savedId)
+          return [savedBlog, ...remaining]
+        })
+        setSelectedId(savedId || '')
+        syncForm(savedBlog)
+      } else {
+        clearSavedDraft()
+      }
       setStatus(editorMode === 'simple' ? 'Blog saved from Simple Copy-Paste mode.' : 'Blog saved.')
     } catch (error) {
       setStatus(error?.message || 'Failed to save blog.')
@@ -630,9 +683,15 @@ export default function BlogManagerClient() {
     setSaving(true)
     try {
       await adminApiFetch(`/api/cms/blogs/${form.id}`, { method: 'DELETE' })
-      setSelectedId('')
-      resetForm()
-      await loadBlogs('')
+      const remaining = items.filter((item) => item.id !== form.id)
+      setItems(remaining)
+      if (remaining[0]) {
+        setSelectedId(remaining[0].id)
+        syncForm(remaining[0])
+      } else {
+        setSelectedId('')
+        resetForm()
+      }
       setStatus('Blog deleted.')
     } catch (error) {
       setStatus(error?.message || 'Failed to delete blog.')
@@ -709,14 +768,20 @@ export default function BlogManagerClient() {
               <div className="flex rounded-xl border border-white/10 bg-black/20 p-1">
                 <button
                   type="button"
-                  onClick={() => setEditorMode('simple')}
+                  onClick={() => {
+                    userEditingIntentRef.current = true
+                    setEditorMode('simple')
+                  }}
                   className={`rounded-lg px-3 py-2 text-sm ${editorMode === 'simple' ? 'bg-teal-300 font-semibold text-slate-950' : 'text-slate-200'}`}
                 >
                   Simple Copy-Paste
                 </button>
                 <button
                   type="button"
-                  onClick={() => setEditorMode('advanced')}
+                  onClick={() => {
+                    userEditingIntentRef.current = true
+                    setEditorMode('advanced')
+                  }}
                   className={`rounded-lg px-3 py-2 text-sm ${editorMode === 'advanced' ? 'bg-teal-300 font-semibold text-slate-950' : 'text-slate-200'}`}
                 >
                   Advanced Blocks
@@ -1191,7 +1256,10 @@ export default function BlogManagerClient() {
 
             <label className="text-xs text-slate-400">
               Featured Image URL
-              <input value={form.featured_image} onChange={(event) => setForm((prev) => ({ ...prev, featured_image: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+              <input value={form.featured_image} onChange={(event) => {
+                userEditingIntentRef.current = true
+                setForm((prev) => ({ ...prev, featured_image: event.target.value }))
+              }} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
             </label>
             <div className="text-xs text-slate-400">
               Featured Image
@@ -1205,7 +1273,10 @@ export default function BlogManagerClient() {
             </div>
             <label className="text-xs text-slate-400">
               OG Image URL
-              <input value={form.og_image} onChange={(event) => setForm((prev) => ({ ...prev, og_image: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+              <input value={form.og_image} onChange={(event) => {
+                userEditingIntentRef.current = true
+                setForm((prev) => ({ ...prev, og_image: event.target.value }))
+              }} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
             </label>
             <div className="text-xs text-slate-400">
               OG Image
@@ -1213,11 +1284,17 @@ export default function BlogManagerClient() {
             </div>
             <label className="text-xs text-slate-400">
               Tags
-              <input value={form.tags} onChange={(event) => setForm((prev) => ({ ...prev, tags: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+              <input value={form.tags} onChange={(event) => {
+                userEditingIntentRef.current = true
+                setForm((prev) => ({ ...prev, tags: event.target.value }))
+              }} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
             </label>
             <label className="text-xs text-slate-400">
               Categories
-              <input value={form.categories} onChange={(event) => setForm((prev) => ({ ...prev, categories: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+              <input value={form.categories} onChange={(event) => {
+                userEditingIntentRef.current = true
+                setForm((prev) => ({ ...prev, categories: event.target.value }))
+              }} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
             </label>
             <label className="text-xs text-slate-400">
               SEO Title
@@ -1227,23 +1304,35 @@ export default function BlogManagerClient() {
               <input
                 value={form.seo_title}
                 placeholder={form.title || 'Auto from title'}
-                onChange={(event) => setForm((prev) => ({ ...prev, seo_title: event.target.value }))}
+                onChange={(event) => {
+                  userEditingIntentRef.current = true
+                  setForm((prev) => ({ ...prev, seo_title: event.target.value }))
+                }}
                 className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
               />
             </label>
             <label className="text-xs text-slate-400">
               Status
-              <select value={form.status} onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100">
+              <select value={form.status} onChange={(event) => {
+                userEditingIntentRef.current = true
+                setForm((prev) => ({ ...prev, status: event.target.value }))
+              }} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100">
                 <option value="draft" className="bg-[#07101b]">Draft</option>
                 <option value="published" className="bg-[#07101b]">Published</option>
               </select>
             </label>
             <label className="text-xs text-slate-400">
               Author ID
-              <input value={form.author_id} onChange={(event) => setForm((prev) => ({ ...prev, author_id: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+              <input value={form.author_id} onChange={(event) => {
+                userEditingIntentRef.current = true
+                setForm((prev) => ({ ...prev, author_id: event.target.value }))
+              }} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
             </label>
             <label className="flex items-center gap-2 text-xs text-slate-300">
-              <input type="checkbox" checked={form.noindex} onChange={(event) => setForm((prev) => ({ ...prev, noindex: event.target.checked }))} />
+              <input type="checkbox" checked={form.noindex} onChange={(event) => {
+                userEditingIntentRef.current = true
+                setForm((prev) => ({ ...prev, noindex: event.target.checked }))
+              }} />
               Noindex this post
             </label>
             <label className="text-xs text-slate-400 md:col-span-2">
@@ -1255,7 +1344,10 @@ export default function BlogManagerClient() {
                 rows={3}
                 value={form.seo_description}
                 placeholder={buildAutoMetaDescription(form.content || form.description || '')}
-                onChange={(event) => setForm((prev) => ({ ...prev, seo_description: event.target.value }))}
+                onChange={(event) => {
+                  userEditingIntentRef.current = true
+                  setForm((prev) => ({ ...prev, seo_description: event.target.value }))
+                }}
                 className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
               />
             </label>
@@ -1266,7 +1358,10 @@ export default function BlogManagerClient() {
             </div>
             <label className="text-xs text-slate-400 md:col-span-2">
               FAQ Schema JSON
-              <textarea rows={4} value={form.faq_schema} onChange={(event) => setForm((prev) => ({ ...prev, faq_schema: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-xs text-slate-100" />
+              <textarea rows={4} value={form.faq_schema} onChange={(event) => {
+                userEditingIntentRef.current = true
+                setForm((prev) => ({ ...prev, faq_schema: event.target.value }))
+              }} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-xs text-slate-100" />
             </label>
           </div>
 

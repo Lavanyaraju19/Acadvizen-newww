@@ -4,6 +4,11 @@ import { supabase } from '../lib/supabaseClient'
 const AuthContext = createContext(null)
 const AUTH_TIMEOUT_MS = 12000
 
+function isTimeoutLikeError(error) {
+  const message = String(error?.message || '').toLowerCase()
+  return message.includes('timed out') || error?.name === 'AbortError'
+}
+
 function withTimeout(promise, timeoutMs, label) {
   let timeoutId
   const timeoutPromise = new Promise((_, reject) => {
@@ -52,7 +57,13 @@ export function AuthProvider({ children }) {
         return data || null
       } catch (error) {
         setProfile(null)
-        if (!silent) setAuthError(error?.message || 'Unable to load account profile.')
+        if (!silent) {
+          setAuthError(
+            isTimeoutLikeError(error)
+              ? 'Unable to load your account profile right now. Please retry in a moment.'
+              : (error?.message || 'Unable to load account profile.')
+          )
+        }
         return null
       } finally {
         inFlightProfileRef.current.delete(userId)
@@ -148,7 +159,7 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
     setUser(data?.user ?? null)
-    await fetchProfile(data.user.id)
+    await fetchProfile(data.user.id, { silent: true })
     return data
   }
 

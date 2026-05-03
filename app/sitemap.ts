@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 import { blogs as localBlogs } from '../data/blogs'
 import { getServerSupabaseClient } from '../lib/supabaseServer'
 import { canonicalizeKnownBlogSlug } from '../lib/blogSlugResolver'
+import { isPublicBlogVisible } from '../lib/blogVisibility'
 
 export const revalidate = 0
 export const dynamic = 'force-dynamic'
@@ -79,6 +80,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ])
 
   const localBlogSlugs = localBlogs
+    .filter(isPublicBlogVisible)
     .map((blog) => blog?.slug)
     .filter((slug): slug is string => Boolean(slug))
 
@@ -92,7 +94,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ),
     ...Array.from(
       new Set([
-        ...(blogs as Array<{ slug?: string }>).map((row) => canonicalizeKnownBlogSlug(row.slug)).filter(Boolean),
+        ...(blogs as Array<{ slug?: string; title?: string; description?: string; excerpt?: string }>)
+          .filter(isPublicBlogVisible)
+          .map((row) => canonicalizeKnownBlogSlug(row.slug))
+          .filter(Boolean),
         ...localBlogSlugs,
       ])
     ).map((slug) => toEntry(`/blog/${slug}`, 0.7, 'weekly')),

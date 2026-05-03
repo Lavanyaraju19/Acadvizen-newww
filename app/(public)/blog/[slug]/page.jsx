@@ -11,6 +11,7 @@ import { getServerSupabaseClient } from '../../../../lib/supabaseServer'
 import { fetchCmsSiteData, fetchRedirectByPath } from '../../../../lib/cmsServer'
 import { blogs as localBlogs } from '../../../../data/blogs'
 import { findLocalBlogBySlug, resolveBlogSlug } from '../../../../lib/blogSlugResolver'
+import { isPublicBlogVisible } from '../../../../lib/blogVisibility'
 
 function pickFirst(...values) {
   for (const value of values) {
@@ -32,7 +33,7 @@ async function fetchRemoteBlog(slug) {
     .eq('status', 'published')
     .maybeSingle()
 
-  if (error || !blog) return null
+  if (error || !blog || !isPublicBlogVisible(blog)) return null
 
   const [{ data: blocks }, { data: related }] = await Promise.all([
     supabase.from('blog_content_blocks').select('*').eq('blog_id', blog.id).order('order_index', { ascending: true }),
@@ -48,7 +49,7 @@ async function fetchRemoteBlog(slug) {
   return {
     blog,
     blocks: Array.isArray(blocks) ? blocks : [],
-    related: Array.isArray(related) ? related : [],
+    related: Array.isArray(related) ? related.filter(isPublicBlogVisible) : [],
   }
 }
 
@@ -84,11 +85,12 @@ async function getBlogData(slug) {
     }
   }
 
-  if (!local) return { blog: null, related: [], blocks: [], toc: [], sections: [], readingMinutes: 1 }
+  if (!local || !isPublicBlogVisible(local)) return { blog: null, related: [], blocks: [], toc: [], sections: [], readingMinutes: 1 }
   const parsed = parseBlogContent(local.content || '')
   const localGeneratedBlocks = convertPlainTextToBlocks(local.content || '')
   const localTocFromBlocks = buildTocFromBlocks(localGeneratedBlocks)
   const related = localBlogs
+    .filter(isPublicBlogVisible)
     .filter((entry) => entry.slug !== slug)
     .slice(0, 3)
     .map((entry) => ({ ...entry, featured_image: entry.image || entry.featured_image || '/blog-images/image1.jpg' }))
@@ -110,7 +112,7 @@ async function getBlogData(slug) {
 }
 
 export async function generateStaticParams() {
-  return localBlogs.map((blog) => ({ slug: blog.slug })).filter((entry) => entry.slug)
+  return localBlogs.filter(isPublicBlogVisible).map((blog) => ({ slug: blog.slug })).filter((entry) => entry.slug)
 }
 
 export async function generateMetadata({ params }) {
