@@ -73,21 +73,23 @@ export default async function Page() {
     seenRemoteSlugs.add(next.slug)
     remoteBlogs.push(next)
   }
-  const fallback = remoteBlogs.length
-    ? []
-    : localBlogs
-        .filter(isPublicBlogVisible)
-        .map((item) => ({
-          id: item.id,
-          slug: item.slug,
-          title: item.title,
-          description: item.excerpt || '',
-          featured_image: item.image || '/blog-images/image1.jpg',
-          published_at: item.created_at,
-          categories: item.categories || [],
-          tags: item.tags || [],
-        }))
-  const merged = [...remoteBlogs, ...fallback]
+  const fallback = localBlogs
+    .filter(isPublicBlogVisible)
+    .map((item) => ({
+      id: item.id,
+      slug: item.slug,
+      title: item.title,
+      description: item.excerpt || '',
+      featured_image: item.image || '/blog-images/image1.jpg',
+      published_at: item.created_at,
+      categories: item.categories || [],
+      tags: item.tags || [],
+    }))
+  const merged = [...remoteBlogs]
+  for (const item of fallback) {
+    if (!item || !item.slug) continue
+    if (!merged.some((entry) => entry?.slug === item.slug)) merged.push(item)
+  }
   const uiCopy = siteData?.settings?.ui_copy && typeof siteData.settings.ui_copy === 'object'
     ? siteData.settings.ui_copy
     : {}
