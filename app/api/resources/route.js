@@ -12,8 +12,17 @@ export async function GET(req) {
     }
     const { searchParams } = new URL(req.url)
     const courseId = searchParams.get('course_id')
-    let query = supabase.from('resources').select('*').order('created_at', { ascending: false })
+    const toolId = searchParams.get('tool_id')
+    const resourceType = searchParams.get('resource_type')
+    let query = supabase
+      .from('resources')
+      .select('*')
+      .eq('is_active', true)
+      .order('order_index', { ascending: true })
+      .order('created_at', { ascending: false })
     if (courseId) query = query.eq('course_id', courseId)
+    if (toolId) query = query.eq('tool_id', toolId)
+    if (resourceType) query = query.eq('resource_type', resourceType)
     const { data, error } = await query
 
     if (error) {

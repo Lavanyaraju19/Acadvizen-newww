@@ -1,9 +1,8 @@
-﻿export const revalidate = 1;
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
 
-import { ResourcesAdminClientPage } from '../../client-pages'
+import ResourcesAdminClient from './ResourcesAdminClient'
 
 export default function Page() {
-  return <ResourcesAdminClientPage />
+  return <ResourcesAdminClient />
 }
-
-

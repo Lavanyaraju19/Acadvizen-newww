@@ -3,39 +3,11 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { Surface } from '../../../src/components/ui/Surface'
-import { supabase } from '../../../lib/supabaseClient'
-import { uploadFile } from '../../../lib/storageUpload'
+import { deleteFileAsset, uploadFileAsset } from '../../../lib/storageUpload'
 import { adminApiFetch } from '../../../lib/adminApiClient'
+import { CMS_MEDIA_BUCKETS } from '../../../lib/mediaBuckets'
 
-const buckets = [
-  'blog-images',
-  'course-images',
-  'placements',
-  'site-assets',
-  'videos',
-  'gallery',
-]
-
-function parseStoragePathFromUrl(url, bucket) {
-  if (!url || !bucket) return ''
-  const marker = `/${bucket}/`
-  const index = url.indexOf(marker)
-  if (index < 0) return ''
-  return url.slice(index + marker.length)
-}
-
-function getImageSize(file) {
-  return new Promise((resolve) => {
-    if (!file || !file.type?.startsWith('image/')) {
-      resolve({ width: null, height: null })
-      return
-    }
-    const image = new window.Image()
-    image.onload = () => resolve({ width: image.width, height: image.height })
-    image.onerror = () => resolve({ width: null, height: null })
-    image.src = URL.createObjectURL(file)
-  })
-}
+const buckets = CMS_MEDIA_BUCKETS
 
 export default function MediaManagerClient() {
   const [bucket, setBucket] = useState('site-assets')
@@ -65,16 +37,15 @@ export default function MediaManagerClient() {
     setUploading(true)
     setStatus('')
     try {
-      const [{ width, height }, publicUrl] = await Promise.all([getImageSize(file), uploadFile(file, bucket)])
-      const path = parseStoragePathFromUrl(publicUrl, bucket)
+      const asset = await uploadFileAsset(file, bucket)
       const payload = {
-        url: publicUrl,
-        bucket,
-        path: path || null,
-        type: file.type?.startsWith('video/') ? 'video' : file.type?.startsWith('image/') ? 'image' : 'file',
-        width,
-        height,
-        size: file.size,
+        url: asset.url,
+        bucket: asset.bucket,
+        path: asset.path,
+        type: asset.type,
+        width: asset.width,
+        height: asset.height,
+        size: asset.size,
         alt_text: '',
         caption: '',
       }
@@ -116,7 +87,7 @@ export default function MediaManagerClient() {
     setStatus('')
     try {
       if (item.bucket && item.path) {
-        await supabase.storage.from(item.bucket).remove([item.path])
+        await deleteFileAsset({ bucket: item.bucket, path: item.path })
       }
       await adminApiFetch(`/api/cms/media/${item.id}`, { method: 'DELETE' })
       setItems((prev) => prev.filter((entry) => entry.id !== item.id))

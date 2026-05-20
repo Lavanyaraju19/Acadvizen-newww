@@ -4,7 +4,6 @@ import Script from 'next/script'
 import Providers from './providers'
 import MetaPixel from '../components/MetaPixel'
 import { siteConfig } from './lib/seo'
-import { blogs as localBlogs } from '../data/blogs'
 import { checkEnv } from '../lib/checkEnv'
 
 checkEnv()
@@ -149,18 +148,6 @@ export default function RootLayout({ children }) {
     '@type': 'Blog',
     name: 'Acadvizen Blog',
     url: `${siteConfig.siteUrl}/blog`,
-    blogPost: localBlogs.slice(0, 6).map((blog) => ({
-      '@type': 'BlogPosting',
-      headline: blog.title,
-      description: blog.excerpt,
-      image: `${siteConfig.siteUrl}${blog.image}`,
-      url: `${siteConfig.siteUrl}/blog/${blog.slug}`,
-      datePublished: blog.created_at,
-      author: {
-        '@type': 'Organization',
-        name: 'Acadvizen',
-      },
-    })),
   }
 
   return (

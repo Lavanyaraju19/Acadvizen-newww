@@ -1,9 +1,8 @@
-﻿export const revalidate = 1;
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
 
-import { CourseDetailsAdminClientPage } from '../../client-pages'
+import CourseDetailsAdminClient from './CourseDetailsAdminClient'
 
 export default function Page() {
-  return <CourseDetailsAdminClientPage />
+  return <CourseDetailsAdminClient />
 }
-
-

@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server'
 import { getServerSupabaseClient } from '../../../lib/supabaseServer'
 
+function normalizeCourse(row = {}) {
+  return {
+    ...row,
+    title: row.title || row.course_name || '',
+    short_description: row.short_description || row.overview || '',
+    image_url: row.image_url || row.featured_image || '',
+  }
+}
+
 export async function GET(req) {
   try {
     const supabase = getServerSupabaseClient()
@@ -28,7 +37,10 @@ export async function GET(req) {
         { status: 200 }
       )
     }
-    return NextResponse.json({ success: true, data, error: null }, { status: 200 })
+    return NextResponse.json(
+      { success: true, data: Array.isArray(data) ? data.map(normalizeCourse) : [], error: null },
+      { status: 200 }
+    )
   } catch (error) {
     return NextResponse.json(
       { success: false, error: `Unhandled error: ${error?.message || error}`, data: [] },

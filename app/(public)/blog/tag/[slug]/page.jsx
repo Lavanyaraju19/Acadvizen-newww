@@ -8,11 +8,14 @@ import { fetchCmsSiteData } from '../../../../../lib/cmsServer'
 async function fetchByTag(slug) {
   const supabase = getServerSupabaseClient()
   if (!supabase || !slug) return []
+  const { data: taxonomy } = await supabase.from('blog_tags').select('name,slug').eq('slug', slug).maybeSingle()
+  const values = Array.from(new Set([slug, taxonomy?.name].filter(Boolean)))
+
   const { data, error } = await supabase
     .from('blogs')
     .select('id,slug,title,description,tags,published_at,created_at')
     .eq('status', 'published')
-    .contains('tags', [slug])
+    .overlaps('tags', values)
     .order('published_at', { ascending: false })
   if (error) return []
   return Array.isArray(data) ? data : []

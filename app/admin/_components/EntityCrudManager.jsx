@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { adminApiFetch } from '../../../lib/adminApiClient'
+import { uploadFileAsset } from '../../../lib/storageUpload'
 
 const typeDefaults = {
   text: '',
@@ -70,6 +71,7 @@ export default function EntityCrudManager({
   const [items, setItems] = useState([])
   const [selectedId, setSelectedId] = useState('')
   const [saving, setSaving] = useState(false)
+  const [uploadingField, setUploadingField] = useState('')
   const [status, setStatus] = useState('')
   const [form, setForm] = useState(buildDefaultForm(fields))
 
@@ -109,6 +111,46 @@ export default function EntityCrudManager({
   function beginCreate() {
     setSelectedId('')
     setForm(buildDefaultForm(fields))
+  }
+
+  async function registerUploadedMedia(asset, field) {
+    if (!asset?.url || field?.trackMedia === false) return
+
+    try {
+      await adminApiFetch('/api/cms/media', {
+        method: 'POST',
+        body: {
+          url: asset.url,
+          bucket: asset.bucket,
+          path: asset.path,
+          type: asset.type,
+          width: asset.width,
+          height: asset.height,
+          size: asset.size,
+          alt_text: '',
+          caption: '',
+        },
+      })
+    } catch {
+      // Keep the primary save path resilient even if media indexing fails.
+    }
+  }
+
+  async function handleFieldUpload(field, file) {
+    if (!field?.bucket || !file) return
+
+    setUploadingField(field.key)
+    setStatus('')
+    try {
+      const asset = await uploadFileAsset(file, field.bucket)
+      await registerUploadedMedia(asset, field)
+      setForm((prev) => ({ ...prev, [field.key]: asset.url }))
+      setStatus(`${field.label} uploaded.`)
+    } catch (error) {
+      setStatus(error?.message || `Failed to upload ${field.label}.`)
+    } finally {
+      setUploadingField('')
+    }
   }
 
   async function save(event) {
@@ -239,6 +281,34 @@ export default function EntityCrudManager({
                   onChange={(event) => setForm((prev) => ({ ...prev, [field.key]: event.target.value }))}
                   className="mt-1 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2 py-2 font-mono text-xs text-slate-100"
                 />
+              ) : field.type === 'select' ? (
+                <select
+                  value={form[field.key] ?? ''}
+                  onChange={(event) => setForm((prev) => ({ ...prev, [field.key]: event.target.value }))}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2 py-2 text-xs text-slate-100"
+                >
+                  {(field.options || []).map((option) => (
+                    <option key={`${field.key}-${option.value}`} value={option.value} className="bg-[#07101b]">
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              ) : field.type === 'file' ? (
+                <div className="mt-1 space-y-2">
+                  <input
+                    type="text"
+                    value={form[field.key] ?? ''}
+                    onChange={(event) => setForm((prev) => ({ ...prev, [field.key]: event.target.value }))}
+                    className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-2 py-2 text-xs text-slate-100"
+                  />
+                  <input
+                    type="file"
+                    accept={field.accept || '*/*'}
+                    onChange={(event) => handleFieldUpload(field, event.target.files?.[0])}
+                    className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-2 py-2 text-xs text-slate-100"
+                  />
+                  {uploadingField === field.key ? <p className="text-[11px] text-slate-400">Uploading...</p> : null}
+                </div>
               ) : (
                 <input
                   type={field.type === 'datetime' ? 'datetime-local' : field.type === 'number' ? 'number' : 'text'}

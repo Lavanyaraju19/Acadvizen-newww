@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Surface } from '../../../src/components/ui/Surface'
 import { convertPlainTextToBlocks, normalizeInlineImages } from '../../../lib/blogContent'
-import { uploadFile } from '../../../lib/storageUpload'
+import { uploadFileAsset } from '../../../lib/storageUpload'
 import { adminApiFetch } from '../../../lib/adminApiClient'
 import BlogBlocksRenderer from '../../../components/blog/BlogBlocksRenderer'
 import AdaptiveImage from '../../../components/media/AdaptiveImage'
@@ -89,14 +89,17 @@ function parseList(value) {
     .filter(Boolean)
 }
 
-async function registerMedia(url, bucket, file) {
+async function registerMedia(asset, file) {
   await adminApiFetch('/api/cms/media', {
     method: 'POST',
     body: {
-      url,
-      bucket,
-      type: file.type?.startsWith('video/') ? 'video' : 'image',
-      size: file.size,
+      url: asset.url,
+      bucket: asset.bucket,
+      path: asset.path,
+      type: asset.type || (file.type?.startsWith('video/') ? 'video' : 'image'),
+      width: asset.width ?? null,
+      height: asset.height ?? null,
+      size: asset.size ?? file.size,
       alt_text: '',
       caption: '',
     },
@@ -517,9 +520,9 @@ export default function BlogManagerClient() {
     userEditingIntentRef.current = true
     setSaving(true)
     try {
-      const url = await uploadFile(file, bucket)
-      await registerMedia(url, bucket, file)
-      applyMedia(url, null, target)
+      const asset = await uploadFileAsset(file, bucket)
+      await registerMedia(asset, file)
+      applyMedia(asset.url, null, target)
       setStatus('Upload complete.')
     } catch (error) {
       setStatus(error?.message || 'Upload failed.')
@@ -591,9 +594,9 @@ export default function BlogManagerClient() {
     try {
       const uploadedUrls = []
       for (const file of validFiles) {
-        const url = await uploadFile(file, 'blog-images')
-        await registerMedia(url, 'blog-images', file)
-        uploadedUrls.push(url)
+        const asset = await uploadFileAsset(file, 'blog-images')
+        await registerMedia(asset, file)
+        uploadedUrls.push(asset.url)
       }
 
       setForm((prev) => ({

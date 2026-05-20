@@ -9,8 +9,7 @@ import { buildTocFromBlocks, estimateReadingMinutes } from '../../../../lib/blog
 import { convertPlainTextToBlocks, parseBlogContent } from '../../../../lib/blogContent'
 import { getServerSupabaseClient } from '../../../../lib/supabaseServer'
 import { fetchCmsSiteData, fetchRedirectByPath } from '../../../../lib/cmsServer'
-import { blogs as localBlogs } from '../../../../data/blogs'
-import { findLocalBlogBySlug, resolveBlogSlug } from '../../../../lib/blogSlugResolver'
+import { canonicalizeKnownBlogSlug } from '../../../../lib/blogSlugResolver'
 import { isPublicBlogVisible } from '../../../../lib/blogVisibility'
 
 function pickFirst(...values) {
@@ -54,70 +53,50 @@ async function fetchRemoteBlog(slug) {
 }
 
 async function getBlogData(slug) {
-  const resolvedSlug = resolveBlogSlug(slug, localBlogs)
-  const remote = (await fetchRemoteBlog(slug)) || (resolvedSlug && resolvedSlug !== slug ? await fetchRemoteBlog(resolvedSlug) : null)
-  const local = findLocalBlogBySlug(slug, localBlogs)
+  const canonicalSlug = canonicalizeKnownBlogSlug(slug)
+  const remote =
+    (await fetchRemoteBlog(slug)) ||
+    (canonicalSlug && canonicalSlug !== slug ? await fetchRemoteBlog(canonicalSlug) : null)
 
-  if (remote?.blog) {
-    const inlineImages = Array.isArray(remote.blog?.content_json?.inline_images) ? remote.blog.content_json.inline_images : []
-    const parsed = parseBlogContent(remote.blog.content || '', { inlineImages })
-    const contentJsonBlocks = Array.isArray(remote.blog?.content_json?.blocks) ? remote.blog.content_json.blocks : []
-    const generatedBlocks = Array.isArray(remote.blocks) && remote.blocks.length
-      ? remote.blocks
-      : contentJsonBlocks.length
-        ? contentJsonBlocks
-      : convertPlainTextToBlocks(remote.blog.content || '', { inlineImages })
-    const tocFromBlocks = buildTocFromBlocks(generatedBlocks)
-    return {
-      blog: {
-        ...remote.blog,
-        excerpt: remote.blog.description || '',
-        image: remote.blog.featured_image || '/blog-images/image1.jpg',
-      },
-      related: (remote.related || []).map((entry) => ({
-        ...entry,
-        featured_image: entry.featured_image || '/blog-images/image1.jpg',
-      })),
-      blocks: generatedBlocks,
-      toc: tocFromBlocks.length ? tocFromBlocks : parsed.toc,
-      sections: parsed.sections,
-      readingMinutes: estimateReadingMinutes({ text: remote.blog.content, blocks: generatedBlocks }),
-    }
+  if (!remote?.blog) {
+    return { blog: null, related: [], blocks: [], toc: [], sections: [], readingMinutes: 1 }
   }
 
-  if (!local || !isPublicBlogVisible(local)) return { blog: null, related: [], blocks: [], toc: [], sections: [], readingMinutes: 1 }
-  const parsed = parseBlogContent(local.content || '')
-  const localGeneratedBlocks = convertPlainTextToBlocks(local.content || '')
-  const localTocFromBlocks = buildTocFromBlocks(localGeneratedBlocks)
-  const related = localBlogs
-    .filter(isPublicBlogVisible)
-    .filter((entry) => entry.slug !== slug)
-    .slice(0, 3)
-    .map((entry) => ({ ...entry, featured_image: entry.image || entry.featured_image || '/blog-images/image1.jpg' }))
+  const inlineImages = Array.isArray(remote.blog?.content_json?.inline_images)
+    ? remote.blog.content_json.inline_images
+    : []
+  const parsed = parseBlogContent(remote.blog.content || '', { inlineImages })
+  const contentJsonBlocks = Array.isArray(remote.blog?.content_json?.blocks) ? remote.blog.content_json.blocks : []
+  const generatedBlocks = Array.isArray(remote.blocks) && remote.blocks.length
+    ? remote.blocks
+    : contentJsonBlocks.length
+      ? contentJsonBlocks
+      : convertPlainTextToBlocks(remote.blog.content || '', { inlineImages })
+  const tocFromBlocks = buildTocFromBlocks(generatedBlocks)
+
   return {
     blog: {
-      ...local,
-      featured_image: local.image || local.featured_image || '/blog-images/image1.jpg',
-      excerpt: local.excerpt || local.description || '',
-      seo_title: local.meta_title || local.title,
-      seo_description: local.meta_description || local.excerpt || '',
-      published_at: local.created_at,
+      ...remote.blog,
+      excerpt: remote.blog.description || '',
+      image: remote.blog.featured_image || '/blog-images/image1.jpg',
     },
-    related,
-    blocks: localGeneratedBlocks,
-    toc: localTocFromBlocks.length ? localTocFromBlocks : parsed.toc,
+    related: (remote.related || []).map((entry) => ({
+      ...entry,
+      featured_image: entry.featured_image || '/blog-images/image1.jpg',
+    })),
+    blocks: generatedBlocks,
+    toc: tocFromBlocks.length ? tocFromBlocks : parsed.toc,
     sections: parsed.sections,
-    readingMinutes: estimateReadingMinutes({ text: local.content, blocks: localGeneratedBlocks }),
+    readingMinutes: estimateReadingMinutes({ text: remote.blog.content, blocks: generatedBlocks }),
   }
 }
 
 export async function generateStaticParams() {
-  return localBlogs.filter(isPublicBlogVisible).map((blog) => ({ slug: blog.slug })).filter((entry) => entry.slug)
+  return []
 }
 
 export async function generateMetadata({ params }) {
-  const resolvedSlug = resolveBlogSlug(params?.slug, localBlogs)
-  const data = await getBlogData(resolvedSlug || params?.slug)
+  const data = await getBlogData(params?.slug)
   const blog = data.blog
   if (!blog) {
     return buildMetadata({
@@ -129,7 +108,12 @@ export async function generateMetadata({ params }) {
 
   const metadata = buildMetadata({
     title: pickFirst(blog.seo_title, blog.meta_title, blog.title),
-    description: pickFirst(blog.seo_description, blog.meta_description, blog.excerpt, 'Digital marketing insights from Acadvizen.'),
+    description: pickFirst(
+      blog.seo_description,
+      blog.meta_description,
+      blog.excerpt,
+      'Digital marketing insights from Acadvizen.'
+    ),
     path: `/blog/${blog.slug}`,
     image: pickFirst(blog.og_image, blog.featured_image, blog.image, '/blog-images/image1.jpg'),
   })
@@ -145,9 +129,9 @@ export default async function Page({ params }) {
     redirect(redirectRule.to_path)
   }
 
-  const resolvedSlug = resolveBlogSlug(requestedSlug, localBlogs)
-  if (resolvedSlug && resolvedSlug !== requestedSlug) {
-    redirect(`/blog/${resolvedSlug}`)
+  const canonicalSlug = canonicalizeKnownBlogSlug(requestedSlug)
+  if (canonicalSlug && canonicalSlug !== requestedSlug) {
+    redirect(`/blog/${canonicalSlug}`)
   }
 
   const [data, siteData] = await Promise.all([getBlogData(requestedSlug), fetchCmsSiteData()])
@@ -159,6 +143,7 @@ export default async function Page({ params }) {
       </div>
     )
   }
+
   const companyName = siteData?.settings?.company_name || 'Acadvizen'
   const uiCopy = siteData?.settings?.ui_copy && typeof siteData.settings.ui_copy === 'object'
     ? siteData.settings.ui_copy
