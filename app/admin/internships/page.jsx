@@ -20,8 +20,16 @@ export default function Page() {
         fields={[
           { key: 'company_name', label: 'Company Name' },
           { key: 'role', label: 'Role' },
-          { key: 'logo', label: 'Logo URL', full: true },
+          { key: 'logo', label: 'Logo', type: 'file', bucket: 'site-assets', accept: 'image/*' },
+          { key: 'location', label: 'Location' },
+          { key: 'duration', label: 'Duration' },
+          { key: 'salary', label: 'Salary' },
+          { key: 'deadline', label: 'Deadline' },
+          { key: 'apply_link', label: 'Apply Link', full: true },
+          { key: 'eligibility', label: 'Eligibility', type: 'textarea', rows: 3, full: true },
           { key: 'description', label: 'Description', type: 'textarea', full: true, rows: 4 },
+          { key: 'status', label: 'Status' },
+          { key: 'is_active', label: 'Active', type: 'checkbox' },
         ]}
       />
     </Surface>

@@ -15,11 +15,15 @@ export default function Page() {
 
       <EntityCrudManager
         entity="companies"
-        title="Company Logos"
-        subtitle="Create, update, and remove company logo records."
+        title="Company Profiles"
+        subtitle="Create, update, and remove company records with logos, hiring status, and links."
         fields={[
           { key: 'company_name', label: 'Company Name' },
-          { key: 'logo', label: 'Logo URL', full: true },
+          { key: 'logo', label: 'Logo', type: 'file', bucket: 'site-assets', accept: 'image/*' },
+          { key: 'description', label: 'Description', type: 'textarea', rows: 4, full: true },
+          { key: 'website_url', label: 'Website URL', full: true },
+          { key: 'hiring_status', label: 'Hiring Status' },
+          { key: 'is_featured', label: 'Featured', type: 'checkbox' },
         ]}
       />
     </Surface>

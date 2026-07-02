@@ -67,6 +67,7 @@ export default function EntityCrudManager({
   showDuplicate = true,
   showDelete = true,
   compact = false,
+  pageSize = 10,
 }) {
   const [items, setItems] = useState([])
   const [selectedId, setSelectedId] = useState('')
@@ -74,8 +75,23 @@ export default function EntityCrudManager({
   const [uploadingField, setUploadingField] = useState('')
   const [status, setStatus] = useState('')
   const [form, setForm] = useState(buildDefaultForm(fields))
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
 
   const selected = useMemo(() => items.find((item) => item.id === selectedId) || null, [items, selectedId])
+  const filteredItems = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    if (!query) return items
+    return items.filter((item) => {
+      const haystack = Object.values(item || {}).join(' ').toLowerCase()
+      return haystack.includes(query)
+    })
+  }, [items, search])
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize))
+  const pagedItems = useMemo(() => {
+    const start = (page - 1) * pageSize
+    return filteredItems.slice(start, start + pageSize)
+  }, [filteredItems, page, pageSize])
 
   async function load(nextId) {
     setStatus('')
@@ -107,6 +123,10 @@ export default function EntityCrudManager({
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entity, filterQuery])
+
+  useEffect(() => {
+    setPage(1)
+  }, [search, entity])
 
   function beginCreate() {
     setSelectedId('')
@@ -227,9 +247,18 @@ export default function EntityCrudManager({
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[240px_1fr]">
-        <aside className="space-y-2">
-          {items.length ? (
-            items.map((item) => (
+        <aside className="space-y-3">
+          <label className="block text-[11px] uppercase tracking-[0.2em] text-slate-400">
+            Search
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search records"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2 py-2 text-xs text-slate-100"
+            />
+          </label>
+          {pagedItems.length ? (
+            pagedItems.map((item) => (
               <button
                 key={item.id}
                 type="button"
@@ -253,6 +282,19 @@ export default function EntityCrudManager({
           ) : (
             <p className="text-xs text-slate-500">No items yet.</p>
           )}
+          {filteredItems.length > pageSize ? (
+            <div className="flex items-center justify-between text-[11px] text-slate-400">
+              <button type="button" disabled={page === 1} onClick={() => setPage((prev) => Math.max(1, prev - 1))} className="disabled:opacity-50">
+                Previous
+              </button>
+              <span>
+                Page {page} of {totalPages}
+              </span>
+              <button type="button" disabled={page >= totalPages} onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))} className="disabled:opacity-50">
+                Next
+              </button>
+            </div>
+          ) : null}
         </aside>
 
         <form onSubmit={save} className="grid gap-3 md:grid-cols-2">

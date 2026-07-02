@@ -10,6 +10,21 @@ import { getEntityConfig, sanitizeEntityPayload } from '../../../../../../lib/cm
 
 export const dynamic = 'force-dynamic'
 
+export async function GET(request, { params }) {
+  const config = getEntityConfig(params?.entity)
+  if (!config) return jsonError('Unknown CMS entity.', 404, [])
+
+  const id = params?.id
+  if (!id) return jsonError('Record id is required.', 400, [])
+
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  if (response) return response
+
+  const { data, error } = await supabase.from(config.table).select('*').eq('id', id).maybeSingle()
+  if (error) return jsonError(`Database query failed: ${error.message}`, 200, [])
+  return jsonOk(data)
+}
+
 export async function PATCH(request, { params }) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized

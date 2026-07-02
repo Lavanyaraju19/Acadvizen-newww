@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Surface } from '../../../src/components/ui/Surface'
 import { adminApiFetch } from '../../../lib/adminApiClient'
+import { uploadFileAsset } from '../../../lib/storageUpload'
 
 const MENU_LOCATIONS = ['header', 'footer', 'bottom_dock', 'legal']
 
@@ -80,6 +81,7 @@ export default function SettingsAdminClient() {
   })
   const [status, setStatus] = useState('')
   const [saving, setSaving] = useState(false)
+  const [uploadingAsset, setUploadingAsset] = useState('')
 
   const groupedMenus = useMemo(() => {
     return MENU_LOCATIONS.reduce((acc, location) => {
@@ -140,6 +142,21 @@ export default function SettingsAdminClient() {
   useEffect(() => {
     loadData()
   }, [])
+
+  async function handleAssetUpload(fieldKey, file) {
+    if (!file) return
+    setUploadingAsset(fieldKey)
+    setStatus('')
+    try {
+      const asset = await uploadFileAsset(file, 'site-assets')
+      setSettings((prev) => ({ ...prev, [fieldKey]: asset.url }))
+      setStatus(`${fieldKey} uploaded.`)
+    } catch (error) {
+      setStatus(error?.message || 'Failed to upload image.')
+    } finally {
+      setUploadingAsset('')
+    }
+  }
 
   async function saveSettings(event) {
     event.preventDefault()
@@ -222,10 +239,14 @@ export default function SettingsAdminClient() {
           <label className="text-xs text-slate-400">
             Logo URL
             <input value={settings.logo || ''} onChange={(e) => setSettings((p) => ({ ...p, logo: e.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+            <input type="file" accept="image/*" onChange={(e) => handleAssetUpload('logo', e.target.files?.[0])} className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+            {uploadingAsset === 'logo' ? <p className="mt-1 text-[11px] text-slate-400">Uploading logo...</p> : null}
           </label>
           <label className="text-xs text-slate-400">
             Favicon URL
             <input value={settings.favicon || ''} onChange={(e) => setSettings((p) => ({ ...p, favicon: e.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+            <input type="file" accept="image/*" onChange={(e) => handleAssetUpload('favicon', e.target.files?.[0])} className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+            {uploadingAsset === 'favicon' ? <p className="mt-1 text-[11px] text-slate-400">Uploading favicon...</p> : null}
           </label>
           <label className="text-xs text-slate-400">
             Company Name

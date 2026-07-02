@@ -401,6 +401,7 @@ export default function PageBuilderClient() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState('')
+  const [bootstrapped, setBootstrapped] = useState(false)
   const [selectedPageId, setSelectedPageId] = useState('')
   const [pageForm, setPageForm] = useState(EMPTY_PAGE_FORM)
   const [sectionForm, setSectionForm] = useState(createEmptySectionForm())
@@ -467,9 +468,11 @@ export default function PageBuilderClient() {
 
   useEffect(() => {
     async function bootstrap() {
+      setBootstrapped(false)
       setStatus('')
       try {
         const pages = await loadPages()
+        setBootstrapped(true)
         if (pages.length) {
           setStatus('Loaded existing CMS pages.')
           return
@@ -487,6 +490,7 @@ export default function PageBuilderClient() {
         setStatus('Imported the current website structure into the CMS.')
       } catch (error) {
         await loadPages()
+        setBootstrapped(true)
         setStatus(error?.message || 'Loaded CMS pages, but automatic sync could not be completed.')
       }
     }

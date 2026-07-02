@@ -10,11 +10,17 @@ export default function Page() {
     { href: '/admin/blogs', label: 'Blogs', icon: BookOpen },
     { href: '/admin/blog-taxonomy', label: 'Blog Taxonomy', icon: Tags },
     { href: '/admin/courses', label: 'Courses', icon: GraduationCap },
+    { href: '/admin/tools', label: 'Tools', icon: LayoutDashboard },
+    { href: '/admin/companies', label: 'Companies', icon: LayoutDashboard },
+    { href: '/admin/internships', label: 'Internships', icon: LayoutDashboard },
+    { href: '/admin/testimonials', label: 'Testimonials', icon: LayoutDashboard },
     { href: '/admin/media', label: 'Media Library', icon: ImageIcon },
     { href: '/admin/trust', label: 'Trust & Conversion', icon: Handshake },
     { href: '/admin/landing-seo', label: 'Landing SEO', icon: MapPinned },
     { href: '/admin/leads', label: 'Leads', icon: Inbox },
+    { href: '/admin/lms', label: 'LMS', icon: BookOpen },
     { href: '/admin/seo', label: 'SEO', icon: Search },
+    { href: '/admin/settings', label: 'Settings', icon: LayoutDashboard },
   ]
 
   return (
