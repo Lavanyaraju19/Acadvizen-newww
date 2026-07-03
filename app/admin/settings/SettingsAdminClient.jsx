@@ -230,30 +230,30 @@ export default function SettingsAdminClient() {
 
   return (
     <Surface className="p-6 md:p-8">
-      <h2 className="text-2xl font-semibold text-slate-50">Site Settings & Menus</h2>
-      <p className="mt-1 text-sm text-slate-300">Control announcement bar, contact details, social links, and all navigation menus.</p>
+      <h2 className="text-2xl font-semibold text-slate-50">Website Settings</h2>
+      <p className="mt-1 text-sm text-slate-300">Manage your website branding, contact information, and navigation menus.</p>
 
       <form onSubmit={saveSettings} className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-        <h3 className="text-base font-semibold text-slate-100">Global Settings</h3>
+        <h3 className="text-base font-semibold text-slate-100">Branding & Contact Information</h3>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <label className="text-xs text-slate-400">
-            Logo URL
+            Company Logo
             <input value={settings.logo || ''} onChange={(e) => setSettings((p) => ({ ...p, logo: e.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
             <input type="file" accept="image/*" onChange={(e) => handleAssetUpload('logo', e.target.files?.[0])} className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
             {uploadingAsset === 'logo' ? <p className="mt-1 text-[11px] text-slate-400">Uploading logo...</p> : null}
           </label>
           <label className="text-xs text-slate-400">
-            Favicon URL
+            Website Icon (Favicon)
             <input value={settings.favicon || ''} onChange={(e) => setSettings((p) => ({ ...p, favicon: e.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
             <input type="file" accept="image/*" onChange={(e) => handleAssetUpload('favicon', e.target.files?.[0])} className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
             {uploadingAsset === 'favicon' ? <p className="mt-1 text-[11px] text-slate-400">Uploading favicon...</p> : null}
           </label>
           <label className="text-xs text-slate-400">
-            Company Name
+            Company/Organization Name
             <input value={settings.company_name || ''} onChange={(e) => setSettings((p) => ({ ...p, company_name: e.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
           </label>
           <label className="text-xs text-slate-400">
-            Contact Email
+            Contact Email Address
             <input value={settings.contact_email || ''} onChange={(e) => setSettings((p) => ({ ...p, contact_email: e.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
           </label>
           <label className="text-xs text-slate-400">
@@ -261,32 +261,46 @@ export default function SettingsAdminClient() {
             <input value={settings.phone_number || ''} onChange={(e) => setSettings((p) => ({ ...p, phone_number: e.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
           </label>
           <label className="text-xs text-slate-400 md:col-span-2">
-            Address
+            Office Address
             <textarea rows={3} value={settings.address || ''} onChange={(e) => setSettings((p) => ({ ...p, address: e.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
           </label>
           <label className="text-xs text-slate-400 md:col-span-2">
-            Announcement Bar
+            Announcement Banner Text
             <input value={settings.announcement_bar || ''} onChange={(e) => setSettings((p) => ({ ...p, announcement_bar: e.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
           </label>
           <label className="text-xs text-slate-400 md:col-span-2">
-            Footer Content
+            Footer Text/Content
             <textarea rows={3} value={settings.footer_content || ''} onChange={(e) => setSettings((p) => ({ ...p, footer_content: e.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
           </label>
+        </div>
+
+        <div className="md:col-span-2 mt-6 border-t border-white/10 pt-4">
+          <h4 className="text-sm font-semibold text-slate-100">Search Engine Optimization (SEO)</h4>
+          <p className="mt-1 text-xs text-slate-400">Default SEO settings for your website.</p>
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
           <label className="text-xs text-slate-400">
-            Default SEO Title
+            Default Page Title
             <input value={settings.default_seo_title || ''} onChange={(e) => setSettings((p) => ({ ...p, default_seo_title: e.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
           </label>
           <label className="text-xs text-slate-400">
-            Default SEO Description
+            Default Page Description
             <textarea rows={2} value={settings.default_seo_description || ''} onChange={(e) => setSettings((p) => ({ ...p, default_seo_description: e.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
           </label>
           <label className="text-xs text-slate-400">
-            Default OG Image
+            Default Social Media Image
             <input value={settings.default_og_image || ''} onChange={(e) => setSettings((p) => ({ ...p, default_og_image: e.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
           </label>
+        </div>
+
+        <div className="md:col-span-2 mt-6 border-t border-white/10 pt-4">
+          <h4 className="text-sm font-semibold text-slate-100">Social Media Links</h4>
+          <p className="mt-1 text-xs text-slate-400">Link your social media profiles.</p>
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
           {['instagram', 'linkedin', 'youtube', 'facebook', 'whatsapp'].map((key) => (
             <label key={key} className="text-xs text-slate-400">
-              {key[0].toUpperCase() + key.slice(1)} URL
+              {key[0].toUpperCase() + key.slice(1)} Profile URL
               <input
                 value={settings.social_links?.[key] || ''}
                 onChange={(e) =>
@@ -302,8 +316,15 @@ export default function SettingsAdminClient() {
               />
             </label>
           ))}
+        </div>
+
+        <div className="md:col-span-2 mt-6 border-t border-white/10 pt-4">
+          <h4 className="text-sm font-semibold text-slate-100">Website Design & Colors</h4>
+          <p className="mt-1 text-xs text-slate-400">Customize your website's appearance.</p>
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
           <label className="text-xs text-slate-400">
-            Brand Primary Color
+            Primary Brand Color
             <input
               value={settings.design_tokens?.brand_primary || ''}
               onChange={(e) =>
@@ -316,7 +337,7 @@ export default function SettingsAdminClient() {
             />
           </label>
           <label className="text-xs text-slate-400">
-            Brand Secondary Color
+            Secondary Brand Color
             <input
               value={settings.design_tokens?.brand_secondary || ''}
               onChange={(e) =>
@@ -329,7 +350,7 @@ export default function SettingsAdminClient() {
             />
           </label>
           <label className="text-xs text-slate-400">
-            Heading Font
+            Heading Font Family
             <input
               value={settings.design_tokens?.heading_font || ''}
               onChange={(e) =>
@@ -342,7 +363,7 @@ export default function SettingsAdminClient() {
             />
           </label>
           <label className="text-xs text-slate-400">
-            Body Font
+            Body Text Font Family
             <input
               value={settings.design_tokens?.body_font || ''}
               onChange={(e) =>
@@ -355,7 +376,7 @@ export default function SettingsAdminClient() {
             />
           </label>
           <label className="text-xs text-slate-400">
-            Default Button Radius
+            Button Corner Style
             <input
               value={settings.design_tokens?.button_radius || ''}
               onChange={(e) =>
@@ -368,7 +389,7 @@ export default function SettingsAdminClient() {
             />
           </label>
           <label className="text-xs text-slate-400 md:col-span-2">
-            Tracking Scripts / Pixels
+            Analytics & Tracking Scripts
             <textarea
               rows={3}
               value={settings.design_tokens?.tracking_scripts || ''}
@@ -381,12 +402,15 @@ export default function SettingsAdminClient() {
               className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
             />
           </label>
-          <div className="md:col-span-2 mt-2 border-t border-white/10 pt-4">
-            <h4 className="text-sm font-semibold text-slate-100">Public Copy Controls</h4>
-            <p className="mt-1 text-xs text-slate-400">Edit navbar/footer/CTA/blog labels without code changes.</p>
-          </div>
+        </div>
+
+        <div className="md:col-span-2 mt-6 border-t border-white/10 pt-4">
+          <h4 className="text-sm font-semibold text-slate-100">Website Text Labels</h4>
+          <p className="mt-1 text-xs text-slate-400">Customize navigation, buttons, and other text labels on your website.</p>
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
           <label className="text-xs text-slate-400">
-            Navbar Brand Label
+            Navigation Bar Brand Label
             <input
               value={settings.ui_copy?.nav_brand_label || ''}
               onChange={(e) => setUiCopy('nav_brand_label', e.target.value)}
@@ -394,7 +418,7 @@ export default function SettingsAdminClient() {
             />
           </label>
           <label className="text-xs text-slate-400">
-            Navbar Menu Label
+            Navigation Menu Label
             <input
               value={settings.ui_copy?.nav_menu_label || ''}
               onChange={(e) => setUiCopy('nav_menu_label', e.target.value)}
@@ -402,7 +426,7 @@ export default function SettingsAdminClient() {
             />
           </label>
           <label className="text-xs text-slate-400">
-            Navbar Close Label
+            Navigation Close Label
             <input
               value={settings.ui_copy?.nav_close_label || ''}
               onChange={(e) => setUiCopy('nav_close_label', e.target.value)}
@@ -418,7 +442,7 @@ export default function SettingsAdminClient() {
             />
           </label>
           <label className="text-xs text-slate-400">
-            Sign-out Label
+            Sign-out Button Label
             <input
               value={settings.ui_copy?.nav_signout_label || ''}
               onChange={(e) => setUiCopy('nav_signout_label', e.target.value)}
@@ -426,7 +450,7 @@ export default function SettingsAdminClient() {
             />
           </label>
           <label className="text-xs text-slate-400">
-            Sign-out Confirm Title
+            Sign-out Confirmation Title
             <input
               value={settings.ui_copy?.nav_signout_confirm_title || ''}
               onChange={(e) => setUiCopy('nav_signout_confirm_title', e.target.value)}
@@ -434,7 +458,7 @@ export default function SettingsAdminClient() {
             />
           </label>
           <label className="text-xs text-slate-400 md:col-span-2">
-            Sign-out Confirm Message
+            Sign-out Confirmation Message
             <input
               value={settings.ui_copy?.nav_signout_confirm_message || ''}
               onChange={(e) => setUiCopy('nav_signout_confirm_message', e.target.value)}
@@ -442,7 +466,7 @@ export default function SettingsAdminClient() {
             />
           </label>
           <label className="text-xs text-slate-400">
-            Sign-out Cancel Label
+            Sign-out Cancel Button Label
             <input
               value={settings.ui_copy?.nav_signout_cancel_label || ''}
               onChange={(e) => setUiCopy('nav_signout_cancel_label', e.target.value)}

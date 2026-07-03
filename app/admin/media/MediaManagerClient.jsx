@@ -115,11 +115,11 @@ export default function MediaManagerClient() {
   return (
     <Surface className="p-6 md:p-8">
       <h2 className="text-2xl font-semibold text-slate-50">Media Library</h2>
-      <p className="mt-1 text-sm text-slate-300">Upload, tag, caption, reuse, and delete media from Supabase storage.</p>
+      <p className="mt-1 text-sm text-slate-300">Upload, organize, and manage all your images, videos, and files.</p>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         <div>
-          <label className="block text-xs uppercase tracking-[0.2em] text-slate-400">Bucket</label>
+          <label className="block text-xs uppercase tracking-[0.2em] text-slate-400">Storage Folder</label>
           <select
             value={bucket}
             onChange={(event) => setBucket(event.target.value)}
@@ -133,7 +133,7 @@ export default function MediaManagerClient() {
           </select>
         </div>
         <div>
-          <label className="block text-xs uppercase tracking-[0.2em] text-slate-400">Upload File</label>
+          <label className="block text-xs uppercase tracking-[0.2em] text-slate-400">Upload New File</label>
           <input
             type="file"
             onChange={(event) => handleUpload(event.target.files?.[0])}
@@ -143,31 +143,31 @@ export default function MediaManagerClient() {
       </div>
       <div className="mt-4 grid gap-3 md:grid-cols-3">
         <label className="text-xs text-slate-400 md:col-span-2">
-          Search
+          Search Media
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="URL, alt text, or caption"
+            placeholder="Search by filename, description, or caption"
             className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
           />
         </label>
         <label className="text-xs text-slate-400">
-          Type
+          File Type
           <select
             value={typeFilter}
             onChange={(event) => setTypeFilter(event.target.value)}
             className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
           >
-            <option value="all" className="bg-[#050b12]">all</option>
-            <option value="image" className="bg-[#050b12]">image</option>
-            <option value="video" className="bg-[#050b12]">video</option>
-            <option value="file" className="bg-[#050b12]">file</option>
+            <option value="all" className="bg-[#050b12]">All Files</option>
+            <option value="image" className="bg-[#050b12]">Images</option>
+            <option value="video" className="bg-[#050b12]">Videos</option>
+            <option value="file" className="bg-[#050b12]">Documents</option>
           </select>
         </label>
       </div>
 
       {status ? <div className="mt-3 text-xs text-slate-300">{status}</div> : null}
-      {uploading ? <div className="mt-1 text-xs text-slate-400">Uploading...</div> : null}
+      {uploading ? <div className="mt-1 text-xs text-slate-400">Uploading file...</div> : null}
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         {filteredItems.map((item) => (
@@ -192,7 +192,7 @@ export default function MediaManagerClient() {
             <p className="truncate text-xs text-slate-500">{item.url}</p>
             <div className="mt-3 grid gap-3">
               <label className="text-xs text-slate-400">
-                Alt Text
+                Description (for screen readers)
                 <input
                   value={item.alt_text || ''}
                   onChange={(event) => updateField(item.id, 'alt_text', event.target.value)}
@@ -215,14 +215,14 @@ export default function MediaManagerClient() {
                 onClick={() => saveMediaItem(item)}
                 className="rounded-lg border border-white/10 px-3 py-1 text-xs text-slate-200 hover:bg-white/[0.05]"
               >
-                Save
+                Save Changes
               </button>
               <button
                 type="button"
                 disabled={saving}
                 onClick={async () => {
                   await navigator.clipboard.writeText(item.url)
-                  setStatus('Media URL copied.')
+                  setStatus('Media URL copied to clipboard.')
                 }}
                 className="rounded-lg border border-white/10 px-3 py-1 text-xs text-slate-200 hover:bg-white/[0.05]"
               >
@@ -241,7 +241,7 @@ export default function MediaManagerClient() {
         ))}
         {!filteredItems.length ? (
           <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-5 text-sm text-slate-400 md:col-span-2">
-            No media items match the current filters.
+            No media items found. Upload your first file to get started.
           </div>
         ) : null}
       </div>

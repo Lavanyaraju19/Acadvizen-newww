@@ -7,23 +7,19 @@ export default function Page() {
   return (
     <Surface className="space-y-5 p-6 md:p-8">
       <div>
-        <h2 className="text-2xl font-semibold text-slate-50">Companies</h2>
+        <h2 className="text-2xl font-semibold text-slate-50">Company Profiles</h2>
         <p className="mt-1 text-sm text-slate-300">
-          Manage company names and logo assets used across the admin-managed site.
+          Manage company names and logos used across the website.
         </p>
       </div>
 
       <EntityCrudManager
         entity="companies"
         title="Company Profiles"
-        subtitle="Create, update, and remove company records with logos, hiring status, and links."
+        subtitle="Create, update, and remove company records with names and logos."
         fields={[
-          { key: 'company_name', label: 'Company Name' },
-          { key: 'logo', label: 'Logo', type: 'file', bucket: 'site-assets', accept: 'image/*' },
-          { key: 'description', label: 'Description', type: 'textarea', rows: 4, full: true },
-          { key: 'website_url', label: 'Website URL', full: true },
-          { key: 'hiring_status', label: 'Hiring Status' },
-          { key: 'is_featured', label: 'Featured', type: 'checkbox' },
+          { key: 'company_name', label: 'Company Name', default: 'Google' },
+          { key: 'logo', label: 'Company Logo', type: 'file', bucket: 'site-assets', accept: 'image/*' },
         ]}
       />
     </Surface>

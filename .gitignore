@@ -25,7 +25,10 @@ dist-ssr
 *.sw?
 
 # Environment variables
-.env
 .env.local
 .env.production.local
 .env.development.local
+
+# Playwright
+playwright-report
+test-results

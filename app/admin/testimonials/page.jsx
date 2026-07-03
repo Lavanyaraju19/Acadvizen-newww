@@ -8,27 +8,24 @@ export default function Page() {
   return (
     <Surface className="space-y-5 p-6 md:p-8">
       <div>
-        <h2 className="text-2xl font-semibold text-slate-50">Testimonials</h2>
+        <h2 className="text-2xl font-semibold text-slate-50">Student Testimonials</h2>
         <p className="mt-1 text-sm text-slate-300">
-          Manage student testimonial cards, ratings, visibility, and ordering directly from the CMS.
+          Manage student testimonials, photos, videos, and reviews.
         </p>
       </div>
 
       <EntityCrudManager
         entity="testimonials"
-        title="Testimonials"
+        title="Student Testimonials"
         subtitle="Create, update, and remove testimonials with photos, videos, and review details."
         fields={[
-          { key: 'name', label: 'Name' },
-          { key: 'role', label: 'Role' },
-          { key: 'company', label: 'Company' },
-          { key: 'course', label: 'Course' },
-          { key: 'rating', label: 'Rating', type: 'number' },
-          { key: 'image_url', label: 'Photo', type: 'file', bucket: 'site-assets', accept: 'image/*' },
-          { key: 'video_testimonial_url', label: 'Video URL', full: true },
-          { key: 'quote', label: 'Review', type: 'textarea', rows: 4, full: true },
-          { key: 'order_index', label: 'Order', type: 'number' },
-          { key: 'is_active', label: 'Visible', type: 'checkbox' },
+          { key: 'name', label: 'Student Name', default: 'Rahul Sharma' },
+          { key: 'role', label: 'Current Role/Job Title', default: 'Digital Marketing Manager' },
+          { key: 'image_url', label: 'Student Photo', type: 'file', bucket: 'site-assets', accept: 'image/*' },
+          { key: 'video_url', label: 'Video Testimonial URL (YouTube/Vimeo)', full: true, default: 'https://youtube.com/watch?v=example' },
+          { key: 'quote', label: 'Student Review/Feedback', type: 'textarea', rows: 4, full: true, default: 'This course completely transformed my career. The practical projects and industry connections helped me land my dream job.' },
+          { key: 'order_index', label: 'Display Order', type: 'number', default: 0 },
+          { key: 'is_active', label: 'Visible (Show on website)', type: 'checkbox', default: true },
         ]}
       />
     </Surface>
