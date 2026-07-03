@@ -32,7 +32,7 @@ import ShowcaseWideCard from '../../components/marketing/ShowcaseWideCard'
 import { neonBlueprintPanelStyle, solidPublicPanelClass, techGridPanelStyle, wavePanelStyle } from '../../lib/publicVisualStyles'
 
 export default function HomePage() {
-  const metaTitle = 'Digital Marketing Course in Bangalore with AI Training | Acadvizen'
+  const metaTitle = 'Acadvizen: Digital Marketing Course in Bangalore with AI Training'
   const metaDescription =
     'Join Acadvizen\'s Digital Marketing Course in Bangalore with AI Training. Learn SEO, Google Ads, Meta Ads, AI Automation, Website Development, Content Marketing, Analytics, and more through live projects, internships, and placement assistance.'
   const metaKeywords =

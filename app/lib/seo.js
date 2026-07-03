@@ -15,7 +15,7 @@ export function buildMetadata({
   twitterDescription,
 }) {
   const url = canonical || new URL(path, SITE_URL).toString()
-  const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME
+  const fullTitle = title ? (title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`) : SITE_NAME
 
   const metadata = {
     title: fullTitle,

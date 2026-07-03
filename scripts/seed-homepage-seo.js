@@ -17,12 +17,12 @@ async function main() {
   try {
     const homepageSeoData = {
       page_slug: 'home',
-      meta_title: 'Digital Marketing Course in Bangalore with AI Training | Acadvizen',
+      meta_title: 'Acadvizen: Digital Marketing Course in Bangalore with AI Training',
       meta_description: 'Join Acadvizen\'s Digital Marketing Course in Bangalore with AI Training. Learn SEO, Google Ads, Meta Ads, AI Automation, Website Development, Content Marketing, Analytics, and more through live projects, internships, and placement assistance.',
       canonical_url: 'https://acadvizen.com',
-      og_title: 'Digital Marketing Course in Bangalore with AI Training | Acadvizen',
+      og_title: 'Acadvizen: Digital Marketing Course in Bangalore with AI Training',
       og_description: 'Join Acadvizen\'s Digital Marketing Course in Bangalore with AI Training. Learn SEO, Google Ads, Meta Ads, AI Automation, Website Development, Content Marketing, Analytics, and more through live projects, internships, and placement assistance.',
-      twitter_title: 'Digital Marketing Course in Bangalore with AI Training | Acadvizen',
+      twitter_title: 'Acadvizen: Digital Marketing Course in Bangalore with AI Training',
       twitter_description: 'Join Acadvizen\'s Digital Marketing Course in Bangalore with AI Training. Learn SEO, Google Ads, Meta Ads, AI Automation, Website Development, Content Marketing, Analytics, and more through live projects, internships, and placement assistance.',
       noindex: false,
     }
