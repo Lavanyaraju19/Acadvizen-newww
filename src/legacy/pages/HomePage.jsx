@@ -32,11 +32,11 @@ import ShowcaseWideCard from '../../components/marketing/ShowcaseWideCard'
 import { neonBlueprintPanelStyle, solidPublicPanelClass, techGridPanelStyle, wavePanelStyle } from '../../lib/publicVisualStyles'
 
 export default function HomePage() {
-  const metaTitle = 'Best Digital Marketing Course In Bangalore'
+  const metaTitle = 'Digital Marketing Course in Bangalore with AI Training | Acadvizen'
   const metaDescription =
-    'Upgrade your career with the best digital marketing training institute in Bangalore - learn practical tools, live campaigns, and industry-ready strategies.'
+    'Join Acadvizen\'s Digital Marketing Course in Bangalore with AI Training. Learn SEO, Google Ads, Meta Ads, AI Automation, Website Development, Content Marketing, Analytics, and more through live projects, internships, and placement assistance.'
   const metaKeywords =
-    'best digital marketing training institute in bangalore, digital marketing institute in bangalore, digital marketing course with placement, digital marketing training institute in bangalore'
+    'digital marketing course in bangalore, digital marketing training with AI, AI marketing course bangalore, SEO course bangalore, Google Ads training, Meta Ads course, digital marketing with placement'
   const coursePrograms = []
   const learningValuePalette = [
     { solid: 'bg-[#1f6378]', border: 'border-[#3fa6c0]', text: 'text-sky-100' },

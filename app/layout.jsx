@@ -11,25 +11,25 @@ checkEnv()
 export const metadata = {
   metadataBase: new URL('https://acadvizen.com'),
   title: {
-    default: 'Acadvizen',
+    default: 'Acadvizen | Digital Marketing Course in Bangalore with AI Training',
     template: '%s | Acadvizen',
   },
-  description: 'Acadvizen helps students discover universities, courses, and career guidance.',
+  description: 'Join Acadvizen\'s Digital Marketing Course in Bangalore with AI Training. Learn SEO, Google Ads, Meta Ads, AI Automation, Website Development, Content Marketing, Analytics, and more through live projects, internships, and placement assistance.',
   robots: {
     index: true,
     follow: true,
   },
   openGraph: {
-    title: 'Acadvizen',
-    description: 'Education and career guidance platform',
+    title: 'Digital Marketing Course in Bangalore with AI Training | Acadvizen',
+    description: 'Join Acadvizen\'s Digital Marketing Course in Bangalore with AI Training. Learn SEO, Google Ads, Meta Ads, AI Automation, Website Development, Content Marketing, Analytics, and more through live projects, internships, and placement assistance.',
     url: 'https://acadvizen.com',
     siteName: 'Acadvizen',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Acadvizen',
-    description: 'Education guidance platform',
+    title: 'Digital Marketing Course in Bangalore with AI Training | Acadvizen',
+    description: 'Join Acadvizen\'s Digital Marketing Course in Bangalore with AI Training. Learn SEO, Google Ads, Meta Ads, AI Automation, Website Development, Content Marketing, Analytics, and more through live projects, internships, and placement assistance.',
   },
   alternates: {
     canonical: 'https://acadvizen.com',

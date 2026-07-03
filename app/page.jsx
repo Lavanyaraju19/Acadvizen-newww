@@ -10,8 +10,8 @@ import { isPublicCmsEnabled } from './lib/publicCms'
 
 export async function generateMetadata() {
   return buildCmsPageMetadata('home', '/', {
-    title: 'Home',
-    description: 'Learn AI-powered digital marketing with placements in Bangalore.',
+    title: 'Digital Marketing Course in Bangalore with AI Training',
+    description: 'Join Acadvizen\'s Digital Marketing Course in Bangalore with AI Training. Learn SEO, Google Ads, Meta Ads, AI Automation, Website Development, Content Marketing, Analytics, and more through live projects, internships, and placement assistance.',
   })
 }
 
