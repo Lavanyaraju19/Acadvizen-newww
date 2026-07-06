@@ -16,11 +16,6 @@ export async function generateMetadata() {
 }
 
 export default async function Page() {
-  console.log("=== PRODUCTION DEBUG ===");
-  console.log("NEXT_PUBLIC_ENABLE_CMS_PUBLIC =", process.env.NEXT_PUBLIC_ENABLE_CMS_PUBLIC);
-  console.log("isPublicCmsEnabled() =", isPublicCmsEnabled());
-  console.log("========================");
-
   if (!isPublicCmsEnabled()) {
     return <PublicLayout><HomeLegacyClient /></PublicLayout>
   }
