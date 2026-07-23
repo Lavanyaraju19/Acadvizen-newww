@@ -857,7 +857,7 @@ export default function HomePage() {
             className="rounded-3xl border border-cyan-700/30 p-8 md:p-12 shadow-[0_18px_48px_rgba(8,15,20,0.3)]"
             style={learningValuesPanelStyle}
           >
-            <p className="text-sm uppercase tracking-[0.25em] text-emerald-200 text-center">A Future-Ready Digital Marketing Institute</p>
+            <p className="text-sm uppercase tracking-[0.25em] text-emerald-200 text-center">A Future-Ready AI Integrated Digital Marketing Institute</p>
             <h2 className="mt-3 text-4xl md:text-5xl font-bold text-slate-50 text-center">Our Learning Values</h2>
             <p className="mt-3 max-w-4xl mx-auto text-center text-lg text-emerald-50/90">
               Students will gain practical insights, live case studies, and real-world strategies learned from global industry experts.

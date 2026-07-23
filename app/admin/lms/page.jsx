@@ -1,40 +1,41 @@
-export const revalidate = 1
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
 
-import EntityCrudManager from '../_components/EntityCrudManager'
 import { Surface } from '../../../src/components/ui/Surface'
+import EntityCrudManager from '../_components/EntityCrudManager'
 
 export default function Page() {
   return (
     <Surface className="space-y-5 p-6 md:p-8">
       <div>
-        <h2 className="text-2xl font-semibold text-slate-50">Learning Management System</h2>
+        <h2 className="text-2xl font-semibold text-slate-50">LMS</h2>
         <p className="mt-1 text-sm text-slate-300">
-          Manage course modules, lessons, and learning content for students.
+          Manage course modules and lessons used for LMS content delivery.
         </p>
       </div>
 
       <EntityCrudManager
         entity="lms_modules"
-        title="Course Modules"
-        subtitle="Organize your courses into learning modules and chapters."
+        title="LMS Modules"
+        subtitle="Create, edit, and delete module records."
         fields={[
-          { key: 'course_id', label: 'Associated Course', default: 'course-id' },
-          { key: 'title', label: 'Module Title', default: 'Module 1: Introduction to Digital Marketing' },
-          { key: 'description', label: 'Module Description', type: 'textarea', full: true, rows: 4, default: 'Learn the fundamentals of digital marketing and understand the digital landscape.' },
-          { key: 'order_index', label: 'Module Order', type: 'number', default: 1 },
+          { key: 'course_id', label: 'Course ID' },
+          { key: 'title', label: 'Title' },
+          { key: 'description', label: 'Description', type: 'textarea', full: true, rows: 4 },
+          { key: 'order_index', label: 'Order', type: 'number' },
         ]}
       />
 
       <EntityCrudManager
         entity="lms_lessons"
-        title="Lesson Content"
-        subtitle="Create and manage individual lessons within modules."
+        title="LMS Lessons"
+        subtitle="Create, edit, and delete lesson records."
         fields={[
-          { key: 'module_id', label: 'Parent Module', default: 'module-id' },
-          { key: 'title', label: 'Lesson Title', default: 'Lesson 1: What is Digital Marketing?' },
-          { key: 'file_url', label: 'Lesson Material/Video URL', full: true },
-          { key: 'content', label: 'Lesson Content/Notes', type: 'textarea', full: true, rows: 5, default: 'Introduction to digital marketing concepts, channels, and strategies.' },
-          { key: 'order_index', label: 'Lesson Order', type: 'number', default: 1 },
+          { key: 'module_id', label: 'Module ID' },
+          { key: 'title', label: 'Title' },
+          { key: 'file_url', label: 'File URL', full: true },
+          { key: 'content', label: 'Content', type: 'textarea', full: true, rows: 5 },
+          { key: 'order_index', label: 'Order', type: 'number' },
         ]}
       />
     </Surface>

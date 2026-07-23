@@ -19,14 +19,36 @@ import {
   Handshake,
   Inbox,
   Tags,
+  Users,
+  MapPin,
+  Home,
+  Layout,
+  LayoutList,
+  Menu as MenuIcon,
+  ArrowRight,
+  FileCode,
+  Download,
+  Layers,
+  LayoutTemplate,
 } from 'lucide-react'
 import { Surface } from '../../src/components/ui/Surface'
 import { CustomCursor } from '../../src/components/ui/CustomCursor'
 import { useAuth } from '../../src/contexts/AuthContext'
 import { fetchAdminSession, getAdminAccessToken } from '../../lib/adminApiClient'
+import GlobalSearch from '../../components/admin/GlobalSearch'
 
 const adminNav = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/admin/homepage', label: 'Homepage', icon: Home },
+  { path: '/admin/header', label: 'Header', icon: Layout },
+  { path: '/admin/footer', label: 'Footer', icon: LayoutList },
+  { path: '/admin/menus', label: 'Menus', icon: MenuIcon },
+  { path: '/admin/redirects', label: 'Redirects', icon: ArrowRight },
+  { path: '/admin/sitemap', label: 'Sitemap', icon: FileCode },
+  { path: '/admin/robots', label: 'Robots.txt', icon: FileText },
+  { path: '/admin/import-export', label: 'Import/Export', icon: Download },
+  { path: '/admin/sections', label: 'Reusable Sections', icon: Layers },
+  { path: '/admin/templates', label: 'Page Templates', icon: LayoutTemplate },
   { path: '/admin/pages', label: 'Pages', icon: FileText },
   { path: '/admin/blogs', label: 'Blogs', icon: BookOpen },
   { path: '/admin/blog-taxonomy', label: 'Blog Taxonomy', icon: Tags },
@@ -35,7 +57,12 @@ const adminNav = [
   { path: '/admin/companies', label: 'Companies', icon: Building2 },
   { path: '/admin/internships', label: 'Internships', icon: School },
   { path: '/admin/testimonials', label: 'Testimonials', icon: MessageSquare },
+  { path: '/admin/forms', label: 'Forms', icon: FileText },
+  { path: '/admin/popups', label: 'Popups', icon: Search },
+  { path: '/admin/banners', label: 'Banners', icon: ImageIcon },
+  { path: '/admin/cities', label: 'Cities', icon: MapPin },
   { path: '/admin/media', label: 'Media', icon: ImageIcon },
+  { path: '/admin/users', label: 'Users', icon: Users },
   { path: '/admin/trust', label: 'Trust & Conversion', icon: Handshake },
   { path: '/admin/landing-seo', label: 'Landing SEO', icon: MapPinned },
   { path: '/admin/leads', label: 'Leads', icon: Inbox },
@@ -345,6 +372,7 @@ export default function AdminLayoutClient({ children }) {
                 <p className="text-xs text-slate-400">Manage courses, tools, resources and students</p>
               </div>
               <div className="flex items-center gap-4">
+                <GlobalSearch />
                 {user?.email && (
                   <span className="text-xs text-slate-400">
                     {profile?.role === 'admin' ? `Admin: ${user.email}` : user.email}

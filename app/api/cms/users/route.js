@@ -3,42 +3,98 @@ import {
   getSupabaseClientOrResponse,
   jsonError,
   jsonOk,
-  parsePositiveInt,
+  readJsonBody,
+  revalidateAllCmsPages,
 } from '../_utils'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request) {
+  const { searchParams } = new URL(request.url)
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  if (response) return response
+
+  const limit = parseInt(searchParams.get('limit') || '100')
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select(`
+      *,
+      user_roles (
+        role_id,
+        roles (
+          id,
+          name,
+          slug,
+          permissions
+        )
+      )
+    `)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) return jsonError(`Failed to fetch users: ${error.message}`, 200, [])
+  return jsonOk(data || [])
+}
+
+export async function POST(request) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
   const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
-  const { searchParams } = new URL(request.url)
-  const query = String(searchParams.get('q') || '').trim()
-  const role = String(searchParams.get('role') || '').trim()
-  const approvalStatus = String(searchParams.get('approval_status') || '').trim()
-  const limit = parsePositiveInt(searchParams.get('limit'), 500)
-
-  let dbQuery = supabase
-    .from('profiles')
-    .select('id,email,full_name,role,approval_status,student_id,created_at,updated_at')
-    .order('created_at', { ascending: false })
-    .limit(limit || 500)
-
-  if (role && role !== 'all') dbQuery = dbQuery.eq('role', role)
-  if (approvalStatus && approvalStatus !== 'all') dbQuery = dbQuery.eq('approval_status', approvalStatus)
-
-  if (query) {
-    const escaped = query.replace(/[%_]/g, '')
-    dbQuery = dbQuery.or(
-      `email.ilike.%${escaped}%,full_name.ilike.%${escaped}%,student_id.ilike.%${escaped}%`
-    )
+  const body = await readJsonBody(request)
+  
+  if (!body?.email) {
+    return jsonError('Email is required', 400)
   }
 
-  const { data, error } = await dbQuery
-  if (error) return jsonError(`Failed to load users: ${error.message}`, 500, [])
+  // Check if user exists
+  const { data: existingUser } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('email', body.email)
+    .single()
 
-  return jsonOk(data || [])
+  if (existingUser) {
+    return jsonError('User with this email already exists', 400)
+  }
+
+  // Create user (this would typically be done through auth, but for admin creation we'll use auth.admin)
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email: body.email,
+    password: body.password || 'TempPassword123!',
+    email_confirm: true,
+    user_metadata: {
+      full_name: body.full_name || '',
+    }
+  })
+
+  if (authError) return jsonError(`Failed to create user: ${authError.message}`, 200)
+
+  // Update profile with role
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .update({
+      full_name: body.full_name || '',
+      role: body.role || 'viewer',
+    })
+    .eq('id', authData.user.id)
+    .select('*')
+    .single()
+
+  if (profileError) return jsonError(`Failed to update profile: ${profileError.message}`, 200)
+
+  // Assign role if provided
+  if (body.role_id) {
+    await supabase.from('user_roles').insert({
+      user_id: authData.user.id,
+      role_id: body.role_id,
+      assigned_by: (await supabase.auth.getUser()).data.user?.id,
+    })
+  }
+
+  revalidateAllCmsPages()
+  return jsonOk(profile)
 }

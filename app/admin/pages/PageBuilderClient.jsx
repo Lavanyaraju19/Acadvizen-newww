@@ -7,6 +7,7 @@ import { Surface } from '../../../src/components/ui/Surface'
 import PrecisionSectionFields from './PrecisionSectionFields'
 import { LIVE_SYNC_TARGETS } from '../../../lib/livePageTargets'
 import { adminApiFetch } from '../../../lib/adminApiClient'
+import { saveAutosave, loadAutosave, clearAutosave, useAutosave } from '../../../lib/autosave'
 
 const SECTION_TYPES = [
   'hero',
@@ -100,6 +101,7 @@ const EMPTY_SECTION_FORM = {
   layoutVariant: 'default',
   columnsCount: 3,
   maxWidth: '',
+  insertAfterIndex: undefined,
 }
 
 function toSlug(value = '') {
@@ -406,6 +408,7 @@ export default function PageBuilderClient() {
   const [pageForm, setPageForm] = useState(EMPTY_PAGE_FORM)
   const [sectionForm, setSectionForm] = useState(createEmptySectionForm())
   const [draggingId, setDraggingId] = useState('')
+  const [previewMode, setPreviewMode] = useState(false)
 
   const selectedPage = useMemo(() => pages.find((page) => page.id === selectedPageId) || null, [pages, selectedPageId])
   const sections = useMemo(
@@ -417,6 +420,9 @@ export default function PageBuilderClient() {
     () => LIVE_SYNC_TARGETS.find((template) => template.slug === (pageForm.slug || selectedPage?.slug)),
     [pageForm.slug, selectedPage?.slug]
   )
+
+  // Autosave page data
+  useAutosave('page', selectedPageId, { pageForm, sectionForm }, [pageForm, sectionForm, selectedPageId])
 
   const previewSections = useMemo(() => {
     const draft = {
@@ -473,6 +479,16 @@ export default function PageBuilderClient() {
       try {
         const pages = await loadPages()
         setBootstrapped(true)
+        
+        // Check for autosaved drafts
+        if (selectedPageId) {
+          const autosave = loadAutosave('page', selectedPageId)
+          if (autosave && autosave.data?.pageForm) {
+            setStatus('📝 Recovered unsaved changes from ' + new Date(autosave.savedAt).toLocaleTimeString())
+            setFormFromAutosave(autosave.data)
+          }
+        }
+        
         if (pages.length) {
           setStatus('Loaded existing CMS pages.')
           return
@@ -498,6 +514,15 @@ export default function PageBuilderClient() {
     bootstrap()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  function setFormFromAutosave(autosaveData) {
+    if (autosaveData?.pageForm) {
+      setPageForm(autosaveData.pageForm)
+    }
+    if (autosaveData?.sectionForm) {
+      setSectionForm(autosaveData.sectionForm)
+    }
+  }
 
   function syncPageForm(page) {
     if (!page) return
@@ -539,6 +564,7 @@ export default function PageBuilderClient() {
       body: { ...nextForm, slug: nextForm.slug?.trim() || toSlug(nextForm.title) },
     })
     await loadPages(json.data?.id)
+    clearAutosave('page', json.data?.id)
     setStatus(successMessage)
     return json.data
   }
@@ -595,6 +621,26 @@ export default function PageBuilderClient() {
     }
   }
 
+  async function handleDuplicatePage() {
+    if (!pageForm.id) return
+    setSaving(true)
+    setStatus('')
+    try {
+      const newItem = await adminApiFetch('/api/cms/duplicate', {
+        method: 'POST',
+        body: { type: 'page', id: pageForm.id },
+      })
+      if (newItem.data) {
+        // Navigate to the duplicated page
+        window.location.href = `/admin/pages?pageId=${newItem.data.id}`
+      }
+    } catch (error) {
+      setStatus(error?.message || 'Failed to duplicate page.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function handleSaveSection(event) {
     event.preventDefault()
     if (!selectedPageId) {
@@ -604,10 +650,19 @@ export default function PageBuilderClient() {
     setSaving(true)
     setStatus('')
     try {
+      let orderIndex
+      if (sectionForm.insertAfterIndex !== undefined) {
+        orderIndex = sectionForm.insertAfterIndex + 1
+      } else if (sectionForm.id) {
+        orderIndex = sections.find((item) => item.id === sectionForm.id)?.order_index || sections.length
+      } else {
+        orderIndex = sections.length
+      }
+      
       const payload = {
         page_id: selectedPageId,
         type: sectionForm.type,
-        order_index: sectionForm.id ? sections.find((item) => item.id === sectionForm.id)?.order_index || sections.length : sections.length,
+        order_index: orderIndex,
         content_json: contentFromForm(sectionForm),
         style_json: styleFromForm(sectionForm),
         visibility: sectionForm.isVisible !== false,
@@ -708,6 +763,22 @@ export default function PageBuilderClient() {
     reorderSections(copy)
   }
 
+  function moveSectionUp(index) {
+    if (index <= 0) return
+    const newSections = [...sections]
+    const [moved] = newSections.splice(index, 1)
+    newSections.splice(index - 1, 0, moved)
+    reorderSections(newSections)
+  }
+
+  function moveSectionDown(index) {
+    if (index >= sections.length - 1) return
+    const newSections = [...sections]
+    const [moved] = newSections.splice(index, 1)
+    newSections.splice(index + 1, 0, moved)
+    reorderSections(newSections)
+  }
+
   async function saveReusableBlock() {
     if (!sectionForm.heading && !sectionForm.text) {
       setStatus('Add heading or content before saving reusable block.')
@@ -768,15 +839,20 @@ export default function PageBuilderClient() {
     <Surface className="p-6 md:p-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-teal-200">CMS Precision Editing</p>
-          <h2 className="mt-2 text-2xl font-semibold text-slate-50">Select page → section → exact fields</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-teal-200">Visual Page Builder</p>
+          <h2 className="mt-2 text-2xl font-semibold text-slate-50">Drag, Drop, and Edit Sections</h2>
           <p className="mt-1 max-w-3xl text-sm text-slate-300">
-            The editor syncs from the current live website source first, then lets you edit headings, cards, bullets, FAQs, buttons, images, and section items exactly as they appear on the website.
+            Build pages visually by adding, reordering, and customizing sections. No coding required.
           </p>
         </div>
-        <button type="button" onClick={beginCreatePage} className="rounded-xl bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-200">
-          New Page
-        </button>
+        <div className="flex gap-2">
+          <button type="button" onClick={() => setPreviewMode(!previewMode)} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.05]">
+            {previewMode ? 'Edit Mode' : 'Preview Mode'}
+          </button>
+          <button type="button" onClick={beginCreatePage} className="rounded-xl bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-200">
+            New Page
+          </button>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[280px_1fr]">
@@ -900,9 +976,14 @@ export default function PageBuilderClient() {
                 Save Draft
               </button>
               {pageForm.id ? (
-                <button type="button" disabled={saving} onClick={handleDeletePage} className="rounded-xl border border-rose-400/30 px-4 py-2 text-sm text-rose-200 hover:bg-rose-500/10 disabled:opacity-70">
-                  Delete Page
-                </button>
+                <>
+                  <button type="button" disabled={saving} onClick={handleDuplicatePage} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05] disabled:opacity-70">
+                    Duplicate
+                  </button>
+                  <button type="button" disabled={saving} onClick={handleDeletePage} className="rounded-xl border border-rose-400/30 px-4 py-2 text-sm text-rose-200 hover:bg-rose-500/10 disabled:opacity-70">
+                    Delete Page
+                  </button>
+                </>
               ) : null}
               {matchedTemplate ? (
                 <button type="button" disabled={saving} onClick={() => importTemplate(matchedTemplate)} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05] disabled:opacity-70">
@@ -917,40 +998,118 @@ export default function PageBuilderClient() {
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="text-base font-semibold text-slate-100">2. View Sections on Page</h3>
-                    <p className="mt-1 text-xs text-slate-400">Click a section to edit it. Drag sections to reorder them.</p>
+                    <h3 className="text-base font-semibold text-slate-100">2. Page Sections</h3>
+                    <p className="mt-1 text-xs text-slate-400">Drag to reorder, click to edit, or use quick actions.</p>
                   </div>
-                  <button type="button" onClick={() => resetSectionForm()} className="rounded-xl border border-white/10 px-3 py-2 text-xs text-slate-200 hover:bg-white/[0.05]">
-                    New Section
+                  <button type="button" onClick={() => resetSectionForm()} className="rounded-xl bg-teal-300 px-3 py-2 text-xs font-semibold text-slate-950 hover:bg-teal-200">
+                    + Add Section
                   </button>
                 </div>
-                <div className="mt-4 space-y-3">
+                
+                {/* Quick Add Section Buttons */}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {['hero', 'text_block', 'feature_cards', 'stats_section', 'testimonial', 'faq', 'cta_banner'].map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => { resetSectionForm(type); setSectionForm(prev => ({ ...prev, type })); }}
+                      className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.02] text-xs text-slate-300 hover:bg-white/[0.05] hover:border-teal-500/30"
+                    >
+                      {type.replace(/_/g, ' ')}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-4 space-y-2">
                   {!selectedPage ? (
                     <div className="text-sm text-slate-400">Select a page first.</div>
                   ) : sections.length === 0 ? (
                     <div className="text-sm text-slate-400">No sections yet. Add one or import the current live page copy.</div>
                   ) : (
-                    sections.map((section) => (
-                      <div
-                        key={section.id}
-                        draggable
-                        onDragStart={() => setDraggingId(section.id)}
-                        onDragOver={(event) => event.preventDefault()}
-                        onDrop={() => onDropSection(section.id)}
-                        className={`rounded-2xl border p-4 ${sectionForm.id === section.id ? 'border-teal-300/50 bg-teal-300/10' : 'border-white/10 bg-white/[0.02]'}`}
-                      >
-                        <button type="button" onClick={() => beginEditSection(section)} className="w-full text-left">
-                          <div className="text-sm font-semibold text-slate-100">
-                            {section.type} <span className="text-slate-500">#{section.order_index}</span>
+                    sections.map((section, index) => (
+                      <div key={section.id}>
+                        <div
+                          draggable
+                          onDragStart={() => setDraggingId(section.id)}
+                          onDragOver={(event) => event.preventDefault()}
+                          onDrop={() => onDropSection(section.id)}
+                          className={`rounded-xl border p-3 transition-all ${sectionForm.id === section.id ? 'border-teal-300/50 bg-teal-300/10' : 'border-white/10 bg-white/[0.02]'} ${draggingId === section.id ? 'opacity-50' : ''}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="cursor-grab text-slate-500 hover:text-slate-300">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"/>
+                              </svg>
+                            </div>
+                            <button type="button" onClick={() => beginEditSection(section)} className="flex-1 text-left">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-semibold text-slate-100 capitalize">
+                                  {section.type.replace(/_/g, ' ')}
+                                </span>
+                                <span className="text-xs text-slate-500">#{index + 1}</span>
+                                {section.visibility === false && (
+                                  <span className="text-xs text-slate-500">(hidden)</span>
+                                )}
+                              </div>
+                              <div className="text-xs text-slate-400 truncate">{describeSection(section)}</div>
+                            </button>
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => moveSectionUp(index)}
+                                disabled={index === 0}
+                                className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] disabled:opacity-30"
+                                title="Move Up"
+                              >
+                                ↑
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => moveSectionDown(index)}
+                                disabled={index === sections.length - 1}
+                                className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] disabled:opacity-30"
+                                title="Move Down"
+                              >
+                                ↓
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => duplicateSection(section.id)}
+                                className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]"
+                                title="Duplicate"
+                              >
+                                📋
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => toggleVisibility(section)}
+                                className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]"
+                                title={section.visibility ? 'Hide' : 'Show'}
+                              >
+                                {section.visibility ? '👁️' : '👁️‍🗨️'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => deleteSection(section.id)}
+                                className="p-1.5 rounded-lg border border-rose-400/30 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
+                                title="Delete"
+                              >
+                                🗑️
+                              </button>
+                            </div>
                           </div>
-                          <div className="mt-1 text-xs text-slate-300">{describeSection(section)}</div>
-                          <div className="mt-1 text-[11px] uppercase tracking-[0.14em] text-slate-500">{section.visibility ? 'Visible' : 'Hidden'}</div>
-                        </button>
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          <button type="button" onClick={() => beginEditSection(section)} className="rounded-lg border border-white/10 px-3 py-1 text-xs text-slate-200 hover:bg-white/[0.05]">Edit</button>
-                          <button type="button" onClick={() => duplicateSection(section.id)} className="rounded-lg border border-white/10 px-3 py-1 text-xs text-slate-200 hover:bg-white/[0.05]">Duplicate</button>
-                          <button type="button" onClick={() => toggleVisibility(section)} className="rounded-lg border border-white/10 px-3 py-1 text-xs text-slate-200 hover:bg-white/[0.05]">{section.visibility ? 'Hide' : 'Show'}</button>
-                          <button type="button" onClick={() => deleteSection(section.id)} className="rounded-lg border border-rose-400/30 px-3 py-1 text-xs text-rose-200 hover:bg-rose-500/10">Delete</button>
+                        </div>
+                        
+                        {/* Insert Section Between */}
+                        <div className="flex justify-center -mt-1">
+                          <button
+                            type="button"
+                            onClick={() => { resetSectionForm(); setSectionForm(prev => ({ ...prev, insertAfterIndex: index })); }}
+                            className="text-xs text-teal-400 hover:text-teal-300 px-2 py-1"
+                            title="Insert section after"
+                          >
+                            + Insert after
+                          </button>
                         </div>
                       </div>
                     ))
