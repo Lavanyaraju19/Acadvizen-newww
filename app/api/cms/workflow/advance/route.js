@@ -34,7 +34,7 @@ export async function POST(request) {
     p_user_id: user?.id,
   })
 
-  if (error) return jsonError(`Failed to advance workflow: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to advance workflow: ${error.message}`, 500)
   
   revalidateAllCmsPages()
   return jsonOk(data)

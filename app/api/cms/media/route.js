@@ -24,7 +24,7 @@ export async function GET(request) {
   if (type) query = query.eq('type', type)
   const { data, error } = await query
 
-  if (error) return jsonError(`Database query failed: ${error.message}`, 200, [])
+  if (error) return jsonError(`Database query failed: ${error.message}`, 500, [])
   return jsonOk(data || [])
 }
 
@@ -38,11 +38,18 @@ export async function POST(request) {
   const body = await readJsonBody(request)
   if (!body?.url) return jsonError('url is required.', 400)
 
+  // Validate media type
+  const allowedTypes = ['image', 'video', 'document', 'audio']
+  const mediaType = body.type || 'image'
+  if (!allowedTypes.includes(mediaType)) {
+    return jsonError(`Invalid media type. Must be one of: ${allowedTypes.join(', ')}`, 400)
+  }
+
   const payload = {
     url: body.url,
     bucket: body.bucket || null,
     path: body.path || null,
-    type: body.type || 'image',
+    type: mediaType,
     width: body.width ?? null,
     height: body.height ?? null,
     size: body.size ?? null,
@@ -51,6 +58,6 @@ export async function POST(request) {
   }
 
   const { data, error } = await supabase.from('media').insert(payload).select('*').single()
-  if (error) return jsonError(`Failed to save media metadata: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to save media metadata: ${error.message}`, 500)
   return jsonOk(data)
 }

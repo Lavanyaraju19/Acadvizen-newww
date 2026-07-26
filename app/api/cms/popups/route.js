@@ -21,7 +21,7 @@ export async function GET(request) {
   if (!includeDrafts) query = query.eq('status', 'published')
 
   const { data, error } = await query
-  if (error) return jsonError(`Database query failed: ${error.message}`, 200, [])
+  if (error) return jsonError(`Database query failed: ${error.message}`, 500, [])
 
   return jsonOk(data || [])
 }
@@ -68,7 +68,7 @@ export async function POST(request) {
     .select('*')
     .single()
 
-  if (error) return jsonError(`Failed to save popup: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to save popup: ${error.message}`, 500)
   revalidateAllCmsPages()
   return jsonOk(data)
 }

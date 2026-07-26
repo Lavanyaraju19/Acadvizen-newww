@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+
 // Autosave utility for CMS content
 const AUTOSAVE_INTERVAL = 30000 // 30 seconds
 const AUTOSAVE_KEY_PREFIX = 'acadvizen-autosave-'

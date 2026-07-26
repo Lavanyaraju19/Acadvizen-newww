@@ -48,7 +48,7 @@ export async function PATCH(request, { params }) {
   if ('noindex' in update) update.noindex = Boolean(update.noindex)
 
   const { data, error } = await supabase.from('seo_metadata').update(update).eq('id', id).select('*').single()
-  if (error) return jsonError(`Failed to update SEO metadata: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to update SEO metadata: ${error.message}`, 500)
   revalidateCmsPaths([normalizePagePath(data?.page_slug)])
   revalidateAllCmsPages()
   return jsonOk(data)
@@ -66,7 +66,7 @@ export async function DELETE(request, { params }) {
 
   const { data: seo } = await supabase.from('seo_metadata').select('page_slug').eq('id', id).maybeSingle()
   const { error } = await supabase.from('seo_metadata').delete().eq('id', id)
-  if (error) return jsonError(`Failed to delete SEO metadata: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to delete SEO metadata: ${error.message}`, 500)
   revalidateCmsPaths([normalizePagePath(seo?.page_slug)])
   revalidateAllCmsPages()
   return jsonOk({ id, deleted: true })

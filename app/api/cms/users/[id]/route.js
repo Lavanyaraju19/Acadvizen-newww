@@ -47,3 +47,53 @@ export async function PATCH(request, { params }) {
   if (error) return jsonError(`Failed to update user: ${error.message}`, 500)
   return jsonOk(data)
 }
+
+export async function DELETE(request, { params }) {
+  const unauthorized = await ensureAdmin(request)
+  if (unauthorized) return unauthorized
+
+  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  if (response) return response
+
+  const id = params?.id
+  if (!id) return jsonError('User id is required.', 400)
+
+  // Check if user exists
+  const { data: existingUser } = await supabase
+    .from('profiles')
+    .select('id, email, role')
+    .eq('id', id)
+    .single()
+
+  if (!existingUser) {
+    return jsonError('User not found', 404)
+  }
+
+  // Prevent deleting the last admin
+  if (existingUser.role === 'admin') {
+    const { data: adminCount } = await supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('role', 'admin')
+
+    if (adminCount && adminCount <= 1) {
+      return jsonError('Cannot delete the last admin user', 400)
+    }
+  }
+
+  // Delete user's form submissions
+  await supabase
+    .from('form_submissions')
+    .delete()
+    .eq('user_id', id)
+
+  // Delete user's profile
+  const { error } = await supabase
+    .from('profiles')
+    .delete()
+    .eq('id', id)
+
+  if (error) return jsonError(`Failed to delete user: ${error.message}`, 500)
+
+  return jsonOk({ success: true, message: 'User deleted successfully' })
+}

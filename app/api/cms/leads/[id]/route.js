@@ -58,7 +58,7 @@ export async function PATCH(request, { params }) {
   if (!Object.keys(update).length) return jsonError('No valid fields to update.', 400)
 
   const { data, error } = await updateLeadWithSchemaFallback(supabase, id, update)
-  if (error) return jsonError(`Failed to update lead: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to update lead: ${error.message}`, 500)
   return jsonOk(data)
 }
 
@@ -73,6 +73,6 @@ export async function DELETE(request, { params }) {
   if (response) return response
 
   const { error } = await supabase.from('leads').delete().eq('id', id)
-  if (error) return jsonError(`Failed to delete lead: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to delete lead: ${error.message}`, 500)
   return jsonOk({ id, deleted: true })
 }

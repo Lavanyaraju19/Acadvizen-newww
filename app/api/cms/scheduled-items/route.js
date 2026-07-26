@@ -20,6 +20,6 @@ export async function GET(request) {
   // Get scheduled items
   const { data, error } = await supabase.rpc('get_scheduled_items')
 
-  if (error) return jsonError(`Failed to fetch scheduled items: ${error.message}`, 200, [])
+  if (error) return jsonError(`Failed to fetch scheduled items: ${error.message}`, 500, [])
   return jsonOk(data || [])
 }

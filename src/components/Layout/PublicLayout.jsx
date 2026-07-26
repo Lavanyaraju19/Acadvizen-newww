@@ -38,11 +38,116 @@ function normalizeStringList(value = []) {
   return []
 }
 
+function normalizeNavItems(value = []) {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((item) => item && typeof item === 'object')
+    .map((item) => ({
+      label: String(item.label || item.title || '').trim(),
+      link: String(item.link || item.url || '#').trim(),
+      active: item.active !== false,
+      children: Array.isArray(item.children) ? normalizeNavItems(item.children) : [],
+    }))
+    .filter((item) => item.label)
+}
+
+function normalizeFooterColumnLinks(value = []) {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((item) => item && typeof item === 'object')
+    .map((item) => ({
+      label: String(item.label || item.title || '').trim(),
+      link: String(item.link || item.url || '#').trim(),
+      active: item.active !== false,
+    }))
+    .filter((item) => item.label && item.link)
+}
+
+function normalizeSocialItems(value = []) {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((item) => item && typeof item === 'object')
+    .map((item) => ({
+      platform: String(item.platform || '').trim().toLowerCase(),
+      url: String(item.url || '#').trim(),
+      active: item.active !== false,
+    }))
+    .filter((item) => item.platform && item.url)
+}
+
 export function PublicLayout({ children }) {
   const [headerVisible, setHeaderVisible] = useState(true)
   const lastScrollYRef = useRef(0)
-  const { settings, menus } = useSiteCms()
+  const { settings, menus, headerSettings, footerSettings } = useSiteCms()
   const uiCopy = settings?.ui_copy && typeof settings.ui_copy === 'object' ? settings.ui_copy : {}
+
+  // Header Settings from header_settings table with fallbacks
+  const logoMarkSrc = '/logo-mark.png'
+  const headerLogoUrl = headerSettings?.logo_url || settings?.logo || '/logo.png'
+  const headerLogoAlt = headerSettings?.logo_alt || settings?.company_name || uiCopy.nav_brand_label || 'Acadvizen'
+  const headerLogoLink = headerSettings?.logo_link || '/'
+  const announcementEnabled = headerSettings?.announcement_enabled ?? false
+  const announcementText = headerSettings?.announcement_text || 'Starting batch from April 6th | Limited Seats Available | Admission Open Now'
+  const announcementLink = headerSettings?.announcement_link || null
+  const announcementBgColor = headerSettings?.announcement_bg_color || '#10b981'
+  const announcementTextColor = headerSettings?.announcement_text_color || '#ffffff'
+  const headerNavItems = normalizeNavItems(headerSettings?.nav_items || [])
+  const primaryCtaEnabled = headerSettings?.primary_cta_enabled ?? true
+  const primaryCtaText = headerSettings?.primary_cta_text || 'Get Started'
+  const primaryCtaLink = headerSettings?.primary_cta_link || '/courses'
+  const primaryCtaBgColor = headerSettings?.primary_cta_bg_color || '#14b8a6'
+  const primaryCtaTextColor = headerSettings?.primary_cta_text_color || '#ffffff'
+  const secondaryCtaEnabled = headerSettings?.secondary_cta_enabled ?? false
+  const secondaryCtaText = headerSettings?.secondary_cta_text || 'Login'
+  const secondaryCtaLink = headerSettings?.secondary_cta_link || '/login'
+  const secondaryCtaBgColor = headerSettings?.secondary_cta_bg_color || 'transparent'
+  const secondaryCtaTextColor = headerSettings?.secondary_cta_text_color || '#ffffff'
+  const secondaryCtaBorderColor = headerSettings?.secondary_cta_border_color || '#ffffff'
+  const showPhone = headerSettings?.show_phone ?? false
+  const headerPhone = headerSettings?.phone_number || settings?.phone_number || '+91 7411314848'
+  const headerPhoneLink = headerSettings?.phone_link || `tel:${headerPhone.replace(/\s/g, '')}`
+  const showEmail = headerSettings?.show_email ?? false
+  const headerEmail = headerSettings?.email_address || settings?.contact_email || 'ceo@acadvizen.com'
+  const headerEmailLink = headerSettings?.email_link || `mailto:${headerEmail}`
+  const showSocial = headerSettings?.show_social ?? false
+  const headerSocialItems = normalizeSocialItems(headerSettings?.social_items || [])
+  const stickyHeader = headerSettings?.sticky_header ?? false
+  const transparentHeader = headerSettings?.transparent_header ?? false
+  const headerBgColor = headerSettings?.header_bg_color || '#050b12'
+  const headerTextColor = headerSettings?.header_text_color || '#ffffff'
+  const headerBorderColor = headerSettings?.header_border_color || 'rgba(255,255,255,0.1)'
+
+  // Footer Settings from footer_settings table with fallbacks
+  const footerLogoUrl = footerSettings?.logo_url || settings?.logo || '/logo.png'
+  const footerLogoAlt = footerSettings?.logo_alt || settings?.company_name || uiCopy.nav_brand_label || 'Acadvizen'
+  const footerColumn1Title = footerSettings?.column1_title || 'Quick Links'
+  const footerColumn1Links = normalizeFooterColumnLinks(footerSettings?.column1_links || [])
+  const footerColumn2Title = footerSettings?.column2_title || 'Courses'
+  const footerColumn2Links = normalizeFooterColumnLinks(footerSettings?.column2_links || [])
+  const footerColumn3Title = footerSettings?.column3_title || 'Company'
+  const footerColumn3Links = normalizeFooterColumnLinks(footerSettings?.column3_links || [])
+  const footerColumn4Title = footerSettings?.column4_title || 'Contact'
+  const footerColumn4Links = normalizeFooterColumnLinks(footerSettings?.column4_links || [])
+  const showContact = footerSettings?.show_contact ?? true
+  const footerContactPhone = footerSettings?.contact_phone || settings?.phone_number || '+91 7411314848'
+  const footerContactEmail = footerSettings?.contact_email || settings?.contact_email || 'ceo@acadvizen.com'
+  const footerContactAddress = footerSettings?.contact_address || settings?.address || 'No 647-35/29 5th Block, Jayanagar\nBangalore, Karnataka 560078'
+  const showFooterSocial = footerSettings?.show_social ?? true
+  const footerSocialItems = normalizeSocialItems(footerSettings?.social_items || [])
+  const showNewsletter = footerSettings?.show_newsletter ?? false
+  const newsletterTitle = footerSettings?.newsletter_title || 'Subscribe to our newsletter'
+  const newsletterPlaceholder = footerSettings?.newsletter_placeholder || 'Enter your email'
+  const copyrightText = footerSettings?.copyright_text || settings?.ui_copy?.footer_copyright_text || '(c) {year} {company}. ALL RIGHTS RESERVED.'
+  const showLegal = footerSettings?.show_legal ?? true
+  const privacyPolicyLink = footerSettings?.privacy_policy_link || '/privacy-policy'
+  const termsLink = footerSettings?.terms_link || '/terms-of-service'
+  const cookiePolicyLink = footerSettings?.cookie_policy_link || '/cookies'
+  const footerBgColor = footerSettings?.footer_bg_color || '#050b12'
+  const footerTextColor = footerSettings?.footer_text_color || '#ffffff'
+  const footerLinkColor = footerSettings?.footer_link_color || '#94a3b8'
+  const footerBorderColor = footerSettings?.footer_border_color || 'rgba(255,255,255,0.1)'
+
+  // Legacy fallback values for backward compatibility
   const defaultLocationLinks = [
     'Digital Marketing Courses in Bangalore',
     'Digital Marketing Courses in Jayanagar',
@@ -77,16 +182,6 @@ export function PublicLayout({ children }) {
         { title: 'Terms of Service', url: '/terms-of-service' },
         { title: 'Privacy Policy', url: '/privacy-policy' },
       ])
-  const contactEmail = settings?.contact_email || 'ceo@acadvizen.com'
-  const contactPhone = settings?.phone_number || '+91 7411314848'
-  const contactAddress =
-    settings?.address || 'No 647-35/29 5th Block, Jayanagar\nBangalore, Karnataka 560078'
-  const announcementText = 'Starting batch from April 6th | Limited Seats Available | Admission Open Now'
-  const socialLinks = settings?.social_links && typeof settings.social_links === 'object'
-    ? settings.social_links
-    : {}
-  const logoSrc = settings?.logo || '/logo.png'
-  const logoMarkSrc = '/logo-mark.png'
   const companyName = settings?.company_name || uiCopy.nav_brand_label || 'Acadvizen'
   const designTokens = settings?.design_tokens && typeof settings.design_tokens === 'object' ? settings.design_tokens : {}
   const footerNavHeading = String(uiCopy.footer_nav_heading || 'Academy Index')
@@ -94,37 +189,51 @@ export function PublicLayout({ children }) {
   const footerContactHeading = String(uiCopy.footer_contact_heading || 'HQ Command')
   const footerLocationsTitle = String(uiCopy.footer_locations_title || 'Digital Marketing Courses in India')
   const locationLinkBaseUrl = String(uiCopy.footer_location_link_url || '/')
-  const footerCopyTemplate = String(uiCopy.footer_copyright_text || '(c) {year} {company}. ALL RIGHTS RESERVED.')
+  const footerCopyTemplate = String(copyrightText)
   const footerCopy = footerCopyTemplate
     .replaceAll('{year}', String(new Date().getFullYear()))
     .replaceAll('{company}', companyName.toUpperCase())
-  const addressLine = contactAddress
+  const addressLine = footerContactAddress
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
     .join(' | ')
+
+  // Social links from new header/footer settings or fallback to legacy settings
+  const socialLinks = settings?.social_links && typeof settings.social_links === 'object'
+    ? settings.social_links
+    : {}
+
+  // Merge social items from header/footer settings with legacy fallback
+  const mergedSocialLinks = {
+    linkedin: headerSocialItems.find(i => i.platform === 'linkedin')?.url || footerSocialItems.find(i => i.platform === 'linkedin')?.url || socialLinks.linkedin || 'https://www.linkedin.com/company/acadvizen-digital-marketing-institute/?viewAsMember=true',
+    instagram: headerSocialItems.find(i => i.platform === 'instagram')?.url || footerSocialItems.find(i => i.platform === 'instagram')?.url || socialLinks.instagram || 'https://www.instagram.com/acadvizen/',
+    facebook: headerSocialItems.find(i => i.platform === 'facebook')?.url || footerSocialItems.find(i => i.platform === 'facebook')?.url || socialLinks.facebook || 'https://www.facebook.com/profile.php?id=61586987972331',
+    youtube: headerSocialItems.find(i => i.platform === 'youtube')?.url || footerSocialItems.find(i => i.platform === 'youtube')?.url || socialLinks.youtube || 'https://www.youtube.com/@Acadvizen',
+  }
+
   const fixedSocialLinks = [
     {
       key: 'linkedin',
-      href: socialLinks.linkedin || 'https://www.linkedin.com/company/acadvizen-digital-marketing-institute/?viewAsMember=true',
+      href: mergedSocialLinks.linkedin,
       label: 'LinkedIn',
       icon: Linkedin,
     },
     {
       key: 'instagram',
-      href: socialLinks.instagram || 'https://www.instagram.com/acadvizen/',
+      href: mergedSocialLinks.instagram,
       label: 'Instagram',
       icon: Instagram,
     },
     {
       key: 'facebook',
-      href: socialLinks.facebook || 'https://www.facebook.com/profile.php?id=61586987972331',
+      href: mergedSocialLinks.facebook,
       label: 'Facebook',
       icon: Facebook,
     },
     {
       key: 'youtube',
-      href: socialLinks.youtube || 'https://www.youtube.com/@Acadvizen',
+      href: mergedSocialLinks.youtube,
       label: 'YouTube',
       icon: Youtube,
     },
@@ -179,20 +288,37 @@ export function PublicLayout({ children }) {
           headerVisible ? 'translate-y-0 opacity-100' : '-translate-y-[110%] opacity-0 pointer-events-none'
         }`}
       >
-        <div className="w-full border-b border-[#1f7a34] bg-[#278f38]">
-          <div className="mx-auto max-w-7xl px-4 py-2 text-center sm:px-6 lg:px-8">
-            <p className="text-xs font-semibold text-[#c9ffe0] sm:text-sm">
-              {announcementText.includes('Admission Open Now') ? (
-                <>
-                  Starting batch from April 6th | Limited Seats Available |{' '}
-                  <span className="font-extrabold text-yellow-300">Admission Open Now</span>
-                </>
+        {announcementEnabled && (
+          <div className="w-full border-b" style={{ borderColor: headerBorderColor, backgroundColor: announcementBgColor }}>
+            <div className="mx-auto max-w-7xl px-4 py-2 text-center sm:px-6 lg:px-8">
+              {announcementLink ? (
+                <a href={announcementLink} className="block">
+                  <p className="text-xs font-semibold sm:text-sm" style={{ color: announcementTextColor }}>
+                    {announcementText.includes('Admission Open Now') ? (
+                      <>
+                        Starting batch from April 6th | Limited Seats Available |{' '}
+                        <span className="font-extrabold">Admission Open Now</span>
+                      </>
+                    ) : (
+                      announcementText
+                    )}
+                  </p>
+                </a>
               ) : (
-                announcementText
+                <p className="text-xs font-semibold sm:text-sm" style={{ color: announcementTextColor }}>
+                  {announcementText.includes('Admission Open Now') ? (
+                    <>
+                      Starting batch from April 6th | Limited Seats Available |{' '}
+                      <span className="font-extrabold">Admission Open Now</span>
+                    </>
+                  ) : (
+                    announcementText
+                  )}
+                </p>
               )}
-            </p>
+            </div>
           </div>
-        </div>
+        )}
 
         <Navbar />
       </div>
@@ -235,7 +361,7 @@ export function PublicLayout({ children }) {
 
       <footer className="relative z-10 mt-8">
         <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-teal-400/40 to-transparent" />
-        <div className="border-t border-white/10 bg-[#040d19]">
+        <div className="border-t" style={{ borderColor: footerBorderColor, backgroundColor: footerBgColor }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="grid gap-8 md:grid-cols-3">
               <div>
@@ -243,7 +369,7 @@ export function PublicLayout({ children }) {
                   <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white p-2 shadow-[0_12px_30px_rgba(0,0,0,0.28)]">
                     <Image
                       src={logoMarkSrc}
-                      alt={companyName}
+                      alt={footerLogoAlt}
                       width={56}
                       height={56}
                       style={{ width: 'auto', height: 'auto' }}
@@ -295,12 +421,12 @@ export function PublicLayout({ children }) {
                 <p className="mt-8 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{footerContactHeading}</p>
                 <div className="mt-4 space-y-2 text-sm text-slate-400">
                   <p>{addressLine}</p>
-                  <p>{contactPhone}</p>
-                  <p>{contactEmail}</p>
+                  <p>{footerContactPhone}</p>
+                  <p>{footerContactEmail}</p>
                 </div>
                 <div className="mt-6 flex items-center gap-3 text-slate-300">
                   <a
-                    href={socialLinks.instagram || 'https://www.instagram.com/acadvizen/'}
+                    href={mergedSocialLinks.instagram}
                     target="_blank"
                     rel="noreferrer"
                     aria-label="Instagram"
@@ -309,7 +435,7 @@ export function PublicLayout({ children }) {
                     <Instagram className="h-4 w-4" />
                   </a>
                   <a
-                    href={socialLinks.linkedin || 'https://www.linkedin.com/company/acadvizen-digital-marketing-institute/?viewAsMember=true'}
+                    href={mergedSocialLinks.linkedin}
                     target="_blank"
                     rel="noreferrer"
                     aria-label="LinkedIn"
@@ -318,7 +444,7 @@ export function PublicLayout({ children }) {
                     <Linkedin className="h-4 w-4" />
                   </a>
                   <a
-                    href={socialLinks.youtube || 'https://www.youtube.com/@Acadvizen'}
+                    href={mergedSocialLinks.youtube}
                     target="_blank"
                     rel="noreferrer"
                     aria-label="YouTube"
@@ -327,7 +453,7 @@ export function PublicLayout({ children }) {
                     <Youtube className="h-4 w-4" />
                   </a>
                   <a
-                    href={socialLinks.facebook || 'https://www.facebook.com/profile.php?id=61586987972331'}
+                    href={mergedSocialLinks.facebook}
                     target="_blank"
                     rel="noreferrer"
                     aria-label="Facebook"

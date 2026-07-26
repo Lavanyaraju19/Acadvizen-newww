@@ -29,7 +29,7 @@ export async function PATCH(request, { params }) {
   }
 
   const { data, error } = await supabase.from('menus').update(update).eq('id', id).select('*').single()
-  if (error) return jsonError(`Failed to update menu item: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to update menu item: ${error.message}`, 500)
   revalidateAllCmsPages()
   return jsonOk(data)
 }
@@ -45,7 +45,7 @@ export async function DELETE(request, { params }) {
   if (!id) return jsonError('Menu id is required.', 400)
 
   const { error } = await supabase.from('menus').delete().eq('id', id)
-  if (error) return jsonError(`Failed to delete menu item: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to delete menu item: ${error.message}`, 500)
   revalidateAllCmsPages()
   return jsonOk({ id, deleted: true })
 }

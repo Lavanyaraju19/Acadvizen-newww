@@ -21,8 +21,12 @@ const nextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
-      { protocol: 'https', hostname: '**' },
-      { protocol: 'http', hostname: '**' },
+      { protocol: 'https', hostname: '*.supabase.co' },
+      { protocol: 'https', hostname: 'logo.clearbit.com' },
+      { protocol: 'https', hostname: 'via.placeholder.com' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
     ],
   },
   async headers() {

@@ -84,16 +84,63 @@ export async function GET(request) {
       const { data: cities } = await supabase
         .from('city_pages')
         .select('slug, updated_at')
-        .eq('status', 'published')
+        .eq('is_active', true)
         .neq('exclude_from_sitemap', true)
 
       if (cities) {
         cities.forEach(city => {
+          // Add both the cities route and the digital-marketing-course-in route
           sitemapItems.push({
             loc: `${baseUrl}/cities/${city.slug}`,
             lastmod: city.updated_at,
             changefreq: settings.changefreq_cities || 'monthly',
             priority: settings.priority_cities || 0.5,
+          })
+          sitemapItems.push({
+            loc: `${baseUrl}/digital-marketing-course-in-${city.slug}`,
+            lastmod: city.updated_at,
+            changefreq: settings.changefreq_cities || 'monthly',
+            priority: settings.priority_cities || 0.6,
+          })
+        })
+      }
+    }
+
+    // Add tools
+    if (settings?.include_tools !== false) {
+      const { data: tools } = await supabase
+        .from('tools_extended')
+        .select('slug, updated_at')
+        .eq('is_active', true)
+        .neq('exclude_from_sitemap', true)
+
+      if (tools) {
+        tools.forEach(tool => {
+          sitemapItems.push({
+            loc: `${baseUrl}/tools/${tool.slug}`,
+            lastmod: tool.updated_at,
+            changefreq: settings.changefreq_tools || 'monthly',
+            priority: settings.priority_tools || 0.5,
+          })
+        })
+      }
+    }
+
+    // Add landing pages
+    if (settings?.include_landing_pages !== false) {
+      const { data: landingPages } = await supabase
+        .from('location_pages')
+        .select('slug, updated_at')
+        .eq('status', 'published')
+        .neq('exclude_from_sitemap', true)
+
+      if (landingPages) {
+        landingPages.forEach(landing => {
+          sitemapItems.push({
+            loc: `${baseUrl}/${landing.slug}`,
+            lastmod: landing.updated_at,
+            changefreq: settings.changefreq_landing_pages || 'weekly',
+            priority: settings.priority_landing_pages || 0.7,
           })
         })
       }

@@ -34,7 +34,8 @@ export async function PATCH(request, { params }) {
   }
 
   const { data, error } = await supabase.from('pages').update(update).eq('id', id).select('*').single()
-  if (error) return jsonError(`Failed to update page: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to update page: ${error.message}`, 500)
+
   revalidateCmsPaths([normalizePagePath(data?.slug)])
   revalidateAllCmsPages()
   return jsonOk(data)
@@ -52,7 +53,7 @@ export async function DELETE(request, { params }) {
 
   const { data: page } = await supabase.from('pages').select('slug').eq('id', id).maybeSingle()
   const { error } = await supabase.from('pages').delete().eq('id', id)
-  if (error) return jsonError(`Failed to delete page: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to delete page: ${error.message}`, 500)
   revalidateCmsPaths([normalizePagePath(page?.slug)])
   revalidateAllCmsPages()
   return jsonOk({ id, deleted: true })

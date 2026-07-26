@@ -22,7 +22,7 @@ export async function GET(request, { params }) {
     .order('version_number', { ascending: false })
     .limit(50)
 
-  if (error) return jsonError(`Failed to fetch versions: ${error.message}`, 200, [])
+  if (error) return jsonError(`Failed to fetch versions: ${error.message}`, 500, [])
   return jsonOk(data || [])
 }
 
@@ -59,6 +59,6 @@ export async function POST(request, { params }) {
       p_change_summary: body.change_summary || 'Manual save'
     })
 
-  if (error) return jsonError(`Failed to create version: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to create version: ${error.message}`, 500)
   return jsonOk({ id: version, version_number: body.version_number })
 }

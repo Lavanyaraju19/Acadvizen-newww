@@ -9,6 +9,7 @@ import {
   readJsonBody,
 } from '../../_utils'
 import { applyEntityOrdering, getEntityConfig, sanitizeEntityPayload } from '../../../../../lib/cmsEntities'
+import { validateEntity } from '../../../../../lib/validation'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,70 +54,87 @@ function applyFilters(query, request, config, isAdmin) {
 }
 
 export async function GET(request, { params }) {
-  const config = getEntityConfig(params?.entity)
-  if (!config) return jsonError('Unknown CMS entity.', 404, [])
+  try {
+    const config = getEntityConfig(params?.entity)
+    if (!config) return jsonError('Unknown CMS entity.', 404, [])
 
-  const { searchParams } = new URL(request.url)
-  const limit = parsePositiveInt(searchParams.get('limit'), 250)
-  const isAdmin = isAdminRequest(request)
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: isAdmin })
-  if (response) return response
+    const { searchParams } = new URL(request.url)
+    const limit = parsePositiveInt(searchParams.get('limit'), 250)
+    const isAdmin = isAdminRequest(request)
+    const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: isAdmin })
+    if (response) return response
 
-  let query = supabase.from(config.table).select('*').limit(limit || 250)
-  query = applyEntityOrdering(query, config)
-  query = applyFilters(query, request, config, isAdmin)
+    let query = supabase.from(config.table).select('*').limit(limit || 250)
+    query = applyEntityOrdering(query, config)
+    query = applyFilters(query, request, config, isAdmin)
 
-  const { data, error } = await query
-  if (error) return jsonError(`Database query failed: ${error.message}`, 200, [])
-  return jsonOk(data || [])
+    const { data, error } = await query
+    if (error) return jsonError(`Database query failed: ${error.message}`, 500, [])
+    return jsonOk(data || [])
+  } catch (error) {
+    return jsonError(`Internal server error: ${error.message}`, 500, [])
+  }
 }
 
 export async function POST(request, { params }) {
-  const unauthorized = await ensureAdmin(request)
-  if (unauthorized) return unauthorized
+  try {
+    const unauthorized = await ensureAdmin(request)
+    if (unauthorized) return unauthorized
 
-  const config = getEntityConfig(params?.entity)
-  if (!config) return jsonError('Unknown CMS entity.', 404)
+    const config = getEntityConfig(params?.entity)
+    if (!config) return jsonError('Unknown CMS entity.', 404)
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
-  if (response) return response
+    const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+    if (response) return response
 
-  const body = await readJsonBody(request)
-  if (!body || typeof body !== 'object') return jsonError('Invalid request body.', 400)
+    const body = await readJsonBody(request)
+    if (!body || typeof body !== 'object') return jsonError('Invalid request body.', 400)
 
-  if (body.action === 'duplicate' && body.id) {
-    const { data: source, error: sourceError } = await supabase.from(config.table).select('*').eq('id', body.id).single()
-    if (sourceError || !source) return jsonError('Source record not found.', 404)
-
-    const duplicate = sanitizeEntityPayload(source, config)
-    if (config.slugField && duplicate[config.slugField]) {
-      duplicate[config.slugField] = `${duplicate[config.slugField]}-${Date.now()}`
+    // Input validation for create/update operations (not for duplicate action)
+    const entityType = params?.entity
+    if (entityType && !body.action) {
+      const validation = validateEntity(entityType, body)
+      if (!validation.valid) {
+        return jsonError(validation.errors.join('; '), 400)
+      }
     }
-    if ('name' in duplicate && duplicate.name) duplicate.name = `${duplicate.name} Copy`
-    if ('title' in duplicate && duplicate.title) duplicate.title = `${duplicate.title} Copy`
-    if (config.statusField) duplicate[config.statusField] = 'draft'
 
-    const { data, error } = await supabase.from(config.table).insert(duplicate).select('*').single()
-    if (error) return jsonError(`Failed to duplicate record: ${error.message}`, 200)
+    if (body.action === 'duplicate' && body.id) {
+      const { data: source, error: sourceError } = await supabase.from(config.table).select('*').eq('id', body.id).single()
+      if (sourceError || !source) return jsonError('Source record not found.', 404)
+
+      const duplicate = sanitizeEntityPayload(source, config)
+      if (config.slugField && duplicate[config.slugField]) {
+        duplicate[config.slugField] = `${duplicate[config.slugField]}-${Date.now()}`
+      }
+      if ('name' in duplicate && duplicate.name) duplicate.name = `${duplicate.name} Copy`
+      if ('title' in duplicate && duplicate.title) duplicate.title = `${duplicate.title} Copy`
+      if (config.statusField) duplicate[config.statusField] = 'draft'
+
+      const { data, error } = await supabase.from(config.table).insert(duplicate).select('*').single()
+      if (error) return jsonError(`Failed to duplicate record: ${error.message}`, 500)
+      revalidateAllCmsPages()
+      return jsonOk(data)
+    }
+
+    const payload = sanitizeEntityPayload(body, config)
+    if (!Object.keys(payload).length) return jsonError('No writable fields provided.', 400)
+
+    const upsertPayload = {
+      ...payload,
+      id: body.id || undefined,
+    }
+
+    const { data, error } = await supabase
+      .from(config.table)
+      .upsert(upsertPayload, { onConflict: 'id' })
+      .select('*')
+      .single()
+
+    if (error) return jsonError(`Failed to save record: ${error.message}`, 500)
     revalidateAllCmsPages()
     return jsonOk(data)
+  } catch (error) {
+    return jsonError(`Internal server error: ${error.message}`, 500)
   }
-
-  const payload = sanitizeEntityPayload(body, config)
-  if (!Object.keys(payload).length) return jsonError('No writable fields provided.', 400)
-
-  const upsertPayload = {
-    ...payload,
-    id: body.id || undefined,
-  }
-
-  const { data, error } = await supabase
-    .from(config.table)
-    .upsert(upsertPayload, { onConflict: 'id' })
-    .select('*')
-    .single()
-
-  if (error) return jsonError(`Failed to save record: ${error.message}`, 200)
-  revalidateAllCmsPages()
-  return jsonOk(data)
 }

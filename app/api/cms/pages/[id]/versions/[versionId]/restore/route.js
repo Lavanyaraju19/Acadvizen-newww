@@ -42,7 +42,7 @@ export async function POST(request, { params }) {
     .select('*')
     .single()
 
-  if (updateError) return jsonError(`Failed to restore version: ${updateError.message}`, 200)
+  if (updateError) return jsonError(`Failed to restore version: ${updateError.message}`, 500)
   
   revalidateAllCmsPages()
   return jsonOk({ restored: true, page })

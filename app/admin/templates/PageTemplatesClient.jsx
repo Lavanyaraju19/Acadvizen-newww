@@ -57,17 +57,11 @@ export default function PageTemplatesClient() {
   async function loadTemplates() {
     setLoading(true)
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
-      )
+      // Use API route instead of direct service role key access
+      const response = await fetch('/api/cms/entities/page_templates')
+      if (!response.ok) throw new Error('Failed to load templates')
       
-      const { data } = await supabaseClient
-        .from('page_templates')
-        .select('*')
-        .order('created_at', { ascending: false })
-      
+      const { data } = await response.json()
       setTemplates(data || [])
     } catch (error) {
       setStatus(error?.message || 'Failed to load templates.')
@@ -86,24 +80,22 @@ export default function PageTemplatesClient() {
     setSaving(true)
     setStatus('')
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
-      )
+      // Use API route instead of direct service role key access
+      const url = editingTemplate 
+        ? `/api/cms/entities/page_templates/${editingTemplate.id}`
+        : '/api/cms/entities/page_templates'
+      const method = editingTemplate ? 'PUT' : 'POST'
       
-      if (editingTemplate) {
-        const { error } = await supabaseClient
-          .from('page_templates')
-          .update(formData)
-          .eq('id', editingTemplate.id)
-        if (error) throw error
-      } else {
-        const { error } = await supabaseClient
-          .from('page_templates')
-          .insert(formData)
-        if (error) throw error
-      }
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      })
+      
+      if (!response.ok) throw new Error('Failed to save template')
+      
+      const { error } = await response.json()
+      if (error) throw error
       
       setShowModal(false)
       setEditingTemplate(null)
@@ -122,13 +114,13 @@ export default function PageTemplatesClient() {
     setSaving(true)
     setStatus('')
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
-      )
+      // Use API route instead of direct service role key access
+      const response = await fetch(`/api/cms/entities/page_templates/${id}`, {
+        method: 'DELETE'
+      })
       
-      await supabaseClient.from('page_templates').delete().eq('id', id)
+      if (!response.ok) throw new Error('Failed to delete template')
+      
       await loadTemplates()
       setStatus('Template deleted.')
     } catch (error) {
@@ -142,22 +134,20 @@ export default function PageTemplatesClient() {
     setSaving(true)
     setStatus('')
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
-      )
-      
-      const { error } = await supabaseClient
-        .from('page_templates')
-        .insert({
-          ...template,
-          id: undefined,
-          name: `${template.name} (Copy)`,
-          is_default: false,
-          created_at: undefined,
-          updated_at: undefined,
+      // Use API route instead of direct service role key access
+      const response = await fetch('/api/cms/duplicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entity: 'page_templates',
+          id: template.id,
+          name: `${template.name} (Copy)`
         })
+      })
+      
+      if (!response.ok) throw new Error('Failed to duplicate template')
+      
+      const { error } = await response.json()
       if (error) throw error
       
       await loadTemplates()

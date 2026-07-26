@@ -33,7 +33,7 @@ export async function GET(request) {
     .order('created_at', { ascending: false })
     .limit(limit)
 
-  if (error) return jsonError(`Failed to fetch users: ${error.message}`, 200, [])
+  if (error) return jsonError(`Failed to fetch users: ${error.message}`, 500, [])
   return jsonOk(data || [])
 }
 
@@ -71,7 +71,7 @@ export async function POST(request) {
     }
   })
 
-  if (authError) return jsonError(`Failed to create user: ${authError.message}`, 200)
+  if (authError) return jsonError(`Failed to create user: ${authError.message}`, 500)
 
   // Update profile with role
   const { data: profile, error: profileError } = await supabase
@@ -84,7 +84,7 @@ export async function POST(request) {
     .select('*')
     .single()
 
-  if (profileError) return jsonError(`Failed to update profile: ${profileError.message}`, 200)
+  if (profileError) return jsonError(`Failed to update profile: ${profileError.message}`, 500)
 
   // Assign role if provided
   if (body.role_id) {

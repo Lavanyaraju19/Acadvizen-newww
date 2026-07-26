@@ -1,25 +1,25 @@
 export const revalidate = 0
 export const dynamic = 'force-dynamic'
 
-import DynamicPageRenderer from '../components/cms/DynamicPageRenderer'
-import { fetchCmsPageBySlug } from '../lib/cmsServer'
+import HomePage from '../src/legacy/pages/HomePage'
+import { fetchAllHomepageData } from '../lib/homepageCmsData'
 import { PublicLayout } from '../src/components/Layout/PublicLayout'
-import HomeLegacyClient from './legacy-fallback/HomeLegacyClient'
-import { buildCmsPageMetadata } from './lib/cmsPageRoute'
-import { isPublicCmsEnabled } from './lib/publicCms'
 
 export async function generateMetadata() {
-  return buildCmsPageMetadata('home', '/', {
+  return {
     title: 'Acadvizen: Digital Marketing Course in Bangalore with AI Training',
     description: 'Join Acadvizen\'s Digital Marketing Course in Bangalore with AI Training. Learn SEO, Google Ads, Meta Ads, AI Automation, Website Development, Content Marketing, Analytics, and more through live projects, internships, and placement assistance.',
-  })
+    keywords: 'digital marketing course in bangalore, digital marketing training with AI, AI marketing course bangalore, SEO course bangalore, Google Ads training, Meta Ads course, digital marketing with placement',
+  }
 }
 
 export default async function Page() {
-  if (!isPublicCmsEnabled()) {
-    return <PublicLayout><HomeLegacyClient /></PublicLayout>
-  }
+  // Fetch all CMS data for homepage
+  const cmsData = await fetchAllHomepageData()
 
-  const cmsPage = await fetchCmsPageBySlug('home')
-  return <PublicLayout>{cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <HomeLegacyClient />}</PublicLayout>
+  return (
+    <PublicLayout>
+      <HomePage cmsData={cmsData} />
+    </PublicLayout>
+  )
 }

@@ -28,7 +28,7 @@ export async function PATCH(request, { params }) {
   }
 
   const { data, error } = await supabase.from('media').update(update).eq('id', id).select('*').single()
-  if (error) return jsonError(`Failed to update media: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to update media: ${error.message}`, 500)
   return jsonOk(data)
 }
 
@@ -43,6 +43,6 @@ export async function DELETE(request, { params }) {
   if (!id) return jsonError('Media id is required.', 400)
 
   const { error } = await supabase.from('media').delete().eq('id', id)
-  if (error) return jsonError(`Failed to delete media metadata: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to delete media metadata: ${error.message}`, 500)
   return jsonOk({ id, deleted: true })
 }

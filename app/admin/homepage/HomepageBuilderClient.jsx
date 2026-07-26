@@ -115,18 +115,16 @@ export default function HomepageBuilderClient() {
     setLoading(true)
     setStatus('')
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
-      )
+      // Use API route instead of direct service role key access
+      const response = await fetch('/api/cms/site', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      })
       
-      const { error } = await supabaseClient
-        .from('homepage_settings')
-        .update(settings)
-        .eq('id', settings.id)
-        .single()
+      if (!response.ok) throw new Error('Failed to update homepage settings')
       
+      const { error } = await response.json()
       if (error) throw error
       
       setStatus('Homepage settings saved.')

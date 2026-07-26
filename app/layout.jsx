@@ -1,12 +1,25 @@
 import './globals.css'
 import { Suspense } from 'react'
 import Script from 'next/script'
+import { Inter } from 'next/font/google'
 import Providers from './providers'
 import MetaPixel from '../components/MetaPixel'
 import { siteConfig } from './lib/seo'
-import { checkEnv } from '../lib/checkEnv'
+import { validateSupabaseConfig } from '../lib/env'
 
-checkEnv()
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+})
+
+// Validate critical environment config at build time
+const configErrors = validateSupabaseConfig()
+if (configErrors.length > 0) {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('[Acadvizen] Critical configuration errors:', configErrors.join(', '))
+  }
+}
 
 export const metadata = {
   metadataBase: new URL('https://acadvizen.com'),
@@ -151,8 +164,8 @@ export default function RootLayout({ children }) {
   }
 
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" className={`${inter.variable}`}>
+      <body className={inter.className}>
         <Script id="gtm-script" strategy="afterInteractive">
           {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],

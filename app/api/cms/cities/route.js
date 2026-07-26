@@ -17,13 +17,23 @@ export async function GET(request) {
 
   const limit = parseInt(searchParams.get('limit') || '100')
 
-  let query = supabase.from('city_pages').select('*').order('priority', { ascending: true }).limit(limit)
-  if (!includeDrafts) query = query.eq('is_active', true)
+  try {
+    let query = supabase.from('city_pages').select('*').order('priority', { ascending: true }).limit(limit)
+    if (!includeDrafts) query = query.eq('is_active', true)
 
-  const { data, error } = await query
-  if (error) return jsonError(`Database query failed: ${error.message}`, 200, [])
+    const { data, error } = await query
+    if (error) {
+      // If table doesn't exist, return empty array
+      if (error.code === '42P01') {
+        return jsonOk([])
+      }
+      return jsonError(`Database query failed: ${error.message}`, 500, [])
+    }
 
-  return jsonOk(data || [])
+    return jsonOk(data || [])
+  } catch (error) {
+    return jsonError(`Unexpected error: ${error.message}`, 500, [])
+  }
 }
 
 export async function POST(request) {
@@ -39,7 +49,20 @@ export async function POST(request) {
   }
 
   // Generate slug from city name if not provided
-  const slug = body.slug || body.city_name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+  let slug = body.slug || body.city_name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+
+  // Ensure slug uniqueness
+  const { data: existingSlug } = await supabase
+    .from('city_pages')
+    .select('id')
+    .eq('slug', slug)
+    .neq('id', body.id || '')
+    .single()
+
+  if (existingSlug) {
+    // Append timestamp to make unique
+    slug = `${slug}-${Date.now()}`
+  }
 
   const payload = {
     id: body.id || undefined,
@@ -79,7 +102,7 @@ export async function POST(request) {
     .select('*')
     .single()
 
-  if (error) return jsonError(`Failed to save city page: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to save city page: ${error.message}`, 500)
   revalidateAllCmsPages()
   return jsonOk(data)
 }

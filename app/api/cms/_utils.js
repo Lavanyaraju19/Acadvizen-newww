@@ -22,10 +22,12 @@ export function jsonOk(data = null, extra = {}) {
   return NextResponse.json({ success: true, data, error: null, ...extra }, { status: 200 })
 }
 
-export function jsonError(error, status = 200, data = null) {
+export function jsonError(error, status = 500, data = null) {
+  // Ensure valid HTTP status code (4xx or 5xx). If caller passed 200, coerce to 500.
+  const httpStatus = (typeof status === 'number' && status >= 400 && status <= 599) ? status : 500
   return NextResponse.json(
     { success: false, data, error: typeof error === 'string' ? error : error?.message || 'Request failed.' },
-    { status }
+    { status: httpStatus }
   )
 }
 
@@ -77,7 +79,7 @@ export function getSupabaseClientOrResponse(request, options = {}) {
       supabase: null,
       response: jsonError(
         'Supabase server configuration is invalid. Check SUPABASE_SERVICE_ROLE_KEY or sign in again as admin.',
-        200,
+        500,
         []
       ),
     }

@@ -30,7 +30,7 @@ export async function GET(request) {
   if (id) query = query.eq('id', id)
 
   const { data, error } = await query
-  if (error) return jsonError(`Database query failed: ${error.message}`, 200, [])
+  if (error) return jsonError(`Database query failed: ${error.message}`, 500, [])
 
   if (!includeSections) return jsonOk(data || [])
   const pageIds = (data || []).map((item) => item.id).filter(Boolean)
@@ -42,7 +42,7 @@ export async function GET(request) {
     .in('page_id', pageIds)
     .order('order_index', { ascending: true })
 
-  if (sectionsError) return jsonError(`Sections query failed: ${sectionsError.message}`, 200, data || [])
+  if (sectionsError) return jsonError(`Sections query failed: ${sectionsError.message}`, 500, data || [])
 
   const grouped = (sections || []).reduce((acc, section) => {
     if (!acc[section.page_id]) acc[section.page_id] = []
@@ -65,14 +65,29 @@ export async function POST(request) {
     return jsonError('title and slug are required.', 400)
   }
 
+  const slug = String(body.slug).trim()
+
+  // Ensure slug uniqueness
+  const { data: existingSlug } = await supabase
+    .from('pages')
+    .select('id')
+    .eq('slug', slug)
+    .neq('id', body.id || '')
+    .single()
+
+  if (existingSlug) {
+    return jsonError('A page with this slug already exists', 400)
+  }
+
   const payload = {
     id: body.id || undefined,
     title: String(body.title).trim(),
-    slug: String(body.slug).trim(),
+    slug,
     description: body.description || null,
     seo_title: body.seo_title || null,
     seo_description: body.seo_description || null,
     status: body.status === 'published' ? 'published' : 'draft',
+    published_at: body.status === 'published' && !body.id ? new Date().toISOString() : body.published_at,
   }
 
   const { data, error } = await supabase
@@ -81,7 +96,7 @@ export async function POST(request) {
     .select('*')
     .single()
 
-  if (error) return jsonError(`Failed to save page: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to save page: ${error.message}`, 500)
   revalidateCmsPaths([normalizePagePath(data?.slug)])
   revalidateAllCmsPages()
   return jsonOk(data)

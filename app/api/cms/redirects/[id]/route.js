@@ -7,7 +7,7 @@ import {
 
 export const dynamic = 'force-dynamic'
 
-export async function PUT(request, { params }) {
+export async function PATCH(request, { params }) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
@@ -48,7 +48,7 @@ export async function PUT(request, { params }) {
     .select('*')
     .single()
 
-  if (error) return jsonError(`Failed to update redirect: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to update redirect: ${error.message}`, 500)
   return jsonOk(data)
 }
 
@@ -66,6 +66,6 @@ export async function DELETE(request, { params }) {
     .delete()
     .eq('id', id)
 
-  if (error) return jsonError(`Failed to delete redirect: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to delete redirect: ${error.message}`, 500)
   return jsonOk({ success: true })
 }

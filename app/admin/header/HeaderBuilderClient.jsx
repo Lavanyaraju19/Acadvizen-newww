@@ -18,8 +18,16 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
+  ChevronLeft,
   Layers,
-  Settings
+  Settings,
+  MoreHorizontal,
+  Monitor,
+  Smartphone,
+  Link2,
+  Copy,
+  Scissors
 } from 'lucide-react'
 
 const SOCIAL_PLATFORMS = [
@@ -30,6 +38,25 @@ const SOCIAL_PLATFORMS = [
   { id: 'youtube', label: 'YouTube', icon: '▶' },
   { id: 'whatsapp', label: 'WhatsApp', icon: '💬' },
 ]
+
+const MENU_ICONS = [
+  { id: 'home', label: 'Home', emoji: '🏠' },
+  { id: 'book', label: 'Courses', emoji: '📚' },
+  { id: 'graduation-cap', label: 'Learning', emoji: '🎓' },
+  { id: 'users', label: 'Community', emoji: '👥' },
+  { id: 'briefcase', label: 'Jobs', emoji: '💼' },
+  { id: 'star', label: 'Featured', emoji: '⭐' },
+  { id: 'heart', label: 'Favorites', emoji: '❤️' },
+  { id: 'clock', label: 'Schedule', emoji: '⏰' },
+  { id: 'calendar', label: 'Calendar', emoji: '📅' },
+  { id: 'message', label: 'Messages', emoji: '💬' },
+  { id: 'settings', label: 'Settings', emoji: '⚙️' },
+  { id: 'help', label: 'Help', emoji: '❓' },
+  { id: 'none', label: 'No Icon', emoji: '' },
+]
+
+const MAX_DEPTH = 3
+const DEFAULT_MEGA_MENU_COLUMNS = 2
 
 export default function HeaderBuilderClient() {
   const [settings, setSettings] = useState({
@@ -74,6 +101,8 @@ export default function HeaderBuilderClient() {
   const [uploading, setUploading] = useState('')
   const [activeSection, setActiveSection] = useState('logo')
   const [expandedSections, setExpandedSections] = useState(new Set(['logo']))
+  const [expandedMenuItems, setExpandedMenuItems] = useState(new Set())
+  const [editingNavItem, setEditingNavItem] = useState(null)
 
   useEffect(() => {
     loadSettings()
@@ -96,7 +125,7 @@ export default function HeaderBuilderClient() {
         setSettings({
           ...settings,
           ...data,
-          nav_items: Array.isArray(data.nav_items) ? data.nav_items : [],
+          nav_items: normalizeNavItems(Array.isArray(data.nav_items) ? data.nav_items : []),
           social_items: Array.isArray(data.social_items) ? data.social_items : [],
         })
       }
@@ -109,18 +138,16 @@ export default function HeaderBuilderClient() {
     setSaving(true)
     setStatus('')
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
-      )
+      // Use API route instead of direct service role key access
+      const response = await fetch('/api/cms/header', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      })
       
-      const { error } = await supabaseClient
-        .from('header_settings')
-        .update(settings)
-        .eq('id', settings.id)
-        .single()
+      if (!response.ok) throw new Error('Failed to update header settings')
       
+      const { error } = await response.json()
       if (error) throw error
       
       setStatus('Header settings saved successfully.')
@@ -146,41 +173,417 @@ export default function HeaderBuilderClient() {
     }
   }
 
-  function addNavItem() {
-    setSettings(prev => ({
-      ...prev,
-      nav_items: [...prev.nav_items, { label: '', link: '/', active: true }]
+  // Helper function to normalize nav items to ensure they have all required fields
+  function normalizeNavItems(items) {
+    return items.map(item => ({
+      id: item.id || generateId(),
+      label: item.label || '',
+      link: item.link || '/',
+      active: item.active !== undefined ? item.active : true,
+      target: item.target || '_self',
+      icon: item.icon || 'none',
+      parent_id: item.parent_id || null,
+      order_index: item.order_index !== undefined ? item.order_index : 0,
+      has_dropdown: item.has_dropdown || false,
+      is_mega_menu: item.is_mega_menu || false,
+      mega_menu_columns: item.mega_menu_columns || DEFAULT_MEGA_MENU_COLUMNS,
+      mega_menu_content: item.mega_menu_content || null,
+      visible_desktop: item.visible_desktop !== undefined ? item.visible_desktop : true,
+      visible_mobile: item.visible_mobile !== undefined ? item.visible_mobile : true,
+      children: Array.isArray(item.children) ? normalizeNavItems(item.children) : [],
     }))
   }
 
-  function updateNavItem(index, field, value) {
-    setSettings(prev => ({
-      ...prev,
-      nav_items: prev.nav_items.map((item, i) => i === index ? { ...item, [field]: value } : item)
-    }))
+  // Generate unique ID for nav items
+  function generateId() {
+    return 'nav_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
   }
 
-  function removeNavItem(index) {
-    setSettings(prev => ({
-      ...prev,
-      nav_items: prev.nav_items.filter((_, i) => i !== index)
-    }))
+  // Validate URL
+  function isValidUrl(url) {
+    if (!url) return true
+    try {
+      new URL(url.startsWith('http') ? url : `https://${url}`)
+      return true
+    } catch {
+      return false
+    }
   }
 
-  function moveNavItemUp(index) {
-    if (index === 0) return
-    const newItems = [...settings.nav_items]
-    const [removed] = newItems.splice(index, 1)
-    newItems.splice(index - 1, 0, removed)
-    setSettings(prev => ({ ...prev, nav_items: newItems }))
+  // Check for circular references
+  function hasCircularReference(itemId, parentId, navItems) {
+    if (!parentId) return false
+    if (parentId === itemId) return true
+    
+    const parent = findNavItemById(parentId, navItems)
+    if (!parent) return false
+    
+    return hasCircularReference(itemId, parent.parent_id, navItems)
   }
 
-  function moveNavItemDown(index) {
-    if (index === settings.nav_items.length - 1) return
-    const newItems = [...settings.nav_items]
-    const [removed] = newItems.splice(index, 1)
-    newItems.splice(index + 1, 0, removed)
-    setSettings(prev => ({ ...prev, nav_items: newItems }))
+  // Find nav item by ID (recursive)
+  function findNavItemById(id, items, parent = null) {
+    for (const item of items) {
+      if (item.id === id) return { item, parent }
+      if (item.children && item.children.length > 0) {
+        const found = findNavItemById(id, item.children, item)
+        if (found) return found
+      }
+    }
+    return null
+  }
+
+  // Get depth of a nav item
+  function getItemDepth(itemId, navItems) {
+    const found = findNavItemById(itemId, navItems)
+    if (!found) return 0
+    
+    let depth = 0
+    let current = found.item
+    while (current.parent_id) {
+      depth++
+      const parent = findNavItemById(current.parent_id, navItems)
+      if (!parent) break
+      current = parent.item
+    }
+    return depth
+  }
+
+  // Get all nav items as flat list
+  function getFlatNavItems(items = settings.nav_items, result = []) {
+    for (const item of items) {
+      result.push(item)
+      if (item.children && item.children.length > 0) {
+        getFlatNavItems(item.children, result)
+      }
+    }
+    return result
+  }
+
+  // Get parent options for dropdown
+  function getParentOptions(currentItemId = null) {
+    const flatItems = getFlatNavItems()
+    return flatItems
+      .filter(item => item.id !== currentItemId)
+      .filter(item => {
+        const depth = getItemDepth(item.id, settings.nav_items)
+        return depth < MAX_DEPTH - 1
+      })
+      .map(item => ({
+        value: item.id,
+        label: item.label || 'Untitled',
+        depth: getItemDepth(item.id, settings.nav_items),
+      }))
+  }
+
+  // Get parent options for a specific item (excluding its descendants)
+  function getParentOptionsForItem(itemId) {
+    const flatItems = getFlatNavItems()
+    const descendants = new Set()
+    
+    // Get all descendants of the current item
+    const collectDescendants = (item) => {
+      descendants.add(item.id)
+      if (item.children) {
+        item.children.forEach(collectDescendants)
+      }
+    }
+    
+    const currentItem = findNavItemById(itemId, settings.nav_items)
+    if (currentItem) {
+      collectDescendants(currentItem.item)
+    }
+    
+    return flatItems
+      .filter(item => !descendants.has(item.id))
+      .filter(item => {
+        const depth = getItemDepth(item.id, settings.nav_items)
+        return depth < MAX_DEPTH - 1
+      })
+      .map(item => ({
+        value: item.id,
+        label: item.label || 'Untitled',
+        depth: getItemDepth(item.id, settings.nav_items),
+      }))
+  }
+
+  // Get breadcrumb for a nav item
+  function getBreadcrumb(itemId) {
+    const breadcrumb = []
+    let current = findNavItemById(itemId, settings.nav_items)
+    
+    while (current) {
+      breadcrumb.unshift(current.item.label || 'Untitled')
+      if (current.item.parent_id) {
+        current = findNavItemById(current.item.parent_id, settings.nav_items)
+      } else {
+        break
+      }
+    }
+    
+    return breadcrumb.join(' > ')
+  }
+
+  function addNavItem(parentId = null) {
+    const newItem = {
+      id: generateId(),
+      label: '',
+      link: '/',
+      active: true,
+      target: '_self',
+      icon: 'none',
+      parent_id: parentId,
+      order_index: 0,
+      has_dropdown: false,
+      is_mega_menu: false,
+      mega_menu_columns: DEFAULT_MEGA_MENU_COLUMNS,
+      mega_menu_content: null,
+      visible_desktop: true,
+      visible_mobile: true,
+      children: [],
+    }
+
+    if (parentId) {
+      setSettings(prev => {
+        const updateChildren = (items) => {
+          return items.map(item => {
+            if (item.id === parentId) {
+              return {
+                ...item,
+                children: [...(item.children || []), { ...newItem, order_index: (item.children || []).length }],
+                has_dropdown: true,
+              }
+            }
+            if (item.children && item.children.length > 0) {
+              return { ...item, children: updateChildren(item.children) }
+            }
+            return item
+          })
+        }
+        return { ...prev, nav_items: updateChildren(prev.nav_items) }
+      })
+    } else {
+      setSettings(prev => ({
+        ...prev,
+        nav_items: [...prev.nav_items, { ...newItem, order_index: prev.nav_items.length }],
+      }))
+    }
+  }
+
+  function updateNavItem(itemId, field, value) {
+    setSettings(prev => {
+      const updateItem = (items) => {
+        return items.map(item => {
+          if (item.id === itemId) {
+            const updated = { ...item, [field]: value }
+            
+            // Auto-enable dropdown when adding children
+            if (field === 'children' && value && value.length > 0) {
+              updated.has_dropdown = true
+            }
+            
+            // Disable mega menu if dropdown is disabled
+            if (field === 'has_dropdown' && value === false) {
+              updated.is_mega_menu = false
+            }
+            
+            return updated
+          }
+          if (item.children && item.children.length > 0) {
+            return { ...item, children: updateItem(item.children) }
+          }
+          return item
+        })
+      }
+      return { ...prev, nav_items: updateItem(prev.nav_items) }
+    })
+  }
+
+  // Recursive version of updateNavItem for nested updates
+  function updateNavItemRecursive(items, itemId, field, value) {
+    return items.map(item => {
+      if (item.id === itemId) {
+        const updated = { ...item, [field]: value }
+        
+        // Auto-enable dropdown when adding children
+        if (field === 'children' && value && value.length > 0) {
+          updated.has_dropdown = true
+        }
+        
+        // Disable mega menu if dropdown is disabled
+        if (field === 'has_dropdown' && value === false) {
+          updated.is_mega_menu = false
+        }
+        
+        return updated
+      }
+      if (item.children && item.children.length > 0) {
+        return { ...item, children: updateNavItemRecursive(item.children, itemId, field, value) }
+      }
+      return item
+    })
+  }
+
+  function removeNavItem(itemId) {
+    setSettings(prev => {
+      const removeItem = (items) => {
+        return items
+          .filter(item => item.id !== itemId)
+          .map(item => {
+            if (item.children && item.children.length > 0) {
+              const newChildren = removeItem(item.children)
+              if (newChildren.length === 0) {
+                return { ...item, children: [], has_dropdown: false }
+              }
+              return { ...item, children: newChildren }
+            }
+            return item
+          })
+      }
+      return { ...prev, nav_items: removeItem(prev.nav_items) }
+    })
+  }
+
+  function moveNavItem(itemId, direction) {
+    setSettings(prev => {
+      const moveItem = (items, parentId = null) => {
+        const index = items.findIndex(item => item.id === itemId)
+        if (index === -1) {
+          // Search in children
+          return items.map(item => {
+            if (item.children && item.children.length > 0) {
+              return { ...item, children: moveItem(item.children, item.id) }
+            }
+            return item
+          })
+        }
+
+        const newItems = [...items]
+        const [removed] = newItems.splice(index, 1)
+        
+        if (direction === 'up' && index > 0) {
+          newItems.splice(index - 1, 0, removed)
+        } else if (direction === 'down' && index < items.length - 1) {
+          newItems.splice(index + 1, 0, removed)
+        }
+        
+        // Update order indices
+        return newItems.map((item, idx) => ({
+          ...item,
+          order_index: idx,
+          children: item.children ? item.children.map((child, cIdx) => ({
+            ...child,
+            order_index: cIdx,
+          })) : [],
+        }))
+      }
+      return { ...prev, nav_items: moveItem(prev.nav_items) }
+    })
+  }
+
+  function moveNavItemToParent(itemId, newParentId) {
+    if (hasCircularReference(itemId, newParentId, settings.nav_items)) {
+      setStatus('Cannot move item: circular reference detected.')
+      return
+    }
+
+    const depth = getItemDepth(newParentId, settings.nav_items)
+    if (depth >= MAX_DEPTH - 1) {
+      setStatus(`Cannot move item: maximum depth (${MAX_DEPTH}) exceeded.`)
+      return
+    }
+
+    setSettings(prev => {
+      // First, remove the item from its current location
+      const removeItem = (items) => {
+        return items
+          .filter(item => item.id !== itemId)
+          .map(item => {
+            if (item.children && item.children.length > 0) {
+              const newChildren = removeItem(item.children)
+              if (newChildren.length === 0) {
+                return { ...item, children: [], has_dropdown: false }
+              }
+              return { ...item, children: newChildren }
+            }
+            return item
+          })
+      }
+
+      // Then, add it to the new parent
+      const addToParent = (items) => {
+        if (!newParentId) {
+          return [...items, findNavItemById(itemId, removeItem(prev.nav_items))?.item]
+        }
+        return items.map(item => {
+          if (item.id === newParentId) {
+            const child = findNavItemById(itemId, removeItem(prev.nav_items))?.item
+            return {
+              ...item,
+              children: [...(item.children || []), { ...child, parent_id: newParentId }],
+              has_dropdown: true,
+            }
+          }
+          if (item.children && item.children.length > 0) {
+            return { ...item, children: addToParent(item.children) }
+          }
+          return item
+        })
+      }
+
+      return { ...prev, nav_items: addToParent(removeItem(prev.nav_items)) }
+    })
+  }
+
+  function duplicateNavItem(itemId) {
+    const found = findNavItemById(itemId, settings.nav_items)
+    if (!found) return
+
+    const duplicateItem = (item) => {
+      const newItem = {
+        ...item,
+        id: generateId(),
+        label: `${item.label} (copy)`,
+        children: item.children ? item.children.map(child => duplicateItem(child)) : [],
+      }
+      return newItem
+    }
+
+    const duplicated = duplicateItem(found.item)
+
+    setSettings(prev => {
+      if (found.parent) {
+        const addToParent = (items) => {
+          return items.map(item => {
+            if (item.id === found.parent.id) {
+              return {
+                ...item,
+                children: [...(item.children || []), { ...duplicated, parent_id: found.parent.id }],
+              }
+            }
+            if (item.children && item.children.length > 0) {
+              return { ...item, children: addToParent(item.children) }
+            }
+            return item
+          })
+        }
+        return { ...prev, nav_items: addToParent(prev.nav_items) }
+      } else {
+        return { ...prev, nav_items: [...prev.nav_items, duplicated] }
+      }
+    })
+  }
+
+  function toggleMenuItemExpansion(itemId) {
+    setExpandedMenuItems(prev => {
+      const next = new Set(prev)
+      if (next.has(itemId)) {
+        next.delete(itemId)
+      } else {
+        next.add(itemId)
+      }
+      return next
+    })
   }
 
   function addSocialItem() {
@@ -395,82 +798,48 @@ export default function HeaderBuilderClient() {
                 <h3 className="text-base font-semibold text-slate-100">Navigation Menu</h3>
                 <button
                   type="button"
-                  onClick={addNavItem}
+                  onClick={() => addNavItem()}
                   className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.05] text-sm"
                 >
                   <Plus className="w-4 h-4 inline mr-1" />
-                  Add Item
+                  Add Top-Level Item
                 </button>
               </div>
-              
-              {settings.nav_items.map((item, index) => (
-                <div key={index} className="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
-                  <div className="flex items-start gap-3">
-                    <GripVertical className="w-5 h-5 text-slate-500 mt-2" />
-                    <div className="flex-1 space-y-3">
-                      <div className="grid gap-3 md:grid-cols-2">
-                        <label className="text-xs text-slate-400">
-                          Label
-                          <input
-                            type="text"
-                            value={item.label}
-                            onChange={(e) => updateNavItem(index, 'label', e.target.value)}
-                            className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
-                          />
-                        </label>
-                        
-                        <label className="text-xs text-slate-400">
-                          Link
-                          <input
-                            type="text"
-                            value={item.link}
-                            onChange={(e) => updateNavItem(index, 'link', e.target.value)}
-                            className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
-                          />
-                        </label>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <label className="flex items-center gap-2 text-xs text-slate-400">
-                          <input
-                            type="checkbox"
-                            checked={item.active}
-                            onChange={(e) => updateNavItem(index, 'active', e.target.checked)}
-                            className="rounded border-white/10 bg-white/[0.03]"
-                          />
-                          Visible
-                        </label>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col gap-1">
-                      <button
-                        type="button"
-                        onClick={() => moveNavItemUp(index)}
-                        disabled={index === 0}
-                        className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] disabled:opacity-30"
-                      >
-                        <ChevronUp className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveNavItemDown(index)}
-                        disabled={index === settings.nav_items.length - 1}
-                        className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] disabled:opacity-30"
-                      >
-                        <ChevronDown className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeNavItem(index)}
-                        className="p-1.5 rounded-lg border border-rose-400/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
+
+              <div className="space-y-2">
+                {settings.nav_items.map((item) => (
+                  <NavItemEditor
+                    key={item.id}
+                    item={item}
+                    depth={0}
+                    expanded={expandedMenuItems.has(item.id)}
+                    onToggleExpand={() => toggleMenuItemExpansion(item.id)}
+                    onUpdate={(field, value) => updateNavItem(item.id, field, value)}
+                    onAddChild={() => addNavItem(item.id)}
+                    onRemove={() => removeNavItem(item.id)}
+                    onMoveUp={() => moveNavItem(item.id, 'up')}
+                    onMoveDown={() => moveNavItem(item.id, 'down')}
+                    onDuplicate={() => duplicateNavItem(item.id)}
+                    onMoveToParent={(newParentId) => moveNavItemToParent(item.id, newParentId)}
+                    editing={editingNavItem === item.id}
+                    onSetEditing={() => setEditingNavItem(editingNavItem === item.id ? null : item.id)}
+                    parentOptions={getParentOptions(item.id)}
+                    breadcrumb={getBreadcrumb(item.id)}
+                    onUpdateChild={(childId, field, value) => {
+                      setSettings(prev => ({ ...prev, nav_items: updateNavItemRecursive(prev.nav_items, childId, field, value) }))
+                    }}
+                    onEditChild={(childId) => setEditingNavItem(editingNavItem === childId ? null : childId)}
+                    editingChild={editingNavItem}
+                    getParentOptionsForItem={getParentOptionsForItem}
+                  />
+                ))}
+              </div>
+
+              {settings.nav_items.length === 0 && (
+                <div className="text-center py-8 text-slate-400 text-sm">
+                  No navigation items yet. Click "Add Top-Level Item" to get started.
                 </div>
-              ))}
+              )}
             </div>
           )}
 
@@ -805,5 +1174,383 @@ export default function HeaderBuilderClient() {
         </main>
       </div>
     </Surface>
+  )
+}
+
+// Nested component for editing individual nav items
+function NavItemEditor({
+  item,
+  depth,
+  expanded,
+  onToggleExpand,
+  onUpdate,
+  onAddChild,
+  onRemove,
+  onMoveUp,
+  onMoveDown,
+  onDuplicate,
+  onMoveToParent,
+  editing,
+  onSetEditing,
+  parentOptions,
+  breadcrumb,
+  onUpdateChild,
+  onEditChild,
+  editingChild,
+  getParentOptionsForItem,
+}) {
+  const hasChildren = item.children && item.children.length > 0
+  const canHaveChildren = depth < MAX_DEPTH - 1
+  const iconEmoji = MENU_ICONS.find(i => i.id === item.icon)?.emoji || ''
+
+  return (
+    <div
+      className="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden"
+      style={{ marginLeft: depth * 20 }}
+    >
+      {/* Item Header */}
+      <div className="p-3">
+        <div className="flex items-center gap-2">
+          {/* Drag Handle */}
+          <GripVertical className="w-5 h-5 text-slate-500 flex-shrink-0" />
+
+          {/* Expand/Collapse Button */}
+          {hasChildren && (
+            <button
+              type="button"
+              onClick={onToggleExpand}
+              className="p-1 rounded-lg hover:bg-white/[0.05] text-slate-400 hover:text-slate-200"
+            >
+              {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </button>
+          )}
+
+          {/* Icon & Label */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            {iconEmoji && <span className="text-lg">{iconEmoji}</span>}
+            <span className="text-sm text-slate-200 truncate">
+              {item.label || 'Untitled'}
+            </span>
+            {item.has_dropdown && (
+              <span className="px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-300 text-xs">
+                Dropdown
+              </span>
+            )}
+            {item.is_mega_menu && (
+              <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 text-xs">
+                Mega Menu
+              </span>
+            )}
+            {!item.active && (
+              <span className="px-1.5 py-0.5 rounded bg-slate-500/20 text-slate-400 text-xs">
+                Hidden
+              </span>
+            )}
+          </div>
+
+          {/* Visibility Indicators */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <span className={`text-xs ${item.visible_desktop ? 'text-teal-400' : 'text-slate-500'}`}>
+              <Monitor className="w-3 h-3" />
+            </span>
+            <span className={`text-xs ${item.visible_mobile ? 'text-teal-400' : 'text-slate-500'}`}>
+              <Smartphone className="w-3 h-3" />
+            </span>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <button
+              type="button"
+              onClick={onMoveUp}
+              className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]"
+              title="Move Up"
+            >
+              <ChevronUp className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onMoveDown}
+              className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]"
+              title="Move Down"
+            >
+              <ChevronDown className="w-4 h-4" />
+            </button>
+            {canHaveChildren && (
+              <button
+                type="button"
+                onClick={onAddChild}
+                className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]"
+                title="Add Child Item"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onDuplicate}
+              className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]"
+              title="Duplicate"
+            >
+              <Copy className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onSetEditing}
+              className={`p-1.5 rounded-lg border ${
+                editing ? 'border-teal-500/30 bg-teal-500/20 text-teal-300' : 'border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]'
+              }`}
+              title="Edit"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onRemove}
+              className="p-1.5 rounded-lg border border-rose-400/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20"
+              title="Delete"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Edit Panel */}
+        {editing && (
+          <div className="mt-3 pt-3 border-t border-white/10 space-y-3">
+            {/* Breadcrumb */}
+            {breadcrumb && (
+              <div className="text-xs text-slate-400">
+                Path: {breadcrumb}
+              </div>
+            )}
+
+            <div className="grid gap-3 md:grid-cols-2">
+              {/* Label */}
+              <label className="text-xs text-slate-400">
+                Label
+                <input
+                  type="text"
+                  value={item.label}
+                  onChange={(e) => onUpdate('label', e.target.value)}
+                  className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                />
+              </label>
+
+              {/* Link */}
+              <label className="text-xs text-slate-400">
+                Link
+                <input
+                  type="text"
+                  value={item.link}
+                  onChange={(e) => onUpdate('link', e.target.value)}
+                  className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                  placeholder="/path or https://example.com"
+                />
+              </label>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              {/* Icon */}
+              <label className="text-xs text-slate-400">
+                Icon
+                <select
+                  value={item.icon}
+                  onChange={(e) => onUpdate('icon', e.target.value)}
+                  className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                >
+                  {MENU_ICONS.map(icon => (
+                    <option key={icon.id} value={icon.id}>
+                      {icon.emoji} {icon.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {/* Target */}
+              <label className="text-xs text-slate-400">
+                Link Target
+                <select
+                  value={item.target}
+                  onChange={(e) => onUpdate('target', e.target.value)}
+                  className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                >
+                  <option value="_self">Same Tab (_self)</option>
+                  <option value="_blank">New Tab (_blank)</option>
+                </select>
+              </label>
+
+              {/* Parent */}
+              <label className="text-xs text-slate-400">
+                Parent Item
+                <select
+                  value={item.parent_id || ''}
+                  onChange={(e) => onMoveToParent(e.target.value || null)}
+                  className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                >
+                  <option value="">No Parent (Top Level)</option>
+                  {(getParentOptionsForItem ? getParentOptionsForItem(item.id) : parentOptions).map(option => (
+                    <option key={option.value} value={option.value}>
+                      {'  '.repeat(option.depth)}{option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {/* Dropdown & Mega Menu Settings */}
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="flex items-center gap-2 text-xs text-slate-400 p-3 rounded-lg border border-white/10 bg-white/[0.02]">
+                <input
+                  type="checkbox"
+                  checked={item.has_dropdown}
+                  onChange={(e) => onUpdate('has_dropdown', e.target.checked)}
+                  className="rounded border-white/10 bg-white/[0.03]"
+                />
+                Enable Dropdown
+              </label>
+
+              {item.has_dropdown && (
+                <label className="flex items-center gap-2 text-xs text-slate-400 p-3 rounded-lg border border-white/10 bg-white/[0.02]">
+                  <input
+                    type="checkbox"
+                    checked={item.is_mega_menu}
+                    onChange={(e) => onUpdate('is_mega_menu', e.target.checked)}
+                    className="rounded border-white/10 bg-white/[0.03]"
+                  />
+                  Mega Menu
+                </label>
+              )}
+            </div>
+
+            {/* Mega Menu Columns */}
+            {item.is_mega_menu && (
+              <label className="text-xs text-slate-400">
+                Mega Menu Columns (1-4)
+                <input
+                  type="number"
+                  min="1"
+                  max="4"
+                  value={item.mega_menu_columns}
+                  onChange={(e) => onUpdate('mega_menu_columns', parseInt(e.target.value) || 1)}
+                  className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                />
+              </label>
+            )}
+
+            {/* Mega Menu Content */}
+            {item.is_mega_menu && (
+              <label className="text-xs text-slate-400">
+                Mega Menu Content (HTML or text)
+                <textarea
+                  value={item.mega_menu_content || ''}
+                  onChange={(e) => onUpdate('mega_menu_content', e.target.value)}
+                  className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100 min-h-[100px]"
+                  placeholder="Add custom content for mega menu..."
+                />
+              </label>
+            )}
+
+            {/* Visibility Settings */}
+            <div className="grid gap-3 md:grid-cols-3">
+              <label className="flex items-center gap-2 text-xs text-slate-400 p-3 rounded-lg border border-white/10 bg-white/[0.02]">
+                <input
+                  type="checkbox"
+                  checked={item.active}
+                  onChange={(e) => onUpdate('active', e.target.checked)}
+                  className="rounded border-white/10 bg-white/[0.03]"
+                />
+                Active
+              </label>
+
+              <label className="flex items-center gap-2 text-xs text-slate-400 p-3 rounded-lg border border-white/10 bg-white/[0.02]">
+                <input
+                  type="checkbox"
+                  checked={item.visible_desktop}
+                  onChange={(e) => onUpdate('visible_desktop', e.target.checked)}
+                  className="rounded border-white/10 bg-white/[0.03]"
+                />
+                <Monitor className="w-3 h-3" />
+                Desktop
+              </label>
+
+              <label className="flex items-center gap-2 text-xs text-slate-400 p-3 rounded-lg border border-white/10 bg-white/[0.02]">
+                <input
+                  type="checkbox"
+                  checked={item.visible_mobile}
+                  onChange={(e) => onUpdate('visible_mobile', e.target.checked)}
+                  className="rounded border-white/10 bg-white/[0.03]"
+                />
+                <Smartphone className="w-3 h-3" />
+                Mobile
+              </label>
+            </div>
+
+            {/* Mega Menu Preview */}
+            {item.is_mega_menu && item.mega_menu_content && (
+              <div className="mt-3 p-3 rounded-lg border border-white/10 bg-white/[0.02]">
+                <div className="text-xs text-slate-400 mb-2">Mega Menu Preview:</div>
+                <div
+                  className="text-sm text-slate-200"
+                  dangerouslySetInnerHTML={{ __html: item.mega_menu_content }}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Children */}
+      {hasChildren && expanded && (
+        <div className="border-t border-white/10 bg-white/[0.01] p-2 space-y-2">
+          {item.children.map((child) => (
+            <NavItemEditor
+              key={child.id}
+              item={child}
+              depth={depth + 1}
+              expanded={false}
+              onToggleExpand={() => onToggleExpand && onToggleExpand(child.id)}
+              onUpdate={(field, value) => {
+                if (onUpdateChild) {
+                  onUpdateChild(child.id, field, value)
+                } else {
+                  onUpdate('children', item.children.map(c => 
+                    c.id === child.id ? { ...c, [field]: value } : c
+                  ))
+                }
+              }}
+              onAddChild={() => {}}
+              onRemove={() => onUpdate('children', item.children.filter(c => c.id !== child.id))}
+              onMoveUp={() => {
+                const newChildren = [...item.children]
+                const idx = newChildren.findIndex(c => c.id === child.id)
+                if (idx > 0) {
+                  [newChildren[idx], newChildren[idx - 1]] = [newChildren[idx - 1], newChildren[idx]]
+                  onUpdate('children', newChildren)
+                }
+              }}
+              onMoveDown={() => {
+                const newChildren = [...item.children]
+                const idx = newChildren.findIndex(c => c.id === child.id)
+                if (idx < newChildren.length - 1) {
+                  [newChildren[idx], newChildren[idx + 1]] = [newChildren[idx + 1], newChildren[idx]]
+                  onUpdate('children', newChildren)
+                }
+              }}
+              onDuplicate={() => {}}
+              onMoveToParent={() => {}}
+              editing={editingChild === child.id}
+              onSetEditing={() => onEditChild && onEditChild(child.id)}
+              parentOptions={getParentOptionsForItem ? getParentOptionsForItem(child.id) : []}
+              breadcrumb={breadcrumb ? `${breadcrumb} > ${child.label || 'Untitled'}` : child.label || 'Untitled'}
+              onUpdateChild={onUpdateChild}
+              onEditChild={onEditChild}
+              editingChild={editingChild}
+              getParentOptionsForItem={getParentOptionsForItem}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   )
 }

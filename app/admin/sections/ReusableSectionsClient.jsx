@@ -38,17 +38,11 @@ export default function ReusableSectionsClient() {
   async function loadSections() {
     setLoading(true)
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
-      )
+      // Use API route instead of direct service role key access
+      const response = await fetch('/api/cms/entities/reusable_sections')
+      if (!response.ok) throw new Error('Failed to load sections')
       
-      const { data } = await supabaseClient
-        .from('reusable_sections')
-        .select('*')
-        .order('created_at', { ascending: false })
-      
+      const { data } = await response.json()
       setSections(data || [])
     } catch (error) {
       setStatus(error?.message || 'Failed to load sections.')
@@ -67,24 +61,22 @@ export default function ReusableSectionsClient() {
     setSaving(true)
     setStatus('')
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
-      )
+      // Use API route instead of direct service role key access
+      const url = editingSection 
+        ? `/api/cms/entities/reusable_sections/${editingSection.id}`
+        : '/api/cms/entities/reusable_sections'
+      const method = editingSection ? 'PUT' : 'POST'
       
-      if (editingSection) {
-        const { error } = await supabaseClient
-          .from('reusable_sections')
-          .update(formData)
-          .eq('id', editingSection.id)
-        if (error) throw error
-      } else {
-        const { error } = await supabaseClient
-          .from('reusable_sections')
-          .insert(formData)
-        if (error) throw error
-      }
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      })
+      
+      if (!response.ok) throw new Error('Failed to save section')
+      
+      const { error } = await response.json()
+      if (error) throw error
       
       setShowModal(false)
       setEditingSection(null)

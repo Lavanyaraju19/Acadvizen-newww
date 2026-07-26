@@ -1,7 +1,6 @@
 import { MetadataRoute } from 'next'
 
-export const revalidate = 1
-
+// Static route file - no revalidation needed
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [

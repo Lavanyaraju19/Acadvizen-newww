@@ -1,24 +1,41 @@
 // Environment variables should be configured in .env.local (local dev)
 // or in hosting project settings (production).
-export function getEnv(key: string, fallback = '') {
+// IMPORTANT: Never hardcode fallback values for production secrets.
+// This application requires Supabase credentials to function.
+
+export function getEnv(key: string, fallback = ''): string {
   const value = process.env[key]
   if (!value) return fallback
   return value
 }
 
-// Public fallback values for local reliability.
-// These values are safe on client side because they are Supabase public credentials.
-const PUBLIC_SUPABASE_URL_FALLBACK = 'https://hhfccftkfryesjirauwf.supabase.co'
-const PUBLIC_SUPABASE_ANON_KEY_FALLBACK =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhoZmNjZnRrZnJ5ZXNqaXJhdXdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5NDU2MDIsImV4cCI6MjA4NTUyMTYwMn0.fQEn6NHCktUeifsNErfB0XBc5bHKKxYLXBBdxx3EqP0'
+export function requireEnv(key: string): string {
+  const value = process.env[key]
+  if (!value) {
+    throw new Error(
+      `Missing required environment variable: ${key}. ` +
+      'Please set it in your .env.local file or hosting environment variables.'
+    )
+  }
+  return value
+}
 
 // Keep NEXT_PUBLIC values as literals so Next.js can inline them on the client.
+// No fallback values — these must be configured in environment.
 export const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || PUBLIC_SUPABASE_URL_FALLBACK
+  process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || ''
 export const SUPABASE_ANON_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   process.env.SUPABASE_ANON_KEY ||
-  PUBLIC_SUPABASE_ANON_KEY_FALLBACK
+  ''
 
 // Server-only key. Access via getEnv in server context to avoid client warnings.
 export const SUPABASE_SERVICE_ROLE_KEY = getEnv('SUPABASE_SERVICE_ROLE_KEY')
+
+// Validation helper - call this at startup
+export function validateSupabaseConfig(): string[] {
+  const errors: string[] = []
+  if (!SUPABASE_URL) errors.push('SUPABASE_URL / NEXT_PUBLIC_SUPABASE_URL is not set')
+  if (!SUPABASE_ANON_KEY) errors.push('SUPABASE_ANON_KEY / NEXT_PUBLIC_SUPABASE_ANON_KEY is not set')
+  return errors
+}

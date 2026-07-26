@@ -15,14 +15,14 @@ export async function GET(request) {
   let pageQuery = supabase.from('pages').select('*').eq('slug', slug).limit(1)
   if (!preview) pageQuery = pageQuery.eq('status', 'published')
   const { data: pages, error: pageError } = await pageQuery
-  if (pageError) return jsonError(`Failed to load page: ${pageError.message}`, 200)
+  if (pageError) return jsonError(`Failed to load page: ${pageError.message}`, 500)
   const page = Array.isArray(pages) ? pages[0] : null
   if (!page) {
     let locationQuery = supabase.from('location_pages').select('*').eq('slug', slug).limit(1)
     if (!preview) locationQuery = locationQuery.eq('status', 'published')
     const { data: locationData, error: locationError } = await locationQuery
     if (locationError && !String(locationError.message || '').toLowerCase().includes('does not exist')) {
-      return jsonError(`Failed to load location page: ${locationError.message}`, 200)
+      return jsonError(`Failed to load location page: ${locationError.message}`, 500)
     }
     const locationPage = Array.isArray(locationData) ? locationData[0] : null
     if (!locationPage) return jsonOk(null)
@@ -47,7 +47,7 @@ export async function GET(request) {
     .order('order_index', { ascending: true })
   if (!preview) sectionQuery = sectionQuery.eq('visibility', true)
   const { data: sections, error: sectionsError } = await sectionQuery
-  if (sectionsError) return jsonError(`Failed to load sections: ${sectionsError.message}`, 200)
+  if (sectionsError) return jsonError(`Failed to load sections: ${sectionsError.message}`, 500)
 
   return jsonOk({ ...page, sections: sections || [] })
 }

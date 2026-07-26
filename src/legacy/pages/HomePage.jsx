@@ -1,8 +1,10 @@
+'use client'
+
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
-import { Link } from 'react-router-dom'
+import NextLink from 'next/link'
 import {
   Target,
   Sparkles,
@@ -27,11 +29,11 @@ import {
   skillBottomPlatforms,
   skillTopPlatforms,
 } from '../../lib/marketingProgramContent'
-import { courseCaseStudies, homepageFaqExact, homepageLearningValues } from '../../lib/sitePageContent'
+import { courseCaseStudies as defaultCourseCaseStudies, homepageFaqExact, homepageLearningValues } from '../../lib/sitePageContent'
 import ShowcaseWideCard from '../../components/marketing/ShowcaseWideCard'
 import { neonBlueprintPanelStyle, solidPublicPanelClass, techGridPanelStyle, wavePanelStyle } from '../../lib/publicVisualStyles'
 
-export default function HomePage() {
+export default function HomePage({ cmsData = {} }) {
   const metaTitle = 'Acadvizen: Digital Marketing Course in Bangalore with AI Training'
   const metaDescription =
     'Join Acadvizen\'s Digital Marketing Course in Bangalore with AI Training. Learn SEO, Google Ads, Meta Ads, AI Automation, Website Development, Content Marketing, Analytics, and more through live projects, internships, and placement assistance.'
@@ -45,7 +47,10 @@ export default function HomePage() {
     { solid: 'bg-[#75607d]', border: 'border-[#b793c4]', text: 'text-fuchsia-100' },
     { solid: 'bg-[#4b7750]', border: 'border-[#80c18a]', text: 'text-teal-100' },
   ]
-  const learningValues = homepageLearningValues.map((label, index) => ({
+  const learningValuesSource = cmsData.courseHighlights && Array.isArray(cmsData.courseHighlights) && cmsData.courseHighlights.length > 0
+    ? cmsData.courseHighlights
+    : homepageLearningValues
+  const learningValues = learningValuesSource.map((label, index) => ({
     label,
     ...learningValuePalette[index % learningValuePalette.length],
   }))
@@ -61,7 +66,7 @@ export default function HomePage() {
   }
   const shimmerDustPanelStyle = techGridPanelStyle
   const techPanelStyle = wavePanelStyle
-  const programHighlights = [
+  const defaultProgramHighlights = [
     'AI-ARCHITECT Mastery: Learn to manage 120+ AI tools to automate 80% of manual marketing tasks.',
     'GEO & AEO Implementation: Rank beyond Google by getting your brand cited in ChatGPT, Gemini, and Perplexity answers.',
     'Viral Content Flywheels: Build automated systems that turn one video into 50+ viral assets for Reels and YouTube.',
@@ -71,7 +76,10 @@ export default function HomePage() {
     '25+ Live "Proof-of-Work" Projects: Graduate with a live digital portfolio of real campaigns, not just a paper certificate.',
     '100% Placement via AI-Resume Tech: Get hired using ATS-optimized resumes and interview training for 2026 high-salary roles.',
   ]
-  const courseModules = [
+  const programHighlights = cmsData.courseHighlights && Array.isArray(cmsData.courseHighlights) && cmsData.courseHighlights.length > 0
+    ? cmsData.courseHighlights
+    : defaultProgramHighlights
+  const defaultCourseModules = [
     {
       title: 'Digital 3.0 & AIO (AI Orchestration)',
       duration: '120 Days',
@@ -143,6 +151,9 @@ export default function HomePage() {
       ],
     },
   ]
+  const courseModules = cmsData.courseModules && Array.isArray(cmsData.courseModules) && cmsData.courseModules.length > 0
+    ? cmsData.courseModules
+    : defaultCourseModules
   const comparisonRows = [
     ['Syllabus Design', 'Static/Standardized: One generic syllabus for everyone, usually updated yearly.', 'Personalized AI-Syllabus: Tailored to your specific niche, career goals, and the latest AI tools.'],
     ['Search Strategy', "Legacy SEO: Focuses solely on Google's search result pages and backlinks.", 'SEO + GEO + AEO: Training to rank on Google and get cited by AI tools like ChatGPT and Perplexity.'],
@@ -152,7 +163,7 @@ export default function HomePage() {
     ['Website Tech', 'Slow Code/Templates: Reliance on heavy coding or standard themes that slow down sites.', 'No-Code Engineering: Ultra-fast, high-converting ecosystems using Framer AI and Elementor.'],
     ['Final Outcome', 'Paper Certificate: Graduates with a generic certificate and a standard resume.', 'Live Digital Portfolio: 25+ real AI projects and an industry-ready portfolio recognized by AI search.'],
   ]
-  const faqItems = [
+  const defaultFaqItems = [
     {
       question: 'Why is Bangalore the best city to start an AI Digital Marketing career in 2026?',
       answer: 'As the Silicon Valley of India, Bangalore is the hub for AI startups and Global Capability Centers. Graduates from AcadVizen Bangalore have stronger access to companies like Swiggy, Flipkart, and Zomato that prioritize marketers who can handle AI-Orchestration.',
@@ -234,6 +245,12 @@ export default function HomePage() {
       answer: 'Yes. You receive program completion recognition along with support toward global certifications including Google, Meta, and AcadVizen’s own advanced program recognition.',
     },
   ]
+  const faqItems = cmsData.faq && Array.isArray(cmsData.faq) && cmsData.faq.length > 0
+    ? cmsData.faq
+    : defaultFaqItems
+  const courseCaseStudies = cmsData.projects && Array.isArray(cmsData.projects) && cmsData.projects.length > 0
+    ? cmsData.projects
+    : defaultCourseCaseStudies
   const faqTabs = []
   const [showPopup, setShowPopup] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -258,7 +275,7 @@ export default function HomePage() {
   const [heroVideoPlaying, setHeroVideoPlaying] = useState(false)
   const heroVideoRef = useRef(null)
   const caseStudiesPreviewRef = useRef(null)
-  const partnersFallback = [
+  const defaultPartnersFallback = [
     { name: 'Google', logo_url: 'https://logo.clearbit.com/google.com', row_group: 'row_a' },
     { name: 'Amazon', logo_url: 'https://logo.clearbit.com/amazon.com', row_group: 'row_a' },
     { name: 'Microsoft', logo_url: 'https://logo.clearbit.com/microsoft.com', row_group: 'row_a' },
@@ -270,6 +287,9 @@ export default function HomePage() {
     { name: 'Flipkart', logo_url: 'https://logo.clearbit.com/flipkart.com', row_group: 'row_b' },
     { name: 'Yahoo', logo_url: 'https://logo.clearbit.com/yahoo.com', row_group: 'row_b' },
   ]
+  const partnersFallback = cmsData.partners && Array.isArray(cmsData.partners) && cmsData.partners.length > 0
+    ? cmsData.partners
+    : defaultPartnersFallback
   const [partners, setPartners] = useState(partnersFallback)
   const [formData, setFormData] = useState({
     fullName: '',
@@ -389,7 +409,7 @@ export default function HomePage() {
   async function loadPartners() {
     const { data, error } = await fetchPublicData('hiring-partners')
     if (error || !data || data.length === 0) {
-      setPartners(partnersFallback)
+      setPartners(defaultPartnersFallback)
       return
     }
     setPartners(data)
@@ -465,10 +485,16 @@ export default function HomePage() {
     subtitle: 'Latest insights from Acadvizen.',
     body: 'No blog posts yet.',
   })
-  const partnersSection = getSection('hiring_partners', {
+  const defaultPartnersSection = {
     title: 'Our Alumni Work Across 2,000+ Global Giants',
     subtitle: 'Trusted by leading brands and high-growth companies.',
-  })
+  }
+  const partnersSection = cmsData.placements && typeof cmsData.placements === 'object'
+    ? {
+        title: cmsData.placements.title || defaultPartnersSection.title,
+        subtitle: cmsData.placements.subtitle || defaultPartnersSection.subtitle,
+      }
+    : defaultPartnersSection
   const partnersToUse = partners.length ? partners : partnersFallback
   const uniquePartners = Array.from(
     new Map(partnersToUse.map((item) => [item.name?.toLowerCase().trim() || item.id, item])).values()
@@ -596,7 +622,7 @@ export default function HomePage() {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '')
-  const scrollingTools = [
+  const defaultScrollingTools = [
     { name: 'Ahrefs', slug: 'ahrefs', logoSrc: '/tools/ahrefs.png' },
     { name: 'SEMrush', slug: 'semrush', logoSrc: '/tools/semrush.png' },
     { name: 'Screaming Frog', slug: 'screaming-frog', logoSrc: '/tools/screamingfrog.png' },
@@ -622,6 +648,9 @@ export default function HomePage() {
     { name: 'Tag Manager', slug: 'google-tag-manager', logoSrc: '/tools/tagmanager.png' },
     { name: 'Synthesia', slug: 'synthesia', logoSrc: '/tools/synthesia.png' },
   ]
+  const scrollingTools = cmsData.tools && Array.isArray(cmsData.tools) && cmsData.tools.length > 0
+    ? cmsData.tools
+    : defaultScrollingTools
   const toolLookup = new Map(
     scrollingTools.map((tool) => [tool.slug || toToolSlug(tool.name || ''), tool])
   )
@@ -654,7 +683,7 @@ export default function HomePage() {
       tools: ['hubspot', 'mailchimp', 'activecampaign'],
     },
   ]
-  const skillGroups = [
+  const defaultSkillGroups = [
     {
       title: 'Search Engine Optimization (SEO + AEO)',
       items: ['On-Page SEO', 'Technical SEO', 'Off-Page SEO', 'Keyword Research', 'Entity SEO', 'AEO', 'GEO', 'AIO'],
@@ -696,6 +725,9 @@ export default function HomePage() {
       tools: ['webflow', 'canva'],
     },
   ]
+  const skillGroups = cmsData.curriculum && Array.isArray(cmsData.curriculum) && cmsData.curriculum.length > 0
+    ? cmsData.curriculum
+    : defaultSkillGroups
 
   const openPopup = () => {
     setScrollY(window.scrollY)
@@ -789,12 +821,12 @@ export default function HomePage() {
               >
                 <span className="inline-flex items-center gap-2 rounded-full border border-[#bfd5ff] bg-white px-5 py-2 text-sm font-semibold text-[#0B6CFF] shadow-[0_12px_30px_rgba(11,108,255,0.18)]">
                   <Target className="h-4 w-4" />
-                  100% Job Guaranteed*
+                  {cmsData.hero?.badge_text || '100% Job Guaranteed*'}
                 </span>
               </motion.div>
-              <h1 className="text-4xl md:text-6xl font-bold wave-text">Master AI-Powered Digital Marketing Course</h1>
+              <h1 className="text-4xl md:text-6xl font-bold wave-text">{cmsData.hero?.heading || 'Master AI-Powered Digital Marketing Course'}</h1>
               <p className="mt-4 text-lg md:text-2xl text-slate-100 font-semibold">
-                Build Your Own Learning Path with Guidance from Global Industry Experts
+                {cmsData.hero?.subheading || 'Build Your Own Learning Path with Guidance from Global Industry Experts'}
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <span className="rounded-full border border-[#bfd5ff] bg-white px-4 py-2 text-sm font-semibold text-[#0B6CFF] shadow-sm">
@@ -966,9 +998,9 @@ export default function HomePage() {
           </div>
           <div className="mt-8 grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
             {courseModules.map((module, idx) => (
-              <Link
+              <NextLink
                 key={module.title}
-                to={`/courses#module-${idx + 1}`}
+                href={`/courses#module-${idx + 1}`}
                 className="group block"
               >
               <div
@@ -998,7 +1030,7 @@ export default function HomePage() {
                   </ol>
                 </div>
               </div>
-              </Link>
+              </NextLink>
             ))}
           </div>
         </Container>
@@ -1015,7 +1047,7 @@ export default function HomePage() {
           </div>
           <div className="mt-8 grid gap-5 md:grid-cols-3">
             {coursePrograms.map((program) => (
-              <Link key={program.name} to="/courses" className="block">
+              <NextLink key={program.name} href="/courses" className="block">
                 <Surface className="p-6 h-full transition-all duration-300 hover:-translate-y-1 hover:border-teal-300/50">
                   <h3 className="text-xl font-semibold text-slate-50">{program.name}</h3>
                   <div className="mt-4 space-y-2 text-sm text-slate-300">
@@ -1026,7 +1058,7 @@ export default function HomePage() {
                     ))}
                   </div>
                 </Surface>
-              </Link>
+              </NextLink>
             ))}
           </div>
         </Container>
@@ -1080,9 +1112,9 @@ export default function HomePage() {
                     const tool = toolLookup.get(slug)
                     if (!tool) return null
                     return (
-                      <Link
+                      <NextLink
                         key={slug}
-                        to={`/tools/${tool.slug || slug}`}
+                        href={`/tools/${tool.slug || slug}`}
                         className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3 transition hover:-translate-y-0.5 hover:border-teal-300/50"
                       >
                         <div className="h-11 w-11 shrink-0">
@@ -1100,7 +1132,7 @@ export default function HomePage() {
                           />
                         </div>
                         <span className="text-sm font-semibold text-slate-100">{tool.name || slug}</span>
-                      </Link>
+                      </NextLink>
                     )
                   })}
                 </div>
@@ -1119,9 +1151,9 @@ export default function HomePage() {
             <div className="mt-8 space-y-6 overflow-hidden">
               <div className="logo-scroll gap-8 min-w-max">
               {[...marqueeRowA, ...marqueeRowA].map((tool, idx) => (
-                <Link
+                <NextLink
                   key={`${tool.slug || tool.name}-row-a-${idx}`}
-                  to={`/tools/${tool.slug || toToolSlug(tool.name || '')}`}
+                  href={`/tools/${tool.slug || toToolSlug(tool.name || '')}`}
                   className="flex min-w-[148px] flex-col items-center justify-center py-3 text-center transition hover:-translate-y-1"
                 >
                   <div className="h-[68px] w-[156px] shrink-0">
@@ -1139,14 +1171,14 @@ export default function HomePage() {
                     />
                   </div>
                   <span className="mt-2 text-sm font-semibold text-slate-100 whitespace-nowrap">{tool.name || tool.slug}</span>
-                </Link>
+                </NextLink>
               ))}
               </div>
               <div className="logo-scroll-reverse gap-8 min-w-max">
               {[...marqueeRowB, ...marqueeRowB].map((tool, idx) => (
-                <Link
+                <NextLink
                   key={`${tool.slug || tool.name}-row-b-${idx}`}
-                  to={`/tools/${tool.slug || toToolSlug(tool.name || '')}`}
+                  href={`/tools/${tool.slug || toToolSlug(tool.name || '')}`}
                   className="flex min-w-[148px] flex-col items-center justify-center py-3 text-center transition hover:-translate-y-1"
                 >
                   <div className="h-[68px] w-[156px] shrink-0">
@@ -1164,7 +1196,7 @@ export default function HomePage() {
                     />
                   </div>
                   <span className="mt-2 text-sm font-semibold text-slate-100 whitespace-nowrap">{tool.name || tool.slug}</span>
-                </Link>
+                </NextLink>
               ))}
               </div>
             </div>
@@ -1296,9 +1328,9 @@ export default function HomePage() {
                     const tool = toolLookup.get(slug)
                     if (!tool) return null
                     return (
-                      <Link
+                      <NextLink
                         key={`${group.title}-${slug}`}
-                        to={`/tools/${tool.slug || slug}`}
+                        href={`/tools/${tool.slug || slug}`}
                         className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2"
                       >
                         <div className="h-6 w-6 shrink-0">
@@ -1316,7 +1348,7 @@ export default function HomePage() {
                           />
                         </div>
                         <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-200">{tool.name || slug}</span>
-                      </Link>
+                      </NextLink>
                     )
                   })}
                 </div>
@@ -1420,10 +1452,10 @@ export default function HomePage() {
           >
             <div className="mx-auto max-w-4xl text-center">
               <h2 className="text-4xl font-bold text-white md:text-5xl">
-                Master the Complete Digital Marketing Skill Set with SEO, AI &amp; Performance Marketing
+                {cmsData.cta?.title || 'Master the Complete Digital Marketing Skill Set with SEO, AI &amp; Performance Marketing'}
               </h2>
               <p className="mt-4 text-base text-slate-200 md:text-lg">
-                Learn 25+ in-demand digital marketing skills including SEO, AIO, AI tools, paid ads, and analytics to build a high-paying career in digital marketing.
+                {cmsData.cta?.description || 'Learn 25+ in-demand digital marketing skills including SEO, AIO, AI tools, paid ads, and analytics to build a high-paying career in digital marketing.'}
               </p>
               <div className="mt-6 flex flex-wrap justify-center gap-2">
                 {skillTopPlatforms.map((label) => (
@@ -1471,12 +1503,12 @@ export default function HomePage() {
             </div>
 
             <div className="mt-10 text-center">
-              <Link
-                to="/courses"
+              <NextLink
+                href={cmsData.cta?.button_link || '/courses'}
                 className="mt-6 inline-flex items-center justify-center rounded-full border border-teal-200/40 bg-teal-300 px-6 py-3 text-sm font-bold text-slate-950 shadow-[0_14px_40px_rgba(94,234,212,0.25)] transition hover:-translate-y-0.5 hover:bg-teal-200"
               >
-                Explore Curriculum
-              </Link>
+                {cmsData.cta?.button_text || 'Explore Curriculum'}
+              </NextLink>
             </div>
           </div>
         </Container>
@@ -1569,12 +1601,12 @@ export default function HomePage() {
             </div>
 
             <div className="mt-10 flex justify-center md:mt-11">
-              <Link
-                to="/projects#case-studies"
+              <NextLink
+                href="/projects#case-studies"
                 className="inline-flex min-w-[240px] items-center justify-center gap-2 rounded-full border border-white/10 bg-[#F5D90A] px-7 py-4 text-sm font-black uppercase tracking-[0.16em] text-slate-950 transition hover:-translate-y-0.5"
               >
                 View All Case Studies <span aria-hidden="true">→</span>
-              </Link>
+              </NextLink>
             </div>
           </div>
         </Container>

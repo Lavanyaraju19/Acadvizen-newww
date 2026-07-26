@@ -40,7 +40,7 @@ export async function GET(request) {
   if (!includeHidden) query = query.eq('visibility', true)
 
   const { data, error } = await query
-  if (error) return jsonError(`Database query failed: ${error.message}`, 200, [])
+  if (error) return jsonError(`Database query failed: ${error.message}`, 500, [])
   return jsonOk(data || [])
 }
 
@@ -67,7 +67,7 @@ export async function POST(request) {
       visibility: source.visibility !== false,
     }
     const { data, error } = await supabase.from('sections').insert(duplicate).select('*').single()
-    if (error) return jsonError(`Failed to duplicate section: ${error.message}`, 200)
+    if (error) return jsonError(`Failed to duplicate section: ${error.message}`, 500)
     const { data: page } = await supabase.from('pages').select('slug').eq('id', source.page_id).maybeSingle()
     revalidateCmsPaths([normalizePagePath(page?.slug)])
     revalidateAllCmsPages()
@@ -93,7 +93,7 @@ export async function POST(request) {
     .select('*')
     .single()
 
-  if (error) return jsonError(`Failed to create section: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to create section: ${error.message}`, 500)
   const { data: page } = await supabase.from('pages').select('slug').eq('id', payload.page_id).maybeSingle()
   revalidateCmsPaths([normalizePagePath(page?.slug)])
   revalidateAllCmsPages()

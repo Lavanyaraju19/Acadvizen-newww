@@ -21,7 +21,7 @@ export async function GET() {
     .eq('id', DEFAULT_SETTINGS_ID)
     .maybeSingle()
 
-  if (error) return jsonError(`Database query failed: ${error.message}`, 200)
+  if (error) return jsonError(`Database query failed: ${error.message}`, 500)
   return jsonOk(data || { id: DEFAULT_SETTINGS_ID, social_links: {}, design_tokens: {}, ui_copy: {} })
 }
 
@@ -59,7 +59,7 @@ export async function PUT(request) {
     .select('*')
     .single()
 
-  if (error) return jsonError(`Failed to save site settings: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to save site settings: ${error.message}`, 500)
   revalidateAllCmsPages()
   return jsonOk(data)
 }

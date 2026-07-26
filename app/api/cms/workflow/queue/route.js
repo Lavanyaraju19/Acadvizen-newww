@@ -17,6 +17,6 @@ export async function GET(request) {
   // Get workflow queue
   const { data, error } = await supabase.rpc('get_workflow_queue')
 
-  if (error) return jsonError(`Failed to fetch workflow queue: ${error.message}`, 200, [])
+  if (error) return jsonError(`Failed to fetch workflow queue: ${error.message}`, 500, [])
   return jsonOk(data || [])
 }

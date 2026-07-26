@@ -131,22 +131,17 @@ export default function UserManagerClient() {
     setLoading(true)
     setStatus('')
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
-      )
+      // Use API route instead of direct service role key access
+      const response = await fetch(`/api/cms/users/${userId}/roles`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roleId })
+      })
       
-      // First remove existing roles
-      await supabaseClient.from('user_roles').delete().eq('user_id', userId)
+      if (!response.ok) throw new Error('Failed to assign role')
       
-      // Then assign new role
-      if (roleId) {
-        await supabaseClient.from('user_roles').insert({
-          user_id: userId,
-          role_id: roleId,
-        })
-      }
+      const { error } = await response.json()
+      if (error) throw error
       
       setStatus('Role assigned successfully.')
       await loadUsers()

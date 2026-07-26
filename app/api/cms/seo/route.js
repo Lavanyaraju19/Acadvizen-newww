@@ -28,7 +28,7 @@ export async function GET(request) {
   if (pageSlug) query = query.eq('page_slug', pageSlug)
 
   const { data, error } = await query
-  if (error) return jsonError(`Database query failed: ${error.message}`, 200, [])
+  if (error) return jsonError(`Database query failed: ${error.message}`, 500, [])
   return jsonOk(data || [])
 }
 
@@ -41,6 +41,32 @@ export async function POST(request) {
 
   const body = await readJsonBody(request)
   if (!body?.page_slug) return jsonError('page_slug is required.', 400)
+
+  // Validate schema_json if provided
+  let validatedSchema = null
+  if (body.schema_json) {
+    try {
+      if (typeof body.schema_json === 'string') {
+        validatedSchema = JSON.parse(body.schema_json)
+      } else if (typeof body.schema_json === 'object') {
+        validatedSchema = body.schema_json
+      } else {
+        return jsonError('schema_json must be a valid JSON object or string', 400)
+      }
+
+      // Basic schema validation - ensure it has required structure
+      if (validatedSchema && typeof validatedSchema !== 'object') {
+        return jsonError('schema_json must be a valid JSON object', 400)
+      }
+
+      // Validate that it's not empty
+      if (validatedSchema && Object.keys(validatedSchema).length === 0) {
+        validatedSchema = null
+      }
+    } catch (e) {
+      return jsonError('schema_json contains invalid JSON', 400)
+    }
+  }
 
   const payload = {
     id: body.id || undefined,
@@ -55,7 +81,7 @@ export async function POST(request) {
     twitter_description: body.twitter_description || null,
     twitter_image: body.twitter_image || null,
     noindex: body.noindex === true,
-    schema_json: body.schema_json && typeof body.schema_json === 'object' ? body.schema_json : null,
+    schema_json: validatedSchema,
   }
 
   const { data, error } = await supabase
@@ -64,7 +90,7 @@ export async function POST(request) {
     .select('*')
     .single()
 
-  if (error) return jsonError(`Failed to save SEO metadata: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to save SEO metadata: ${error.message}`, 500)
   revalidateCmsPaths([normalizePagePath(data?.page_slug)])
   revalidateAllCmsPages()
   return jsonOk(data)

@@ -29,7 +29,7 @@ export async function GET(request) {
   }
 
   const { data, error } = await query
-  if (error) return jsonError(`Failed to fetch redirects: ${error.message}`, 200, [])
+  if (error) return jsonError(`Failed to fetch redirects: ${error.message}`, 500, [])
   return jsonOk(data || [])
 }
 
@@ -44,6 +44,12 @@ export async function POST(request) {
   
   if (!body.old_url || !body.new_url) {
     return jsonError('old_url and new_url are required', 400)
+  }
+
+  // Validate URL format
+  const urlRegex = /^(\/[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=]*)$|^https?:\/\/[^\s/$.?#].[^\s]*$/
+  if (!urlRegex.test(body.old_url) || !urlRegex.test(body.new_url)) {
+    return jsonError('Invalid URL format. URLs must start with / or http:// or https://', 400)
   }
 
   // Check for redirect loops
@@ -76,6 +82,6 @@ export async function POST(request) {
     .select('*')
     .single()
 
-  if (error) return jsonError(`Failed to create redirect: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to create redirect: ${error.message}`, 500)
   return jsonOk(data)
 }

@@ -71,53 +71,6 @@ const adminNav = [
   { path: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
-function slugifyFieldLabel(value = '') {
-  return String(value)
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)+/g, '')
-}
-
-function ensureFormFieldAttributes(root) {
-  if (!root) return
-
-  const fields = root.querySelectorAll('input, textarea, select')
-  let counter = 0
-
-  fields.forEach((field) => {
-    if (!(field instanceof HTMLElement)) return
-
-    const existingId = field.getAttribute('id')
-    const existingName = field.getAttribute('name')
-    if (existingId && existingName) {
-      counter += 1
-      return
-    }
-
-    const labelEl = field.closest('label')
-    const labelText = slugifyFieldLabel(
-      labelEl?.firstChild?.textContent ||
-        labelEl?.textContent ||
-        field.getAttribute('placeholder') ||
-        field.getAttribute('aria-label') ||
-        field.getAttribute('type') ||
-        'field'
-    )
-
-    const fallbackId = `admin-${labelText || 'field'}-${counter + 1}`
-
-    field.setAttribute('id', existingId || fallbackId)
-    field.setAttribute('name', existingName || labelText || `field_${counter + 1}`)
-
-    if (labelEl && !labelEl.getAttribute('for')) {
-      labelEl.setAttribute('for', field.getAttribute('id') || fallbackId)
-    }
-
-    counter += 1
-  })
-}
-
 export default function AdminLayoutClient({ children }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -201,62 +154,12 @@ export default function AdminLayoutClient({ children }) {
     }
   }, [adminState.profile, adminState.user, clearAdminSession, isLoginLikePath, verifiedOnce])
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined
+  // window.fetch override removed. Use adminApiFetch from lib/adminApiClient.js
+  // which properly injects auth headers via Authorization Bearer token.
+  // AdminLayoutClient should not monkey-patch global fetch.
 
-    const originalFetch = window.fetch.bind(window)
-
-    window.fetch = async (input, init) => {
-      const url =
-        typeof input === 'string'
-          ? input
-          : input instanceof URL
-            ? input.toString()
-            : input instanceof Request
-              ? input.url
-              : String(input)
-
-      const isCmsRequest = url.startsWith('/api/cms/') || url.includes('/api/cms/')
-      if (!isCmsRequest || !adminState.accessToken) {
-        return originalFetch(input, init)
-      }
-
-      try {
-        const headers = new Headers(input instanceof Request ? input.headers : init?.headers)
-        headers.set('Authorization', `Bearer ${adminState.accessToken}`)
-
-        if (input instanceof Request) {
-          return originalFetch(new Request(input, { headers }))
-        }
-
-        return originalFetch(input, { ...init, headers })
-      } catch {
-        return originalFetch(input, init)
-      }
-    }
-
-    return () => {
-      window.fetch = originalFetch
-    }
-  }, [adminState.accessToken])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined
-    if (isLoginLikePath) return undefined
-
-    const root = document.querySelector('[data-admin-root]')
-    if (!root) return undefined
-
-    const scan = () => ensureFormFieldAttributes(root)
-    scan()
-
-    const observer = new MutationObserver(() => {
-      scan()
-    })
-
-    observer.observe(root, { childList: true, subtree: true })
-    return () => observer.disconnect()
-  }, [isLoginLikePath, pathname])
+  // MutationObserver for form field labels removed.
+  // All form fields should use proper htmlFor/id patterns in their components.
 
   useEffect(() => {
     if (isLoginLikePath) return undefined

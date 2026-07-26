@@ -87,7 +87,7 @@ export async function GET(request) {
   if (status) query = query.eq('status', status)
 
   const { data, error } = await query
-  if (error) return jsonError(`Failed to fetch leads: ${error.message}`, 200, [])
+  if (error) return jsonError(`Failed to fetch leads: ${error.message}`, 500, [])
   return jsonOk(data || [])
 }
 
@@ -104,6 +104,6 @@ export async function POST(request) {
   }
 
   const { data, error } = await insertLeadWithSchemaFallback(supabase, payload)
-  if (error) return jsonError(`Failed to save lead: ${error.message}`, 200)
+  if (error) return jsonError(`Failed to save lead: ${error.message}`, 500)
   return jsonOk(data)
 }
