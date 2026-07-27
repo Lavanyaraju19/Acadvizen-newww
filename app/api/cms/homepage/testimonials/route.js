@@ -41,12 +41,13 @@ export async function POST(request) {
 
   const body = await readJsonBody(request)
 
+  // Use actual DB column names: name, role, company, quote, image_url, rating
   const payload = {
     name: String(body.name || '').trim(),
-    role: String(body.role || '').trim(),
+    role: String(body.role || '').trim() || null,
     company: body.company || null,
-    content: String(body.content || '').trim(),
-    image: body.image || null,
+    quote: body.quote || body.content || null,
+    image_url: body.image_url || body.image || null,
     rating: Number(body.rating) || 5,
     order_index: Number(body.order_index) || 0,
     is_active: body.is_active !== false,
@@ -79,10 +80,10 @@ export async function PATCH(request) {
 
   const payload = {
     name: body.name !== undefined ? String(body.name).trim() : undefined,
-    role: body.role !== undefined ? String(body.role).trim() : undefined,
+    role: body.role !== undefined ? String(body.role).trim() : (body.role !== undefined ? body.role : undefined),
     company: body.company !== undefined ? body.company : undefined,
-    content: body.content !== undefined ? String(body.content).trim() : undefined,
-    image: body.image !== undefined ? body.image : undefined,
+    quote: body.quote !== undefined ? body.quote : (body.content !== undefined ? body.content : undefined),
+    image_url: body.image_url !== undefined ? body.image_url : (body.image !== undefined ? body.image : undefined),
     rating: body.rating !== undefined ? Number(body.rating) : undefined,
     order_index: body.order_index !== undefined ? Number(body.order_index) : undefined,
     is_active: body.is_active !== undefined ? Boolean(body.is_active) : undefined,

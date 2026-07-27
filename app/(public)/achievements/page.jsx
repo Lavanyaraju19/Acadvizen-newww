@@ -22,5 +22,7 @@ export default async function Page() {
   }
 
   const cmsPage = await fetchCmsPageBySlug('achievements')
-  return cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <AchievementsPage />
+  // Only use CMS renderer if the page has actual sections with content.
+  // If sections array is empty, fall back to legacy component to avoid blank page.
+  return cmsPage?.sections?.length ? <DynamicPageRenderer page={cmsPage} /> : <AchievementsPage />
 }

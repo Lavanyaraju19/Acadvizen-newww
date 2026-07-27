@@ -41,10 +41,12 @@ export async function POST(request) {
 
   const body = await readJsonBody(request)
 
+  // Use actual DB column names: title, duration, focus, pillars (jsonb), order_index, is_active
   const payload = {
     title: String(body.title || '').trim(),
-    description: String(body.description || '').trim(),
-    icon: body.icon || null,
+    duration: body.duration || null,
+    focus: body.focus || null,
+    pillars: body.pillars || (body.icon ? [body.icon] : undefined),
     order_index: Number(body.order_index) || 0,
     is_active: body.is_active !== false,
   }
@@ -76,8 +78,9 @@ export async function PATCH(request) {
 
   const payload = {
     title: body.title !== undefined ? String(body.title).trim() : undefined,
-    description: body.description !== undefined ? String(body.description).trim() : undefined,
-    icon: body.icon !== undefined ? body.icon : undefined,
+    duration: body.duration !== undefined ? body.duration : undefined,
+    focus: body.focus !== undefined ? body.focus : undefined,
+    pillars: body.pillars !== undefined ? body.pillars : (body.icon !== undefined ? [body.icon] : undefined),
     order_index: body.order_index !== undefined ? Number(body.order_index) : undefined,
     is_active: body.is_active !== undefined ? Boolean(body.is_active) : undefined,
   }

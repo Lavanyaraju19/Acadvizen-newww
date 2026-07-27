@@ -10,7 +10,7 @@ import { isPublicCmsEnabled } from '../../lib/publicCms'
 export async function generateMetadata() {
   return buildCmsPageMetadata('hire-from-us', '/hire-from-us', {
     title: 'Hire From Us',
-    description: 'Hire job-ready digital marketing talent with project and placement-readiness training.',
+    description: 'Hire skilled digital marketing talent from Acadvizen.',
   })
 }
 
@@ -20,5 +20,7 @@ export default async function Page() {
   }
 
   const cmsPage = await fetchCmsPageBySlug('hire-from-us')
-  return cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <HireFromUsLegacyClient />
+  // Only use CMS renderer if the page has actual sections with content.
+  // If sections array is empty, fall back to legacy client to avoid blank page.
+  return cmsPage?.sections?.length ? <DynamicPageRenderer page={cmsPage} /> : <HireFromUsLegacyClient />
 }

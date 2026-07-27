@@ -43,12 +43,14 @@ export default async function Page({ params }) {
   const slug = params?.slug || ''
   if (isPublicCmsEnabled()) {
     const cmsPage = await fetchCmsPageByAnySlug([`course-${slug}`, `courses-${slug}`, slug])
-    if (cmsPage) {
+    // Only use CMS renderer if the page has actual sections with content.
+    if (cmsPage?.sections?.length) {
       return <DynamicPageRenderer page={cmsPage} />
     }
 
     const locationLike = await fetchLocationPageBySlug(`course-${slug}`)
-    if (locationLike) {
+    // Only use CMS renderer if the location page has actual sections with content.
+    if (locationLike?.sections?.length) {
       return <DynamicPageRenderer page={locationLike} />
     }
   }

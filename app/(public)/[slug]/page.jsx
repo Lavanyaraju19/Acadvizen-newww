@@ -61,6 +61,9 @@ export default async function Page({ params }) {
 
   const resolved = page || locationPage
   if (!resolved) notFound()
+  // Only use CMS renderer if the page has actual sections with content.
+  // If sections array is empty, show 404 to avoid blank page.
+  if (!resolved.sections?.length) notFound()
   return (
     <>
       {seo?.schema_json && typeof seo.schema_json === 'object' ? (

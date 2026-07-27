@@ -20,5 +20,7 @@ export default async function Page() {
   }
 
   const cmsPage = await fetchCmsPageBySlug('digital-marketing-course-in-jayanagar')
-  return cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <HomeLegacyClient />
+  // Only use CMS renderer if the page has actual sections with content.
+  // If sections array is empty, fall back to legacy client to avoid blank page.
+  return cmsPage?.sections?.length ? <DynamicPageRenderer page={cmsPage} /> : <HomeLegacyClient />
 }

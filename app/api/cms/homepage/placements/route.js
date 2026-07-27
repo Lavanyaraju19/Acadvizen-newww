@@ -41,12 +41,13 @@ export async function POST(request) {
 
   const body = await readJsonBody(request)
 
+  // Use actual DB column names: company_name, logo_url, student_name, role, testimonial
   const payload = {
     company_name: String(body.company_name || '').trim(),
-    logo: body.logo || null,
+    logo_url: body.logo_url || body.logo || null,
     student_name: body.student_name || null,
-    student_image: body.student_image || null,
     role: body.role || null,
+    testimonial: body.testimonial || body.student_image || null,
     order_index: Number(body.order_index) || 0,
     is_active: body.is_active !== false,
   }
@@ -78,10 +79,10 @@ export async function PATCH(request) {
 
   const payload = {
     company_name: body.company_name !== undefined ? String(body.company_name).trim() : undefined,
-    logo: body.logo !== undefined ? body.logo : undefined,
+    logo_url: body.logo_url !== undefined ? body.logo_url : (body.logo !== undefined ? body.logo : undefined),
     student_name: body.student_name !== undefined ? body.student_name : undefined,
-    student_image: body.student_image !== undefined ? body.student_image : undefined,
     role: body.role !== undefined ? body.role : undefined,
+    testimonial: body.testimonial !== undefined ? body.testimonial : (body.student_image !== undefined ? body.student_image : undefined),
     order_index: body.order_index !== undefined ? Number(body.order_index) : undefined,
     is_active: body.is_active !== undefined ? Boolean(body.is_active) : undefined,
   }

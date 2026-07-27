@@ -3,12 +3,28 @@ import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
+function getDefaultSitemap() {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://acadvizen.com'
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>`
+}
+
 export async function GET(request) {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
-    )
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    if (!supabaseUrl || !supabaseKey) {
+      return new NextResponse(getDefaultSitemap(), {
+        headers: { 'Content-Type': 'application/xml', 'Cache-Control': 'public, max-age=3600' },
+      })
+    }
+    const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Get sitemap settings
     const { data: settings } = await supabase
@@ -18,6 +34,9 @@ export async function GET(request) {
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://acadvizen.com'
     const sitemapItems = []
+
+    // Add static pages
+    sitemapItems.push({ loc: `${baseUrl}`, changefreq: 'weekly', priority: 1.0 })
 
     // Add pages
     if (settings?.include_pages !== false) {
@@ -64,7 +83,7 @@ export async function GET(request) {
       const { data: courses } = await supabase
         .from('courses')
         .select('slug, updated_at')
-        .eq('status', 'published')
+        .eq('is_active', true)
         .neq('exclude_from_sitemap', true)
 
       if (courses) {
@@ -89,7 +108,6 @@ export async function GET(request) {
 
       if (cities) {
         cities.forEach(city => {
-          // Add both the cities route and the digital-marketing-course-in route
           sitemapItems.push({
             loc: `${baseUrl}/cities/${city.slug}`,
             lastmod: city.updated_at,
@@ -119,8 +137,8 @@ export async function GET(request) {
           sitemapItems.push({
             loc: `${baseUrl}/tools/${tool.slug}`,
             lastmod: tool.updated_at,
-            changefreq: settings.changefreq_tools || 'monthly',
-            priority: settings.priority_tools || 0.5,
+            changefreq: 'monthly',
+            priority: 0.5,
           })
         })
       }
@@ -151,16 +169,20 @@ export async function GET(request) {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${sitemapItems.map(item => `  <url>
     <loc>${item.loc}</loc>
-    <lastmod>${new Date(item.lastmod).toISOString()}</lastmod>
+    ${item.lastmod ? `<lastmod>${new Date(item.lastmod).toISOString()}</lastmod>` : ''}
     <changefreq>${item.changefreq}</changefreq>
     <priority>${item.priority}</priority>
   </url>`).join('\n')}
 </urlset>`
 
-    // Update last_generated timestamp
-    await supabase
-      .from('sitemap_settings')
-      .update({ last_generated: new Date().toISOString() })
+    // Try to update last_generated timestamp (non-critical)
+    try {
+      await supabase
+        .from('sitemap_settings')
+        .update({ last_generated: new Date().toISOString() })
+    } catch {
+      // ignore
+    }
 
     return new NextResponse(xml, {
       headers: {
@@ -170,6 +192,11 @@ ${sitemapItems.map(item => `  <url>
     })
   } catch (error) {
     console.error('Sitemap generation error:', error)
-    return new NextResponse('Error generating sitemap', { status: 500 })
+    return new NextResponse(getDefaultSitemap(), {
+      headers: {
+        'Content-Type': 'application/xml',
+        'Cache-Control': 'public, max-age=3600',
+      },
+    })
   }
 }

@@ -21,5 +21,7 @@ export default async function Page() {
   }
 
   const cmsPage = await fetchCmsPageBySlug('tools')
-  return cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <ToolsLegacyClient />
+  // Only use CMS renderer if the page has actual sections with content.
+  // If sections array is empty, fall back to legacy client to avoid blank page.
+  return cmsPage?.sections?.length ? <DynamicPageRenderer page={cmsPage} /> : <ToolsLegacyClient />
 }

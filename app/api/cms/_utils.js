@@ -23,7 +23,6 @@ export function jsonOk(data = null, extra = {}) {
 }
 
 export function jsonError(error, status = 500, data = null) {
-  // Ensure valid HTTP status code (4xx or 5xx). If caller passed 200, coerce to 500.
   const httpStatus = (typeof status === 'number' && status >= 400 && status <= 599) ? status : 500
   return NextResponse.json(
     { success: false, data, error: typeof error === 'string' ? error : error?.message || 'Request failed.' },
@@ -36,7 +35,6 @@ function withTimeout(promise, timeoutMs, message) {
   const timeoutPromise = new Promise((_, reject) => {
     timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs)
   })
-
   return Promise.race([promise, timeoutPromise]).finally(() => {
     if (timeoutId) clearTimeout(timeoutId)
   })
@@ -72,7 +70,7 @@ export function getSupabaseClientOrResponse(request, options = {}) {
   const authToken = getBearerToken(request)
   const preferServiceRole = options?.preferServiceRole === true && hasValidSupabaseServiceRoleKey()
   const supabase = preferServiceRole
-    ? getServerSupabaseClient()
+    ? getServerSupabaseClient({ preferServiceRole: true })
     : getServerSupabaseClient({ authToken: authToken || null })
   if (!supabase) {
     return {
@@ -98,7 +96,7 @@ export async function resolveAdminContext(request) {
   }
 
   const authSupabase = getServerSupabaseClient({ authToken })
-  const serviceSupabase = hasValidSupabaseServiceRoleKey() ? getServerSupabaseClient() : null
+  const serviceSupabase = hasValidSupabaseServiceRoleKey() ? getServerSupabaseClient({ preferServiceRole: true }) : null
   const verifier = serviceSupabase || authSupabase
 
   if (!verifier) {

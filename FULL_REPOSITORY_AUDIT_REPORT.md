@@ -125,23 +125,19 @@
 
 ### 5.1 Hardcoded Supabase Keys in Source Code (Critical)
 - **File:** `lib/env.ts` (lines 7-12)
-- **Issue:** Fallback Supabase URL and anon key are hardcoded in the source code:
-  ```
-  PUBLIC_SUPABASE_URL_FALLBACK = 'https://hhfccftkfryesjirauwf.supabase.co'
-  PUBLIC_SUPABASE_ANON_KEY_FALLBACK = 'eyJhbGciOiJIUzI1NiIs...'
-  ```
+- **Issue:** Fallback Supabase URL and anon key are hardcoded in the source code.
 - **Impact:** These are public keys (anon), but exposing the project URL and anon key in source code makes it easier for attackers to probe the Supabase project.
 - **Fix:** Remove fallback values, validate env vars at build time, and fail fast if missing.
 
 ### 5.2 Missing Row Level Security (RLS) Policies for New Tables (Critical)
 - **File:** `supabase/schema.sql` (lines 115-150)
-- **Issue:** RLS is enabled only for base tables. Many migration-added tables (e.g., `homepage_*`, `header_settings`, `footer_settings`, `seo_metadata`, `sections`, `pages`, `location_pages`, `blogs`, `menus`, `redirects`, `popups`, `banners`, `forms`, etc.) may not have RLS policies defined.
+- **Issue:** RLS is enabled only for base tables. Many migration-added tables may not have RLS policies defined.
 - **Impact:** Unauthorized data access via direct Supabase client calls from the browser.
 - **Fix:** Create RLS policies for all tables.
 
 ### 5.3 Service Role Key Used in Client-Side Context (High)
 - **File:** `lib/supabaseServer.ts` (line 50)
-- **Issue:** `getServerSupabaseClient` uses `SUPABASE_SERVICE_ROLE_KEY` by default when no auth token is provided. The service role key bypasses all RLS.
+- **Issue:** `getServerSupabaseClient` uses `SUPABASE_SERVICE_ROLE_KEY` by default when no auth token is provided.
 - **Impact:** If this function is called from an API route that doesn't properly authenticate, it exposes full database access.
 - **Fix:** Only use service role key when admin is authenticated.
 
@@ -162,19 +158,19 @@
 
 ### 6.1 No ISR Configuration (High)
 - **File:** `app/page.jsx` — `export const revalidate = 0` and `export const dynamic = 'force-dynamic'`
-- **Issue:** All public pages use `force-dynamic` which disables caching entirely. Every request triggers a server-side data fetch.
+- **Issue:** All public pages use `force-dynamic` which disables caching entirely.
 - **Impact:** Slow page loads, high server load, poor Core Web Vitals.
 - **Fix:** Use Incremental Static Regeneration (ISR) with appropriate `revalidate` intervals.
 
 ### 6.2 Large Images Not Optimized (High)
 - **Files:** Various section components
-- **Issue:** Images loaded via `<Image>` component with `layout="fill"` or without proper `sizes` attribute. The `next.config.mjs` allows all remote hosts (`hostname: '**'`) which is overly permissive.
+- **Issue:** Images loaded via `<Image>` component without proper `sizes` attribute. The `next.config.mjs` allows all remote hosts.
 - **Impact:** Slow LCP, poor image optimization.
 - **Fix:** Restrict remote patterns, add proper `sizes`, use `priority` for above-fold images.
 
 ### 6.3 No Font Optimization (Medium)
 - **Files:** `app/layout.jsx`, `tailwind.config.js`
-- **Issue:** Inter font is specified in tailwind config but not loaded via `next/font`. The font will fall back to system-ui until loaded.
+- **Issue:** Inter font specified in tailwind config but not loaded via `next/font`.
 - **Impact:** Layout shift (CLS), slow initial render.
 - **Fix:** Use `next/font` to load Inter font.
 
@@ -196,13 +192,13 @@
 
 ### 7.1 Missing Form Labels (High)
 - **Files:** Multiple form components
-- **Issue:** Many inputs lack explicit `<label>` elements or `aria-label` attributes. The admin layout has a client-side hack (`ensureFormFieldAttributes`) to fix this at runtime.
+- **Issue:** Many inputs lack explicit `<label>` elements or `aria-label` attributes.
 - **Impact:** Screen readers cannot identify form fields.
 - **Fix:** Add proper `<label htmlFor="...">` and `id` attributes to all form inputs.
 
 ### 7.2 Low Color Contrast (High)
 - **File:** `app/globals.css` and various components
-- **Issue:** The dark theme uses text colors like `text-slate-300` (#CBD5E1) on dark backgrounds, which may fail WCAG AA contrast requirements.
+- **Issue:** The dark theme uses text colors like `text-slate-300` (#CBD5E1) on dark backgrounds.
 - **Impact:** Readability issues for users with visual impairments.
 - **Fix:** Increase contrast ratios to meet WCAG AA (4.5:1 for normal text).
 
@@ -231,7 +227,7 @@
 ### 8.1 Duplicate Meta Tags (Medium)
 - **File:** `app/layout.jsx` — metadata export defines title/description
 - **File:** `app/page.jsx` — `generateMetadata` also returns title/description
-- **Issue:** The root layout defines default metadata, but homepage overrides it. However, the layout's metadata might conflict with page-level metadata.
+- **Issue:** The root layout defines default metadata, but homepage overrides it.
 - **Impact:** Potential duplicate or conflicting meta tags.
 - **Fix:** Remove metadata from layout and ensure all pages define their own via `generateMetadata`.
 
@@ -242,19 +238,19 @@
 
 ### 8.3 Robots.ts Uses `revalidate = 1` (Low)
 - **File:** `app/robots.ts` (line 4)
-- **Issue:** The robots.ts file has `export const revalidate = 1` which is unnecessary for static route files.
+- **Issue:** The robots.ts file has `export const revalidate = 1` which is unnecessary.
 - **Impact:** Unnecessary server-side execution.
 - **Fix:** Remove dynamic revalidation from static route files.
 
 ### 8.4 Sitemap May Be Incomplete (Medium)
 - **File:** `app/sitemap.ts`
-- **Issue:** The sitemap fetches data from multiple tables but catches errors silently, returning empty arrays. If database connections fail, the sitemap will be incomplete.
+- **Issue:** The sitemap fetches data from multiple tables but catches errors silently.
 - **Impact:** Search engines may not discover all pages.
 - **Fix:** Add fallback static sitemap entries and log errors properly.
 
 ### 8.5 Missing Breadcrumb Schema on Public Pages (High)
 - **File:** `app/(public)/[slug]/page.jsx`
-- **Issue:** Only blog pages have breadcrumb structured data. Other public pages (courses, tools, about, etc.) lack breadcrumb schema.
+- **Issue:** Only blog pages have breadcrumb structured data.
 - **Impact:** Missed rich snippet opportunities in search results.
 - **Fix:** Add BreadcrumbList schema to all page types.
 
@@ -281,12 +277,12 @@
 ### 10.1 Missing React Router Dom Import (High)
 - **File:** `src/legacy/pages/HomePage.jsx` (line 14)
 - **Issue:** `import { Link } from 'react-router-dom'` — `react-router-dom` is NOT in `package.json` dependencies.
-- **Impact:** Import will fail at build time unless the webpack shim resolves it. The shim may not provide complete functionality.
+- **Impact:** Import will fail at build time unless the webpack shim resolves it.
 - **Fix:** Remove react-router-dom dependency and use `next/link`.
 
 ### 10.2 Conditional Absolute Imports (Medium)
 - **File:** `jsconfig.json` — maps `@/*` to `src/*`
-- **Issue:** Some imports in `/lib` files use `../../../` relative paths while others use `@/` absolute paths. Mix of two conventions.
+- **Issue:** Some imports in `/lib` files use `../../../` relative paths while others use `@/` absolute paths.
 - **Impact:** Import confusion, difficulty refactoring.
 - **Fix:** Standardize on one import convention.
 
@@ -300,18 +296,22 @@
   - `lib/supabaseBrowser.ts`
   - `src/lib/supabaseClient.js`
   - `src/lib/supabase.js`
-- **Issue:** Four different ways to create/get Supabase client. The `src/lib/` versions are legacy and may conflict.
+- **Issue:** Four different ways to create/get Supabase client.
 - **Impact:** Inconsistent behavior, maintenance burden.
 - **Fix:** Consolidate to single `lib/supabaseBrowser.ts` and remove duplicates.
 
 ### 11.2 Legacy Pages Directory (`src/pages/`) Not Used (Medium)
 - **Files:** `src/pages/_HomePage.jsx`, `src/pages/_LoginPage.jsx`
-- **Issue:** Files exist in `src/pages/` but the project uses App Router (`app/` directory). These files appear unused.
+- **Issue:** Files exist in `src/pages/` but the project uses App Router (`app/` directory).
 - **Impact:** Dead code, confusion for developers.
 - **Fix:** Remove unused legacy page files.
 
 ### 11.3 Duplicate Blog Data (Medium)
 - **File:** `data/blogs.js` — contains hardcoded blog data
+- **Issue:** Blog data exists both as local hardcoded data and in the database.
+- **Impact:** Data inconsistency, stale local data.
+- **Fix:** Use database as single source of truth with appropriate fallback.
+
 - **Files:** Content sourced from Supabase `blogs` table
 - **Issue:** Blog data exists both as local hardcoded data and in the database. The homepage merges both sources.
 - **Impact:** Data inconsistency, stale local data.
@@ -452,11 +452,6 @@
 
 ---
 
-## Immediate Action Items (Critical)
 
-1. **Install `@supabase/ssr`** — Add to package.json dependencies
-2. **Remove hardcoded Supabase fallback keys** from `lib/env.ts`
-3. **Implement RLS policies** for all CMS tables
-4. **Add rate limiting** to all API routes (especially lead capture)
-5. **Secure service role key usage** — only use when admin auth is verified
+
 

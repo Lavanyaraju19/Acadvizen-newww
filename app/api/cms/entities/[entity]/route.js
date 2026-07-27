@@ -53,6 +53,12 @@ function applyFilters(query, request, config, isAdmin) {
   return next
 }
 
+function isTableNotFoundError(error) {
+  if (!error) return false
+  const msg = String(error.message || '').toLowerCase()
+  return msg.includes('does not exist') || msg.includes('relation') || msg.includes('42p01') || msg.includes('could not find the table') || msg.includes('schema cache')
+}
+
 export async function GET(request, { params }) {
   try {
     const config = getEntityConfig(params?.entity)
@@ -69,7 +75,10 @@ export async function GET(request, { params }) {
     query = applyFilters(query, request, config, isAdmin)
 
     const { data, error } = await query
-    if (error) return jsonError(`Database query failed: ${error.message}`, 500, [])
+    if (error) {
+      if (isTableNotFoundError(error)) return jsonOk([])
+      return jsonError(`Database query failed: ${error.message}`, 500, [])
+    }
     return jsonOk(data || [])
   } catch (error) {
     return jsonError(`Internal server error: ${error.message}`, 500, [])

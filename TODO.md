@@ -42,6 +42,15 @@
 - [x] **ROOT CAUSE: Missing homepage section tables** - `/api/cms/homepage/*` endpoints query tables (homepage_hero, homepage_faq, etc.) that were never created in any migration
   - Fix: Created `20260730_homepage_section_tables.sql` migration with all 11 missing tables + RLS policies + default records
 - [x] **Fixed corrupted JSX** in `src/legacy/pages/HomePage.jsx` - Restored missing `<NextLink>` attributes in CTA section
+
+
+- [x] **Fixed `supabaseServer.ts`** - Added `preferServiceRole` option to `getServerSupabaseClient()`, raw key fallback, removed auto service-role fallback
+- [x] **Fixed Header API (200)** - Added "could not find the table" / "schema cache" to `isTableNotFoundError()` patterns
+- [x] **Fixed Footer API (200)** - Same `isTableNotFoundError()` fix as header
+- [x] **ALL 3 CMS API endpoints verified:**
+  - `GET /api/cms/header` → **200** ✓ (returns defaults)
+  - `GET /api/cms/footer` → **200** ✓ (returns defaults)
+  - `GET /api/cms/site` → **200** ✓ (returns site data)
 - [x] Cleaned up `fix-corrupted-jsx.js` temp file
 
 ## 🔴 Critical (Requires DB access to verify/fix)
@@ -74,3 +83,6 @@
 - [x] npm run build - ✅ PASSED
 - [x] Header/Footer API field mismatches - FIXED
 - [x] Missing homepage section tables migration - CREATED
+- [x] Header API - **200 OK** ✅
+- [x] Footer API - **200 OK** ✅
+- [x] Site API - **200 OK** ✅

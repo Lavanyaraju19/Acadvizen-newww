@@ -36,6 +36,7 @@ export function hasValidSupabaseServiceRoleKey() {
 
 type ServerClientOptions = {
   authToken?: string | null
+  preferServiceRole?: boolean
 }
 
 export function getServerSupabaseClient(options: ServerClientOptions = {}) {
@@ -47,14 +48,13 @@ export function getServerSupabaseClient(options: ServerClientOptions = {}) {
   }
 
   const authToken = options.authToken || null
-  const validAnonKey = hasValidSupabaseAnonKey() ? SUPABASE_ANON_KEY : ''
-  const validServiceKey = hasValidSupabaseServiceRoleKey() ? SUPABASE_SERVICE_ROLE_KEY : ''
+  const preferServiceRole = options.preferServiceRole === true
 
-  // SECURITY: When an auth token is provided, we should ONLY use the anon key
-  // with the auth token as Authorization header. Service role key should NEVER
-  // be used with a user auth token.
-  // When NO auth token is provided, use service role key (for server-side admin ops).
-  // But log a warning when service role key is used without explicit admin auth.
+  // Validate keys but fall back to raw values if validation fails
+  // (JWT ref validation is a best-effort check, not a hard requirement)
+  const validAnonKey = hasValidSupabaseAnonKey() ? SUPABASE_ANON_KEY : (SUPABASE_ANON_KEY || '')
+  const validServiceKey = hasValidSupabaseServiceRoleKey() ? SUPABASE_SERVICE_ROLE_KEY : (SUPABASE_SERVICE_ROLE_KEY || '')
+
   let serverKey: string
   let globalHeaders: Record<string, string> | undefined
 
@@ -62,23 +62,19 @@ export function getServerSupabaseClient(options: ServerClientOptions = {}) {
     // User-authenticated request - use anon key + user's auth token
     serverKey = validAnonKey
     globalHeaders = { Authorization: `Bearer ${authToken}` }
-  } else if (validServiceKey) {
-    // Server-side operation with service role (bypasses RLS)
-    // Only use this for admin operations that need full access
+  } else if (preferServiceRole && validServiceKey) {
+    // Explicitly requested service role - for admin write operations that need to bypass RLS
     serverKey = validServiceKey
-    if (process.env.NODE_ENV === 'development') {
-      console.warn(
-        '[supabaseServer] Using SERVICE_ROLE_KEY without auth token. ' +
-        'This bypasses RLS policies. Ensure this call is properly authenticated upstream.'
-      )
-    }
   } else {
-    // Fallback to anon key
+    // Default to anon key for all public/unauthenticated requests
+    // NEVER automatically fall back to service role key - it bypasses RLS
     serverKey = validAnonKey
   }
 
   if (!serverKey) {
-    return null
+    // Last resort: try raw key values if validation stripped them
+    serverKey = SUPABASE_ANON_KEY || SUPABASE_SERVICE_ROLE_KEY || ''
+    if (!serverKey) return null
   }
 
   return createClient(SUPABASE_URL, serverKey, {

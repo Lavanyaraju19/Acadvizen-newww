@@ -10,7 +10,7 @@ import { isPublicCmsEnabled } from '../../lib/publicCms'
 export async function generateMetadata() {
   return buildCmsPageMetadata('soft-skills', '/soft-skills', {
     title: 'Soft Skills',
-    description: 'Soft skills training for career-ready digital marketing learners.',
+    description: 'Enhance your soft skills training with Acadvizen.',
   })
 }
 
@@ -20,5 +20,7 @@ export default async function Page() {
   }
 
   const cmsPage = await fetchCmsPageBySlug('soft-skills')
-  return cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <SoftSkillsLegacyClient />
+  // Only use CMS renderer if the page has actual sections with content.
+  // If sections array is empty, fall back to legacy client to avoid blank page.
+  return cmsPage?.sections?.length ? <DynamicPageRenderer page={cmsPage} /> : <SoftSkillsLegacyClient />
 }
