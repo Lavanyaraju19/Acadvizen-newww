@@ -21,7 +21,7 @@ export function requireEnv(key: string): string {
 }
 
 // Keep NEXT_PUBLIC values as literals so Next.js can inline them on the client.
-// No fallback values — these must be configured in environment.
+// No fallback values - these must be configured in environment.
 export const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || ''
 export const SUPABASE_ANON_KEY =
@@ -38,4 +38,8 @@ export function validateSupabaseConfig(): string[] {
   if (!SUPABASE_URL) errors.push('SUPABASE_URL / NEXT_PUBLIC_SUPABASE_URL is not set')
   if (!SUPABASE_ANON_KEY) errors.push('SUPABASE_ANON_KEY / NEXT_PUBLIC_SUPABASE_ANON_KEY is not set')
   return errors
+}
+
+export function isSupabaseConfigAvailable(): boolean {
+  return !!SUPABASE_URL && !!SUPABASE_ANON_KEY
 }

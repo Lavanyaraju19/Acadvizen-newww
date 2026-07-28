@@ -30,16 +30,6 @@ export function jsonError(error, status = 500, data = null) {
   )
 }
 
-function withTimeout(promise, timeoutMs, message) {
-  let timeoutId
-  const timeoutPromise = new Promise((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs)
-  })
-  return Promise.race([promise, timeoutPromise]).finally(() => {
-    if (timeoutId) clearTimeout(timeoutId)
-  })
-}
-
 function readAuthorizationHeader(request) {
   const direct = request?.headers?.get?.('authorization')
   if (direct) return direct
@@ -64,6 +54,34 @@ function getBearerToken(request) {
   const authorization = String(readAuthorizationHeader(request) || '')
   if (!authorization.toLowerCase().startsWith('bearer ')) return ''
   return authorization.slice(7).trim()
+}
+
+function getErrorMessage(error) {
+  return String(error?.message || error || '').toLowerCase()
+}
+
+function isTransientError(error) {
+  const message = getErrorMessage(error)
+  return (
+    error?.name === 'AbortError' ||
+    error?.status >= 500 ||
+    message.includes('timeout') ||
+    message.includes('timed out') ||
+    message.includes('network') ||
+    message.includes('fetch') ||
+    message.includes('failed to fetch') ||
+    message.includes('econnrefused') ||
+    message.includes('etimedout') ||
+    message.includes('enotfound') ||
+    message.includes('abort') ||
+    message.includes('signal') ||
+    message.includes('temporarily unavailable')
+  )
+}
+
+function isTokenRefreshNeeded(error) {
+  const message = getErrorMessage(error)
+  return message.includes('expired') || message.includes('jwt') || message.includes('token')
 }
 
 export function getSupabaseClientOrResponse(request, options = {}) {
@@ -108,13 +126,17 @@ export async function resolveAdminContext(request) {
   }
 
   try {
-    const { data: authData, error: authError } = await withTimeout(
-      verifier.auth.getUser(authToken),
-      7000,
-      'Admin session lookup timed out.'
-    )
+    const { data: authData, error: authError } = await verifier.auth.getUser(authToken)
 
     if (authError || !authData?.user?.id) {
+      if (isTransientError(authError)) {
+        return { ok: false, status: 503, error: 'Admin session verification is temporarily unavailable. Please retry.', transient: true }
+      }
+
+      if (isTokenRefreshNeeded(authError)) {
+        return { ok: false, status: 401, error: 'Admin session expired. Please sign in again.', needsRefresh: true }
+      }
+
       return { ok: false, status: 401, error: authError?.message || 'Admin session is invalid. Please sign in again.' }
     }
 
@@ -123,17 +145,16 @@ export async function resolveAdminContext(request) {
       return { ok: false, status: 500, error: 'Admin profile lookup is unavailable.' }
     }
 
-    const { data: profile, error: profileError } = await withTimeout(
-      profileClient
-        .from('profiles')
-        .select('*')
-        .eq('id', authData.user.id)
-        .maybeSingle(),
-      7000,
-      'Admin profile lookup timed out.'
-    )
+    const { data: profile, error: profileError } = await profileClient
+      .from('profiles')
+      .select('*')
+      .eq('id', authData.user.id)
+      .maybeSingle()
 
     if (profileError) {
+      if (isTransientError(profileError)) {
+        return { ok: false, status: 503, error: 'Admin profile lookup is temporarily unavailable. Please retry.', transient: true }
+      }
       return { ok: false, status: 401, error: profileError.message || 'Unable to verify the admin profile.' }
     }
 
@@ -153,6 +174,9 @@ export async function resolveAdminContext(request) {
       profile,
     }
   } catch (error) {
+    if (isTransientError(error)) {
+      return { ok: false, status: 503, error: 'Admin session verification is temporarily unavailable. Please retry.', transient: true }
+    }
     return {
       ok: false,
       status: 500,

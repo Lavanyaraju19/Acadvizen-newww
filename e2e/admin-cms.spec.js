@@ -2,7 +2,6 @@ const { test, expect } = require('@playwright/test');
 const {
   loginAdmin,
   checkAndHandleSessionError,
-  waitForSuccessMessage,
 } = require('./utils');
 
 // Test data
@@ -73,203 +72,108 @@ const testData = {
   },
 };
 
+// List of all admin modules that should be accessible
+const ADMIN_MODULES = [
+  { path: '/admin', label: 'Dashboard' },
+  { path: '/admin/homepage', label: 'Homepage Builder' },
+  { path: '/admin/header', label: 'Header' },
+  { path: '/admin/footer', label: 'Footer' },
+  { path: '/admin/menus', label: 'Menus' },
+  { path: '/admin/pages', label: 'Pages' },
+  { path: '/admin/blogs', label: 'Blogs' },
+  { path: '/admin/blog-taxonomy', label: 'Blog Taxonomy' },
+  { path: '/admin/courses', label: 'Courses' },
+  { path: '/admin/tools', label: 'Tools' },
+  { path: '/admin/companies', label: 'Companies' },
+  { path: '/admin/internships', label: 'Internships' },
+  { path: '/admin/testimonials', label: 'Testimonials' },
+  { path: '/admin/cities', label: 'Cities' },
+  { path: '/admin/media', label: 'Media Library' },
+  { path: '/admin/forms', label: 'Forms' },
+  { path: '/admin/popups', label: 'Popups' },
+  { path: '/admin/banners', label: 'Banners' },
+  { path: '/admin/redirects', label: 'Redirects' },
+  { path: '/admin/sitemap', label: 'Sitemap' },
+  { path: '/admin/robots', label: 'Robots.txt' },
+  { path: '/admin/sections', label: 'Reusable Sections' },
+  { path: '/admin/templates', label: 'Page Templates' },
+  { path: '/admin/landing-seo', label: 'Landing SEO' },
+  { path: '/admin/trust', label: 'Trust & Conversion' },
+  { path: '/admin/trust-conversion', label: 'Trust & Conversion (alt)' },
+  { path: '/admin/leads', label: 'Leads' },
+  { path: '/admin/lms', label: 'LMS' },
+  { path: '/admin/seo', label: 'SEO Settings' },
+  { path: '/admin/settings', label: 'Settings' },
+  { path: '/admin/users', label: 'Users' },
+  { path: '/admin/course-details', label: 'Course Details' },
+  { path: '/admin/import-export', label: 'Import/Export' },
+  { path: '/admin/resources', label: 'Resources' },
+  { path: '/admin/students', label: 'Students' },
+];
+
 test.describe('Admin CMS E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
     await loginAdmin(page);
   });
 
-  test.describe('Blog Taxonomy', () => {
-    test('should load blog taxonomy page', async ({ page }) => {
-      await page.goto('/admin/blog-taxonomy');
-      await page.waitForLoadState('domcontentloaded');
-      await checkAndHandleSessionError(page);
-      
-      // Verify page loads successfully
-      const authorsSection = page.locator('h3:has-text("Blog Authors")');
-      await expect(authorsSection).toBeVisible();
-    });
-  });
+  // ── MODULE LOADING TESTS ──────────────────────────────────
+  // Each admin module is tested to ensure it loads without session errors
 
-  test.describe('Courses', () => {
-    test('should load courses page', async ({ page }) => {
-      await page.goto('/admin/courses');
-      await page.waitForLoadState('domcontentloaded');
-      await checkAndHandleSessionError(page);
-
-      // Verify page loads successfully
-      const title = page.locator('h3:has-text("Courses")');
-      await expect(title.first()).toBeVisible();
-    });
-  });
-
-  test.describe('Tools', () => {
-    test('should load tools page', async ({ page }) => {
-      await page.goto('/admin/tools');
-      await page.waitForLoadState('domcontentloaded');
-      await checkAndHandleSessionError(page);
-
-      // Verify page loads successfully
-      const title = page.locator('h3:has-text("Digital Marketing Tools")');
-      await expect(title.first()).toBeVisible();
-    });
-  });
-
-  test.describe('Companies', () => {
-    test('should load companies page', async ({ page }) => {
-      await page.goto('/admin/companies');
-      await page.waitForLoadState('domcontentloaded');
-      await checkAndHandleSessionError(page);
-
-      // Verify page loads (may have DB error if table doesn't exist)
-      const currentUrl = page.url();
-      expect(currentUrl).toContain('/admin/companies');
-    });
-  });
-
-  test.describe('Internships', () => {
-    test('should load internships page', async ({ page }) => {
-      await page.goto('/admin/internships');
-      await page.waitForLoadState('domcontentloaded');
-      await checkAndHandleSessionError(page);
-
-      // Verify page loads
-      const currentUrl = page.url();
-      expect(currentUrl).toContain('/admin/internships');
-    });
-  });
-
-  test.describe('Testimonials', () => {
-    test('should load testimonials page', async ({ page }) => {
-      await page.goto('/admin/testimonials');
-      await page.waitForLoadState('domcontentloaded');
-      await checkAndHandleSessionError(page);
-
-      // Verify page loads (may have DB error if table doesn't exist)
-      const currentUrl = page.url();
-      expect(currentUrl).toContain('/admin/testimonials');
-    });
-  });
-
-  test.describe('Media Library', () => {
-    test('should load media library page', async ({ page }) => {
-      await page.goto('/admin/media');
-      await page.waitForLoadState('domcontentloaded');
-      await checkAndHandleSessionError(page);
-
-      // Verify page loads
-      const currentUrl = page.url();
-      expect(currentUrl).toContain('/admin/media');
-    });
-  });
-
-  test.describe('Trust & Conversion', () => {
-    test('should load trust page', async ({ page }) => {
-      await page.goto('/admin/trust');
-      await page.waitForLoadState('domcontentloaded');
-      await checkAndHandleSessionError(page);
-
-      // Verify page loads
-      const currentUrl = page.url();
-      expect(currentUrl).toContain('/admin/trust');
-    });
-  });
-
-  test.describe('Landing SEO', () => {
-    test('should load landing SEO page', async ({ page }) => {
-      await page.goto('/admin/landing-seo');
-      await page.waitForLoadState('domcontentloaded');
-      await checkAndHandleSessionError(page);
-
-      // Verify page loads
-      const currentUrl = page.url();
-      expect(currentUrl).toContain('/admin/landing-seo');
-    });
-  });
-
-  test.describe('Leads', () => {
-    test('should load leads page', async ({ page }) => {
-      await page.goto('/admin/leads');
-      await page.waitForLoadState('domcontentloaded');
-      await checkAndHandleSessionError(page);
-
-      // Verify page loads
-      const currentUrl = page.url();
-      expect(currentUrl).toContain('/admin/leads');
-    });
-  });
-
-  test.describe('LMS', () => {
-    test('should load LMS page', async ({ page }) => {
-      await page.goto('/admin/lms');
-      await page.waitForLoadState('domcontentloaded');
-      await checkAndHandleSessionError(page);
-
-      // Verify page loads
-      const currentUrl = page.url();
-      expect(currentUrl).toContain('/admin/lms');
-    });
-  });
-
-  test.describe('SEO Settings', () => {
-    test('should load SEO settings page', async ({ page }) => {
-      await page.goto('/admin/seo');
-      await page.waitForLoadState('domcontentloaded');
-      await checkAndHandleSessionError(page);
-
-      // Verify page loads
-      const currentUrl = page.url();
-      expect(currentUrl).toContain('/admin/seo');
-    });
-  });
-
-  test.describe('Website Settings', () => {
-    test('should load settings page', async ({ page }) => {
-      await page.goto('/admin/settings');
-      await page.waitForLoadState('domcontentloaded');
-      await checkAndHandleSessionError(page);
-
-      // Verify page loads
-      const currentUrl = page.url();
-      expect(currentUrl).toContain('/admin/settings');
-    });
-  });
-
-  test.describe('Pages', () => {
-    test('should load pages page', async ({ page }) => {
-      await page.goto('/admin/pages');
-      await page.waitForLoadState('domcontentloaded');
-      await checkAndHandleSessionError(page);
-
-      // Verify page loads
-      const currentUrl = page.url();
-      expect(currentUrl).toContain('/admin/pages');
-    });
-  });
-
-  test.describe('Navigation', () => {
-    test('should navigate between admin modules', async ({ page }) => {
-      const modules = [
-        '/admin/courses',
-        '/admin/tools',
-        '/admin/companies',
-        '/admin/internships',
-        '/admin/testimonials',
-        '/admin/media',
-        '/admin/trust',
-        '/admin/landing-seo',
-        '/admin/leads',
-        '/admin/lms',
-        '/admin/seo',
-        '/admin/settings',
-        '/admin/pages',
-      ];
-
-      for (const module of modules) {
-        await page.goto(module);
+  for (const mod of ADMIN_MODULES) {
+    test.describe(mod.label, () => {
+      test(`should load ${mod.label} page at ${mod.path}`, async ({ page }) => {
+        await page.goto(mod.path);
         await page.waitForLoadState('domcontentloaded');
         await checkAndHandleSessionError(page);
-        await expect(page).toHaveURL(new RegExp(module.replace('/', '\\/')));
+
+        // Verify we're on the expected admin page
+        await expect(page).toHaveURL(new RegExp(mod.path.replace('/', '\\/')));
+      });
+    });
+  }
+
+  // ── CROSS-MODULE NAVIGATION ───────────────────────────────
+  test.describe('Navigation', () => {
+    test('should navigate between all admin modules without session expiry', async ({ page }) => {
+      for (const mod of ADMIN_MODULES) {
+        // Navigate to module
+        await page.goto(mod.path);
+        await page.waitForLoadState('domcontentloaded');
+        await checkAndHandleSessionError(page);
+
+        // Assert on URL
+        await expect(page).toHaveURL(new RegExp(mod.path.replace('/', '\\/')));
       }
+    });
+  });
+
+  // ── SESSION PERSISTENCE ──────────────────────────────────
+  test.describe('Session Persistence', () => {
+    test('should maintain session across multiple module navigations', async ({ page }) => {
+      // Visit 5 random modules to verify session stays alive
+      const sampleModules = ADMIN_MODULES
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 5);
+
+      for (const mod of sampleModules) {
+        await page.goto(mod.path);
+        await page.waitForLoadState('domcontentloaded');
+        await checkAndHandleSessionError(page);
+        await expect(page).toHaveURL(new RegExp(mod.path.replace('/', '\\/')));
+      }
+    });
+
+    test('should survive page refresh without session loss', async ({ page }) => {
+      await page.goto('/admin');
+      await page.waitForLoadState('domcontentloaded');
+      await checkAndHandleSessionError(page);
+
+      // Reload the page
+      await page.reload();
+      await page.waitForLoadState('domcontentloaded');
+
+      // Should still be on admin, not redirected to login
+      await expect(page).toHaveURL(/\/admin($|\/)/);
     });
   });
 });

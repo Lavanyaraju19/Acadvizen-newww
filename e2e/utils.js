@@ -1,8 +1,20 @@
 require('dotenv').config();
 const { expect } = require('@playwright/test');
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'operation@acadvizen.com';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Admin@Acadvizen2026';
+// ⚠ NEVER hardcode credentials. Always use environment variables.
+// Set E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD in your .env.local file.
+const E2E_ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL;
+const E2E_ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD;
+
+if (!E2E_ADMIN_EMAIL || !E2E_ADMIN_PASSWORD) {
+  throw new Error(
+    'E2E credentials not configured. Set E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD in .env.local file ' +
+    'or in environment variables.\n' +
+    'Example:\n' +
+    '  E2E_ADMIN_EMAIL=your-admin@example.com\n' +
+    '  E2E_ADMIN_PASSWORD=your-admin-password'
+  );
+}
 
 async function loginAdmin(page) {
   await page.goto('/admin-login');
@@ -23,8 +35,8 @@ async function loginAdmin(page) {
   }
 
   // Fill in login form
-  await page.fill('input[type="email"], input[name="email"]', ADMIN_EMAIL);
-  await page.fill('input[type="password"], input[name="password"]', ADMIN_PASSWORD);
+  await page.fill('input[type="email"], input[name="email"]', E2E_ADMIN_EMAIL);
+  await page.fill('input[type="password"], input[name="password"]', E2E_ADMIN_PASSWORD);
   await page.click('button[type="submit"], button:has-text("Sign in")');
 
   // Wait for navigation - either to /admin or handle error
@@ -42,9 +54,9 @@ async function loginAdmin(page) {
       throw new Error(`Login failed - redirected to ${finalUrl} instead of /admin`);
     }
   }
-  
+
   await page.waitForLoadState('domcontentloaded');
-  
+
   // Verify we're not on an error page
   const errorElement = page.locator('text=Admin Access Error, text=Unable to open the admin dashboard');
   if (await errorElement.count() > 0) {
@@ -65,7 +77,7 @@ async function checkAndHandleSessionError(page) {
       // If no retry button, go back to login
       await loginAdmin(page);
     }
-    
+
     // Check if error persists after retry
     const errorAfterRetry = page.locator('text=Admin Access Error, text=Unable to open the admin dashboard');
     if (await errorAfterRetry.count() > 0) {
@@ -111,8 +123,8 @@ async function verifyRecordNotExists(page, recordSelector) {
 }
 
 module.exports = {
-  ADMIN_EMAIL,
-  ADMIN_PASSWORD,
+  E2E_ADMIN_EMAIL,
+  E2E_ADMIN_PASSWORD,
   loginAdmin,
   checkAndHandleSessionError,
   waitForSuccessMessage,

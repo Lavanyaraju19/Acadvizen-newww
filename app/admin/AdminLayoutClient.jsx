@@ -35,6 +35,7 @@ import { Surface } from '../../src/components/ui/Surface'
 import { CustomCursor } from '../../src/components/ui/CustomCursor'
 import { useAuth } from '../../src/contexts/AuthContext'
 import { fetchAdminSession, getAdminAccessToken } from '../../lib/adminApiClient'
+import { sessionManager } from '../../lib/sessionManager'
 import GlobalSearch from '../../components/admin/GlobalSearch'
 
 const adminNav = [
@@ -71,6 +72,42 @@ const adminNav = [
   { path: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
+function getErrorMessage(error) {
+  return String(error?.message || '').toLowerCase()
+}
+
+function isTransientAdminError(error) {
+  const message = getErrorMessage(error)
+  return (
+    error?.transient === true ||
+    error?.status === 503 ||
+    error?.name === 'AbortError' ||
+    message.includes('timed out') ||
+    message.includes('timeout') ||
+    message.includes('network') ||
+    message.includes('fetch') ||
+    message.includes('failed to fetch') ||
+    message.includes('abort') ||
+    message.includes('econnrefused') ||
+    message.includes('etimedout') ||
+    message.includes('enotfound') ||
+    message.includes('temporarily unavailable')
+  )
+}
+
+function isSessionAuthFailure(error) {
+  const message = getErrorMessage(error)
+  return (
+    error?.status === 401 &&
+    (
+      message.includes('session expired') ||
+      message.includes('session is invalid') ||
+      message.includes('access token') ||
+      message.includes('sign in again')
+    )
+  )
+}
+
 export default function AdminLayoutClient({ children }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -84,16 +121,18 @@ export default function AdminLayoutClient({ children }) {
     user: null,
     profile: null,
     accessToken: '',
+    reconnecting: false,
   })
   const isLoginLikePath = pathname === '/admin/login' || pathname === '/admin-login'
   const user = adminState.user
   const profile = adminState.profile
   const guardMessage = useMemo(() => {
+    if (adminState.reconnecting) return 'Reconnecting to your admin session...'
     if (adminState.error) return adminState.error
     if (guardTimedOut) return 'Admin authentication is taking longer than expected.'
     if (user && !profile) return 'Loading your admin profile...'
     return 'Checking admin access...'
-  }, [adminState.error, guardTimedOut, profile, user])
+  }, [adminState.error, adminState.reconnecting, guardTimedOut, profile, user])
 
   const clearAdminSession = useCallback(async () => {
     try {
@@ -108,6 +147,20 @@ export default function AdminLayoutClient({ children }) {
       // noop
     }
   }, [signOut])
+
+  const handleConfirmedAuthFailure = useCallback(async (message) => {
+    await clearAdminSession()
+    setVerifiedOnce(false)
+    setAdminState({
+      loading: false,
+      error: message,
+      user: null,
+      profile: null,
+      accessToken: '',
+      reconnecting: false,
+    })
+    router.replace('/admin-login')
+  }, [clearAdminSession, router])
 
   const verifyAdminAccess = useCallback(async () => {
     if (isLoginLikePath) return
@@ -128,6 +181,8 @@ export default function AdminLayoutClient({ children }) {
     }
 
     try {
+      await sessionManager.refreshIfNeeded()
+
       const payload = await fetchAdminSession()
       const accessToken = await getAdminAccessToken()
 
@@ -137,11 +192,33 @@ export default function AdminLayoutClient({ children }) {
         user: payload?.data?.user || null,
         profile: payload?.data?.profile || null,
         accessToken,
+        reconnecting: false,
       })
       setVerifiedOnce(true)
       setGuardTimedOut(false)
     } catch (error) {
       const message = error?.message || 'Unable to open the admin dashboard.'
+
+      if (isTransientAdminError(error)) {
+        setAdminState((prev) => ({
+          ...prev,
+          loading: false,
+          error: verifiedOnce ? '' : message,
+          reconnecting: true,
+        }))
+        return
+      }
+
+      if (isSessionAuthFailure(error)) {
+        const recovered = await sessionManager.refreshIfNeeded(true)
+        if (recovered) {
+          setRetryNonce((value) => value + 1)
+          return
+        }
+        await handleConfirmedAuthFailure(message)
+        return
+      }
+
       await clearAdminSession()
       setVerifiedOnce(false)
       setAdminState({
@@ -150,9 +227,17 @@ export default function AdminLayoutClient({ children }) {
         user: null,
         profile: null,
         accessToken: '',
+        reconnecting: false,
       })
     }
-  }, [adminState.profile, adminState.user, clearAdminSession, isLoginLikePath, verifiedOnce])
+  }, [
+    adminState.profile,
+    adminState.user,
+    clearAdminSession,
+    handleConfirmedAuthFailure,
+    isLoginLikePath,
+    verifiedOnce,
+  ])
 
   // window.fetch override removed. Use adminApiFetch from lib/adminApiClient.js
   // which properly injects auth headers via Authorization Bearer token.
@@ -160,6 +245,33 @@ export default function AdminLayoutClient({ children }) {
 
   // MutationObserver for form field labels removed.
   // All form fields should use proper htmlFor/id patterns in their components.
+
+  useEffect(() => {
+    if (isLoginLikePath) return undefined
+
+    return sessionManager.subscribe((event) => {
+      if (event === 'reconnecting' || event === 'expiring') {
+        setAdminState((prev) => ({
+          ...prev,
+          loading: false,
+          reconnecting: true,
+        }))
+      }
+
+      if (event === 'refreshed' || event === 'recovered') {
+        setAdminState((prev) => ({
+          ...prev,
+          error: '',
+          reconnecting: false,
+        }))
+        setRetryNonce((value) => value + 1)
+      }
+
+      if (event === 'expired') {
+        void handleConfirmedAuthFailure('Admin session expired. Please sign in again.')
+      }
+    })
+  }, [handleConfirmedAuthFailure, isLoginLikePath])
 
   useEffect(() => {
     if (isLoginLikePath) return undefined
@@ -276,6 +388,9 @@ export default function AdminLayoutClient({ children }) {
               </div>
               <div className="flex items-center gap-4">
                 <GlobalSearch />
+                {adminState.reconnecting ? (
+                  <span className="text-xs font-semibold text-amber-200">Reconnecting...</span>
+                ) : null}
                 {user?.email && (
                   <span className="text-xs text-slate-400">
                     {profile?.role === 'admin' ? `Admin: ${user.email}` : user.email}
