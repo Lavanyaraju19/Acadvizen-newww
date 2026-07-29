@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { ensureBrowserSupabaseClient, supabase } from '../lib/supabaseClient'
+import { canAccessAdminProfile, enrichAdminProfile } from '../../lib/adminPermissions'
 
 const AuthContext = createContext(null)
 const AUTH_TIMEOUT_MS = 12000
@@ -27,9 +28,19 @@ export function AuthProvider({ children }) {
   const [profileLoading, setProfileLoading] = useState(false)
   const [authError, setAuthError] = useState('')
   const inFlightProfileRef = useRef(new Map())
+  const supabaseRef = useRef(supabase)
 
-  async function fetchProfile(userId, { silent = false } = {}) {
-    if (!supabase || !userId) {
+  const getClient = useCallback(async () => {
+    const client = supabaseRef.current || await ensureBrowserSupabaseClient()
+    if (client) {
+      supabaseRef.current = client
+    }
+    return client
+  }, [])
+
+  const fetchProfile = useCallback(async (userId, { silent = false } = {}) => {
+    const client = await getClient()
+    if (!client || !userId) {
       setProfile(null)
       setProfileLoading(false)
       return null
@@ -42,7 +53,7 @@ export function AuthProvider({ children }) {
       setProfileLoading(true)
       try {
         const { data, error } = await withTimeout(
-          supabase
+          client
             .from('profiles')
             .select('*')
             .eq('id', userId)
@@ -52,7 +63,7 @@ export function AuthProvider({ children }) {
         )
 
         if (error) throw error
-        setProfile(data || null)
+        setProfile(enrichAdminProfile(data || null))
         if (!silent) setAuthError('')
         return data || null
       } catch (error) {
@@ -73,17 +84,11 @@ export function AuthProvider({ children }) {
 
     inFlightProfileRef.current.set(userId, request)
     return request
-  }
+  }, [getClient])
 
   useEffect(() => {
     let isMounted = true
-    if (!supabase) {
-      setAuthError('Supabase browser client is unavailable.')
-      setLoading(false)
-      return () => {
-        isMounted = false
-      }
-    }
+    let unsubscribe = null
 
     const applySession = (session, { silentProfile = false } = {}) => {
       setUser(session?.user ?? null)
@@ -100,15 +105,39 @@ export function AuthProvider({ children }) {
       try {
         setLoading(true)
         setAuthError('')
+        const client = await getClient()
+        if (!client) {
+          throw new Error('Supabase browser client is unavailable.')
+        }
         const {
           data: { session },
         } = await withTimeout(
-          supabase.auth.getSession(),
+          client.auth.getSession(),
           AUTH_TIMEOUT_MS,
           'Session initialization timed out.'
         )
         if (!isMounted) return
         applySession(session, { silentProfile: true })
+
+        const { data } = client.auth.onAuthStateChange(async (_event, nextSession) => {
+          try {
+            setLoading(true)
+            applySession(nextSession, { silentProfile: true })
+          } catch (err) {
+            if (isMounted) {
+              setUser(null)
+              setProfile(null)
+              setProfileLoading(false)
+              setAuthError(err?.message || 'Unable to refresh authentication state.')
+            }
+          } finally {
+            if (isMounted) setLoading(false)
+          }
+        })
+
+        unsubscribe = () => {
+          data?.subscription?.unsubscribe()
+        }
       } catch (err) {
         if (isMounted) {
           setUser(null)
@@ -123,30 +152,17 @@ export function AuthProvider({ children }) {
 
     init()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      try {
-        setLoading(true)
-        applySession(session, { silentProfile: true })
-      } catch (err) {
-        if (isMounted) {
-          setUser(null)
-          setProfile(null)
-          setProfileLoading(false)
-          setAuthError(err?.message || 'Unable to refresh authentication state.')
-        }
-      } finally {
-        if (isMounted) setLoading(false)
-      }
-    })
-
     return () => {
       isMounted = false
-      subscription.unsubscribe()
+      unsubscribe?.()
     }
-  }, [])
+  }, [fetchProfile, getClient])
 
   async function signUp(email, password, fullName) {
-    const { data, error } = await supabase.auth.signUp({
+    const client = await getClient()
+    if (!client?.auth) throw new Error('Supabase browser client is unavailable.')
+
+    const { data, error } = await client.auth.signUp({
       email,
       password,
       options: { data: { full_name: fullName } },
@@ -156,7 +172,10 @@ export function AuthProvider({ children }) {
   }
 
   async function signIn(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    const client = await getClient()
+    if (!client?.auth) throw new Error('Supabase browser client is unavailable.')
+
+    const { data, error } = await client.auth.signInWithPassword({ email, password })
     if (error) throw error
     setUser(data?.user ?? null)
     await fetchProfile(data.user.id, { silent: true })
@@ -164,9 +183,12 @@ export function AuthProvider({ children }) {
   }
 
   async function signOut(scope = 'global') {
-    const { error } = await supabase.auth.signOut({ scope })
+    const client = await getClient()
+    if (!client?.auth) throw new Error('Supabase browser client is unavailable.')
+
+    const { error } = await client.auth.signOut({ scope })
     if (error && scope !== 'local') {
-      await supabase.auth.signOut({ scope: 'local' })
+      await client.auth.signOut({ scope: 'local' })
     }
     setUser(null)
     setProfile(null)
@@ -175,7 +197,10 @@ export function AuthProvider({ children }) {
   }
 
   async function resetPassword(email) {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const client = await getClient()
+    if (!client?.auth) throw new Error('Supabase browser client is unavailable.')
+
+    const { error } = await client.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     })
     if (error) throw error
@@ -192,7 +217,8 @@ export function AuthProvider({ children }) {
     signIn,
     signOut,
     resetPassword,
-    isAdmin: profile?.role === 'admin',
+    isAdmin: profile?.is_full_admin === true,
+    canAccessAdmin: canAccessAdminProfile(profile),
     isStudent: profile?.role === 'student',
     isSales: profile?.role === 'sales',
     isApproved: profile?.approval_status === 'approved',

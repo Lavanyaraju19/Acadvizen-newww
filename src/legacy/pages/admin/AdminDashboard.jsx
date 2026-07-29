@@ -8,6 +8,7 @@ import { StudentsAdmin } from './StudentsAdmin'
 import { CustomCursor } from '../../../components/ui/CustomCursor'
 import { Surface } from '../../../components/ui/Surface'
 import { useAuth } from '../../../contexts/AuthContext'
+import { isFullAdminProfile } from '../../../../lib/adminPermissions'
 
 const adminNav = [
   { path: '/admin', label: 'Courses', component: CoursesAdmin },
@@ -54,7 +55,7 @@ export function AdminDashboard() {
               <div className="flex items-center gap-4">
                 {user?.email && (
                   <span className="text-xs text-slate-400">
-                    {profile?.role === 'admin' ? `Admin: ${user.email}` : user.email}
+                    {isFullAdminProfile(profile) ? `Admin: ${user.email}` : user.email}
                   </span>
                 )}
                 <Link

@@ -64,6 +64,7 @@ export default async function DigitalMarketingCoursePage({ params }) {
             {cityPage.hero_subtitle || cityPage.hero_description}
           </p>
           {cityPage.hero_image_url && (
+            /* eslint-disable-next-line @next/next/no-img-element -- These city pages render arbitrary CMS image URLs without guaranteed Next image host allowlists. */
             <img
               src={cityPage.hero_image_url}
               alt={cityPage.city_name}
@@ -85,6 +86,7 @@ export default async function DigitalMarketingCoursePage({ params }) {
               {cityPage.about_description}
             </p>
             {cityPage.about_image_url && (
+              /* eslint-disable-next-line @next/next/no-img-element -- These city pages render arbitrary CMS image URLs without guaranteed Next image host allowlists. */
               <img
                 src={cityPage.about_image_url}
                 alt={cityPage.about_title}
@@ -138,7 +140,7 @@ export default async function DigitalMarketingCoursePage({ params }) {
             <div className="grid md:grid-cols-2 gap-6">
               {cityPage.testimonials.map((testimonial, index) => (
                 <div key={index} className="p-6 border border-slate-200 rounded-lg">
-                  <p className="text-slate-700 mb-4 italic">"{testimonial.quote}"</p>
+                  <p className="text-slate-700 mb-4 italic">&ldquo;{testimonial.quote}&rdquo;</p>
                   <div className="font-semibold text-slate-900">
                     {testimonial.name}
                     {testimonial.role && <span className="text-slate-600"> - {testimonial.role}</span>}

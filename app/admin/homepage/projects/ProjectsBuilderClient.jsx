@@ -219,7 +219,7 @@ export default function ProjectsBuilderClient() {
           
           {projects.length === 0 ? (
             <div className="p-8 rounded-xl border border-white/10 bg-white/[0.03] text-center text-slate-400">
-              No projects yet. Click "Add Project" to create one.
+              No projects yet. Click &quot;Add Project&quot; to create one.
             </div>
           ) : (
             projects.map((item, index) => (
@@ -234,6 +234,7 @@ export default function ProjectsBuilderClient() {
                 <div className="flex items-start gap-3">
                   <GripVertical className="w-5 h-5 text-slate-500 mt-1" />
                   {item.image_url && (
+                    /* eslint-disable-next-line @next/next/no-img-element -- Builder list previews render arbitrary CMS images that are not guaranteed to be in Next image allowlists. */
                     <img 
                       src={item.image_url} 
                       alt={item.title}

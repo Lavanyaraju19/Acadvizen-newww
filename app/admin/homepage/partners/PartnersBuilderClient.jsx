@@ -216,7 +216,7 @@ export default function PartnersBuilderClient() {
           
           {partners.length === 0 ? (
             <div className="p-8 rounded-xl border border-white/10 bg-white/[0.03] text-center text-slate-400">
-              No partners yet. Click "Add Partner" to create one.
+              No partners yet. Click &quot;Add Partner&quot; to create one.
             </div>
           ) : (
             partners.map((item, index) => (
@@ -231,6 +231,7 @@ export default function PartnersBuilderClient() {
                 <div className="flex items-center gap-3">
                   <GripVertical className="w-5 h-5 text-slate-500" />
                   {item.logo_url && (
+                    /* eslint-disable-next-line @next/next/no-img-element -- Builder list previews must support arbitrary uploaded logos without requiring Next image host allowlists. */
                     <img 
                       src={item.logo_url} 
                       alt={item.name}

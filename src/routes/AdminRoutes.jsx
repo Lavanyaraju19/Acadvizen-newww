@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { AdminLogin } from '../pages/admin/Login'
 import { AdminDashboard } from '../pages/admin/AdminDashboard'
 import { useAuth } from '../contexts/AuthContext'
+import { canAccessAdminProfile } from '../../lib/adminPermissions'
 
 function AdminGuard({ children }) {
   const location = useLocation()
@@ -32,7 +33,7 @@ function AdminGuard({ children }) {
     return <Navigate to="/admin/login" state={{ from: location }} replace />
   }
 
-  if (profile.role !== 'admin') {
+  if (!canAccessAdminProfile(profile)) {
     return <Navigate to="/" replace />
   }
 

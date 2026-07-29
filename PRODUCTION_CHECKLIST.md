@@ -5,6 +5,34 @@
 
 ---
 
+## Current Audit Snapshot - 2026-07-28
+
+### Architecture Confirmed
+
+- [x] Next.js 14 App Router project confirmed
+- [x] React 18 confirmed
+- [x] Mixed JavaScript and TypeScript codebase confirmed
+- [x] Supabase-backed authentication/CMS architecture confirmed
+- [x] Middleware present for API protection and maintenance gating
+
+### Verified During This Audit
+
+- [x] Admin browser auth bootstrap repaired to support runtime public-config loading
+- [x] Shared public blog visibility rules consolidated for blog API, listing, detail, sitemap, and homepage latest-post flow
+- [x] Homepage FAQ now uses valid CMS FAQ entries when available
+- [x] Footer location links no longer point all labels to a single shared URL
+- [x] Type-check blocker in `lib/rateLimiter.ts` repaired
+
+### Still Requires Command Verification
+
+- [ ] `npm run build` completes successfully
+- [ ] Lint command completes successfully
+- [ ] Full type check completes successfully
+- [ ] E2E test suite completes successfully
+- [ ] Production smoke test completed against the built app
+
+---
+
 ## Pre-Deployment Checklist
 
 ### Environment Setup

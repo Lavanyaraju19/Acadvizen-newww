@@ -213,7 +213,7 @@ export default function CurriculumBuilderClient() {
           
           {curriculumItems.length === 0 ? (
             <div className="p-8 rounded-xl border border-white/10 bg-white/[0.03] text-center text-slate-400">
-              No curriculum sections yet. Click "Add Section" to create one.
+              No curriculum sections yet. Click &quot;Add Section&quot; to create one.
             </div>
           ) : (
             curriculumItems.map((item, index) => (

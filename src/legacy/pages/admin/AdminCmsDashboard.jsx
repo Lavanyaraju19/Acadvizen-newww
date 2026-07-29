@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../../lib/supabaseClient'
 import { useAuth } from '../../../contexts/AuthContext'
 import { Surface } from '../../../components/ui/Surface'
@@ -7,6 +7,7 @@ import { CoursesAdmin } from './CoursesAdmin'
 import { ToolsAdmin } from './ToolsAdmin'
 import { ResourcesAdmin } from './ResourcesAdmin'
 import { uploadFile } from '../../../../lib/storageUpload'
+import { canAccessAdminProfile } from '../../../../lib/adminPermissions'
 
 function SectionShell({ title, subtitle, children, actions }) {
   return (
@@ -107,7 +108,7 @@ function CrudSection({
   const [formError, setFormError] = useState('')
   const [formSuccess, setFormSuccess] = useState('')
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     const initial = {}
     fields.forEach((field) => {
       if (field.type === 'checkbox') initial[field.name] = field.default ?? false
@@ -115,18 +116,18 @@ function CrudSection({
       else initial[field.name] = field.default ?? ''
     })
     setForm(initial)
-  }
+  }, [fields])
 
-  const loadItems = async () => {
+  const loadItems = useCallback(async () => {
     setLoading(true)
     const { data } = await supabase.from(table).select('*').order(orderBy, { ascending: true })
     if (data) setItems(data)
     setLoading(false)
-  }
+  }, [orderBy, table])
 
   useEffect(() => {
     resetForm()
-    loadItems()
+    void loadItems()
     const channel = supabase
       .channel(`cms-${table}`)
       .on('postgres_changes', { event: '*', schema: 'public', table }, loadItems)
@@ -134,7 +135,7 @@ function CrudSection({
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [table])
+  }, [loadItems, resetForm, table])
 
   const startEdit = (item) => {
     setEditing(item)
@@ -549,13 +550,13 @@ export function AdminCmsDashboard() {
 
   useEffect(() => {
     if (loading) return
-    if (!user || profile?.role !== 'admin') {
+    if (!user || !canAccessAdminProfile(profile)) {
       navigate('/admin-login', { replace: true })
     }
   }, [user, profile, loading, navigate])
 
   useEffect(() => {
-    if (!user || profile?.role !== 'admin') return
+    if (!user || !canAccessAdminProfile(profile)) return
 
     const seedDefaults = async () => {
       const [{ count: homeCount }, { count: statsCount }, { count: toolsCount }, { count: testimonialsCount }] =
@@ -660,9 +661,9 @@ export function AdminCmsDashboard() {
                 title="CMS Overview"
                 subtitle="Use the sidebar to manage content, cohorts, and assets."
                 actions={
-                  <a href="/" className="text-sm font-semibold text-teal-300 hover:text-teal-200">
+                  <Link to="/" className="text-sm font-semibold text-teal-300 hover:text-teal-200">
                     Back to site
-                  </a>
+                  </Link>
                 }
               >
                 <div className="grid gap-4 md:grid-cols-2">

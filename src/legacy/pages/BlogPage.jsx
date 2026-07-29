@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { supabase } from '../../lib/supabaseClient'
@@ -12,15 +12,15 @@ import { canonicalizeKnownBlogSlug } from '../../../lib/blogSlugResolver'
 export function BlogPage() {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
-  const pickFirstNonEmpty = (...values) => {
+  const pickFirstNonEmpty = useCallback((...values) => {
     for (const value of values) {
       if (value === null || value === undefined) continue
       if (typeof value === 'string' && value.trim() === '') continue
       return value
     }
     return null
-  }
-  const mergeWithLocal = (post) => {
+  }, [])
+  const mergeWithLocal = useCallback((post) => {
     const canonicalSlug = canonicalizeKnownBlogSlug(post.slug)
     const local = localBlogs.find((item) => item.slug === canonicalSlug || item.id === post.id)
     return {
@@ -39,7 +39,7 @@ export function BlogPage() {
       ),
       published_at: pickFirstNonEmpty(post.published_at, post.created_at, local?.created_at),
     }
-  }
+  }, [pickFirstNonEmpty])
   const formatPublishedDate = (value) => {
     if (!value) return 'Draft'
     return new Date(value).toLocaleDateString('en-US', {
@@ -50,18 +50,7 @@ export function BlogPage() {
     })
   }
 
-  useEffect(() => {
-    loadPosts()
-    const channel = supabase
-      ?.channel('public-blog-posts')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'blog_posts' }, loadPosts)
-      .subscribe()
-    return () => {
-      if (channel) supabase?.removeChannel(channel)
-    }
-  }, [])
-
-  async function loadPosts() {
+  const loadPosts = useCallback(async () => {
     setLoading(true)
     const { data } = await fetchPublicData('blog-posts')
     const fetched = Array.isArray(data) ? data.map(mergeWithLocal) : []
@@ -90,7 +79,18 @@ export function BlogPage() {
     }
     setPosts(deduped)
     setLoading(false)
-  }
+  }, [mergeWithLocal])
+
+  useEffect(() => {
+    void loadPosts()
+    const channel = supabase
+      ?.channel('public-blog-posts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'blog_posts' }, loadPosts)
+      .subscribe()
+    return () => {
+      if (channel) supabase?.removeChannel(channel)
+    }
+  }, [loadPosts])
 
   return (
     <div className="min-h-screen">

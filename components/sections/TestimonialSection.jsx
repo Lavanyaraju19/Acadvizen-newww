@@ -14,7 +14,7 @@ export default function TestimonialSection({ section }) {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {items.map((item, index) => (
             <article key={`${safeString(item?.name)}-${index}`} className="rounded-2xl border border-white/10 bg-[var(--section-card-bg,rgba(255,255,255,0.03))] p-5">
-              <p className="text-sm leading-relaxed text-slate-300">"{safeString(item?.quote)}"</p>
+              <p className="text-sm leading-relaxed text-slate-300">&ldquo;{safeString(item?.quote)}&rdquo;</p>
               <p className="mt-4 text-sm font-semibold text-slate-100">{safeString(item?.name)}</p>
               {item?.role ? <p className="text-xs text-slate-400">{safeString(item.role)}</p> : null}
             </article>

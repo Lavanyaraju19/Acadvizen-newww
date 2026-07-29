@@ -1,88 +1,33 @@
-# Phase 2 – Fix All Issues: TODO List
+# Production Hardening - Prioritized Task List
 
-## ✅ Completed
-- [x] Created FULL_REPOSITORY_AUDIT_REPORT.md (Phase 1)
-- [x] @supabase/ssr dependency already installed (package.json has ^0.12.3)
-- [x] middleware.js already properly uses @supabase/ssr (createServerClient)
-- [x] supabaseServer.ts already has security warnings for service role key usage
-- [x] Fix hardcoded Supabase keys in lib/env.ts - Added .env.example, keys referenced via process.env
-- [x] Fix react-router-dom imports → next/link in legacy pages (HomePage.jsx converted to NextLink)
-- [x] Add error.jsx for route segments (app/error.jsx, admin/error.jsx created)
-- [x] Add loading.jsx files (app/loading.jsx created)
-- [x] Add .env.example file
-- [x] Build passes successfully - 105 routes generated
+## Audit Snapshot - 2026-07-28
+- [x] Reviewed current Git status and confirmed an already-dirty worktree
+- [x] Confirmed active stack is Next.js 14 App Router with mixed JS/TS and Supabase
+- [x] Confirmed README is stale and still describes an old Vite/React Router architecture
+- [x] Identified critical blockers in auth bootstrap, blog consistency, footer location links, FAQ rendering, and type-check readiness
 
-## ✅ Completed High Priority Fixes (Phase 2)
-- [x] Fix window.fetch override in AdminLayoutClient.jsx - REPLACED with dedicated API client
-- [x] Fix ensureFormFieldAttributes DOM mutation approach - REMOVED, labels handled by components
-- [x] Fix CMS API response status codes (200→4xx/5xx) - FIXED in _utils.js jsonError()
-- [x] Add error boundaries to API routes - ADDED try-catch wrappers to all CMS routes
-- [x] Add input validation on entity creation - INTEGRATED validation.js into POST route
-- [x] Optimize images and restrict remote patterns - RESTRICTED in next.config.mjs (6 specific hosts)
-- [x] Add next/font for Inter font - ADDED in layout.jsx via next/font/google
-- [x] Fix duplicate Supabase client definitions - homepageCmsData.js now reuses server client
-- [x] Fix CMS independent homepage section management - FIXED homepageCmsData.js
-- [x] Fix robots.ts revalidate - REMOVED unnecessary `export const revalidate = 1`
-- [x] Remove initSupabase() unused call - REMOVED from providers.jsx
+## Priority 1 - Build and Runtime Blockers
+- [x] Repair browser Supabase bootstrap so admin auth works when public env vars are missing from the bundle
+- [x] Fix the current TypeScript blocker in `lib/rateLimiter.ts`
+- [ ] Run `npm run build` to completion and fix remaining production build failures
+- [ ] Run lint and capture real results
 
-## ✅ Phase 3 – Runtime Error Fixes
-- [x] **Fixed root cause of `href={undefined}` runtime error** - Updated `src/lib/react-router-dom-shim.js` Link component
-- [x] Shim now safely resolves href: never passes `undefined`, `null`, or empty strings to NextLink
-- [x] Added `resolveHref()` helper that falls back to `'/'` when no valid URL is provided
-- [x] Strips invalid HTML attributes (`aria-disabled`) before passing to NextLink
-- [x] Created `app/api/cms/bulk/route.js` - Bulk operations API
-- [x] Created `app/api/cms/revalidate/route.js` - Content revalidation API
+## Priority 2 - CMS to Public Consistency
+- [x] Unify public blog visibility rules and shared published-blog fetching
+- [x] Stop homepage latest-post logic from merging legacy fallback posts with CMS-published posts
+- [x] Switch homepage FAQ rendering back to valid CMS-managed FAQ items when available
+- [x] Fix footer location links so each label points to its own URL instead of a shared homepage/base URL
+- [ ] Audit homepage section duplication root cause and remove any real duplicate rendering path
 
-## ✅ Phase 4 – Root Cause Analysis & API 500 Fixes
-- [x] **ROOT CAUSE: Header/Footer API HTTP 500** - Field name mismatch between API routes and actual DB schema columns
-  - Header API sent `logo`, `navigation_links`, `cta_text` → DB expects `logo_url`, `nav_items`, `primary_cta_text`
-  - Footer API sent `description`, `social_links`, `quick_links` → DB columns don't exist or named differently
-  - Fix: Replaced both route files with correct DB column names + backward-compatible fallback handling
-- [x] **ROOT CAUSE: Site API fragile** - `Promise.all` syntax was broken after edit, fixed with individual queries with proper error handling
-- [x] **ROOT CAUSE: Missing homepage section tables** - `/api/cms/homepage/*` endpoints query tables (homepage_hero, homepage_faq, etc.) that were never created in any migration
-  - Fix: Created `20260730_homepage_section_tables.sql` migration with all 11 missing tables + RLS policies + default records
-- [x] **Fixed corrupted JSX** in `src/legacy/pages/HomePage.jsx` - Restored missing `<NextLink>` attributes in CTA section
+## Priority 3 - Security and Server Controls
+- [x] Keep admin/session APIs on runtime-loaded browser auth instead of a frozen null client
+- [ ] Review server-side permission coverage for key CMS write routes
+- [ ] Standardize API success/error response shapes across critical CMS routes
+- [ ] Verify no browser-exposed service-role usage remains
 
+## Priority 4 - Production Verification
+- [ ] Update production documentation to match the actual Next.js architecture
+- [ ] Run responsive and smoke tests on the main public and admin routes
+- [ ] Run E2E coverage for at least blog, homepage, and admin login flows
+- [ ] Produce final readiness report with only command-backed claims
 
-- [x] **Fixed `supabaseServer.ts`** - Added `preferServiceRole` option to `getServerSupabaseClient()`, raw key fallback, removed auto service-role fallback
-- [x] **Fixed Header API (200)** - Added "could not find the table" / "schema cache" to `isTableNotFoundError()` patterns
-- [x] **Fixed Footer API (200)** - Same `isTableNotFoundError()` fix as header
-- [x] **ALL 3 CMS API endpoints verified:**
-  - `GET /api/cms/header` → **200** ✓ (returns defaults)
-  - `GET /api/cms/footer` → **200** ✓ (returns defaults)
-  - `GET /api/cms/site` → **200** ✓ (returns site data)
-- [x] Cleaned up `fix-corrupted-jsx.js` temp file
-
-## 🔴 Critical (Requires DB access to verify/fix)
-- [ ] Apply new migration `20260730_homepage_section_tables.sql` to Supabase project
-- [ ] Add RLS policies documentation/fixes for CMS tables (needs DB access)
-- [ ] Secure service role key in supabaseServer.ts (warnings present, verify in production)
-
-## 🟡 Medium Priority (remaining)
-- [ ] Remove legacy dead code (src/pages/, unused scripts)
-- [ ] Remove hardcoded blog data (data/blogs.js) - PRESERVED (fallback for production)
-- [ ] Fix responsive overflow issues
-- [ ] Add empty states for entity lists
-- [ ] Add CMS version history for all entities
-- [ ] Add draft/publish workflow for all entities
-- [ ] Fix duplicate metadata in layout vs pages
-- [ ] Fix sitemap error handling
-- [ ] Add structured data (breadcrumbs) to all pages
-- [ ] Remove unused script files from root
-- [ ] Standardize import conventions
-- [ ] Add focus-visible styles
-
-## 🟢 Low Priority (remaining)
-- [ ] Remove unused legacy pages
-- [ ] Clean up jsconfig paths
-- [ ] Add maintenance mode banner for admins
-- [ ] Clean up root directory files
-- [ ] Add CSRF documentation
-
-## 📋 Build Status
-- [x] npm run build - ✅ PASSED
-- [x] Header/Footer API field mismatches - FIXED
-- [x] Missing homepage section tables migration - CREATED
-- [x] Header API - **200 OK** ✅
-- [x] Footer API - **200 OK** ✅
-- [x] Site API - **200 OK** ✅

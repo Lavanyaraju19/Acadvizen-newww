@@ -9,14 +9,34 @@ import {
 
 export const dynamic = 'force-dynamic'
 
+function inferWorkflowPermission(newStatus = '') {
+  const normalized = String(newStatus || '').trim().toLowerCase()
+  if (!normalized) return { resource: 'pages', action: 'update' }
+
+  if (['review', 'in_review', 'pending_review', 'submitted_for_review'].includes(normalized)) {
+    return { resource: 'pages', action: 'submit_review' }
+  }
+  if (normalized === 'approved') {
+    return { resource: 'pages', action: 'approve' }
+  }
+  if (normalized === 'rejected') {
+    return { resource: 'pages', action: 'reject' }
+  }
+  if (normalized === 'published') {
+    return { resource: 'pages', action: 'publish' }
+  }
+
+  return { resource: 'pages', action: 'update' }
+}
+
 export async function POST(request) {
-  const unauthorized = await ensureAdmin(request)
+  const body = await readJsonBody(request)
+  const unauthorized = await ensureAdmin(request, inferWorkflowPermission(body?.new_status))
   if (unauthorized) return unauthorized
 
   const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
-  const body = await readJsonBody(request)
   const { entity_type, entity_id, new_status } = body
 
   if (!entity_type || !entity_id || !new_status) {

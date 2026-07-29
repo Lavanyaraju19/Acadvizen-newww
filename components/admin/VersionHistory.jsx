@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { History, Restore, Eye, X, ChevronDown, ChevronUp, Clock, User, Compare } from 'lucide-react'
 import { adminApiFetch } from '../../lib/adminApiClient'
 
@@ -12,7 +12,7 @@ export default function VersionHistory({ entityType, entityId, onRestore }) {
   const [comparing, setComparing] = useState(false)
   const [error, setError] = useState('')
 
-  async function loadVersions() {
+  const loadVersions = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
@@ -27,13 +27,13 @@ export default function VersionHistory({ entityType, entityId, onRestore }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [entityId, entityType])
 
   useEffect(() => {
     if (isOpen && entityId) {
-      loadVersions()
+      void loadVersions()
     }
-  }, [isOpen, entityId, entityType])
+  }, [entityId, isOpen, loadVersions])
 
   async function handleRestore(versionId) {
     if (!window.confirm('Restore this version? Current changes will be replaced.')) return

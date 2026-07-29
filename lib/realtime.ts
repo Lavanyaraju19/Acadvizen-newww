@@ -1,6 +1,22 @@
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import { getBrowserSupabaseClient } from './supabaseBrowser'
 
+/**
+ * Subscribe to realtime changes on a table.
+ * 
+ * IMPORTANT: Always unsubscribe when done to prevent memory leaks:
+ * 
+ *   const channel = subscribeToTable('my_table', callback)
+ *   // ... later
+ *   channel?.unsubscribe()
+ * 
+ * For React components, use useEffect cleanup:
+ * 
+ *   useEffect(() => {
+ *     const channel = subscribeToTable('my_table', callback)
+ *     return () => { channel?.unsubscribe() }
+ *   }, [])
+ */
 export function subscribeToTable(
   tableName: string,
   callback: (payload: Record<string, unknown>) => void
@@ -14,3 +30,4 @@ export function subscribeToTable(
   channel.subscribe()
   return channel
 }
+

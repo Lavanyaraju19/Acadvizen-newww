@@ -8,6 +8,16 @@ import {
 } from '../_utils'
 
 export const dynamic = 'force-dynamic'
+const MANAGED_ROLE_SLUGS = new Set([
+  'super_admin',
+  'admin',
+  'editor',
+  'author',
+  'reviewer',
+  'viewer',
+  'seo_manager',
+  'content_writer',
+])
 
 function isTableNotFoundError(error) {
   if (!error) return false
@@ -15,8 +25,21 @@ function isTableNotFoundError(error) {
   return msg.includes('does not exist') || msg.includes('relation') || msg.includes('42p01') || msg.includes('could not find the table') || msg.includes('schema cache')
 }
 
+async function findRoleRecord(supabase, roleSlug) {
+  if (!roleSlug) return { data: null, error: null }
+
+  return supabase
+    .from('roles')
+    .select('id,name,slug,permissions')
+    .or(`slug.eq.${roleSlug},name.eq.${roleSlug}`)
+    .maybeSingle()
+}
+
 export async function GET(request) {
   try {
+    const unauthorized = await ensureAdmin(request, { resource: 'users', action: 'read' })
+    if (unauthorized) return unauthorized
+
     const { searchParams } = new URL(request.url)
     const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
     if (response) return response
@@ -52,7 +75,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const unauthorized = await ensureAdmin(request)
+    const unauthorized = await ensureAdmin(request, { resource: 'users', action: 'create' })
     if (unauthorized) return unauthorized
 
     const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
@@ -62,6 +85,19 @@ export async function POST(request) {
     
     if (!body?.email) {
       return jsonError('Email is required', 400)
+    }
+
+    const roleSlug = String(body.role || 'viewer').trim().toLowerCase()
+    if (!MANAGED_ROLE_SLUGS.has(roleSlug)) {
+      return jsonError('Invalid role value.', 400)
+    }
+
+    const { data: targetRole, error: targetRoleError } = await findRoleRecord(supabase, roleSlug)
+    if (targetRoleError) {
+      return jsonError(`Failed to load role: ${targetRoleError.message}`, 500)
+    }
+    if (!targetRole) {
+      return jsonError(`The role "${roleSlug}" is not configured. Apply the RBAC seed migration first.`, 503)
     }
 
     const { data: existingUser } = await supabase
@@ -89,7 +125,7 @@ export async function POST(request) {
       .from('profiles')
       .update({
         full_name: body.full_name || '',
-        role: body.role || 'viewer',
+        role: roleSlug,
       })
       .eq('id', authData.user.id)
       .select('*')
@@ -97,12 +133,22 @@ export async function POST(request) {
 
     if (profileError) return jsonError(`Failed to update profile: ${profileError.message}`, 500)
 
-    if (body.role_id) {
-      await supabase.from('user_roles').insert({
-        user_id: authData.user.id,
-        role_id: body.role_id,
-        assigned_by: (await supabase.auth.getUser()).data.user?.id,
-      })
+    const { error: deleteAssignmentsError } = await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', authData.user.id)
+
+    if (deleteAssignmentsError && !isTableNotFoundError(deleteAssignmentsError)) {
+      return jsonError(`Failed to reset user role assignments: ${deleteAssignmentsError.message}`, 500)
+    }
+
+    const { error: roleAssignmentError } = await supabase.from('user_roles').insert({
+      user_id: authData.user.id,
+      role_id: targetRole.id,
+    })
+
+    if (roleAssignmentError && !isTableNotFoundError(roleAssignmentError)) {
+      return jsonError(`Failed to assign role: ${roleAssignmentError.message}`, 500)
     }
 
     revalidateAllCmsPages()

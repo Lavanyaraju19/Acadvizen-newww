@@ -40,41 +40,30 @@ type ServerClientOptions = {
 }
 
 export function getServerSupabaseClient(options: ServerClientOptions = {}) {
-  if (!SUPABASE_URL || !(SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY)) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('[supabaseServer] Missing Supabase URL or keys. Check environment variables.')
-    }
+  if (!SUPABASE_URL) {
     return null
   }
 
   const authToken = options.authToken || null
   const preferServiceRole = options.preferServiceRole === true
 
-  // Validate keys but fall back to raw values if validation fails
-  // (JWT ref validation is a best-effort check, not a hard requirement)
-  const validAnonKey = hasValidSupabaseAnonKey() ? SUPABASE_ANON_KEY : (SUPABASE_ANON_KEY || '')
-  const validServiceKey = hasValidSupabaseServiceRoleKey() ? SUPABASE_SERVICE_ROLE_KEY : (SUPABASE_SERVICE_ROLE_KEY || '')
-
   let serverKey: string
   let globalHeaders: Record<string, string> | undefined
 
   if (authToken) {
     // User-authenticated request - use anon key + user's auth token
-    serverKey = validAnonKey
+    if (!SUPABASE_ANON_KEY) return null
+    serverKey = SUPABASE_ANON_KEY
     globalHeaders = { Authorization: `Bearer ${authToken}` }
-  } else if (preferServiceRole && validServiceKey) {
-    // Explicitly requested service role - for admin write operations that need to bypass RLS
-    serverKey = validServiceKey
+  } else if (preferServiceRole && SUPABASE_SERVICE_ROLE_KEY) {
+    // Explicitly requested service role - for admin write operations only
+    // SECURITY: Only use when a valid admin session has been verified upstream
+    serverKey = SUPABASE_SERVICE_ROLE_KEY
   } else {
     // Default to anon key for all public/unauthenticated requests
-    // NEVER automatically fall back to service role key - it bypasses RLS
-    serverKey = validAnonKey
-  }
-
-  if (!serverKey) {
-    // Last resort: try raw key values if validation stripped them
-    serverKey = SUPABASE_ANON_KEY || SUPABASE_SERVICE_ROLE_KEY || ''
-    if (!serverKey) return null
+    // SECURITY: NEVER fall back to service role key - it bypasses RLS
+    if (!SUPABASE_ANON_KEY) return null
+    serverKey = SUPABASE_ANON_KEY
   }
 
   return createClient(SUPABASE_URL, serverKey, {
@@ -85,3 +74,4 @@ export function getServerSupabaseClient(options: ServerClientOptions = {}) {
     global: globalHeaders ? { headers: globalHeaders } : undefined,
   })
 }
+

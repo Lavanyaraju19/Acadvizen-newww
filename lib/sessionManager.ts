@@ -1,6 +1,6 @@
 'use client'
 
-import { supabase } from './supabaseClient'
+import { ensureBrowserSupabaseClient } from './supabaseBrowser'
 
 type SessionState = {
   initialized: boolean
@@ -10,6 +10,7 @@ type SessionState = {
   isRefreshing: boolean
   lastError: string | null
   reconnecting: boolean
+  hasSeenSession: boolean
 }
 
 export type SessionEvent = 'expiring' | 'expired' | 'recovered' | 'refreshed' | 'reconnecting'
@@ -35,9 +36,11 @@ class SessionManager {
     isRefreshing: false,
     lastError: null,
     reconnecting: false,
+    hasSeenSession: false,
   }
   private heartbeatInterval: ReturnType<typeof setInterval> | null = null
   private refreshPromise: Promise<boolean> | null = null
+  private initPromise: Promise<void> | null = null
   private authSubscription: { unsubscribe: () => void } | null = null
   private listeners: Set<SessionListener> = new Set()
   private readonly HEARTBEAT_MS = 120_000
@@ -45,10 +48,11 @@ class SessionManager {
   private readonly RETRY_BACKOFF_BASE_MS = 1_000
   private readonly REFRESH_COOLDOWN_MS = 10_000
   private readonly REFRESH_WINDOW_SECONDS = 300
+  private syncPromise: Promise<void> | null = null
 
   private constructor() {
     if (typeof window === 'undefined') return
-    this.init()
+    void this.init()
   }
 
   static getInstance(): SessionManager {
@@ -95,35 +99,92 @@ class SessionManager {
     this.notify('reconnecting')
   }
 
-  private init() {
-    if (this.state.initialized) return
-    if (!supabase?.auth) return
+  private async getClient() {
+    return ensureBrowserSupabaseClient()
+  }
 
-    const { data } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') {
-        this.startHeartbeat()
-      }
+  private async syncServerSession(accessToken: string) {
+    if (!accessToken) return
+    if (this.syncPromise) {
+      await this.syncPromise
+    }
 
-      if (event === 'TOKEN_REFRESHED') {
-        this.markRefreshSuccess()
-        this.notify('refreshed')
-      }
-
-      if (event === 'SIGNED_OUT') {
-        this.state.reconnecting = false
-        this.stopHeartbeat()
-      }
+    this.syncPromise = fetch('/api/admin/session', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      cache: 'no-store',
+    }).then(() => undefined).catch(() => undefined).finally(() => {
+      this.syncPromise = null
     })
 
-    this.authSubscription = data?.subscription || null
-    document.addEventListener('visibilitychange', this.handleVisibilityChange)
-    window.addEventListener('focus', this.handleFocus)
-    window.addEventListener('online', this.handleOnline)
-    window.addEventListener('offline', this.handleOffline)
+    await this.syncPromise
+  }
 
-    this.state.initialized = true
-    this.startHeartbeat()
-    void this.refreshIfNeeded()
+  private async init() {
+    if (this.state.initialized) return
+    if (this.initPromise) return this.initPromise
+
+    this.initPromise = (async () => {
+      const supabase = await this.getClient()
+      if (!supabase?.auth || this.state.initialized) return
+
+      const { data } = supabase.auth.onAuthStateChange((event, session) => {
+        void this.handleAuthEvent(event, session?.access_token || '')
+      })
+
+      this.authSubscription = data?.subscription || null
+      document.addEventListener('visibilitychange', this.handleVisibilityChange)
+      window.addEventListener('focus', this.handleFocus)
+      window.addEventListener('online', this.handleOnline)
+      window.addEventListener('offline', this.handleOffline)
+
+      this.state.initialized = true
+      try {
+        const { data } = await supabase.auth.getSession()
+        if (data?.session) {
+          this.state.hasSeenSession = true
+          this.startHeartbeat()
+        }
+      } catch {
+        // Ignore bootstrap session lookup failures and let follow-up checks recover.
+      }
+    })().finally(() => {
+      this.initPromise = null
+    })
+
+    return this.initPromise
+  }
+
+  private async getReadyClient() {
+    await this.init()
+    return this.getClient()
+  }
+
+  private async handleAuthEvent(event: string, accessToken = '') {
+    if (event === 'SIGNED_IN') {
+      this.state.hasSeenSession = true
+      await this.syncServerSession(accessToken)
+      this.startHeartbeat()
+    }
+
+    if (event === 'TOKEN_REFRESHED') {
+      this.state.hasSeenSession = true
+      await this.syncServerSession(accessToken)
+      this.markRefreshSuccess()
+      this.notify('refreshed')
+    }
+
+    if (event === 'SIGNED_OUT') {
+      this.state.reconnecting = false
+      this.stopHeartbeat()
+      try {
+        await fetch('/api/admin/session', { method: 'DELETE' })
+      } catch {
+        // Ignore sync cleanup failures.
+      }
+    }
   }
 
   private startHeartbeat() {
@@ -195,6 +256,7 @@ class SessionManager {
     hasRefreshToken: boolean
     needsRefresh: boolean
   }> {
+    const supabase = await this.getReadyClient()
     if (!supabase?.auth) {
       return { valid: false, expiresIn: null, hasRefreshToken: false, needsRefresh: false }
     }
@@ -205,6 +267,8 @@ class SessionManager {
       if (!session) {
         return { valid: false, expiresIn: null, hasRefreshToken: false, needsRefresh: false }
       }
+
+      this.state.hasSeenSession = true
 
       const now = Math.floor(Date.now() / 1000)
       const expiresAt = session.expires_at || 0
@@ -245,6 +309,7 @@ class SessionManager {
   }
 
   private async runRefreshIfNeeded(force: boolean): Promise<boolean> {
+    const supabase = await this.getReadyClient()
     if (!supabase?.auth) return false
 
     const sessionState = await this.getSessionState()
@@ -260,6 +325,12 @@ class SessionManager {
     }
 
     if (!sessionState.hasRefreshToken) {
+      if (!this.state.hasSeenSession) {
+        this.state.lastError = null
+        this.state.reconnecting = false
+        return false
+      }
+
       if (this.state.reconnecting && this.state.lastError) {
         return false
       }
@@ -344,6 +415,7 @@ class SessionManager {
     this.state.initialized = false
     this.state.reconnecting = false
     this.state.isRefreshing = false
+    this.state.hasSeenSession = false
   }
 }
 

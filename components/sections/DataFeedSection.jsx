@@ -67,7 +67,7 @@ function renderItem(type, item) {
   if (type === 'testimonials_feed') {
     return (
       <article key={item.id} className="rounded-2xl border border-white/10 bg-[var(--section-card-bg,rgba(255,255,255,0.03))] p-5">
-        <p className="text-sm leading-relaxed text-slate-300">"{item.quote || item.message || ''}"</p>
+        <p className="text-sm leading-relaxed text-slate-300">&ldquo;{item.quote || item.message || ''}&rdquo;</p>
         <p className="mt-4 text-sm font-semibold text-slate-100">{item.name || 'Learner'}</p>
         {item.role ? <p className="text-xs text-slate-400">{item.role}</p> : null}
       </article>

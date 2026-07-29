@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 
 function formatMeta(item) {
@@ -9,11 +10,13 @@ function BlogCard({ item, readMoreLabel }) {
     <article className="flex min-h-[420px] h-full flex-col justify-between rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
       <div>
         <div className="h-[220px] overflow-hidden rounded-2xl bg-[#eef2ea]">
-          <img
+          <Image
             src={item.image}
             alt={item.title}
+            width={720}
+            height={440}
+            unoptimized
             className="h-[220px] w-full object-cover"
-            loading="lazy"
           />
         </div>
         <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-[#7b8781]">{formatMeta(item)}</p>

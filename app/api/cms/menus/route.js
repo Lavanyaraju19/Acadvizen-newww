@@ -1,7 +1,7 @@
 import {
   ensureAdmin,
   getSupabaseClientOrResponse,
-  isAdminRequest,
+  getOptionalAdminContext,
   jsonError,
   jsonOk,
   parsePositiveInt,
@@ -14,7 +14,13 @@ export const dynamic = 'force-dynamic'
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
   const location = searchParams.get('location')
-  const includeInactive = searchParams.get('include_inactive') === '1' && isAdminRequest(request)
+  const wantsInactive = searchParams.get('include_inactive') === '1'
+  const adminAccess = wantsInactive
+    ? await getOptionalAdminContext(request, { resource: 'menus', action: 'read' })
+    : { context: null, response: null }
+  if (adminAccess.response) return adminAccess.response
+
+  const includeInactive = Boolean(adminAccess.context)
   const limit = parsePositiveInt(searchParams.get('limit'), 500)
   const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: includeInactive })
   if (response) return response

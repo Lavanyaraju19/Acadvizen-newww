@@ -216,7 +216,7 @@ export default function CourseHighlightsBuilderClient() {
           
           {highlights.length === 0 ? (
             <div className="p-8 rounded-xl border border-white/10 bg-white/[0.03] text-center text-slate-400">
-              No course highlights yet. Click "Add Highlight" to create one.
+              No course highlights yet. Click &quot;Add Highlight&quot; to create one.
             </div>
           ) : (
             highlights.map((item, index) => (

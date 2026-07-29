@@ -207,7 +207,7 @@ export default function FaqBuilderClient() {
           
           {faqs.length === 0 ? (
             <div className="p-8 rounded-xl border border-white/10 bg-white/[0.03] text-center text-slate-400">
-              No FAQs yet. Click "Add FAQ" to create one.
+              No FAQs yet. Click &quot;Add FAQ&quot; to create one.
             </div>
           ) : (
             faqs.map((item, index) => (

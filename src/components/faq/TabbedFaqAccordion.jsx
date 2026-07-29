@@ -14,6 +14,7 @@ export function TabbedFaqAccordion({
 }) {
   const [activeTab, setActiveTab] = useState(tabs[0] || null)
   const [openQuestion, setOpenQuestion] = useState(null)
+  const accordionIdBase = 'faq-accordion'
 
   const filteredItems = useMemo(() => {
     if (!activeTab) return items
@@ -53,17 +54,33 @@ export function TabbedFaqAccordion({
       <div className="mt-8 space-y-4">
         {filteredItems.map((item) => {
           const isOpen = activeQuestion === item.question
+          const itemId = `${accordionIdBase}-${String(item.question || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '')}`
+          const buttonId = `${itemId}-button`
+          const panelId = `${itemId}-panel`
           return (
             <div key={item.question} className={cardClassName}>
               <button
                 type="button"
                 onClick={() => setOpenQuestion(isOpen ? null : item.question)}
+                aria-expanded={isOpen}
+                aria-controls={panelId}
+                id={buttonId}
                 className="flex w-full items-start justify-between gap-4 text-left"
               >
                 <h3 className="text-2xl font-bold leading-tight text-slate-50">{item.question}</h3>
                 <ChevronDown className={`mt-1 h-5 w-5 shrink-0 text-slate-300 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
               </button>
-              {isOpen ? <p className={answerClassName}>{item.answer}</p> : null}
+              <div
+                id={panelId}
+                role="region"
+                aria-labelledby={buttonId}
+                hidden={!isOpen}
+              >
+                <p className={answerClassName}>{item.answer}</p>
+              </div>
             </div>
           )
         })}

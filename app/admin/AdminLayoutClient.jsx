@@ -37,6 +37,7 @@ import { useAuth } from '../../src/contexts/AuthContext'
 import { fetchAdminSession, getAdminAccessToken } from '../../lib/adminApiClient'
 import { sessionManager } from '../../lib/sessionManager'
 import GlobalSearch from '../../components/admin/GlobalSearch'
+import { canAccessAdminProfile, hasProfilePermission } from '../../lib/adminPermissions'
 
 const adminNav = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -126,6 +127,21 @@ export default function AdminLayoutClient({ children }) {
   const isLoginLikePath = pathname === '/admin/login' || pathname === '/admin-login'
   const user = adminState.user
   const profile = adminState.profile
+  const visibleAdminNav = useMemo(() => adminNav.filter((nav) => {
+    if (!profile) return false
+    if (nav.path.startsWith('/admin/users')) return hasProfilePermission(profile, 'users', 'read')
+    if (nav.path.startsWith('/admin/settings') || nav.path.startsWith('/admin/header') || nav.path.startsWith('/admin/footer') || nav.path.startsWith('/admin/menus') || nav.path.startsWith('/admin/redirects') || nav.path.startsWith('/admin/sitemap') || nav.path.startsWith('/admin/robots') || nav.path.startsWith('/admin/import-export')) {
+      return hasProfilePermission(profile, 'settings', 'read')
+    }
+    if (nav.path.startsWith('/admin/seo')) return hasProfilePermission(profile, 'seo', 'read')
+    if (nav.path.startsWith('/admin/media')) return hasProfilePermission(profile, 'media', 'read')
+    if (nav.path.startsWith('/admin/forms') || nav.path.startsWith('/admin/leads')) return hasProfilePermission(profile, 'forms', 'read')
+    if (nav.path.startsWith('/admin/popups')) return hasProfilePermission(profile, 'popups', 'read')
+    if (nav.path.startsWith('/admin/banners')) return hasProfilePermission(profile, 'banners', 'read')
+    if (nav.path.startsWith('/admin/blog')) return hasProfilePermission(profile, 'blogs', 'read')
+    if (nav.path.startsWith('/admin/courses')) return hasProfilePermission(profile, 'courses', 'read')
+    return hasProfilePermission(profile, 'pages', 'read') || canAccessAdminProfile(profile)
+  }), [profile])
   const guardMessage = useMemo(() => {
     if (adminState.reconnecting) return 'Reconnecting to your admin session...'
     if (adminState.error) return adminState.error
@@ -181,8 +197,6 @@ export default function AdminLayoutClient({ children }) {
     }
 
     try {
-      await sessionManager.refreshIfNeeded()
-
       const payload = await fetchAdminSession()
       const accessToken = await getAdminAccessToken()
 
@@ -334,7 +348,7 @@ export default function AdminLayoutClient({ children }) {
     )
   }
 
-  if (!user || !profile || profile.role !== 'admin') {
+  if (!user || !profile || !canAccessAdminProfile(profile)) {
     return (
       <div className="min-h-screen acadvizen-noise">
         <div className="mx-auto flex min-h-screen max-w-2xl items-center justify-center px-6">
@@ -393,7 +407,7 @@ export default function AdminLayoutClient({ children }) {
                 ) : null}
                 {user?.email && (
                   <span className="text-xs text-slate-400">
-                    {profile?.role === 'admin' ? `Admin: ${user.email}` : user.email}
+                    {profile?.is_full_admin ? `Admin: ${user.email}` : user.email}
                   </span>
                 )}
                 <Link href="/" className="text-sm font-semibold text-teal-300 hover:text-teal-200 transition-colors">
@@ -418,7 +432,7 @@ export default function AdminLayoutClient({ children }) {
             </div>
             <div className="mt-4 h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
             <nav className="mt-3 flex flex-wrap gap-2">
-              {adminNav.map((nav) => {
+              {visibleAdminNav.map((nav) => {
                 const active = pathname === nav.path
                 const Icon = nav.icon
 

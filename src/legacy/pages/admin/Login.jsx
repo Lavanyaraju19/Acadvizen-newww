@@ -2,63 +2,27 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Surface } from '../../../components/ui/Surface'
 import { useAuth } from '../../../contexts/AuthContext'
-import { supabase } from '../../../lib/supabaseClient'
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from '../../../../lib/env'
-import { adminApiFetch } from '../../../../lib/adminApiClient'
+import { ensureBrowserSupabaseClient, ensureBrowserSupabaseConfig } from '../../../lib/supabaseClient'
+import { signInAdminWithPassword } from '../../../../lib/adminAuthClient'
+import { canAccessAdminProfile } from '../../../../lib/adminPermissions'
 
 export function AdminLogin() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, profile, loading, signOut } = useAuth()
-  const supabaseUrl = SUPABASE_URL
-  const supabaseAnonKey = SUPABASE_ANON_KEY
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const signInWithRetry = async (payload, retries = 3) => {
-    try {
-      return await supabase.auth.signInWithPassword(payload)
-    } catch (err) {
-      const message = err?.message || ''
-      if ((err?.name === 'AbortError' || message.includes('signal is aborted')) && retries > 0) {
-        await new Promise((resolve) => setTimeout(resolve, 800))
-        return signInWithRetry(payload, retries - 1)
-      }
-      throw err
-    }
-  }
-
-  const manualPasswordSignIn = async (email, password) => {
-    const res = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
-      method: 'POST',
-      headers: {
-        apikey: supabaseAnonKey,
-        Authorization: `Bearer ${supabaseAnonKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    })
-    const data = await res.json()
-    if (!res.ok) {
-      throw new Error(data?.error_description || data?.msg || 'Unable to sign in.')
-    }
-    await supabase.auth.setSession({
-      access_token: data.access_token,
-      refresh_token: data.refresh_token,
-    })
-    return { user: data.user }
-  }
-
   useEffect(() => {
     if (loading) return
-    if (user && profile?.role === 'admin') {
+    if (user && canAccessAdminProfile(profile)) {
       const redirectTo = location.state?.from?.pathname || '/admin'
       navigate(redirectTo, { replace: true })
       return
     }
-    if (user && profile && profile.role !== 'admin') {
+    if (user && profile && !canAccessAdminProfile(profile)) {
       setError('This account does not have admin access.')
       signOut()
     }
@@ -67,6 +31,7 @@ export function AdminLogin() {
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
+    let hardTimeout = null
 
     if (!email.trim() || !password.trim()) {
       setError('Please enter your admin email and password.')
@@ -75,70 +40,22 @@ export function AdminLogin() {
 
     try {
       setSubmitting(true)
-      const hardTimeout = setTimeout(() => {
+      const config = await ensureBrowserSupabaseConfig()
+      const client = config ? await ensureBrowserSupabaseClient() : null
+      hardTimeout = setTimeout(() => {
         setSubmitting(false)
         setError('Sign-in timed out. Please try again.')
       }, 18000)
-      if (!supabaseUrl || !supabaseAnonKey) {
+
+      if (!client?.auth || !config?.url || !config?.anonKey) {
         setError('Supabase configuration is unavailable. Contact support if this persists.')
         clearTimeout(hardTimeout)
         return
       }
 
-      await supabase.auth.signOut({ scope: 'local' })
-
-      try {
-        const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 8000)
-        const health = await fetch(`${supabaseUrl}/auth/v1/health`, {
-          headers: { apikey: supabaseAnonKey },
-          signal: controller.signal,
-        })
-        clearTimeout(timeout)
-        if (!health.ok) {
-          setError('Supabase is unreachable. Please check your internet or Supabase status.')
-          clearTimeout(hardTimeout)
-          return
-        }
-      } catch (pingErr) {
-        setError('Supabase is unreachable. Please check your internet or Supabase status.')
-        clearTimeout(hardTimeout)
-        return
-      }
-
-      let data
-      let error
-      try {
-        const res = await signInWithRetry({
-          email: email.trim(),
-          password: password.trim(),
-        })
-        data = res?.data
-        error = res?.error
-      } catch (err) {
-        // fallback to direct auth call if supabase-js stalls
-        try {
-          const manual = await manualPasswordSignIn(email.trim(), password.trim())
-          data = { user: manual.user }
-          error = null
-        } catch (manualErr) {
-          error = manualErr
-        }
-      }
+      const result = await signInAdminWithPassword(email, password)
       clearTimeout(hardTimeout)
-      if (error) {
-        setError(error.message || 'Invalid email or password.')
-        return
-      }
-
-      if (data?.user?.id) {
-        try {
-          await adminApiFetch('/api/admin/session', { method: 'POST' })
-        } catch (sessionError) {
-          await supabase.auth.signOut()
-          setError(sessionError?.message || 'This account does not have admin access.')
-          return
-        }
+      if (result?.user?.id) {
         navigate('/admin', { replace: true })
         return
       }
@@ -148,11 +65,12 @@ export function AdminLogin() {
       if (err?.name === 'AbortError' || message.includes('signal is aborted')) {
         setError('Request was interrupted. Please try again; if it persists, restart the dev server.')
       } else if (message.includes('Failed to fetch')) {
-        setError('Network error. Unable to reach Supabase. Check your internet and env vars.')
+        setError('Network error. Unable to reach the login service. Check your connection and try again.')
       } else {
         setError(message)
       }
     } finally {
+      if (hardTimeout) clearTimeout(hardTimeout)
       setSubmitting(false)
     }
   }

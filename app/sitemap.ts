@@ -1,7 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { getServerSupabaseClient } from '../lib/supabaseServer'
-import { canonicalizeKnownBlogSlug } from '../lib/blogSlugResolver'
-import { isPublicBlogVisible } from '../lib/blogVisibility'
+import { fetchPublishedPublicBlogs } from '../lib/publicBlogData'
 
 export const revalidate = 0
 export const dynamic = 'force-dynamic'
@@ -69,7 +68,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ] = await Promise.all([
     fetchRows('pages', 'slug', { column: 'status', value: 'published' }),
     fetchRows('location_pages', 'slug', { column: 'status', value: 'published' }),
-    fetchRows('blogs', 'slug', { column: 'status', value: 'published' }),
+    fetchPublishedPublicBlogs({ select: 'slug,published_at,created_at,status', limit: 500 }),
     fetchRows('courses', 'slug', { column: 'is_active', value: true }),
     fetchRows('tools_extended', 'slug', { column: 'is_active', value: true }),
     fetchRows('locations', 'slug'),
@@ -88,9 +87,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ),
     ...Array.from(
       new Set([
-        ...(blogs as Array<{ slug?: string; title?: string; description?: string; excerpt?: string }>)
-          .filter(isPublicBlogVisible)
-          .map((row) => canonicalizeKnownBlogSlug(row.slug))
+        ...(blogs as Array<{ slug?: string }>)
+          .map((row) => row.slug)
           .filter(Boolean),
       ])
     ).map((slug) => toEntry(`/blog/${slug}`, 0.7, 'weekly')),

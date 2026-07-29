@@ -62,7 +62,11 @@ export default function SEOManager({ entityType, entityId, seoData, onSave }) {
   }, [seoData])
 
   useEffect(() => {
-    updatePreview()
+    setPreviewData({
+      title: formData.meta_title || 'Page Title',
+      description: formData.meta_description || 'Page description will appear here...',
+      url: formData.canonical_url || 'https://acadvizen.com/page',
+    })
   }, [formData])
 
   function calculateSeoScore(data) {
@@ -76,14 +80,6 @@ export default function SEOManager({ entityType, entityId, seoData, onSave }) {
     if (data.canonical_url) score += 10
     if (data.json_ld_schema) score += 10
     setSeoScore(score)
-  }
-
-  function updatePreview() {
-    setPreviewData({
-      title: formData.meta_title || 'Page Title',
-      description: formData.meta_description || 'Page description will appear here...',
-      url: formData.canonical_url || 'https://acadvizen.com/page',
-    })
   }
 
   function handleChange(field, value) {

@@ -68,22 +68,10 @@ export default function UserManagerClient() {
 
   async function loadRoles() {
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      )
-      
-      const { data, error } = await supabaseClient
-        .from('roles')
-        .select('*')
-        .order('name')
-      
-      if (!error) {
-        setRoles(data || [])
-      }
+      const payload = await adminApiFetch('/api/cms/entities/roles?limit=100', { cache: 'no-store' })
+      setRoles(Array.isArray(payload?.data) ? payload.data : [])
     } catch (error) {
-      console.error('Failed to load roles:', error)
+      setStatus(error?.message || 'Failed to load roles.')
     }
   }
 

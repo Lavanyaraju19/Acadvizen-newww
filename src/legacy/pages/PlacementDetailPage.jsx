@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
@@ -10,17 +10,17 @@ export function PlacementDetailPage() {
   const [placement, setPlacement] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadPlacement()
-  }, [id])
-
-  async function loadPlacement() {
+  const loadPlacement = useCallback(async () => {
     setLoading(true)
     const { data } = await fetchPublicData('placements', { id })
     const placementRow = Array.isArray(data) ? data[0] : data
     setPlacement(placementRow || null)
     setLoading(false)
-  }
+  }, [id])
+
+  useEffect(() => {
+    void loadPlacement()
+  }, [loadPlacement])
 
   if (loading) {
     return (

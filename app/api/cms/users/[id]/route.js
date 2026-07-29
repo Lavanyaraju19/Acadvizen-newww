@@ -8,11 +8,181 @@ import {
 
 export const dynamic = 'force-dynamic'
 
-const ALLOWED_ROLES = new Set(['admin', 'sales', 'student'])
+const MANAGED_ROLE_SLUGS = new Set([
+  'super_admin',
+  'admin',
+  'editor',
+  'author',
+  'reviewer',
+  'viewer',
+  'seo_manager',
+  'content_writer',
+])
 const ALLOWED_APPROVALS = new Set(['pending', 'approved', 'rejected'])
 
+function normalizeRoleSlug(value = '') {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+}
+
+function isMissingTableError(error) {
+  const message = String(error?.message || '').toLowerCase()
+  return (
+    message.includes('does not exist') ||
+    message.includes('relation') ||
+    message.includes('42p01') ||
+    message.includes('could not find the table') ||
+    message.includes('schema cache')
+  )
+}
+
+async function findRoleRecord(supabase, roleSlug) {
+  if (!roleSlug) return { data: null, error: null }
+
+  return supabase
+    .from('roles')
+    .select('id,name,slug,permissions')
+    .or(`slug.eq.${roleSlug},name.eq.${roleSlug}`)
+    .maybeSingle()
+}
+
+async function readProfileRoleSummary(supabase, userId) {
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id,email,role')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (profileError) {
+    return { data: null, error: profileError }
+  }
+
+  let assignments = []
+  const { data: userRoles, error: userRolesError } = await supabase
+    .from('user_roles')
+    .select(`
+      role_id,
+      roles (
+        id,
+        name,
+        slug
+      )
+    `)
+    .eq('user_id', userId)
+
+  if (!userRolesError) {
+    assignments = Array.isArray(userRoles) ? userRoles : []
+  } else if (!isMissingTableError(userRolesError)) {
+    return { data: null, error: userRolesError }
+  }
+
+  const roleSlugs = new Set()
+  const directRole = normalizeRoleSlug(profile?.role)
+  if (directRole) {
+    roleSlugs.add(directRole)
+  }
+
+  assignments.forEach((assignment) => {
+    const roles = Array.isArray(assignment?.roles) ? assignment.roles : [assignment?.roles]
+    roles.forEach((role) => {
+      const slug = normalizeRoleSlug(role?.slug || role?.name)
+      if (slug) {
+        roleSlugs.add(slug)
+      }
+    })
+  })
+
+  return {
+    data: {
+      profile,
+      assignments,
+      roleSlugs: Array.from(roleSlugs),
+      isSuperAdmin: roleSlugs.has('super_admin'),
+    },
+    error: null,
+  }
+}
+
+async function countActiveSuperAdmins(supabase) {
+  const { data: profiles, error } = await supabase
+    .from('profiles')
+    .select('id,role')
+
+  if (error) {
+    return { count: 0, error }
+  }
+
+  const profileIds = Array.isArray(profiles) ? profiles.map((profile) => profile.id).filter(Boolean) : []
+  const directSuperAdmins = new Set(
+    (profiles || [])
+      .filter((profile) => normalizeRoleSlug(profile?.role) === 'super_admin')
+      .map((profile) => profile.id)
+  )
+
+  if (!profileIds.length) {
+    return { count: directSuperAdmins.size, error: null }
+  }
+
+  const { data: assignments, error: assignmentsError } = await supabase
+    .from('user_roles')
+    .select(`
+      user_id,
+      roles (
+        slug,
+        name
+      )
+    `)
+    .in('user_id', profileIds)
+
+  if (assignmentsError && !isMissingTableError(assignmentsError)) {
+    return { count: 0, error: assignmentsError }
+  }
+
+  const superAdminIds = new Set(directSuperAdmins)
+  ;(assignments || []).forEach((assignment) => {
+    const roles = Array.isArray(assignment?.roles) ? assignment.roles : [assignment?.roles]
+    roles.forEach((role) => {
+      const slug = normalizeRoleSlug(role?.slug || role?.name)
+      if (slug === 'super_admin' && assignment?.user_id) {
+        superAdminIds.add(assignment.user_id)
+      }
+    })
+  })
+
+  return { count: superAdminIds.size, error: null }
+}
+
+async function ensureSuperAdminRemovalIsSafe(supabase, userId, { nextRole = null, deleting = false } = {}) {
+  const { data: summary, error: summaryError } = await readProfileRoleSummary(supabase, userId)
+  if (summaryError) {
+    return jsonError(`Failed to verify the current user role assignments: ${summaryError.message}`, 500)
+  }
+
+  if (!summary?.profile) {
+    return jsonError('User not found', 404)
+  }
+
+  const losingSuperAdmin = summary.isSuperAdmin && (deleting || normalizeRoleSlug(nextRole) !== 'super_admin')
+  if (!losingSuperAdmin) {
+    return null
+  }
+
+  const { count, error: countError } = await countActiveSuperAdmins(supabase)
+  if (countError) {
+    return jsonError(`Failed to verify Super Admin protection: ${countError.message}`, 500)
+  }
+
+  if (count <= 1) {
+    return jsonError('Cannot remove, delete, or demote the last active Super Admin.', 400)
+  }
+
+  return null
+}
+
 export async function PATCH(request, { params }) {
-  const unauthorized = await ensureAdmin(request)
+  const unauthorized = await ensureAdmin(request, { resource: 'users', action: 'update' })
   if (unauthorized) return unauthorized
 
   const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
@@ -25,10 +195,13 @@ export async function PATCH(request, { params }) {
   if (!body || typeof body !== 'object') return jsonError('Invalid request body.', 400)
 
   const update = {}
+  let targetRole = null
+
   if ('full_name' in body) update.full_name = body.full_name || null
   if ('role' in body) {
-    if (!ALLOWED_ROLES.has(String(body.role || ''))) return jsonError('Invalid role value.', 400)
-    update.role = body.role
+    targetRole = normalizeRoleSlug(body.role)
+    if (!MANAGED_ROLE_SLUGS.has(targetRole)) return jsonError('Invalid role value.', 400)
+    update.role = targetRole
   }
   if ('approval_status' in body) {
     if (!ALLOWED_APPROVALS.has(String(body.approval_status || ''))) return jsonError('Invalid approval status.', 400)
@@ -36,6 +209,41 @@ export async function PATCH(request, { params }) {
   }
 
   if (!Object.keys(update).length) return jsonError('No valid user fields provided.', 400)
+
+  const superAdminSafety = targetRole
+    ? await ensureSuperAdminRemovalIsSafe(supabase, id, { nextRole: targetRole })
+    : null
+  if (superAdminSafety) return superAdminSafety
+
+  if (targetRole) {
+    const { data: roleRecord, error: roleError } = await findRoleRecord(supabase, targetRole)
+    if (roleError) {
+      return jsonError(`Failed to load the requested role: ${roleError.message}`, 500)
+    }
+    if (!roleRecord) {
+      return jsonError(`The role "${targetRole}" is not configured. Apply the RBAC seed migration first.`, 503)
+    }
+
+    const { error: deleteAssignmentsError } = await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', id)
+
+    if (deleteAssignmentsError && !isMissingTableError(deleteAssignmentsError)) {
+      return jsonError(`Failed to reset role assignments: ${deleteAssignmentsError.message}`, 500)
+    }
+
+    const { error: insertAssignmentError } = await supabase
+      .from('user_roles')
+      .insert({
+        user_id: id,
+        role_id: roleRecord.id,
+      })
+
+    if (insertAssignmentError && !isMissingTableError(insertAssignmentError)) {
+      return jsonError(`Failed to update role assignments: ${insertAssignmentError.message}`, 500)
+    }
+  }
 
   const { data, error } = await supabase
     .from('profiles')
@@ -49,7 +257,7 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  const unauthorized = await ensureAdmin(request)
+  const unauthorized = await ensureAdmin(request, { resource: 'users', action: 'delete' })
   if (unauthorized) return unauthorized
 
   const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
@@ -58,36 +266,37 @@ export async function DELETE(request, { params }) {
   const id = params?.id
   if (!id) return jsonError('User id is required.', 400)
 
-  // Check if user exists
-  const { data: existingUser } = await supabase
+  const superAdminSafety = await ensureSuperAdminRemovalIsSafe(supabase, id, { deleting: true })
+  if (superAdminSafety) return superAdminSafety
+
+  const { data: existingUser, error: existingUserError } = await supabase
     .from('profiles')
-    .select('id, email, role')
+    .select('id,email,role')
     .eq('id', id)
     .single()
+
+  if (existingUserError) {
+    return jsonError(`Failed to load the user: ${existingUserError.message}`, 500)
+  }
 
   if (!existingUser) {
     return jsonError('User not found', 404)
   }
 
-  // Prevent deleting the last admin
-  if (existingUser.role === 'admin') {
-    const { data: adminCount } = await supabase
-      .from('profiles')
-      .select('id', { count: 'exact', head: true })
-      .eq('role', 'admin')
-
-    if (adminCount && adminCount <= 1) {
-      return jsonError('Cannot delete the last admin user', 400)
-    }
-  }
-
-  // Delete user's form submissions
   await supabase
     .from('form_submissions')
     .delete()
     .eq('user_id', id)
 
-  // Delete user's profile
+  const { error: deleteRoleAssignmentsError } = await supabase
+    .from('user_roles')
+    .delete()
+    .eq('user_id', id)
+
+  if (deleteRoleAssignmentsError && !isMissingTableError(deleteRoleAssignmentsError)) {
+    return jsonError(`Failed to remove user role assignments: ${deleteRoleAssignmentsError.message}`, 500)
+  }
+
   const { error } = await supabase
     .from('profiles')
     .delete()

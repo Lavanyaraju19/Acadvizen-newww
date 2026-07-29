@@ -166,17 +166,8 @@ export default function FooterBuilderClient() {
 
   async function loadSettings() {
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      )
-      
-      const { data } = await supabaseClient
-        .from('footer_settings')
-        .select('*')
-        .single()
-      
+      const payload = await adminApiFetch('/api/cms/footer', { cache: 'no-store' })
+      const data = payload?.data
       if (data) {
         // Migrate old data structure to new structure if needed
         const migratedData = { ...data }
@@ -340,7 +331,7 @@ export default function FooterBuilderClient() {
         }))
       }
     } catch (error) {
-      console.error('Failed to load footer settings:', error)
+      setStatus(error?.message || 'Failed to load footer settings.')
     }
   }
 
@@ -348,18 +339,10 @@ export default function FooterBuilderClient() {
     setSaving(true)
     setStatus('')
     try {
-      // Use API route instead of direct service role key access
-      const response = await fetch('/api/cms/footer', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings)
+      await adminApiFetch('/api/cms/footer', {
+        method: 'POST',
+        body: settings,
       })
-      
-      if (!response.ok) throw new Error('Failed to update footer settings')
-      
-      const { error } = await response.json()
-      if (error) throw error
-      
       setStatus('Footer settings saved successfully.')
     } catch (error) {
       setStatus(error?.message || 'Failed to save settings.')

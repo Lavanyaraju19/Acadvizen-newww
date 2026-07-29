@@ -1,6 +1,7 @@
 import {
   ensureAdmin,
   getSupabaseClientOrResponse,
+  getOptionalAdminContext,
   jsonError,
   jsonOk,
   readJsonBody,
@@ -19,7 +20,12 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url)
     const includeDrafts = searchParams.get('include_drafts') === '1'
-    const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: includeDrafts })
+    const adminAccess = includeDrafts
+      ? await getOptionalAdminContext(request, { resource: 'forms', action: 'read' })
+      : { context: null, response: null }
+    if (adminAccess.response) return adminAccess.response
+
+    const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: Boolean(adminAccess.context) })
     if (response) return response
 
     const limit = parseInt(searchParams.get('limit') || '100')

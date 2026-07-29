@@ -38,6 +38,27 @@ function normalizeStringList(value = []) {
   return []
 }
 
+function slugifyLocationValue(value = '') {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+}
+
+function normalizeLocationLinkEntries(value = []) {
+  return normalizeStringList(value)
+    .map((entry) => {
+      const [labelPart, hrefPart] = String(entry).split('|')
+      const label = String(labelPart || '').trim()
+      const href = String(hrefPart || '').trim()
+      return {
+        label,
+        href,
+      }
+    })
+    .filter((item) => item.label)
+}
+
 function normalizeNavItems(value = []) {
   if (!Array.isArray(value)) return []
   return value
@@ -78,7 +99,7 @@ function normalizeSocialItems(value = []) {
 export function PublicLayout({ children }) {
   const [headerVisible, setHeaderVisible] = useState(true)
   const lastScrollYRef = useRef(0)
-  const { settings, menus, headerSettings, footerSettings } = useSiteCms()
+  const { settings, menus, headerSettings, footerSettings, locations } = useSiteCms()
   const uiCopy = settings?.ui_copy && typeof settings.ui_copy === 'object' ? settings.ui_copy : {}
 
   // Header Settings from header_settings table with fallbacks
@@ -148,23 +169,41 @@ export function PublicLayout({ children }) {
   const footerBorderColor = footerSettings?.footer_border_color || 'rgba(255,255,255,0.1)'
 
   // Legacy fallback values for backward compatibility
-  const defaultLocationLinks = [
-    'Digital Marketing Courses in Bangalore',
-    'Digital Marketing Courses in Jayanagar',
-    'Digital Marketing Courses in JP Nagar',
-    'Digital Marketing Courses in Koramangala',
-    'Digital Marketing Courses in Mysore',
-    'Digital Marketing Courses in Indiranagar',
-    'Digital Marketing Courses in MG Road',
-    'Digital Marketing Courses in Rajajinagar',
-    'Digital Marketing Courses in RR Nagar',
-    'Digital Marketing Courses in HSR Layout',
-    'Digital Marketing Courses in Whitefield',
-    'Digital Marketing Courses in Marathahalli',
-  ]
-  const locationLinks = normalizeStringList(uiCopy.footer_location_links).length
-    ? normalizeStringList(uiCopy.footer_location_links)
-    : defaultLocationLinks
+  const configuredLocationLinks = normalizeLocationLinkEntries(uiCopy.footer_location_links)
+  const dynamicLocationLinks = Array.isArray(locations)
+    ? locations
+        .filter((item) => item && typeof item === 'object' && (item.is_active !== false))
+        .map((item) => {
+          const slug = slugifyLocationValue(item.slug || item.name || item.title || '')
+          const labelSource = String(item.label || item.name || item.title || item.slug || '').trim()
+          if (!slug || !labelSource) return null
+          return {
+            label: String(item.footer_label || `Digital Marketing Courses in ${labelSource}`).trim(),
+            href: String(item.path || item.url || item.public_url || `/digital-marketing-courses-${slug}`).trim(),
+          }
+        })
+        .filter(Boolean)
+    : []
+  const fallbackLocationLinks = [
+    'Bangalore',
+    'Jayanagar',
+    'JP Nagar',
+    'Koramangala',
+    'Mysore',
+    'Indiranagar',
+    'MG Road',
+    'Whitefield',
+    'Marathahalli',
+  ].map((name) => ({
+    label: `Digital Marketing Courses in ${name}`,
+    href: `/digital-marketing-courses-${slugifyLocationValue(name)}`,
+  }))
+  const locationLinks = configuredLocationLinks.length
+    ? configuredLocationLinks.map((item) => ({
+        label: item.label,
+        href: item.href || `/digital-marketing-courses-${slugifyLocationValue(item.label.replace(/^digital marketing courses in\s+/i, ''))}`,
+      }))
+    : (dynamicLocationLinks.length ? dynamicLocationLinks : fallbackLocationLinks)
   const uiFooterFallback = normalizeMenuItems(uiCopy.footer_fallback_links)
   const uiLegalFallback = normalizeMenuItems(uiCopy.legal_fallback_links)
   const footerLinks = Array.isArray(menus?.footer) && menus.footer.length
@@ -188,7 +227,6 @@ export function PublicLayout({ children }) {
   const footerLegalHeading = String(uiCopy.footer_legal_heading || 'Legal')
   const footerContactHeading = String(uiCopy.footer_contact_heading || 'HQ Command')
   const footerLocationsTitle = String(uiCopy.footer_locations_title || 'Digital Marketing Courses in India')
-  const locationLinkBaseUrl = String(uiCopy.footer_location_link_url || '/')
   const footerCopyTemplate = String(copyrightText)
   const footerCopy = footerCopyTemplate
     .replaceAll('{year}', String(new Date().getFullYear()))
@@ -470,10 +508,10 @@ export function PublicLayout({ children }) {
                 <h4 className="text-xl font-semibold text-slate-100">{footerLocationsTitle}</h4>
                 <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm leading-relaxed text-slate-300">
                   {locationLinks.map((label, idx) => (
-                    <span key={label} className="inline-flex items-center gap-3">
+                    <span key={`${label.label}-${label.href}`} className="inline-flex items-center gap-3">
                       {idx > 0 && <span className="text-slate-500">|</span>}
-                      <a href={locationLinkBaseUrl} className="hover:text-slate-100 transition-colors">
-                        {label}
+                      <a href={label.href} className="hover:text-slate-100 transition-colors">
+                        {label.label}
                       </a>
                     </span>
                   ))}

@@ -1,13 +1,14 @@
 import {
-  ensureAdmin,
   getSupabaseClientOrResponse,
   jsonError,
   jsonOk,
+  requireAdminContext,
   revalidateAllCmsPages,
   revalidateCmsPaths,
   readJsonBody,
 } from '../../_utils'
 import { convertPlainTextToBlocks, normalizeInlineImages } from '../../../../../lib/blogContent'
+import { createSlugRedirectRecord } from '../../../../../lib/redirects'
 
 export const dynamic = 'force-dynamic'
 
@@ -172,8 +173,8 @@ async function replaceBlogBlocks(supabase, blogId, blocks) {
 }
 
 export async function PATCH(request, { params }) {
-  const unauthorized = await ensureAdmin(request)
-  if (unauthorized) return unauthorized
+  const adminAccess = await requireAdminContext(request, { resource: 'blogs', action: 'update' })
+  if (adminAccess.response) return adminAccess.response
 
   const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
@@ -193,11 +194,24 @@ export async function PATCH(request, { params }) {
   }
   if (!existingBlog) return jsonError('Blog not found.', 404)
 
+  const roleSlugs = new Set(adminAccess.context.profile?.effective_role_slugs || [])
+  const isAuthorScoped = roleSlugs.has('author') && !adminAccess.context.profile?.is_full_admin
+  if (isAuthorScoped && existingBlog.author_id !== adminAccess.context.user.id) {
+    return jsonError('Authors can only update their own blog drafts.', 403)
+  }
+
   const body = await readJsonBody(request)
   const writeInput = buildBlogUpdate(body, existingBlog)
   if (writeInput.error) return jsonError(writeInput.error, 400)
 
   const { update, normalizedBlocks } = writeInput
+  if (update.status === 'published') {
+    const publishAccess = await requireAdminContext(request, { resource: 'blogs', action: 'publish' })
+    if (publishAccess.response) return publishAccess.response
+  }
+  if (isAuthorScoped) {
+    update.author_id = adminAccess.context.user.id
+  }
   const nextSlug = update.slug || existingBlog.slug
 
   try {
@@ -231,15 +245,40 @@ export async function PATCH(request, { params }) {
     }
 
     const currentSlug = data?.slug || nextSlug
-    revalidateCmsPaths(['/blog', `/blog/${existingBlog.slug}`, `/blog/${currentSlug}`])
-    revalidateAllCmsPages(['/blog'])
+    let redirectWarning = ''
+
+    if (
+      existingBlog.slug &&
+      currentSlug &&
+      existingBlog.slug !== currentSlug &&
+      existingBlog.status === 'published' &&
+      data?.status === 'published'
+    ) {
+      try {
+        await createSlugRedirectRecord(supabase, {
+          fromPath: `/blog/${existingBlog.slug}`,
+          toPath: `/blog/${currentSlug}`,
+          statusCode: 301,
+        })
+      } catch (redirectError) {
+        redirectWarning = redirectError?.message || 'Slug redirect could not be created automatically.'
+        logBlogError('Slug redirect creation failed.', redirectError, {
+          id,
+          fromSlug: existingBlog.slug,
+          toSlug: currentSlug,
+        })
+      }
+    }
+
+    revalidateCmsPaths(['/blog', `/blog/${existingBlog.slug}`, `/blog/${currentSlug}`, '/sitemap.xml'])
+    revalidateAllCmsPages(['/blog', '/sitemap.xml'])
 
     return jsonOk({
       ...data,
       blocks: Array.isArray(blocks) && blocks.length
         ? blocks
         : (Array.isArray(data?.content_json?.blocks) ? data.content_json.blocks : []),
-    })
+    }, redirectWarning ? { warning: redirectWarning } : {})
   } catch (error) {
     logBlogError('Unhandled blog update failure.', error, { id, slug: nextSlug })
     return jsonError(error?.message || 'Failed to update blog.', 500)
@@ -247,8 +286,8 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  const unauthorized = await ensureAdmin(request)
-  if (unauthorized) return unauthorized
+  const adminAccess = await requireAdminContext(request, { resource: 'blogs', action: 'delete' })
+  if (adminAccess.response) return adminAccess.response
 
   const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
@@ -258,7 +297,7 @@ export async function DELETE(request, { params }) {
 
   const { data: blog, error: blogLookupError } = await supabase
     .from('blogs')
-    .select('slug')
+    .select('slug,author_id')
     .eq('id', id)
     .maybeSingle()
 
@@ -268,13 +307,19 @@ export async function DELETE(request, { params }) {
   }
   if (!blog?.slug) return jsonError('Blog not found.', 404)
 
+  const roleSlugs = new Set(adminAccess.context.profile?.effective_role_slugs || [])
+  const isAuthorScoped = roleSlugs.has('author') && !adminAccess.context.profile?.is_full_admin
+  if (isAuthorScoped && blog.author_id !== adminAccess.context.user.id) {
+    return jsonError('Authors can only delete their own blog drafts.', 403)
+  }
+
   const { error } = await supabase.from('blogs').delete().eq('id', id)
   if (error) {
     logBlogError('Blog delete failed.', error, { id, slug: blog.slug })
     return jsonError(`Failed to delete blog: ${error.message}`, 500)
   }
 
-  revalidateCmsPaths(['/blog', `/blog/${blog.slug}`])
-  revalidateAllCmsPages(['/blog'])
+  revalidateCmsPaths(['/blog', `/blog/${blog.slug}`, '/sitemap.xml'])
+  revalidateAllCmsPages(['/blog', '/sitemap.xml'])
   return jsonOk({ id, deleted: true })
 }

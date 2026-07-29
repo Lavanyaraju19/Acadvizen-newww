@@ -1,7 +1,7 @@
 import {
   ensureAdmin,
   getSupabaseClientOrResponse,
-  isAdminRequest,
+  getOptionalAdminContext,
   jsonError,
   jsonOk,
   normalizePagePath,
@@ -10,12 +10,51 @@ import {
   revalidateCmsPaths,
   readJsonBody,
 } from '../_utils'
+import { createSlugRedirectRecord } from '../../../../lib/redirects'
+import { generateSlug, validateSlug } from '../../../../lib/slugUtils'
 
 export const dynamic = 'force-dynamic'
 
+const OPTIONAL_PAGE_COLUMNS = ['canonical_url', 'published_at']
+
+function getMissingColumnName(error) {
+  const message = String(error?.message || '')
+  const match = message.match(/'([^']+)' column/i)
+  return match?.[1] || ''
+}
+
+async function savePageRecord(supabase, payload) {
+  let candidatePayload = { ...payload }
+
+  while (true) {
+    const attempt = await supabase
+      .from('pages')
+      .upsert(candidatePayload, { onConflict: 'id' })
+      .select('*')
+      .single()
+
+    if (!attempt.error) {
+      return attempt
+    }
+
+    const missingColumn = getMissingColumnName(attempt.error)
+    if (!missingColumn || !OPTIONAL_PAGE_COLUMNS.includes(missingColumn) || !(missingColumn in candidatePayload)) {
+      return attempt
+    }
+
+    delete candidatePayload[missingColumn]
+  }
+}
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
-  const includeDrafts = searchParams.get('include_drafts') === '1' && isAdminRequest(request)
+  const wantsDrafts = searchParams.get('include_drafts') === '1'
+  const adminAccess = wantsDrafts
+    ? await getOptionalAdminContext(request, { resource: 'pages', action: 'read' })
+    : { context: null, response: null }
+  if (adminAccess.response) return adminAccess.response
+
+  const includeDrafts = Boolean(adminAccess.context)
   const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: includeDrafts })
   if (response) return response
 
@@ -61,43 +100,83 @@ export async function POST(request) {
   if (response) return response
 
   const body = await readJsonBody(request)
-  if (!body?.title || !body?.slug) {
-    return jsonError('title and slug are required.', 400)
+  if (!body?.title) {
+    return jsonError('title is required.', 400)
   }
 
-  const slug = String(body.slug).trim()
+  const slug = generateSlug(body.slug || body.title)
+  const slugValidation = validateSlug(slug)
+  if (!slugValidation.valid) {
+    return jsonError(slugValidation.error, 400)
+  }
+
+  const existingPageId = body.id || ''
+  const { data: existingPage, error: existingPageError } = existingPageId
+    ? await supabase.from('pages').select('*').eq('id', existingPageId).maybeSingle()
+    : { data: null, error: null }
+
+  if (existingPageError) {
+    return jsonError(`Failed to load existing page: ${existingPageError.message}`, 500)
+  }
 
   // Ensure slug uniqueness
-  const { data: existingSlug } = await supabase
+  let existingSlugQuery = supabase
     .from('pages')
     .select('id')
     .eq('slug', slug)
-    .neq('id', body.id || '')
-    .single()
+
+  if (existingPageId) {
+    existingSlugQuery = existingSlugQuery.neq('id', existingPageId)
+  }
+
+  const { data: existingSlug, error: existingSlugError } = await existingSlugQuery.maybeSingle()
+
+  if (existingSlugError) {
+    return jsonError(`Failed to validate page slug: ${existingSlugError.message}`, 500)
+  }
 
   if (existingSlug) {
     return jsonError('A page with this slug already exists', 400)
   }
 
+  const nextStatus = body.status === 'published' ? 'published' : 'draft'
   const payload = {
-    id: body.id || undefined,
+    id: existingPageId || undefined,
     title: String(body.title).trim(),
     slug,
     description: body.description || null,
     seo_title: body.seo_title || null,
     seo_description: body.seo_description || null,
-    status: body.status === 'published' ? 'published' : 'draft',
-    published_at: body.status === 'published' && !body.id ? new Date().toISOString() : body.published_at,
+    canonical_url: body.canonical_url || null,
+    status: nextStatus,
+    published_at:
+      nextStatus === 'published'
+        ? (existingPage?.published_at || body.published_at || new Date().toISOString())
+        : null,
   }
 
-  const { data, error } = await supabase
-    .from('pages')
-    .upsert(payload, { onConflict: 'id' })
-    .select('*')
-    .single()
+  const { data, error } = await savePageRecord(supabase, payload)
 
   if (error) return jsonError(`Failed to save page: ${error.message}`, 500)
-  revalidateCmsPaths([normalizePagePath(data?.slug)])
+
+  let warning = null
+  if (
+    existingPage?.slug &&
+    existingPage.slug !== data?.slug &&
+    (existingPage.status === 'published' || data?.status === 'published')
+  ) {
+    try {
+      await createSlugRedirectRecord(supabase, {
+        fromPath: normalizePagePath(existingPage.slug),
+        toPath: normalizePagePath(data?.slug),
+        statusCode: 301,
+      })
+    } catch (redirectError) {
+      warning = `Page saved, but the slug redirect could not be created: ${redirectError.message}`
+    }
+  }
+
+  revalidateCmsPaths([normalizePagePath(existingPage?.slug), normalizePagePath(data?.slug), '/sitemap.xml'])
   revalidateAllCmsPages()
-  return jsonOk(data)
+  return jsonOk(data, warning ? { warning } : {})
 }

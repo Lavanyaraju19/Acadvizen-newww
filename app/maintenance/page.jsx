@@ -10,18 +10,18 @@ export default function MaintenancePage() {
           <h1 className="text-6xl font-bold text-teal-400 mb-4">🔧</h1>
           <h2 className="text-3xl font-semibold text-slate-100 mb-2">Under Maintenance</h2>
           <p className="text-slate-400 max-w-md mx-auto">
-            We're currently performing scheduled maintenance. Please check back soon.
+            We&apos;re currently performing scheduled maintenance. Please check back soon.
           </p>
         </div>
         
         <div className="max-w-md mx-auto">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 mb-6">
             <p className="text-sm text-slate-300 mb-4">
-              Site is under maintenance. We'll be back shortly.
+              Site is under maintenance. We&apos;ll be back shortly.
             </p>
             <div className="flex items-center justify-center gap-2 text-slate-400">
               <div className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
-              <span className="text-sm">We're working on it</span>
+              <span className="text-sm">We&apos;re working on it</span>
             </div>
           </div>
           

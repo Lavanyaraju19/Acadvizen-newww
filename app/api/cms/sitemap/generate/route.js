@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getServerSupabaseClient, hasValidSupabaseServiceRoleKey } from '../../../../../lib/supabaseServer'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,14 +17,15 @@ function getDefaultSitemap() {
 
 export async function GET(request) {
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    if (!supabaseUrl || !supabaseKey) {
+    const supabase = getServerSupabaseClient({
+      preferServiceRole: hasValidSupabaseServiceRoleKey(),
+    })
+
+    if (!supabase) {
       return new NextResponse(getDefaultSitemap(), {
         headers: { 'Content-Type': 'application/xml', 'Cache-Control': 'public, max-age=3600' },
       })
     }
-    const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Get sitemap settings
     const { data: settings } = await supabase

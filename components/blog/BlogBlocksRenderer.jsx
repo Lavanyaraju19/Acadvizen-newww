@@ -54,7 +54,7 @@ export default function BlogBlocksRenderer({ blocks = [], fallbackSections = [] 
           if (type === 'quote') {
             return (
               <blockquote key={id} className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4 text-slate-200">
-                <p className="text-lg leading-relaxed">"{content.text}"</p>
+                <p className="text-lg leading-relaxed">&ldquo;{content.text}&rdquo;</p>
                 {content.author ? <footer className="mt-2 text-sm text-slate-400">- {content.author}</footer> : null}
               </blockquote>
             )

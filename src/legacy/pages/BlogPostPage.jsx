@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Image from 'next/image'
 import { Link, useParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
@@ -150,15 +150,15 @@ export function BlogPostPage() {
   const [post, setPost] = useState(null)
   const [loading, setLoading] = useState(true)
   const [internalLinks, setInternalLinks] = useState({ blogs: [], courses: [], tools: [], locations: [] })
-  const pickFirstNonEmpty = (...values) => {
+  const pickFirstNonEmpty = useCallback((...values) => {
     for (const value of values) {
       if (value === null || value === undefined) continue
       if (typeof value === 'string' && value.trim() === '') continue
       return value
     }
     return null
-  }
-  const mergeWithLocal = (incoming) => {
+  }, [])
+  const mergeWithLocal = useCallback((incoming) => {
     const local = localBlogs.find((item) => item.slug === incoming?.slug || item.id === incoming?.id || item.slug === slug)
     return {
       ...(incoming || {}),
@@ -175,7 +175,7 @@ export function BlogPostPage() {
       ),
       published_at: pickFirstNonEmpty(incoming?.published_at, incoming?.created_at, local?.created_at),
     }
-  }
+  }, [pickFirstNonEmpty, slug])
   const formatPublishedDate = (value) => {
     if (!value) return 'Draft'
     return new Date(value).toLocaleDateString('en-US', {
@@ -186,17 +186,37 @@ export function BlogPostPage() {
     })
   }
 
-  useEffect(() => {
-    loadPost()
-    const blogChannel = subscribeToTable('blog_posts', () => loadPost())
-    const legacyChannel = subscribeToTable('blogs', () => loadPost())
-    return () => {
-      if (blogChannel) supabase?.removeChannel(blogChannel)
-      if (legacyChannel) supabase?.removeChannel(legacyChannel)
-    }
-  }, [slug])
+  const loadInternalLinks = useCallback(async (sourcePost) => {
+    const [blogRes, courseRes, toolRes, locationRes] = await Promise.all([
+      fetchPublicData('blog-posts', { limit: 8 }),
+      fetchPublicData('courses'),
+      fetchPublicData('tools-extended', { limit: 8 }),
+      fetchPublicData('locations'),
+    ])
 
-  async function loadPost() {
+    const blogs = Array.isArray(blogRes.data) ? blogRes.data : []
+    const courses = Array.isArray(courseRes.data) ? courseRes.data : []
+    const tools = Array.isArray(toolRes.data) ? toolRes.data : []
+    const locations = Array.isArray(locationRes.data) ? locationRes.data : []
+
+    const links = buildInternalLinks(
+      { title: sourcePost?.title || sourcePost?.meta_title },
+      {
+        blogs: blogs.map((item) => ({ title: item.title, slug: item.slug, type: 'blog' })),
+        courses: courses.map((item) => ({ title: item.title, slug: item.slug, type: 'course' })),
+        tools: tools.map((item) => ({ title: item.name, slug: item.slug, type: 'tool' })),
+        locations: locations.map((item) => ({
+          title: item.meta_title || item.name,
+          slug: item.slug,
+          type: 'location',
+        })),
+      },
+      4
+    )
+    setInternalLinks(links)
+  }, [])
+
+  const loadPost = useCallback(async () => {
     setLoading(true)
     const resolvedSlug = resolveBlogSlug(slug, localBlogs) || slug
     const { data: bySlug } = await fetchPublicData('blog-posts', { slug: resolvedSlug })
@@ -226,37 +246,17 @@ export function BlogPostPage() {
       await loadInternalLinks(mergedFallback)
     }
     setLoading(false)
-  }
+  }, [loadInternalLinks, mergeWithLocal, slug])
 
-  async function loadInternalLinks(sourcePost) {
-    const [blogRes, courseRes, toolRes, locationRes] = await Promise.all([
-      fetchPublicData('blog-posts', { limit: 8 }),
-      fetchPublicData('courses'),
-      fetchPublicData('tools-extended', { limit: 8 }),
-      fetchPublicData('locations'),
-    ])
-
-    const blogs = Array.isArray(blogRes.data) ? blogRes.data : []
-    const courses = Array.isArray(courseRes.data) ? courseRes.data : []
-    const tools = Array.isArray(toolRes.data) ? toolRes.data : []
-    const locations = Array.isArray(locationRes.data) ? locationRes.data : []
-
-    const links = buildInternalLinks(
-      { title: sourcePost?.title || sourcePost?.meta_title },
-      {
-        blogs: blogs.map((item) => ({ title: item.title, slug: item.slug, type: 'blog' })),
-        courses: courses.map((item) => ({ title: item.title, slug: item.slug, type: 'course' })),
-        tools: tools.map((item) => ({ title: item.name, slug: item.slug, type: 'tool' })),
-        locations: locations.map((item) => ({
-          title: item.meta_title || item.name,
-          slug: item.slug,
-          type: 'location',
-        })),
-      },
-      4
-    )
-    setInternalLinks(links)
-  }
+  useEffect(() => {
+    void loadPost()
+    const blogChannel = subscribeToTable('blog_posts', () => void loadPost())
+    const legacyChannel = subscribeToTable('blogs', () => void loadPost())
+    return () => {
+      if (blogChannel) supabase?.removeChannel(blogChannel)
+      if (legacyChannel) supabase?.removeChannel(legacyChannel)
+    }
+  }, [loadPost])
 
   if (loading) {
     return (

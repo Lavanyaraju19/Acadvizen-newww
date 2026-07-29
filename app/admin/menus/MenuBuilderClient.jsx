@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Surface } from '../../../src/components/ui/Surface'
 import { adminApiFetch } from '../../../lib/adminApiClient'
 import { 
@@ -40,18 +40,18 @@ export default function MenuBuilderClient() {
     is_active: true,
   })
 
-  useEffect(() => {
-    loadMenus()
-  }, [selectedLocation])
-
-  async function loadMenus() {
+  const loadMenus = useCallback(async () => {
     try {
       const json = await adminApiFetch(`/api/cms/menus?location=${selectedLocation}&include_inactive=1&limit=500`, { cache: 'no-store' })
       setMenus(Array.isArray(json.data) ? json.data : [])
     } catch (error) {
       setStatus(error?.message || 'Failed to load menus.')
     }
-  }
+  }, [selectedLocation])
+
+  useEffect(() => {
+    void loadMenus()
+  }, [loadMenus])
 
   async function saveMenuItem(event) {
     event.preventDefault()
@@ -363,7 +363,7 @@ export default function MenuBuilderClient() {
               <div className="p-8 text-center text-slate-400">
                 <MenuIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p className="font-medium">No menu items yet</p>
-                <p className="text-sm mt-1 opacity-70">Click "Add Menu Item" to get started</p>
+                <p className="text-sm mt-1 opacity-70">Click &quot;Add Menu Item&quot; to get started</p>
               </div>
             ) : (
               <div className="space-y-2">

@@ -8,6 +8,7 @@ import PrecisionSectionFields from './PrecisionSectionFields'
 import { LIVE_SYNC_TARGETS } from '../../../lib/livePageTargets'
 import { adminApiFetch } from '../../../lib/adminApiClient'
 import { saveAutosave, loadAutosave, clearAutosave, useAutosave } from '../../../lib/autosave'
+import { generateSlug } from '../../../lib/slugUtils'
 
 const SECTION_TYPES = [
   'hero',
@@ -43,6 +44,7 @@ const EMPTY_PAGE_FORM = {
   description: '',
   seo_title: '',
   seo_description: '',
+  canonical_url: '',
   status: 'draft',
 }
 
@@ -105,11 +107,7 @@ const EMPTY_SECTION_FORM = {
 }
 
 function toSlug(value = '') {
-  return String(value)
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)+/g, '')
+  return generateSlug(value)
 }
 
 function parseLines(value = '') {
@@ -457,6 +455,7 @@ export default function PageBuilderClient() {
             description: page.description || '',
             seo_title: page.seo_title || '',
             seo_description: page.seo_description || '',
+            canonical_url: page.canonical_url || '',
             status: page.status || 'draft',
           })
         }
@@ -533,6 +532,7 @@ export default function PageBuilderClient() {
       description: page.description || '',
       seo_title: page.seo_title || '',
       seo_description: page.seo_description || '',
+      canonical_url: page.canonical_url || '',
       status: page.status || 'draft',
     })
   }
@@ -962,6 +962,10 @@ export default function PageBuilderClient() {
               <label className="text-xs text-slate-400">
                 SEO Title
                 <input {...fieldAttrs('page_seo_title')} value={pageForm.seo_title} onChange={(event) => setPageForm((prev) => ({ ...prev, seo_title: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+              </label>
+              <label className="text-xs text-slate-400">
+                Canonical URL
+                <input {...fieldAttrs('page_canonical_url')} value={pageForm.canonical_url} onChange={(event) => setPageForm((prev) => ({ ...prev, canonical_url: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
               </label>
               <TextAreaField label="SEO Description" value={pageForm.seo_description} onChange={(value) => setPageForm((prev) => ({ ...prev, seo_description: value }))} rows={3} />
             </div>

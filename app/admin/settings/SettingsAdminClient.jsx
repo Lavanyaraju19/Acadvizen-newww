@@ -320,7 +320,7 @@ export default function SettingsAdminClient() {
 
         <div className="md:col-span-2 mt-6 border-t border-white/10 pt-4">
           <h4 className="text-sm font-semibold text-slate-100">Website Design & Colors</h4>
-          <p className="mt-1 text-xs text-slate-400">Customize your website's appearance.</p>
+          <p className="mt-1 text-xs text-slate-400">Customize your website&apos;s appearance.</p>
         </div>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <label className="text-xs text-slate-400">

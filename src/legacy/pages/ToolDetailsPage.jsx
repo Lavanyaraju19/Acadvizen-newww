@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
@@ -12,11 +12,7 @@ export function ToolDetailsPage() {
   const [related, setRelated] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadTool()
-  }, [slug])
-
-  async function loadTool() {
+  const loadTool = useCallback(async () => {
     setLoading(true)
     const { data } = await fetchPublicData('tools-extended', { slug })
     const toolRow = Array.isArray(data) ? data[0] : data
@@ -29,7 +25,11 @@ export function ToolDetailsPage() {
       if (relatedData) setRelated(relatedList)
     }
     setLoading(false)
-  }
+  }, [slug])
+
+  useEffect(() => {
+    void loadTool()
+  }, [loadTool])
 
   if (loading) {
     return (

@@ -1,6 +1,7 @@
 export function ConsistentPortraitMedia({ src, alt, className = '', scale = 1.12 }) {
   return (
     <div className={`h-[320px] w-full overflow-hidden ${className}`.trim()}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- This shared portrait helper is used across legacy surfaces with arbitrary media URLs and CSS transforms. */}
       <img
         src={src}
         alt={alt}

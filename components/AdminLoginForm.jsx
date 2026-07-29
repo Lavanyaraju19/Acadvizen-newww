@@ -2,9 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '../lib/supabaseClient'
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from '../lib/env'
-import { adminApiFetch } from '../lib/adminApiClient'
+import { ensureBrowserSupabaseClient, ensureBrowserSupabaseConfig } from '../lib/supabaseClient'
+import { signInAdminWithPassword } from '../lib/adminAuthClient'
 
 const LOGIN_TIMEOUT_MS = 18000
 
@@ -15,47 +14,10 @@ export default function AdminLoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  async function signInWithRetry(client, payload, retries = 2) {
-    try {
-      return await client.auth.signInWithPassword(payload)
-    } catch (err) {
-      const message = err?.message || ''
-      if ((err?.name === 'AbortError' || message.includes('signal is aborted')) && retries > 0) {
-        await new Promise((resolve) => setTimeout(resolve, 800))
-        return signInWithRetry(client, payload, retries - 1)
-      }
-      throw err
-    }
-  }
-
-  async function manualPasswordSignIn(emailValue, passwordValue) {
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !supabase?.auth) {
-      throw new Error('Supabase configuration is unavailable. Contact support if this persists.')
-    }
-
-    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-      method: 'POST',
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email: emailValue, password: passwordValue }),
-    })
-    const data = await res.json()
-    if (!res.ok) {
-      throw new Error(data?.error_description || data?.msg || 'Unable to sign in.')
-    }
-    await supabase.auth.setSession({
-      access_token: data.access_token,
-      refresh_token: data.refresh_token,
-    })
-    return { user: data.user }
-  }
-
   const handleLogin = async (event) => {
     event.preventDefault()
     setError('')
+    let hardTimeout = null
 
     if (!email.trim() || !password.trim()) {
       setError('Please enter email and password.')
@@ -64,55 +26,23 @@ export default function AdminLoginForm() {
 
     try {
       setLoading(true)
-      const client = supabase
+      const config = await ensureBrowserSupabaseConfig()
+      const client = config ? await ensureBrowserSupabaseClient() : null
 
-      if (!client?.auth || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      if (!client?.auth || !config?.url || !config?.anonKey) {
         throw new Error('Supabase configuration is unavailable. Contact support if this persists.')
       }
 
-      const hardTimeout = setTimeout(() => {
+      hardTimeout = setTimeout(() => {
         setLoading(false)
         setError('Sign-in timed out. Please try again.')
       }, LOGIN_TIMEOUT_MS)
 
-      await client.auth.signOut({ scope: 'local' })
-
-      let data
-      let loginError = null
-      try {
-        const response = await signInWithRetry(client, {
-          email: email.trim(),
-          password: password.trim(),
-        })
-        data = response?.data
-        loginError = response?.error || null
-      } catch (signInError) {
-        try {
-          const manual = await manualPasswordSignIn(email.trim(), password.trim())
-          data = { user: manual.user }
-        } catch (manualError) {
-          loginError = manualError
-        }
-      }
-
+      const result = await signInAdminWithPassword(email, password)
       clearTimeout(hardTimeout)
-
-      if (loginError) {
-        setError(loginError.message)
-        return
-      }
-
-      const user = data?.user
+      const user = result?.user
       if (!user?.id) {
         setError('Unable to verify account. Please try again.')
-        return
-      }
-
-      try {
-        await adminApiFetch('/api/admin/session', { method: 'POST' })
-      } catch (sessionError) {
-        await client.auth.signOut()
-        setError(sessionError?.message || 'Access denied: not an admin')
         return
       }
 
@@ -121,6 +51,7 @@ export default function AdminLoginForm() {
     } catch (e) {
       setError(e?.message || 'Login failed. Please try again.')
     } finally {
+      if (hardTimeout) clearTimeout(hardTimeout)
       setLoading(false)
     }
   }

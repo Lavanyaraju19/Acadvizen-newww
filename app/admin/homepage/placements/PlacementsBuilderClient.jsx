@@ -223,7 +223,7 @@ export default function PlacementsBuilderClient() {
           
           {placements.length === 0 ? (
             <div className="p-8 rounded-xl border border-white/10 bg-white/[0.03] text-center text-slate-400">
-              No placements yet. Click "Add Placement" to create one.
+              No placements yet. Click &quot;Add Placement&quot; to create one.
             </div>
           ) : (
             placements.map((item, index) => (
@@ -238,6 +238,7 @@ export default function PlacementsBuilderClient() {
                 <div className="flex items-start gap-3">
                   <GripVertical className="w-5 h-5 text-slate-500 mt-1" />
                   {item.logo_url && (
+                    /* eslint-disable-next-line @next/next/no-img-element -- Builder list previews must support arbitrary uploaded company logos without remote image config. */
                     <img 
                       src={item.logo_url} 
                       alt={item.company_name}

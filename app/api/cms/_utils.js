@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server'
 import { cookies, headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { getServerSupabaseClient, hasValidSupabaseServiceRoleKey } from '../../../lib/supabaseServer'
+import { logger } from '../../../lib/productionLogger'
+import {
+  canAccessAdminProfile,
+  enrichAdminProfile,
+  hasProfilePermission,
+  inferCmsPermissionFromPath,
+} from '../../../lib/adminPermissions'
 
 const CMS_PUBLIC_PATHS = [
   '/',
@@ -18,17 +25,23 @@ const CMS_PUBLIC_PATHS = [
   '/blog',
 ]
 
+// ── Standardized JSON responses ─────────────────────────────────────────
+
 export function jsonOk(data = null, extra = {}) {
   return NextResponse.json({ success: true, data, error: null, ...extra }, { status: 200 })
 }
 
 export function jsonError(error, status = 500, data = null) {
   const httpStatus = (typeof status === 'number' && status >= 400 && status <= 599) ? status : 500
+  // Never expose stack traces in production
+  const message = typeof error === 'string' ? error : (error?.message || 'Request failed.')
   return NextResponse.json(
-    { success: false, data, error: typeof error === 'string' ? error : error?.message || 'Request failed.' },
+    { success: false, data, error: message },
     { status: httpStatus }
   )
 }
+
+// ── Auth helpers ────────────────────────────────────────────────────────
 
 function readAuthorizationHeader(request) {
   const direct = request?.headers?.get?.('authorization')
@@ -54,6 +67,10 @@ function getBearerToken(request) {
   const authorization = String(readAuthorizationHeader(request) || '')
   if (!authorization.toLowerCase().startsWith('bearer ')) return ''
   return authorization.slice(7).trim()
+}
+
+export function hasAdminAuthorizationHint(request) {
+  return Boolean(getBearerToken(request) || readAdminCookie(request))
 }
 
 function getErrorMessage(error) {
@@ -108,7 +125,7 @@ export function isAdminRequest(request) {
 }
 
 export async function resolveAdminContext(request) {
-  const authToken = getBearerToken(request)
+  const authToken = getBearerToken(request) || readAdminCookie(request)
   if (!authToken) {
     return { ok: false, status: 401, error: 'Admin session expired. Please sign in again.' }
   }
@@ -126,7 +143,18 @@ export async function resolveAdminContext(request) {
   }
 
   try {
-    const { data: authData, error: authError } = await verifier.auth.getUser(authToken)
+    let authData = null
+    let authError = null
+
+    const primaryAuthResult = await verifier.auth.getUser(authToken)
+    authData = primaryAuthResult.data || null
+    authError = primaryAuthResult.error || null
+
+    if ((authError || !authData?.user?.id) && serviceSupabase && authSupabase && verifier === serviceSupabase) {
+      const fallbackAuthResult = await authSupabase.auth.getUser(authToken)
+      authData = fallbackAuthResult.data || null
+      authError = fallbackAuthResult.error || null
+    }
 
     if (authError || !authData?.user?.id) {
       if (isTransientError(authError)) {
@@ -145,11 +173,28 @@ export async function resolveAdminContext(request) {
       return { ok: false, status: 500, error: 'Admin profile lookup is unavailable.' }
     }
 
-    const { data: profile, error: profileError } = await profileClient
+    let profile = null
+    let profileError = null
+
+    const primaryProfileResult = await profileClient
       .from('profiles')
       .select('*')
       .eq('id', authData.user.id)
       .maybeSingle()
+
+    profile = primaryProfileResult.data || null
+    profileError = primaryProfileResult.error || null
+
+    if ((profileError || !profile) && serviceSupabase && authSupabase && profileClient === serviceSupabase) {
+      const fallbackProfileResult = await authSupabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .maybeSingle()
+
+      profile = fallbackProfileResult.data || null
+      profileError = fallbackProfileResult.error || null
+    }
 
     if (profileError) {
       if (isTransientError(profileError)) {
@@ -162,7 +207,30 @@ export async function resolveAdminContext(request) {
       return { ok: false, status: 403, error: 'Admin profile is missing for this account.' }
     }
 
-    if (profile.role !== 'admin') {
+    let userRoles = []
+    if (serviceSupabase) {
+      const { data: assignments } = await serviceSupabase
+        .from('user_roles')
+        .select(`
+          role_id,
+          roles (
+            id,
+            name,
+            slug,
+            permissions
+          )
+        `)
+        .eq('user_id', authData.user.id)
+
+      userRoles = Array.isArray(assignments) ? assignments : []
+    }
+
+    const enrichedProfile = enrichAdminProfile({
+      ...profile,
+      user_roles: userRoles,
+    })
+
+    if (!canAccessAdminProfile(enrichedProfile)) {
       return { ok: false, status: 403, error: 'This account does not have admin access.' }
     }
 
@@ -171,7 +239,7 @@ export async function resolveAdminContext(request) {
       status: 200,
       authToken,
       user: authData.user,
-      profile,
+      profile: enrichedProfile,
     }
   } catch (error) {
     if (isTransientError(error)) {
@@ -185,12 +253,57 @@ export async function resolveAdminContext(request) {
   }
 }
 
-export async function ensureAdmin(request) {
+function resolveRequiredPermission(request, permissionOverride = null) {
+  if (permissionOverride && typeof permissionOverride === 'object') {
+    return permissionOverride
+  }
+
+  const pathname = request?.nextUrl?.pathname || new URL(request.url).pathname
+  return inferCmsPermissionFromPath(pathname, request.method)
+}
+
+export async function requireAdminContext(request, permissionOverride = null) {
   const result = await resolveAdminContext(request)
   if (!result.ok) {
-    return jsonError(result.error, result.status || 401, null)
+    return {
+      context: null,
+      response: jsonError(result.error, result.status || 401, null),
+      requiredPermission: null,
+    }
   }
-  return null
+
+  const requiredPermission = resolveRequiredPermission(request, permissionOverride)
+
+  if (requiredPermission && !hasProfilePermission(result.profile, requiredPermission.resource, requiredPermission.action)) {
+    return {
+      context: null,
+      response: jsonError('This account does not have permission to perform this action.', 403, null),
+      requiredPermission,
+    }
+  }
+
+  return {
+    context: result,
+    response: null,
+    requiredPermission,
+  }
+}
+
+export async function ensureAdmin(request, permissionOverride = null) {
+  const { response } = await requireAdminContext(request, permissionOverride)
+  return response
+}
+
+export async function getOptionalAdminContext(request, permissionOverride = null) {
+  if (!hasAdminAuthorizationHint(request)) {
+    return {
+      context: null,
+      response: null,
+      requiredPermission: null,
+    }
+  }
+
+  return requireAdminContext(request, permissionOverride)
 }
 
 export async function readJsonBody(request) {

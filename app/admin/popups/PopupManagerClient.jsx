@@ -520,6 +520,7 @@ export default function PopupManagerClient() {
                   )}
                   
                   {popupForm.image_url && (
+                    /* eslint-disable-next-line @next/next/no-img-element -- Popup preview renders arbitrary uploaded images and should not depend on Next image host configuration. */
                     <img 
                       src={popupForm.image_url} 
                       alt="Popup" 

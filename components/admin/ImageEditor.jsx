@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { 
   X, 
   Save, 
@@ -33,13 +33,7 @@ export default function ImageEditor({ imageUrl, onSave, onClose }) {
   const [dragStart, setDragStart] = useState(null)
   const [outputSize, setOutputSize] = useState({ width: 0, height: 0 })
 
-  useEffect(() => {
-    if (imageUrl) {
-      loadImage(imageUrl)
-    }
-  }, [imageUrl])
-
-  function loadImage(src) {
+  const loadImage = useCallback((src) => {
     const img = new Image()
     img.crossOrigin = 'anonymous'
     img.onload = () => {
@@ -50,7 +44,13 @@ export default function ImageEditor({ imageUrl, onSave, onClose }) {
       drawImage(img, 0, false, false, 1)
     }
     img.src = src
-  }
+  }, [])
+
+  useEffect(() => {
+    if (imageUrl) {
+      loadImage(imageUrl)
+    }
+  }, [imageUrl, loadImage])
 
   function drawImage(img, rot, fh, fv, scl, crop = null) {
     const canvas = canvasRef.current

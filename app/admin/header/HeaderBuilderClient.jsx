@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Surface } from '../../../src/components/ui/Surface'
 import { adminApiFetch } from '../../../lib/adminApiClient'
 import { uploadFileAsset } from '../../../lib/storageUpload'
@@ -58,6 +58,30 @@ const MENU_ICONS = [
 const MAX_DEPTH = 3
 const DEFAULT_MEGA_MENU_COLUMNS = 2
 
+function generateNavItemId() {
+  return 'nav_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+}
+
+function normalizeNavItems(items) {
+  return items.map((item) => ({
+    id: item.id || generateNavItemId(),
+    label: item.label || '',
+    link: item.link || '/',
+    active: item.active !== undefined ? item.active : true,
+    target: item.target || '_self',
+    icon: item.icon || 'none',
+    parent_id: item.parent_id || null,
+    order_index: item.order_index !== undefined ? item.order_index : 0,
+    has_dropdown: item.has_dropdown || false,
+    is_mega_menu: item.is_mega_menu || false,
+    mega_menu_columns: item.mega_menu_columns || DEFAULT_MEGA_MENU_COLUMNS,
+    mega_menu_content: item.mega_menu_content || null,
+    visible_desktop: item.visible_desktop !== undefined ? item.visible_desktop : true,
+    visible_mobile: item.visible_mobile !== undefined ? item.visible_mobile : true,
+    children: Array.isArray(item.children) ? normalizeNavItems(item.children) : [],
+  }))
+}
+
 export default function HeaderBuilderClient() {
   const [settings, setSettings] = useState({
     logo_url: '',
@@ -104,52 +128,35 @@ export default function HeaderBuilderClient() {
   const [expandedMenuItems, setExpandedMenuItems] = useState(new Set())
   const [editingNavItem, setEditingNavItem] = useState(null)
 
-  useEffect(() => {
-    loadSettings()
-  }, [])
-
-  async function loadSettings() {
+  const loadSettings = useCallback(async () => {
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      )
-      
-      const { data } = await supabaseClient
-        .from('header_settings')
-        .select('*')
-        .single()
-      
+      const payload = await adminApiFetch('/api/cms/header', { cache: 'no-store' })
+      const data = payload?.data
       if (data) {
-        setSettings({
-          ...settings,
+        setSettings((prev) => ({
+          ...prev,
           ...data,
           nav_items: normalizeNavItems(Array.isArray(data.nav_items) ? data.nav_items : []),
           social_items: Array.isArray(data.social_items) ? data.social_items : [],
-        })
+        }))
       }
     } catch (error) {
-      console.error('Failed to load header settings:', error)
+      setStatus(error?.message || 'Failed to load header settings.')
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    void loadSettings()
+  }, [loadSettings])
 
   async function saveSettings() {
     setSaving(true)
     setStatus('')
     try {
-      // Use API route instead of direct service role key access
-      const response = await fetch('/api/cms/header', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings)
+      await adminApiFetch('/api/cms/header', {
+        method: 'POST',
+        body: settings,
       })
-      
-      if (!response.ok) throw new Error('Failed to update header settings')
-      
-      const { error } = await response.json()
-      if (error) throw error
-      
       setStatus('Header settings saved successfully.')
     } catch (error) {
       setStatus(error?.message || 'Failed to save settings.')
@@ -171,32 +178,6 @@ export default function HeaderBuilderClient() {
     } finally {
       setUploading('')
     }
-  }
-
-  // Helper function to normalize nav items to ensure they have all required fields
-  function normalizeNavItems(items) {
-    return items.map(item => ({
-      id: item.id || generateId(),
-      label: item.label || '',
-      link: item.link || '/',
-      active: item.active !== undefined ? item.active : true,
-      target: item.target || '_self',
-      icon: item.icon || 'none',
-      parent_id: item.parent_id || null,
-      order_index: item.order_index !== undefined ? item.order_index : 0,
-      has_dropdown: item.has_dropdown || false,
-      is_mega_menu: item.is_mega_menu || false,
-      mega_menu_columns: item.mega_menu_columns || DEFAULT_MEGA_MENU_COLUMNS,
-      mega_menu_content: item.mega_menu_content || null,
-      visible_desktop: item.visible_desktop !== undefined ? item.visible_desktop : true,
-      visible_mobile: item.visible_mobile !== undefined ? item.visible_mobile : true,
-      children: Array.isArray(item.children) ? normalizeNavItems(item.children) : [],
-    }))
-  }
-
-  // Generate unique ID for nav items
-  function generateId() {
-    return 'nav_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
   }
 
   // Validate URL
@@ -837,7 +818,7 @@ export default function HeaderBuilderClient() {
 
               {settings.nav_items.length === 0 && (
                 <div className="text-center py-8 text-slate-400 text-sm">
-                  No navigation items yet. Click "Add Top-Level Item" to get started.
+                  No navigation items yet. Click &quot;Add Top-Level Item&quot; to get started.
                 </div>
               )}
             </div>

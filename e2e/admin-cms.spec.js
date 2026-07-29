@@ -1,11 +1,15 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('@playwright/test')
 const {
+  E2E_ADMIN_EMAIL,
+  E2E_ADMIN_PASSWORD,
   loginAdmin,
   checkAndHandleSessionError,
-} = require('./utils');
+} = require('./utils')
+
+const hasE2ECredentials = Boolean(E2E_ADMIN_EMAIL && E2E_ADMIN_PASSWORD)
 
 // Test data
-const testTimestamp = Date.now();
+const testTimestamp = Date.now()
 const testData = {
   author: {
     author_name: `Test Author ${testTimestamp}`,
@@ -70,7 +74,7 @@ const testData = {
     order_index: 100,
     is_active: true,
   },
-};
+}
 
 // List of all admin modules that should be accessible
 const ADMIN_MODULES = [
@@ -109,71 +113,74 @@ const ADMIN_MODULES = [
   { path: '/admin/import-export', label: 'Import/Export' },
   { path: '/admin/resources', label: 'Resources' },
   { path: '/admin/students', label: 'Students' },
-];
+]
 
 test.describe('Admin CMS E2E Tests', () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAdmin(page);
-  });
+  test.describe.configure({ mode: 'serial' })
+  test.skip(!hasE2ECredentials, 'E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD are required for admin CMS workflows')
 
-  // ── MODULE LOADING TESTS ──────────────────────────────────
-  // Each admin module is tested to ensure it loads without session errors
+  /** @type {import('@playwright/test').BrowserContext | null} */
+  let adminContext = null
+  /** @type {import('@playwright/test').Page | null} */
+  let adminPage = null
+
+  test.beforeAll(async ({ browser }) => {
+    adminContext = await browser.newContext()
+    adminPage = await adminContext.newPage()
+    await loginAdmin(adminPage)
+  })
+
+  test.afterAll(async () => {
+    await adminContext?.close()
+    adminContext = null
+    adminPage = null
+  })
 
   for (const mod of ADMIN_MODULES) {
     test.describe(mod.label, () => {
-      test(`should load ${mod.label} page at ${mod.path}`, async ({ page }) => {
-        await page.goto(mod.path);
-        await page.waitForLoadState('domcontentloaded');
-        await checkAndHandleSessionError(page);
-
-        // Verify we're on the expected admin page
-        await expect(page).toHaveURL(new RegExp(mod.path.replace('/', '\\/')));
-      });
-    });
+      test(`should load ${mod.label} page at ${mod.path}`, async () => {
+        await adminPage.goto(mod.path)
+        await adminPage.waitForLoadState('domcontentloaded')
+        await checkAndHandleSessionError(adminPage)
+        await expect(adminPage).toHaveURL(new RegExp(mod.path.replace('/', '\\/')))
+      })
+    })
   }
 
-  // ── CROSS-MODULE NAVIGATION ───────────────────────────────
   test.describe('Navigation', () => {
-    test('should navigate between all admin modules without session expiry', async ({ page }) => {
+    test('should navigate between all admin modules without session expiry', async () => {
       for (const mod of ADMIN_MODULES) {
-        // Navigate to module
-        await page.goto(mod.path);
-        await page.waitForLoadState('domcontentloaded');
-        await checkAndHandleSessionError(page);
-
-        // Assert on URL
-        await expect(page).toHaveURL(new RegExp(mod.path.replace('/', '\\/')));
+        await adminPage.goto(mod.path)
+        await adminPage.waitForLoadState('domcontentloaded')
+        await checkAndHandleSessionError(adminPage)
+        await expect(adminPage).toHaveURL(new RegExp(mod.path.replace('/', '\\/')))
       }
-    });
-  });
+    })
+  })
 
-  // ── SESSION PERSISTENCE ──────────────────────────────────
   test.describe('Session Persistence', () => {
-    test('should maintain session across multiple module navigations', async ({ page }) => {
-      // Visit 5 random modules to verify session stays alive
+    test('should maintain session across multiple module navigations', async () => {
       const sampleModules = ADMIN_MODULES
         .sort(() => Math.random() - 0.5)
-        .slice(0, 5);
+        .slice(0, 5)
 
       for (const mod of sampleModules) {
-        await page.goto(mod.path);
-        await page.waitForLoadState('domcontentloaded');
-        await checkAndHandleSessionError(page);
-        await expect(page).toHaveURL(new RegExp(mod.path.replace('/', '\\/')));
+        await adminPage.goto(mod.path)
+        await adminPage.waitForLoadState('domcontentloaded')
+        await checkAndHandleSessionError(adminPage)
+        await expect(adminPage).toHaveURL(new RegExp(mod.path.replace('/', '\\/')))
       }
-    });
+    })
 
-    test('should survive page refresh without session loss', async ({ page }) => {
-      await page.goto('/admin');
-      await page.waitForLoadState('domcontentloaded');
-      await checkAndHandleSessionError(page);
+    test('should survive page refresh without session loss', async () => {
+      await adminPage.goto('/admin')
+      await adminPage.waitForLoadState('domcontentloaded')
+      await checkAndHandleSessionError(adminPage)
 
-      // Reload the page
-      await page.reload();
-      await page.waitForLoadState('domcontentloaded');
+      await adminPage.reload()
+      await adminPage.waitForLoadState('domcontentloaded')
 
-      // Should still be on admin, not redirected to login
-      await expect(page).toHaveURL(/\/admin($|\/)/);
-    });
-  });
-});
+      await expect(adminPage).toHaveURL(/\/admin($|\/)/)
+    })
+  })
+})

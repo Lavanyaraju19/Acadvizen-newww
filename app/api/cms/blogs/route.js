@@ -1,7 +1,7 @@
 import {
-  ensureAdmin,
   getSupabaseClientOrResponse,
-  isAdminRequest,
+  getOptionalAdminContext,
+  requireAdminContext,
   jsonError,
   jsonOk,
   revalidateAllCmsPages,
@@ -199,7 +199,13 @@ async function replaceBlogBlocks(supabase, blogId, blocks) {
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
-  const includeDrafts = searchParams.get('include_drafts') === '1' && isAdminRequest(request)
+  const wantsDrafts = searchParams.get('include_drafts') === '1'
+  const adminAccess = wantsDrafts
+    ? await getOptionalAdminContext(request, { resource: 'blogs', action: 'read' })
+    : { context: null, response: null }
+  if (adminAccess.response) return adminAccess.response
+
+  const includeDrafts = Boolean(adminAccess.context)
   const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: includeDrafts })
   if (response) return response
 
@@ -224,8 +230,8 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const unauthorized = await ensureAdmin(request)
-  if (unauthorized) return unauthorized
+  const adminAccess = await requireAdminContext(request, { resource: 'blogs', action: 'create' })
+  if (adminAccess.response) return adminAccess.response
 
   const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
@@ -248,6 +254,15 @@ export async function POST(request) {
   if (writeInput.error) return jsonError(writeInput.error, 400)
 
   const { payload, normalizedBlocks } = writeInput
+  if (payload.status === 'published') {
+    const publishAccess = await requireAdminContext(request, { resource: 'blogs', action: 'publish' })
+    if (publishAccess.response) return publishAccess.response
+  }
+
+  const roleSlugs = new Set(adminAccess.context.profile?.effective_role_slugs || [])
+  if (roleSlugs.has('author') && !adminAccess.context.profile?.is_full_admin) {
+    payload.author_id = adminAccess.context.user.id
+  }
 
   try {
     const conflict = await ensureUniqueSlug(supabase, payload.slug, existingId)
@@ -274,8 +289,8 @@ export async function POST(request) {
     }
 
     const [withBlocks] = await attachBlocks(supabase, [data], true)
-    revalidateCmsPaths(['/blog', `/blog/${existingBlog?.slug || data.slug}`, `/blog/${data.slug}`])
-    revalidateAllCmsPages(['/blog'])
+    revalidateCmsPaths(['/blog', `/blog/${existingBlog?.slug || data.slug}`, `/blog/${data.slug}`, '/sitemap.xml'])
+    revalidateAllCmsPages(['/blog', '/sitemap.xml'])
     return jsonOk(withBlocks || data)
   } catch (error) {
     logBlogError('Unhandled blog save failure.', error, {

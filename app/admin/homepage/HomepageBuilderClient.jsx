@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Surface } from '../../../src/components/ui/Surface'
 import { adminApiFetch } from '../../../lib/adminApiClient'
 import { 
@@ -50,12 +50,7 @@ export default function HomepageBuilderClient() {
   const [status, setStatus] = useState('')
   const [editingSection, setEditingSection] = useState(null)
 
-  useEffect(() => {
-    loadHomepage()
-    loadSettings()
-  }, [])
-
-  async function loadHomepage() {
+  const loadHomepage = useCallback(async () => {
     try {
       const json = await adminApiFetch('/api/cms/pages?include_drafts=1&include_sections=1&limit=1', { cache: 'no-store' })
       const pages = Array.isArray(json.data) ? json.data : []
@@ -66,33 +61,40 @@ export default function HomepageBuilderClient() {
         setSections(Array.isArray(homePage.sections) ? homePage.sections : [])
       } else {
         setStatus('Homepage not found. Creating new homepage...')
-        await createHomepage()
+        const payload = {
+          title: 'Home',
+          slug: 'home',
+          description: 'Acadvizen Homepage',
+          status: 'published',
+        }
+
+        await adminApiFetch('/api/cms/pages', { method: 'POST', body: payload })
+        setStatus('Homepage created successfully.')
+
+        const nextJson = await adminApiFetch('/api/cms/pages?include_drafts=1&include_sections=1&limit=1', { cache: 'no-store' })
+        const nextPages = Array.isArray(nextJson.data) ? nextJson.data : []
+        const nextHomePage = nextPages.find((page) => page.slug === 'home')
+        if (nextHomePage) {
+          setHomepage(nextHomePage)
+          setSections(Array.isArray(nextHomePage.sections) ? nextHomePage.sections : [])
+        }
       }
     } catch (error) {
       setStatus(error?.message || 'Failed to load homepage.')
     }
-  }
+  }, [])
 
-  async function loadSettings() {
+  const loadSettings = useCallback(async () => {
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      )
-      
-      const { data } = await supabaseClient
-        .from('homepage_settings')
-        .select('*')
-        .single()
-      
-      if (data) {
-        setSettings(data)
+      const payload = await adminApiFetch('/api/cms/entities/homepage_settings?limit=1', { cache: 'no-store' })
+      const current = Array.isArray(payload?.data) ? payload.data[0] : null
+      if (current) {
+        setSettings(current)
       }
     } catch (error) {
-      console.error('Failed to load homepage settings:', error)
+      setStatus(error?.message || 'Failed to load homepage settings.')
     }
-  }
+  }, [])
 
   async function createHomepage() {
     try {
@@ -111,22 +113,25 @@ export default function HomepageBuilderClient() {
     }
   }
 
+  useEffect(() => {
+    void loadHomepage()
+    void loadSettings()
+  }, [loadHomepage, loadSettings])
+
   async function saveSettings() {
     setLoading(true)
     setStatus('')
     try {
-      // Use API route instead of direct service role key access
-      const response = await fetch('/api/cms/site', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings)
+      const payload = await adminApiFetch('/api/cms/entities/homepage_settings', {
+        method: 'POST',
+        body: {
+          ...settings,
+          id: settings.id || undefined,
+        },
       })
-      
-      if (!response.ok) throw new Error('Failed to update homepage settings')
-      
-      const { error } = await response.json()
-      if (error) throw error
-      
+      if (payload?.data) {
+        setSettings(payload.data)
+      }
       setStatus('Homepage settings saved.')
     } catch (error) {
       setStatus(error?.message || 'Failed to save settings.')

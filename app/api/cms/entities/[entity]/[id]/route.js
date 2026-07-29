@@ -12,6 +12,9 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request, { params }) {
   try {
+    const unauthorized = await ensureAdmin(request)
+    if (unauthorized) return unauthorized
+
     const config = getEntityConfig(params?.entity)
     if (!config) return jsonError('Unknown CMS entity.', 404, [])
 

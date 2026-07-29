@@ -49,6 +49,7 @@ if (window.__acadvizenMetaPixelLastPage !== window.location.pathname + window.lo
 }`}
       </Script>
       <noscript>
+        {/* eslint-disable-next-line @next/next/no-img-element -- Meta Pixel noscript fallback requires a raw tracking image beacon. */}
         <img
           height="1"
           width="1"

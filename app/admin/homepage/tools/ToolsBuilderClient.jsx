@@ -232,7 +232,7 @@ export default function ToolsBuilderClient() {
           
           {tools.length === 0 ? (
             <div className="p-8 rounded-xl border border-white/10 bg-white/[0.03] text-center text-slate-400">
-              No tools yet. Click "Add Tool" to create one.
+              No tools yet. Click &quot;Add Tool&quot; to create one.
             </div>
           ) : (
             tools.map((item, index) => (
@@ -247,6 +247,7 @@ export default function ToolsBuilderClient() {
                 <div className="flex items-center gap-3">
                   <GripVertical className="w-5 h-5 text-slate-500" />
                   {item.logo_url && (
+                    /* eslint-disable-next-line @next/next/no-img-element -- Builder list previews must support arbitrary uploaded tool logos without remote image config. */
                     <img 
                       src={item.logo_url} 
                       alt={item.name}

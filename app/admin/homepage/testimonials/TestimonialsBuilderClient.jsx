@@ -235,7 +235,7 @@ export default function TestimonialsBuilderClient() {
           
           {testimonials.length === 0 ? (
             <div className="p-8 rounded-xl border border-white/10 bg-white/[0.03] text-center text-slate-400">
-              No testimonials yet. Click "Add Testimonial" to create one.
+              No testimonials yet. Click &quot;Add Testimonial&quot; to create one.
             </div>
           ) : (
             testimonials.map((item, index) => (
@@ -250,6 +250,7 @@ export default function TestimonialsBuilderClient() {
                 <div className="flex items-start gap-3">
                   <GripVertical className="w-5 h-5 text-slate-500 mt-1" />
                   {item.image_url && (
+                    /* eslint-disable-next-line @next/next/no-img-element -- Builder list previews render arbitrary testimonial avatars from CMS storage. */
                     <img 
                       src={item.image_url} 
                       alt={item.name}

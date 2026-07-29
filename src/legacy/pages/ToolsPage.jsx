@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { fetchPublicData } from '../../lib/apiClient'
@@ -15,30 +15,6 @@ export function ToolsPage() {
   const [category, setCategory] = useState('all')
   const [pageSections, setPageSections] = useState({})
   const [internalLinks, setInternalLinks] = useState({ blogs: [], courses: [] })
-
-  useEffect(() => {
-    void loadTools()
-    void loadPageSections()
-  }, [])
-
-  async function loadTools() {
-    setLoading(true)
-    const { data } = await fetchPublicData('tools-extended')
-    if (data) setTools(data)
-    if (data) await loadInternalLinks(data)
-    setLoading(false)
-  }
-
-  async function loadPageSections() {
-    const { data } = await fetchPublicData('page-sections', { page: 'tools' })
-    if (!data) return
-    const next = {}
-    data.forEach((section) => {
-      if (section.section_key) next[section.section_key] = section
-    })
-    setPageSections(next)
-  }
-
   const parseJson = (value, fallback) => {
     if (!value) return fallback
     if (typeof value === 'string') {
@@ -57,7 +33,7 @@ export function ToolsPage() {
   const metaSection = getSection('meta')
   const metaCta = parseJson(metaSection.cta_json, {})
 
-  async function loadInternalLinks(toolData) {
+  const loadInternalLinks = useCallback(async (toolData) => {
     const [blogRes, courseRes] = await Promise.all([
       fetchPublicData('blog-posts', { limit: 8 }),
       fetchPublicData('courses'),
@@ -77,7 +53,30 @@ export function ToolsPage() {
     )
 
     setInternalLinks({ blogs: links.blogs, courses: links.courses })
-  }
+  }, [heroSection.title])
+
+  const loadTools = useCallback(async () => {
+    setLoading(true)
+    const { data } = await fetchPublicData('tools-extended')
+    if (data) setTools(data)
+    if (data) await loadInternalLinks(data)
+    setLoading(false)
+  }, [loadInternalLinks])
+
+  const loadPageSections = useCallback(async () => {
+    const { data } = await fetchPublicData('page-sections', { page: 'tools' })
+    if (!data) return
+    const next = {}
+    data.forEach((section) => {
+      if (section.section_key) next[section.section_key] = section
+    })
+    setPageSections(next)
+  }, [])
+
+  useEffect(() => {
+    void loadTools()
+    void loadPageSections()
+  }, [loadPageSections, loadTools])
 
   const categorySet = new Set(tools.map((t) => t.category).filter(Boolean))
   categorySet.delete('Gen AI')

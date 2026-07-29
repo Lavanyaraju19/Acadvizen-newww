@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Surface } from '../../../src/components/ui/Surface'
 import { adminApiFetch } from '../../../lib/adminApiClient'
 import { uploadFileAsset } from '../../../lib/storageUpload'
@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 
 export default function GlobalSettingsClient() {
+  const [settingsId, setSettingsId] = useState(null)
   const [settings, setSettings] = useState({
     business_name: '',
     tagline: '',
@@ -88,54 +89,42 @@ export default function GlobalSettingsClient() {
   const [activeSection, setActiveSection] = useState('business')
   const [expandedSections, setExpandedSections] = useState(new Set(['business']))
 
-  useEffect(() => {
-    loadSettings()
-  }, [])
-
-  async function loadSettings() {
+  const loadSettings = useCallback(async () => {
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      )
-      
-      const { data } = await supabaseClient
-        .from('global_settings')
-        .select('*')
-        .single()
-      
+      const payload = await adminApiFetch('/api/cms/entities/global_settings?limit=1', { cache: 'no-store' })
+      const data = Array.isArray(payload?.data) ? payload.data[0] : null
       if (data) {
-        setSettings({
-          ...settings,
+        setSettingsId(data.id || null)
+        setSettings((prev) => ({
+          ...prev,
           ...data,
           business_hours: typeof data.business_hours === 'string' 
             ? JSON.parse(data.business_hours) 
-            : data.business_hours || settings.business_hours,
+            : data.business_hours || prev.business_hours,
           maintenance_allowed_ips: data.maintenance_allowed_ips || [],
-        })
+        }))
       }
     } catch (error) {
-      console.error('Failed to load settings:', error)
+      setStatus(error?.message || 'Failed to load settings.')
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    void loadSettings()
+  }, [loadSettings])
 
   async function saveSettings() {
     setSaving(true)
     setStatus('')
     try {
-      // Use API route instead of direct service role key access
-      const response = await fetch('/api/cms/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings)
+      const payload = await adminApiFetch('/api/cms/entities/global_settings', {
+        method: 'POST',
+        body: {
+          ...settings,
+          id: settingsId || settings.id || undefined,
+        },
       })
-      
-      if (!response.ok) throw new Error('Failed to update settings')
-      
-      const { error } = await response.json()
-      if (error) throw error
-      
+      setSettingsId(payload?.data?.id || settingsId)
       setStatus('Settings saved successfully.')
     } catch (error) {
       setStatus(error?.message || 'Failed to save settings.')

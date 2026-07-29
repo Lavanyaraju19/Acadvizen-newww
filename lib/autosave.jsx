@@ -106,5 +106,5 @@ export function useAutosave(entityType, entityId, data, deps = []) {
     }, AUTOSAVE_INTERVAL)
     
     return () => clearInterval(interval)
-  }, [entityType, entityId, data, ...deps])
+  }, [entityType, entityId, data, deps])
 }

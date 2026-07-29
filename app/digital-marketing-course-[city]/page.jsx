@@ -172,7 +172,7 @@ export default async function CityCoursePage({ params }) {
           <div className="grid gap-4 md:grid-cols-2">
             {testimonials.map((testimonial) => (
               <article key={testimonial.id} className="rounded-xl border border-slate-200 bg-white p-4">
-                <p className="text-sm text-slate-600">"{testimonial.quote || testimonial.message}"</p>
+                <p className="text-sm text-slate-600">&ldquo;{testimonial.quote || testimonial.message}&rdquo;</p>
                 <p className="mt-3 text-xs font-semibold text-slate-900">{testimonial.name || 'Student'}</p>
               </article>
             ))}

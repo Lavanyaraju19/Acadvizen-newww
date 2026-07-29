@@ -216,7 +216,7 @@ export default function CourseModulesBuilderClient() {
           
           {modules.length === 0 ? (
             <div className="p-8 rounded-xl border border-white/10 bg-white/[0.03] text-center text-slate-400">
-              No course modules yet. Click "Add Module" to create one.
+              No course modules yet. Click &quot;Add Module&quot; to create one.
             </div>
           ) : (
             modules.map((item, index) => (

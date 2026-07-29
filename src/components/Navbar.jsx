@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import Image from 'next/image'
 import { useAuth } from '../contexts/AuthContext'
 import { useSiteCms } from '../hooks/useSiteCms'
+import { canAccessAdminProfile, isFullAdminProfile } from '../../lib/adminPermissions'
 
 function ensureAchievementsLink(items = []) {
   const normalized = Array.isArray(items) ? items.filter(Boolean) : []
@@ -116,13 +117,13 @@ export function Navbar() {
           <div className="flex items-center gap-3">
             {!loading && user?.email && (
               <span className="hidden sm:inline text-xs text-teal-100 bg-teal-500/15 px-3 py-1 rounded-full border border-teal-400/20">
-                {profile?.role === 'admin' ? `${userAdminPrefix} ${user.email}` : `${userSignedInPrefix} ${user.email}`}
+                {isFullAdminProfile(profile) ? `${userAdminPrefix} ${user.email}` : `${userSignedInPrefix} ${user.email}`}
               </span>
             )}
             {!loading && user && (
               <div className="flex items-center gap-2">
                 <Link
-                  to={profile?.role === 'admin' ? '/admin' : '/dashboard'}
+                  to={canAccessAdminProfile(profile) ? '/admin' : '/dashboard'}
                   className="rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-100 hover:bg-white/5"
                 >
                   {dashboardLabel}

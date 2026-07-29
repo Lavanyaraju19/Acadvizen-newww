@@ -1,7 +1,7 @@
 import {
   ensureAdmin,
   getSupabaseClientOrResponse,
-  isAdminRequest,
+  getOptionalAdminContext,
   jsonError,
   jsonOk,
   parsePositiveInt,
@@ -66,7 +66,9 @@ export async function GET(request, { params }) {
 
     const { searchParams } = new URL(request.url)
     const limit = parsePositiveInt(searchParams.get('limit'), 250)
-    const isAdmin = isAdminRequest(request)
+    const adminAccess = await getOptionalAdminContext(request)
+    if (adminAccess.response) return adminAccess.response
+    const isAdmin = Boolean(adminAccess.context)
     const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: isAdmin })
     if (response) return response
 

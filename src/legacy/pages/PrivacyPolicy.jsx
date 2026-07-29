@@ -85,7 +85,7 @@ export function PrivacyPolicy() {
               Login cookies last for two days, and screen options cookies last for a year.
             </p>
             <p className="mt-4 text-slate-300 leading-relaxed">
-              If you select "Remember Me", your login will persist for two weeks.
+              If you select &quot;Remember Me&quot;, your login will persist for two weeks.
             </p>
             <p className="mt-4 text-slate-300 leading-relaxed">
               If you log out of your account, the login cookies will be removed.

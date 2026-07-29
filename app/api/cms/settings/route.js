@@ -11,7 +11,10 @@ export const dynamic = 'force-dynamic'
 
 const DEFAULT_SETTINGS_ID = 'default'
 
-export async function GET() {
+export async function GET(request) {
+  const unauthorized = await ensureAdmin(request)
+  if (unauthorized) return unauthorized
+
   const { supabase, response } = getSupabaseClientOrResponse()
   if (response) return response
 

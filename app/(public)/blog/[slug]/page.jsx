@@ -3,14 +3,14 @@ export const dynamic = 'force-dynamic'
 export const dynamicParams = true
 
 import BlogLayout from '../../../../components/BlogLayout'
-import { redirect } from 'next/navigation'
+import { permanentRedirect, redirect } from 'next/navigation'
 import { buildMetadata } from '../../../lib/seo'
 import { buildTocFromBlocks, estimateReadingMinutes } from '../../../../lib/blogBlockUtils'
 import { convertPlainTextToBlocks, parseBlogContent } from '../../../../lib/blogContent'
 import { getServerSupabaseClient } from '../../../../lib/supabaseServer'
 import { fetchCmsSiteData, fetchRedirectByPath } from '../../../../lib/cmsServer'
 import { canonicalizeKnownBlogSlug } from '../../../../lib/blogSlugResolver'
-import { isPublicBlogVisible } from '../../../../lib/blogVisibility'
+import { fetchPublishedPublicBlogBySlug, fetchRelatedPublishedBlogs } from '../../../../lib/publicBlogData'
 
 function pickFirst(...values) {
   for (const value of values) {
@@ -25,30 +25,18 @@ async function fetchRemoteBlog(slug) {
   const supabase = getServerSupabaseClient()
   if (!supabase || !slug) return null
 
-  const { data: blog, error } = await supabase
-    .from('blogs')
-    .select('*')
-    .eq('slug', slug)
-    .eq('status', 'published')
-    .maybeSingle()
-
-  if (error || !blog || !isPublicBlogVisible(blog)) return null
+  const blog = await fetchPublishedPublicBlogBySlug(slug)
+  if (!blog) return null
 
   const [{ data: blocks }, { data: related }] = await Promise.all([
     supabase.from('blog_content_blocks').select('*').eq('blog_id', blog.id).order('order_index', { ascending: true }),
-    supabase
-      .from('blogs')
-      .select('*')
-      .eq('status', 'published')
-      .neq('id', blog.id)
-      .order('published_at', { ascending: false })
-      .limit(3),
+    fetchRelatedPublishedBlogs(blog, 3),
   ])
 
   return {
     blog,
     blocks: Array.isArray(blocks) ? blocks : [],
-    related: Array.isArray(related) ? related.filter(isPublicBlogVisible) : [],
+    related: Array.isArray(related) ? related : [],
   }
 }
 
@@ -126,6 +114,9 @@ export default async function Page({ params }) {
   const requestedSlug = params?.slug || ''
   const redirectRule = await fetchRedirectByPath(`/blog/${requestedSlug}`)
   if (redirectRule?.to_path) {
+    if ((redirectRule.status_code || redirectRule.redirect_type) === 301) {
+      permanentRedirect(redirectRule.to_path)
+    }
     redirect(redirectRule.to_path)
   }
 

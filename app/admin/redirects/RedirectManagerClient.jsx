@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Surface } from '../../../src/components/ui/Surface'
 import { adminApiFetch } from '../../../lib/adminApiClient'
 import { 
@@ -31,11 +31,7 @@ export default function RedirectManagerClient() {
     is_active: true,
   })
 
-  useEffect(() => {
-    loadRedirects()
-  }, [search])
-
-  async function loadRedirects() {
+  const loadRedirects = useCallback(async () => {
     setLoading(true)
     try {
       const url = search 
@@ -48,7 +44,11 @@ export default function RedirectManagerClient() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [search])
+
+  useEffect(() => {
+    void loadRedirects()
+  }, [loadRedirects])
 
   async function saveRedirect(event) {
     event.preventDefault()
@@ -235,7 +235,7 @@ export default function RedirectManagerClient() {
         ) : redirects.length === 0 ? (
           <div className="p-8 text-center text-slate-400">
             <p className="font-medium">No redirects found</p>
-            <p className="text-sm mt-1 opacity-70">Click "Add Redirect" to create your first redirect</p>
+            <p className="text-sm mt-1 opacity-70">Click &quot;Add Redirect&quot; to create your first redirect</p>
           </div>
         ) : (
           <div className="divide-y divide-white/10">

@@ -38,12 +38,8 @@ export default function ReusableSectionsClient() {
   async function loadSections() {
     setLoading(true)
     try {
-      // Use API route instead of direct service role key access
-      const response = await fetch('/api/cms/entities/reusable_sections')
-      if (!response.ok) throw new Error('Failed to load sections')
-      
-      const { data } = await response.json()
-      setSections(data || [])
+      const payload = await adminApiFetch('/api/cms/entities/reusable_sections?limit=500', { cache: 'no-store' })
+      setSections(Array.isArray(payload?.data) ? payload.data : [])
     } catch (error) {
       setStatus(error?.message || 'Failed to load sections.')
     } finally {
@@ -95,13 +91,7 @@ export default function ReusableSectionsClient() {
     setSaving(true)
     setStatus('')
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
-      )
-      
-      await supabaseClient.from('reusable_sections').delete().eq('id', id)
+      await adminApiFetch(`/api/cms/entities/reusable_sections/${id}`, { method: 'DELETE' })
       await loadSections()
       setStatus('Section deleted.')
     } catch (error) {
@@ -115,23 +105,13 @@ export default function ReusableSectionsClient() {
     setSaving(true)
     setStatus('')
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
-      )
-      
-      const { error } = await supabaseClient
-        .from('reusable_sections')
-        .insert({
-          ...section,
-          id: undefined,
-          name: `${section.name} (Copy)`,
-          created_at: undefined,
-          updated_at: undefined,
-        })
-      if (error) throw error
-      
+      await adminApiFetch('/api/cms/entities/reusable_sections', {
+        method: 'POST',
+        body: {
+          action: 'duplicate',
+          id: section.id,
+        },
+      })
       await loadSections()
       setStatus('Section duplicated.')
     } catch (error) {

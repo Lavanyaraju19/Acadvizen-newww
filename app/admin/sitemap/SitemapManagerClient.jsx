@@ -32,6 +32,7 @@ export default function SitemapManagerClient() {
     priority_cities: 0.5,
     last_generated: null,
   })
+  const [settingsId, setSettingsId] = useState(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState('')
@@ -44,22 +45,14 @@ export default function SitemapManagerClient() {
   async function loadSettings() {
     setLoading(true)
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
-      )
-      
-      const { data } = await supabaseClient
-        .from('sitemap_settings')
-        .select('*')
-        .single()
-      
-      if (data) {
-        setSettings(data)
+      const payload = await adminApiFetch('/api/cms/entities/sitemap_settings?limit=1', { cache: 'no-store' })
+      const current = Array.isArray(payload?.data) ? payload.data[0] : null
+      if (current) {
+        setSettings(current)
+        setSettingsId(current.id || null)
       }
     } catch (error) {
-      console.error('Failed to load sitemap settings:', error)
+      setStatus(error?.message || 'Failed to load sitemap settings.')
     } finally {
       setLoading(false)
     }
@@ -69,20 +62,18 @@ export default function SitemapManagerClient() {
     setSaving(true)
     setStatus('')
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
-      )
-      
-      const { error } = await supabaseClient
-        .from('sitemap_settings')
-        .update(settings)
-        .eq('id', settings.id)
-        .single()
-      
-      if (error) throw error
-      
+      const payload = await adminApiFetch('/api/cms/entities/sitemap_settings', {
+        method: 'POST',
+        body: {
+          ...settings,
+          id: settingsId || settings.id || undefined,
+        },
+      })
+
+      if (payload?.data) {
+        setSettings(payload.data)
+        setSettingsId(payload.data.id || settingsId)
+      }
       setStatus('Sitemap settings saved successfully.')
     } catch (error) {
       setStatus(error?.message || 'Failed to save sitemap settings.')

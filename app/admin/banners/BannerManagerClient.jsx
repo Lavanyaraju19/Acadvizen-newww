@@ -639,6 +639,7 @@ export default function BannerManagerClient() {
                 }}
               >
                 {bannerForm.desktop_image && (
+                  /* eslint-disable-next-line @next/next/no-img-element -- Admin preview needs direct rendering of arbitrary CMS image URLs without Image host configuration. */
                   <img 
                     src={bannerForm.desktop_image} 
                     alt={bannerForm.alt_text || 'Banner'} 

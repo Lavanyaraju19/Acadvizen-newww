@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Surface } from '../../../src/components/ui/Surface'
 import { adminApiFetch } from '../../../lib/adminApiClient'
 import { 
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 
 export default function RobotsManagerClient() {
+  const [settingsId, setSettingsId] = useState(null)
   const [robotsTxt, setRobotsTxt] = useState('')
   const [preview, setPreview] = useState('')
   const [loading, setLoading] = useState(false)
@@ -21,34 +22,22 @@ export default function RobotsManagerClient() {
   const [status, setStatus] = useState('')
   const [showPreview, setShowPreview] = useState(false)
 
-  useEffect(() => {
-    loadRobotsTxt()
-  }, [])
-
-  async function loadRobotsTxt() {
+  const loadRobotsTxt = useCallback(async () => {
     setLoading(true)
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
-      )
-      
-      const { data } = await supabaseClient
-        .from('global_settings')
-        .select('robots_txt')
-        .single()
-      
-      if (data) {
-        setRobotsTxt(data.robots_txt || getDefaultRobotsTxt())
-        setPreview(data.robots_txt || getDefaultRobotsTxt())
-      }
+      const payload = await adminApiFetch('/api/cms/entities/global_settings?limit=1', { cache: 'no-store' })
+      const current = Array.isArray(payload?.data) ? payload.data[0] : null
+      const nextRobotsTxt = current?.robots_txt || getDefaultRobotsTxt()
+
+      setSettingsId(current?.id || null)
+      setRobotsTxt(nextRobotsTxt)
+      setPreview(nextRobotsTxt)
     } catch (error) {
-      console.error('Failed to load robots.txt:', error)
+      setStatus(error?.message || 'Failed to load robots.txt.')
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   function getDefaultRobotsTxt() {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://acadvizen.com'
@@ -58,23 +47,23 @@ Allow: /
 Sitemap: ${siteUrl}/api/cms/sitemap/generate`
   }
 
+  useEffect(() => {
+    void loadRobotsTxt()
+  }, [loadRobotsTxt])
+
   async function saveRobotsTxt() {
     setSaving(true)
     setStatus('')
     try {
-      const { supabase } = await import('@supabase/supabase-js')
-      const supabaseClient = supabase.createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
-      )
-      
-      const { error } = await supabaseClient
-        .from('global_settings')
-        .update({ robots_txt: robotsTxt })
-        .eq('id', (await supabaseClient.from('global_settings').select('id').single()).data?.id)
-      
-      if (error) throw error
-      
+      const payload = await adminApiFetch('/api/cms/entities/global_settings', {
+        method: 'POST',
+        body: {
+          id: settingsId || undefined,
+          robots_txt: robotsTxt,
+        },
+      })
+
+      setSettingsId(payload?.data?.id || settingsId)
       setStatus('Robots.txt saved successfully.')
       setPreview(robotsTxt)
     } catch (error) {

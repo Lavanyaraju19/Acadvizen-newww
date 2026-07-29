@@ -1,24 +1,59 @@
 'use client'
 
 import Image from 'next/image'
-import { ComposableMap, Geographies, Geography } from 'react-simple-maps'
 
-const MAP_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
-
-const HIGHLIGHT_COUNTRIES = new Set([
-  'United States of America',
-  'Canada',
-  'Brazil',
-  'United Kingdom',
-  'France',
-  'Germany',
-  'India',
-  'United Arab Emirates',
-  'Singapore',
-  'Japan',
-  'Australia',
-  'South Africa',
-])
+const worldShapes = [
+  {
+    id: 'north-america',
+    fill: '#4285f4',
+    d: 'M110 110 C155 70, 245 72, 286 110 C317 138, 320 178, 286 208 C258 232, 209 227, 188 246 C171 260, 168 286, 142 298 C117 309, 82 301, 66 277 C50 252, 58 216, 81 192 C100 171, 108 145, 110 110 Z',
+  },
+  {
+    id: 'south-america',
+    fill: '#4285f4',
+    d: 'M235 274 C268 268, 300 283, 315 316 C330 350, 320 388, 294 424 C279 445, 274 468, 258 486 C241 505, 214 508, 200 490 C184 468, 194 438, 205 414 C217 387, 220 366, 214 337 C209 315, 213 290, 235 274 Z',
+  },
+  {
+    id: 'greenland',
+    fill: '#d1dae6',
+    d: 'M300 60 C328 45, 366 49, 388 73 C401 88, 397 109, 375 118 C350 128, 311 121, 296 100 C285 85, 286 68, 300 60 Z',
+  },
+  {
+    id: 'europe',
+    fill: '#4285f4',
+    d: 'M465 121 C497 101, 541 100, 572 117 C594 130, 603 149, 594 168 C583 191, 548 196, 523 191 C499 187, 476 175, 459 160 C446 147, 449 131, 465 121 Z',
+  },
+  {
+    id: 'africa',
+    fill: '#4285f4',
+    d: 'M503 196 C542 185, 586 202, 607 236 C629 272, 626 319, 604 361 C587 394, 554 423, 522 420 C489 416, 463 379, 454 341 C446 305, 451 271, 463 238 C472 215, 483 201, 503 196 Z',
+  },
+  {
+    id: 'middle-east',
+    fill: '#4285f4',
+    d: 'M590 189 C612 180, 638 182, 655 197 C668 208, 672 223, 663 236 C651 251, 627 255, 607 248 C587 241, 575 227, 576 210 C577 199, 582 192, 590 189 Z',
+  },
+  {
+    id: 'asia',
+    fill: '#4285f4',
+    d: 'M603 116 C664 83, 762 83, 825 113 C874 137, 902 175, 886 213 C873 244, 825 257, 782 251 C749 247, 724 256, 706 276 C686 296, 651 304, 627 291 C606 279, 600 253, 590 232 C579 208, 558 188, 554 162 C551 141, 568 124, 603 116 Z',
+  },
+  {
+    id: 'southeast-asia',
+    fill: '#4285f4',
+    d: 'M739 282 C759 273, 787 276, 801 293 C813 307, 812 329, 795 341 C777 353, 749 352, 733 339 C720 327, 720 296, 739 282 Z',
+  },
+  {
+    id: 'australia',
+    fill: '#4285f4',
+    d: 'M786 380 C817 362, 862 364, 891 383 C910 396, 916 417, 904 435 C889 458, 854 467, 821 461 C787 455, 761 433, 760 410 C760 397, 770 389, 786 380 Z',
+  },
+  {
+    id: 'japan',
+    fill: '#4285f4',
+    d: 'M828 189 C838 182, 851 184, 858 194 C863 203, 859 215, 849 221 C839 227, 825 224, 819 214 C814 204, 818 195, 828 189 Z',
+  },
+]
 
 const learnerMarkers = [
   {
@@ -51,9 +86,6 @@ const learnerMarkers = [
 ]
 
 export default function WorldCareerMap() {
-  const baseFill = '#d1dae6'
-  const highlightFill = '#4285f4'
-
   return (
     <div className="relative w-full overflow-hidden rounded-[30px] border border-cyan-300/20 bg-[radial-gradient(circle_at_14%_14%,rgba(14,116,144,0.25),transparent_26%),radial-gradient(circle_at_86%_78%,rgba(67,56,202,0.24),transparent_34%),linear-gradient(120deg,rgba(2,10,27,0.97),rgba(5,19,46,0.96)_44%,rgba(15,23,56,0.94))] p-4 md:p-6">
       <div className="pointer-events-none absolute inset-0">
@@ -64,30 +96,33 @@ export default function WorldCareerMap() {
       <div className="relative h-[280px] sm:h-[340px] md:h-[430px]">
         <div className="absolute inset-0 rounded-2xl border border-white/10 bg-slate-950/25" />
         <div className="absolute inset-0">
-          <ComposableMap projection="geoMercator" projectionConfig={{ scale: 120 }} className="h-full w-full">
-            <Geographies geography={MAP_URL}>
-              {({ geographies }) =>
-                geographies.map((geo) => {
-                  const name = geo.properties?.NAME || geo.properties?.name
-                  const isHighlighted = HIGHLIGHT_COUNTRIES.has(name)
-                  return (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      fill={isHighlighted ? highlightFill : baseFill}
-                      stroke="#203252"
-                      strokeWidth={0.35}
-                      style={{
-                        default: { outline: 'none' },
-                        hover: { outline: 'none' },
-                        pressed: { outline: 'none' },
-                      }}
-                    />
-                  )
-                })
-              }
-            </Geographies>
-          </ComposableMap>
+          <svg
+            viewBox="0 0 1000 520"
+            className="h-full w-full"
+            role="img"
+            aria-label="Illustrated world map showing Acadvizen learner activity across global regions"
+            preserveAspectRatio="xMidYMid meet"
+          >
+            <defs>
+              <radialGradient id="oceanGlow" cx="50%" cy="50%" r="60%">
+                <stop offset="0%" stopColor="rgba(56,189,248,0.12)" />
+                <stop offset="100%" stopColor="rgba(15,23,42,0)" />
+              </radialGradient>
+            </defs>
+            <rect x="0" y="0" width="1000" height="520" fill="url(#oceanGlow)" />
+            {worldShapes.map((shape) => (
+              <path
+                key={shape.id}
+                d={shape.d}
+                fill={shape.fill}
+                stroke="#203252"
+                strokeWidth="8"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                opacity="0.96"
+              />
+            ))}
+          </svg>
         </div>
 
         <div className="absolute inset-0 hidden md:block">

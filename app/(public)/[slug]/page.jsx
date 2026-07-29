@@ -2,7 +2,7 @@ export const revalidate = 0
 export const dynamic = 'force-dynamic'
 
 import { notFound } from 'next/navigation'
-import { redirect } from 'next/navigation'
+import { permanentRedirect, redirect } from 'next/navigation'
 import DynamicPageRenderer from '../../../components/cms/DynamicPageRenderer'
 import { fetchCmsPageBySlug, fetchLocationPageBySlug, fetchRedirectByPath, fetchSeoBySlug } from '../../../lib/cmsServer'
 import { buildMetadata } from '../../lib/seo'
@@ -46,6 +46,9 @@ export default async function Page({ params }) {
   const pathname = slug ? `/${slug}` : '/'
   const redirectRule = await fetchRedirectByPath(pathname)
   if (redirectRule?.to_path) {
+    if ((redirectRule.status_code || redirectRule.redirect_type) === 301) {
+      permanentRedirect(redirectRule.to_path)
+    }
     redirect(redirectRule.to_path)
   }
 

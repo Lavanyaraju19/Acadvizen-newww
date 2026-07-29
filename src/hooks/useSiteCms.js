@@ -32,11 +32,25 @@ async function fetchFooterSettings() {
   }
 }
 
+async function fetchLocations() {
+  try {
+    const res = await fetch('/api/locations', { cache: 'no-store' })
+    const payload = await res.json()
+    if (payload?.success && Array.isArray(payload.data)) {
+      return payload.data
+    }
+    return []
+  } catch {
+    return []
+  }
+}
+
 export function useSiteCms() {
   const [settings, setSettings] = useState(null)
   const [menus, setMenus] = useState(EMPTY_MENUS)
   const [headerSettings, setHeaderSettings] = useState(null)
   const [footerSettings, setFooterSettings] = useState(null)
+  const [locations, setLocations] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -44,10 +58,11 @@ export function useSiteCms() {
 
     async function load() {
       try {
-        const [siteRes, headerRes, footerRes] = await Promise.all([
+        const [siteRes, headerRes, footerRes, locationsRes] = await Promise.all([
           fetch('/api/cms/site', { cache: 'no-store' }),
           fetchHeaderSettings(),
           fetchFooterSettings(),
+          fetchLocations(),
         ])
 
         const sitePayload = await siteRes.json()
@@ -60,6 +75,7 @@ export function useSiteCms() {
 
         setHeaderSettings(headerRes)
         setFooterSettings(footerRes)
+        setLocations(Array.isArray(locationsRes) ? locationsRes : [])
       } catch {
         // Keep fallback defaults on network failure.
       } finally {
@@ -73,5 +89,5 @@ export function useSiteCms() {
     }
   }, [])
 
-  return { settings, menus, headerSettings, footerSettings, loading }
+  return { settings, menus, headerSettings, footerSettings, locations, loading }
 }

@@ -128,7 +128,7 @@ export default function Page() {
         <div>
           <h2 className="text-2xl font-semibold text-slate-50">Admin Dashboard</h2>
           <p className="mt-1 text-sm text-slate-300">
-            Welcome back! Here's what's happening with your website.
+            Welcome back! Here&apos;s what&apos;s happening with your website.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -355,4 +355,3 @@ export default function Page() {
     </Surface>
   )
 }
-

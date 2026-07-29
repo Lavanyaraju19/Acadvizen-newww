@@ -1,7 +1,6 @@
 import {
   ensureAdmin,
   getSupabaseClientOrResponse,
-  isAdminRequest,
   jsonError,
   jsonOk,
   parsePositiveInt,
@@ -11,7 +10,8 @@ import {
 export const dynamic = 'force-dynamic'
 
 export async function GET(request) {
-  if (!isAdminRequest(request)) return jsonError('Unauthorized admin request.', 401, [])
+  const unauthorized = await ensureAdmin(request, { resource: 'media', action: 'read' })
+  if (unauthorized) return unauthorized
 
   const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response

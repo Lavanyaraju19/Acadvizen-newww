@@ -1074,6 +1074,7 @@ export default function CityBuilderClient() {
                 {/* Hero Preview */}
                 {cityForm.hero_image_url && (
                   <div className="relative h-64 rounded-lg overflow-hidden mb-6">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- City preview accepts arbitrary uploaded image URLs and should render them without remote image config coupling. */}
                     <img 
                       src={cityForm.hero_image_url} 
                       alt={cityForm.city_name}

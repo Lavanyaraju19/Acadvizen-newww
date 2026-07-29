@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { Helmet } from 'react-helmet-async'
@@ -248,6 +248,16 @@ export default function HomePage({ cmsData = {} }) {
   const faqItems = cmsData.faq && Array.isArray(cmsData.faq) && cmsData.faq.length > 0
     ? cmsData.faq
     : defaultFaqItems
+  const validFaqItems = faqItems
+    .filter((item) => item && typeof item === 'object')
+    .map((item, index) => ({
+      question: String(item.question || '').trim(),
+      answer: String(item.answer || '').trim(),
+      category: item.category ? String(item.category).trim() : '',
+      orderIndex: Number.isFinite(Number(item.order_index)) ? Number(item.order_index) : index,
+    }))
+    .filter((item) => item.question && item.answer)
+    .sort((left, right) => left.orderIndex - right.orderIndex)
   const courseCaseStudies = cmsData.projects && Array.isArray(cmsData.projects) && cmsData.projects.length > 0
     ? cmsData.projects
     : defaultCourseCaseStudies
@@ -258,24 +268,14 @@ export default function HomePage({ cmsData = {} }) {
   const [saving, setSaving] = useState(false)
   const [scrollY, setScrollY] = useState(0)
   const [homeSections, setHomeSections] = useState({})
-  const [blogPosts, setBlogPosts] = useState(
-    localBlogs
-      .slice()
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 6)
-      .map((post) => ({
-        ...post,
-        featured_image: post.image,
-        published_at: post.created_at,
-      }))
-  )
+  const [blogPosts, setBlogPosts] = useState([])
   const [activeProgramPanel, setActiveProgramPanel] = useState('overview')
   const [expandedWhoCard, setExpandedWhoCard] = useState(null)
   const [heroVideoAvailable, setHeroVideoAvailable] = useState(true)
   const [heroVideoPlaying, setHeroVideoPlaying] = useState(false)
   const heroVideoRef = useRef(null)
   const caseStudiesPreviewRef = useRef(null)
-  const defaultPartnersFallback = [
+  const defaultPartnersFallback = useMemo(() => ([
     { name: 'Google', logo_url: 'https://logo.clearbit.com/google.com', row_group: 'row_a' },
     { name: 'Amazon', logo_url: 'https://logo.clearbit.com/amazon.com', row_group: 'row_a' },
     { name: 'Microsoft', logo_url: 'https://logo.clearbit.com/microsoft.com', row_group: 'row_a' },
@@ -286,7 +286,7 @@ export default function HomePage({ cmsData = {} }) {
     { name: 'Dentsu', logo_url: 'https://logo.clearbit.com/dentsu.com', row_group: 'row_b' },
     { name: 'Flipkart', logo_url: 'https://logo.clearbit.com/flipkart.com', row_group: 'row_b' },
     { name: 'Yahoo', logo_url: 'https://logo.clearbit.com/yahoo.com', row_group: 'row_b' },
-  ]
+  ]), [])
   const partnersFallback = cmsData.partners && Array.isArray(cmsData.partners) && cmsData.partners.length > 0
     ? cmsData.partners
     : defaultPartnersFallback
@@ -304,6 +304,65 @@ export default function HomePage({ cmsData = {} }) {
     const amount = Math.max(caseStudiesPreviewRef.current.clientWidth * 0.7, 280)
     caseStudiesPreviewRef.current.scrollBy({ left: direction * amount, behavior: 'smooth' })
   }
+
+  const loadBlogPosts = useCallback(async () => {
+    let { data, error } = await fetchPublicData('blog-posts', { limit: 6 })
+
+    if (error || !Array.isArray(data)) {
+      setBlogPosts([])
+      return
+    }
+
+    const pickFirstNonEmpty = (...values) => {
+      for (const value of values) {
+        if (value === null || value === undefined) continue
+        if (typeof value === 'string' && value.trim() === '') continue
+        return value
+      }
+      return null
+    }
+
+    const hydrated = data.map((post, idx) => {
+      const canonicalSlug = canonicalizeKnownBlogSlug(post.slug)
+      const local = localBlogs.find((item) => item.slug === canonicalSlug || item.id === post.id)
+      return {
+        ...post,
+        slug: canonicalSlug || post.slug,
+        ...(local || {}),
+        title: pickFirstNonEmpty(local?.title, post.title),
+        excerpt: pickFirstNonEmpty(local?.excerpt, post.excerpt),
+        content: pickFirstNonEmpty(local?.content, post.content),
+        featured_image: pickFirstNonEmpty(
+          local?.image,
+          local?.featured_image,
+          post.featured_image,
+          post.image,
+          idx === 0 ? '/blog-images/image1.jpg' : `/blog-images/image${idx + 1}.jpg`
+        ),
+        published_at: pickFirstNonEmpty(post.published_at, post.created_at, local?.created_at),
+      }
+    })
+    setBlogPosts(hydrated.slice(0, 6))
+  }, [])
+
+  const loadPartners = useCallback(async () => {
+    const { data, error } = await fetchPublicData('hiring-partners')
+    if (error || !data || data.length === 0) {
+      setPartners(defaultPartnersFallback)
+      return
+    }
+    setPartners(data)
+  }, [defaultPartnersFallback])
+
+  const loadHomeSections = useCallback(async () => {
+    const { data } = await fetchPublicData('home-sections')
+    if (!data) return
+    const next = {}
+    data.forEach((section) => {
+      if (section.section_key) next[section.section_key] = section
+    })
+    setHomeSections(next)
+  }, [])
 
   useEffect(() => {
     const runDeferredLoads = () => {
@@ -342,87 +401,7 @@ export default function HomePage({ cmsData = {} }) {
         clearTimeout(deferredHandle)
       }
     }
-  }, [])
-
-  async function loadBlogPosts() {
-    let { data, error } = await fetchPublicData('blog-posts', { limit: 6 })
-
-    if (error || !data || data.length === 0) {
-      const fallbackBlogs = localBlogs
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 6)
-        .map((post) => ({
-          ...post,
-          featured_image: post.image,
-          published_at: post.created_at,
-        }))
-      setBlogPosts(fallbackBlogs)
-      return
-    }
-
-    const pickFirstNonEmpty = (...values) => {
-      for (const value of values) {
-        if (value === null || value === undefined) continue
-        if (typeof value === 'string' && value.trim() === '') continue
-        return value
-      }
-      return null
-    }
-
-    const hydrated = data.map((post, idx) => {
-      const canonicalSlug = canonicalizeKnownBlogSlug(post.slug)
-      const local = localBlogs.find((item) => item.slug === canonicalSlug || item.id === post.id)
-      return {
-        ...post,
-        slug: canonicalSlug || post.slug,
-        ...(local || {}),
-        title: pickFirstNonEmpty(local?.title, post.title),
-        excerpt: pickFirstNonEmpty(local?.excerpt, post.excerpt),
-        content: pickFirstNonEmpty(local?.content, post.content),
-        featured_image: pickFirstNonEmpty(
-          local?.image,
-          local?.featured_image,
-          post.featured_image,
-          post.image,
-          idx === 0 ? '/blog-images/image1.jpg' : `/blog-images/image${idx + 1}.jpg`
-        ),
-        published_at: pickFirstNonEmpty(post.published_at, post.created_at, local?.created_at),
-      }
-    })
-    const localFallback = localBlogs
-      .slice()
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .map((post) => ({
-        ...post,
-        featured_image: post.image,
-        published_at: post.created_at,
-      }))
-    const merged = [...hydrated]
-    for (const post of localFallback) {
-      if (!merged.some((item) => (item.slug || item.id) === (post.slug || post.id))) {
-        merged.push(post)
-      }
-    }
-    setBlogPosts(merged.slice(0, 6))
-  }
-
-  async function loadPartners() {
-    const { data, error } = await fetchPublicData('hiring-partners')
-    if (error || !data || data.length === 0) {
-      setPartners(defaultPartnersFallback)
-      return
-    }
-    setPartners(data)
-  }
-  async function loadHomeSections() {
-    const { data } = await fetchPublicData('home-sections')
-    if (!data) return
-    const next = {}
-    data.forEach((section) => {
-      if (section.section_key) next[section.section_key] = section
-    })
-    setHomeSections(next)
-  }
+  }, [loadBlogPosts, loadHomeSections, loadPartners])
 
   const parseJson = (value, fallback) => {
     if (!value) return fallback
@@ -1619,7 +1598,7 @@ export default function HomePage({ cmsData = {} }) {
               title="FAQ"
               intro="Homepage FAQs cover program depth, AI-first learning, placements, working-professional flexibility, and certification outcomes."
               tabs={faqTabs}
-              items={homepageFaqExact}
+              items={validFaqItems.length ? validFaqItems : homepageFaqExact}
               tabInactiveClassName="border-white/15 bg-transparent text-slate-100"
               cardClassName="rounded-[1.7rem] border border-[#1b3551] bg-[#091a2d] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.18)]"
               answerClassName="mt-4 text-base leading-8 text-slate-300"

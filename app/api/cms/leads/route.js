@@ -1,7 +1,6 @@
 import {
   ensureAdmin,
   getSupabaseClientOrResponse,
-  isAdminRequest,
   jsonError,
   jsonOk,
   parsePositiveInt,
@@ -74,7 +73,8 @@ async function insertLeadWithSchemaFallback(supabase, record) {
 }
 
 export async function GET(request) {
-  if (!isAdminRequest(request)) return jsonError('Unauthorized admin request.', 401, [])
+  const unauthorized = await ensureAdmin(request, { resource: 'leads', action: 'read' })
+  if (unauthorized) return unauthorized
 
   const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response

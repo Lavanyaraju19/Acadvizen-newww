@@ -9,7 +9,6 @@ import AdaptiveImage from '../../components/media/AdaptiveImage'
 import { canonicalizeKnownBlogSlug } from '../../lib/blogSlugResolver'
 
 export function BlogSection({ section, posts }) {
-  if (!section) return null
   const stripHtml = (value = '') => String(value).replace(/<[^>]*>/g, ' ')
   const sliderRef = useRef(null)
   const formatPublishedDate = (value) => {
@@ -22,6 +21,8 @@ export function BlogSection({ section, posts }) {
     })
   }
   const visiblePosts = useMemo(() => posts || [], [posts])
+
+  if (!section) return null
 
   const handleScroll = (direction) => {
     if (!sliderRef.current) return

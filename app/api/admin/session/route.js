@@ -1,11 +1,21 @@
 import { NextResponse } from 'next/server'
 import { resolveAdminContext } from '../../cms/_utils'
 
-function sessionCookieOptions() {
+function shouldUseSecureCookies(request) {
+  const forwardedProto = String(request?.headers?.get?.('x-forwarded-proto') || '').toLowerCase()
+  if (forwardedProto) {
+    return forwardedProto === 'https'
+  }
+
+  const protocol = String(request?.nextUrl?.protocol || '').toLowerCase()
+  return protocol === 'https:'
+}
+
+function sessionCookieOptions(request) {
   return {
     path: '/',
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: shouldUseSecureCookies(request),
     httpOnly: true,
     maxAge: 60 * 60 * 12,
   }
@@ -56,7 +66,7 @@ export async function POST(request) {
       },
       error: null,
     })
-    res.cookies.set('acadvizen_admin_session', '1', sessionCookieOptions())
+    res.cookies.set('acadvizen_admin_session', result.authToken, sessionCookieOptions(request))
     return res
   } catch (error) {
     return NextResponse.json(
@@ -66,11 +76,11 @@ export async function POST(request) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request) {
   try {
     const res = NextResponse.json({ success: true, data: { session: 'cleared' }, error: null })
     res.cookies.set('acadvizen_admin_session', '', {
-      path: '/',
+      ...sessionCookieOptions(request),
       maxAge: 0,
     })
     return res

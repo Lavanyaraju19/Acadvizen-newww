@@ -1,18 +1,19 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getServerSupabaseClient, hasValidSupabaseServiceRoleKey } from '../../../../lib/supabaseServer'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request) {
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    if (!supabaseUrl || !supabaseKey) {
+    const supabase = getServerSupabaseClient({
+      preferServiceRole: hasValidSupabaseServiceRoleKey(),
+    })
+
+    if (!supabase) {
       return new NextResponse(getDefaultRobotsTxt(), {
         headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'public, max-age=3600' },
       })
     }
-    const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Get robots.txt from global_settings
     const { data: settings } = await supabase
