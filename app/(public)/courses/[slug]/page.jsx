@@ -1,6 +1,7 @@
 export const revalidate = 0
 export const dynamic = 'force-dynamic'
 
+import Link from 'next/link'
 import DynamicPageRenderer from '../../../../components/cms/DynamicPageRenderer'
 import { buildMetadata } from '../../../lib/seo'
 import { fetchCourseBySlug } from '../../../lib/contentMeta'
@@ -58,9 +59,9 @@ export default async function Page({ params }) {
   return (
     <>
       <div className="sr-only">
-        <a href="/blog">Read latest blogs</a>
-        <a href="/contact">Contact admissions</a>
-        <a href="/digital-marketing-course-in-bangalore">Digital marketing course in Bangalore</a>
+        <Link href="/blog">Read latest blogs</Link>
+        <Link href="/contact">Contact admissions</Link>
+        <Link href="/digital-marketing-course-in-bangalore">Digital marketing course in Bangalore</Link>
       </div>
       <CourseDetailLegacyClient />
     </>
