@@ -38,13 +38,19 @@ export function requireEnv(key: string): string {
  */
 export function validateAllEnv(): string[] {
   const errors: string[] = []
+  const publicSupabaseKey =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    ''
 
   // Required: Supabase
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     errors.push('NEXT_PUBLIC_SUPABASE_URL is required')
   }
-  if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    errors.push('NEXT_PUBLIC_SUPABASE_ANON_KEY is required')
+  if (!publicSupabaseKey) {
+    errors.push('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY is required')
   }
 
   // Semi-required: Service role key (needed for admin operations)
@@ -99,6 +105,8 @@ export function assertValidEnv(): void {
 export const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || ''
 export const SUPABASE_ANON_KEY =
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.SUPABASE_PUBLISHABLE_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
 
 // ── Server-only values ──────────────────────────────────────────────────
