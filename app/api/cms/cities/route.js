@@ -1,11 +1,18 @@
 import {
   ensureAdmin,
   getSupabaseClientOrResponse,
+  getOptionalAdminContext,
   jsonError,
   jsonOk,
   readJsonBody,
-  revalidateAllCmsPages,
+  revalidateCmsMutation,
 } from '../_utils'
+import {
+  assertSlugAvailable,
+  buildCmsMutationMeta,
+  getCanonicalPublicUrl,
+  normalizeCmsSlug,
+} from '../../../../lib/cmsPublishing'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,8 +25,14 @@ function isTableNotFoundError(error) {
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url)
-    const includeDrafts = searchParams.get('include_drafts') === '1'
-    const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: includeDrafts })
+    const wantsDrafts = searchParams.get('include_drafts') === '1'
+    const adminAccess = wantsDrafts
+      ? await getOptionalAdminContext(request, { resource: 'pages', action: 'read' })
+      : { context: null, response: null }
+    if (adminAccess.response) return adminAccess.response
+    const includeDrafts = Boolean(adminAccess.context)
+
+    const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: includeDrafts })
     if (response) return response
 
     const limit = parseInt(searchParams.get('limit') || '100')
@@ -44,7 +57,7 @@ export async function POST(request) {
     const unauthorized = await ensureAdmin(request)
     if (unauthorized) return unauthorized
 
-    const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+    const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
     if (response) return response
 
     const body = await readJsonBody(request)
@@ -52,7 +65,19 @@ export async function POST(request) {
       return jsonError('City name is required.', 400)
     }
 
-    let slug = body.slug || body.city_name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+    const slug = normalizeCmsSlug(body.slug || body.city_name)
+    if (!slug) return jsonError('Slug is required.', 400)
+
+    try {
+      await assertSlugAvailable(supabase, {
+        table: 'city_pages',
+        slug,
+        currentId: body.id || '',
+        contentType: 'city page',
+      })
+    } catch (error) {
+      return jsonError(error.message, error.status || 500)
+    }
 
     const payload = {
       id: body.id || undefined,
@@ -96,8 +121,19 @@ export async function POST(request) {
       if (isTableNotFoundError(error)) return jsonError('Database table not yet created. Run migrations first.', 503)
       return jsonError(`Failed to save city page: ${error.message}`, 500)
     }
-    revalidateAllCmsPages()
-    return jsonOk(data)
+    const revalidation = revalidateCmsMutation('city_page', {
+      slug: data?.slug,
+      extraPaths: [`/digital-marketing-course-in-${data?.slug}`, '/sitemap.xml'],
+    })
+    const responseData = {
+      ...data,
+      canonical_public_url: getCanonicalPublicUrl('city_page', data?.slug),
+    }
+    const publication = buildCmsMutationMeta('city_page', responseData, revalidation)
+    if (!revalidation.ok) {
+      return jsonError('City page saved, but cache revalidation failed. Please retry publishing.', 500, responseData)
+    }
+    return jsonOk(responseData, { publication })
   } catch (err) {
     return jsonError(`Internal server error: ${err.message}`, 500)
   }

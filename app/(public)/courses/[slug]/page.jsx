@@ -2,21 +2,18 @@ export const revalidate = 0
 export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
+import { permanentRedirect, redirect } from 'next/navigation'
 import DynamicPageRenderer from '../../../../components/cms/DynamicPageRenderer'
 import { buildMetadata } from '../../../lib/seo'
 import { fetchCourseBySlug } from '../../../lib/contentMeta'
-import { fetchCmsPageByAnySlug, fetchLocationPageBySlug } from '../../../../lib/cmsServer'
+import { fetchCmsPageByAnySlug, fetchLocationPageBySlug, fetchRedirectByPath } from '../../../../lib/cmsServer'
 import { isPublicCmsEnabled } from '../../../lib/publicCms'
 import CourseDetailLegacyClient from '../../../legacy-fallback/CourseDetailLegacyClient'
 
 export const dynamicParams = true
 
-export async function generateStaticParams() {
-  return [{ slug: 'basic' }, { slug: 'advanced' }, { slug: 'master' }]
-}
-
 export async function generateMetadata({ params }) {
-  const slug = params?.slug || ''
+  const { slug } = await params
   if (isPublicCmsEnabled()) {
     const cmsPage = await fetchCmsPageByAnySlug([`course-${slug}`, `courses-${slug}`, slug])
     if (cmsPage) {
@@ -41,18 +38,36 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function Page({ params }) {
-  const slug = params?.slug || ''
+  const { slug } = await params
+  const redirectRule = await fetchRedirectByPath(`/courses/${slug}`)
+  if (redirectRule?.to_path) {
+    if ((redirectRule.status_code || redirectRule.redirect_type) === 301) {
+      permanentRedirect(redirectRule.to_path)
+    }
+    redirect(redirectRule.to_path)
+  }
+
   if (isPublicCmsEnabled()) {
     const cmsPage = await fetchCmsPageByAnySlug([`course-${slug}`, `courses-${slug}`, slug])
     // Only use CMS renderer if the page has actual sections with content.
     if (cmsPage?.sections?.length) {
-      return <DynamicPageRenderer page={cmsPage} />
+      return (
+        <DynamicPageRenderer
+          page={cmsPage}
+          breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Courses', href: '/courses' }, { label: cmsPage.title || 'Course' }]}
+        />
+      )
     }
 
     const locationLike = await fetchLocationPageBySlug(`course-${slug}`)
     // Only use CMS renderer if the location page has actual sections with content.
     if (locationLike?.sections?.length) {
-      return <DynamicPageRenderer page={locationLike} />
+      return (
+        <DynamicPageRenderer
+          page={locationLike}
+          breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Courses', href: '/courses' }, { label: locationLike.title || 'Course' }]}
+        />
+      )
     }
   }
 

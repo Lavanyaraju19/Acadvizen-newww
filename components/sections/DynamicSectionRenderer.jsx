@@ -6,6 +6,7 @@ import HeroSection from './HeroSection'
 import ImageSection from './ImageSection'
 import DataFeedSection from './DataFeedSection'
 import LeadFormSection from './LeadFormSection'
+import FormEmbedSection from './FormEmbedSection'
 import RichTextSection from './RichTextSection'
 import StatsSection from './StatsSection'
 import TestimonialSection from './TestimonialSection'
@@ -39,6 +40,7 @@ const SECTION_COMPONENTS = {
   community_events_feed: DataFeedSection,
   cta_block_ref: DataFeedSection,
   lead_form: LeadFormSection,
+  form_embed: FormEmbedSection,
 }
 
 function normalizeType(type) {

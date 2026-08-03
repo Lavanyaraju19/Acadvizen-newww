@@ -17,6 +17,7 @@ export default function Page() {
         entity="internships"
         title="Internship Listings"
         subtitle="Create, update, and delete internship records."
+        publicUrlPattern="/internships/{slug}"
         fields={[
           { key: 'company_name', label: 'Company Name' },
           { key: 'role', label: 'Role' },

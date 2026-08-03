@@ -11,13 +11,14 @@ export const dynamic = 'force-dynamic'
 
 // GET all versions for a blog
 export async function GET(request, { params }) {
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
+  const { id } = await params
   const { data, error } = await supabase
     .from('blog_versions')
     .select('*')
-    .eq('blog_id', params.id)
+    .eq('blog_id', id)
     .order('created_at', { ascending: false })
 
   if (error) return jsonError(`Failed to fetch blog versions: ${error.message}`, 500)
@@ -29,16 +30,17 @@ export async function POST(request, { params }) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await readJsonBody(request)
+  const { id } = await params
 
   // Get current blog state
   const { data: currentBlog } = await supabase
     .from('blogs')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (!currentBlog) {
@@ -49,7 +51,7 @@ export async function POST(request, { params }) {
   const { data, error } = await supabase
     .from('blog_versions')
     .insert({
-      blog_id: params.id,
+      blog_id: id,
       title: currentBlog.title,
       slug: currentBlog.slug,
       content: currentBlog.content,

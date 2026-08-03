@@ -1,5 +1,8 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import { adminApiFetch } from '../../../lib/adminApiClient'
+
 function fieldKey(label = '') {
   return String(label)
     .toLowerCase()
@@ -81,6 +84,23 @@ function SectionItemShell({ title, subtitle, onMoveUp, onMoveDown, onDelete, chi
 }
 
 export default function PrecisionSectionFields({ sectionForm, setSectionForm }) {
+  const [publishedForms, setPublishedForms] = useState([])
+
+  useEffect(() => {
+    if (sectionForm.type !== 'form_embed') return undefined
+    let cancelled = false
+    adminApiFetch('/api/cms/forms?include_drafts=1&limit=200', { cache: 'no-store' })
+      .then((json) => {
+        if (!cancelled) setPublishedForms(Array.isArray(json?.data) ? json.data : [])
+      })
+      .catch(() => {
+        if (!cancelled) setPublishedForms([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [sectionForm.type])
+
   const updateField = (field, value) => {
     setSectionForm((prev) => ({ ...prev, [field]: value }))
   }
@@ -522,6 +542,39 @@ export default function PrecisionSectionFields({ sectionForm, setSectionForm }) 
     </div>
   )
 
+  const renderFormEmbedEditors = () => {
+    const forms = publishedForms
+    return (
+      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+        <div>
+          <div className="text-sm font-semibold text-slate-100">Embedded form</div>
+          <div className="text-xs text-slate-400">
+            Pick a form built in Forms &rarr; Form Builder. Only <span className="text-teal-300">Published</span> forms
+            appear live on the public page.
+          </div>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <label className="text-xs text-slate-400">
+            Form
+            <select
+              value={sectionForm.formId || ''}
+              onChange={(event) => updateField('formId', event.target.value)}
+              className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
+            >
+              <option value="">Select a form...</option>
+              {forms.map((form) => (
+                <option key={form.id} value={form.id} className="bg-[#07101b]">
+                  {form.name} {form.status === 'published' ? '' : '(draft - not visible yet)'}
+                </option>
+              ))}
+            </select>
+          </label>
+          <InputField label="Optional Heading Override" value={sectionForm.heading} onChange={(value) => updateField('heading', value)} />
+        </div>
+      </div>
+    )
+  }
+
   switch (sectionForm.type) {
     case 'hero':
       return renderHeroEditors()
@@ -539,6 +592,8 @@ export default function PrecisionSectionFields({ sectionForm, setSectionForm }) 
       return renderGalleryEditors()
     case 'lead_form':
       return renderLeadFormEditors()
+    case 'form_embed':
+      return renderFormEmbedEditors()
     default:
       return null
   }

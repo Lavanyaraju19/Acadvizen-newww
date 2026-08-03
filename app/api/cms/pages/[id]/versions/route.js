@@ -10,7 +10,7 @@ import {
 export const dynamic = 'force-dynamic'
 
 export async function GET(request, { params }) {
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const { id } = params
@@ -30,7 +30,7 @@ export async function POST(request, { params }) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await readJsonBody(request)
@@ -48,10 +48,11 @@ export async function POST(request, { params }) {
   }
 
   // Create version using the function
+  // Note: the pages table's jsonb content column is named `content`, not `content_json`.
   const { data: version, error } = await supabase
     .rpc('create_page_version', {
       p_page_id: id,
-      p_content_json: page.content_json,
+      p_content_json: page.content,
       p_seo_title: page.seo_title,
       p_seo_description: page.seo_description,
       p_status: page.status,

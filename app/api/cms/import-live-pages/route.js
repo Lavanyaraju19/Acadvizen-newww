@@ -19,7 +19,7 @@ export async function POST(request) {
     )
   }
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await readJsonBody(request)

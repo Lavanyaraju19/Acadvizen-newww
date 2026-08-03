@@ -1,4 +1,4 @@
-const SITE_URL = 'https://acadvizen.com'
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://acadvizen.com').replace(/\/+$/, '')
 const SITE_NAME = 'Acadvizen'
 const DEFAULT_IMAGE = '/logo.png'
 

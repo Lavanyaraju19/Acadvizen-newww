@@ -1,128 +1,148 @@
+import { getEntityConfig, sanitizeEntityPayload } from '../../../../../lib/cmsEntities'
 import {
   ensureAdmin,
+  requireAdminContext,
   getSupabaseClientOrResponse,
   jsonError,
   jsonOk,
-  normalizePagePath,
-  revalidateAllCmsPages,
-  revalidateCmsPaths,
+  revalidateCmsMutation,
   readJsonBody,
 } from '../../_utils'
+import { hasProfilePermission } from '../../../../../lib/adminPermissions'
+import {
+  assertSlugAvailable,
+  buildCmsMutationMeta,
+  buildPublishFields,
+  getCanonicalPath,
+  getCanonicalPublicUrl,
+  normalizeCmsSlug,
+  normalizeCmsStatus,
+} from '../../../../../lib/cmsPublishing'
 import { createSlugRedirectRecord } from '../../../../../lib/redirects'
-import { generateSlug, validateSlug } from '../../../../../lib/slugUtils'
+import { reassignSeoMetadataSlug, clearSeoMetadataForSlug } from '../../../../../lib/cmsServer'
 
 export const dynamic = 'force-dynamic'
 
-const OPTIONAL_PAGE_COLUMNS = ['canonical_url', 'published_at']
+const config = getEntityConfig('pages')
 
-function getMissingColumnName(error) {
-  const message = String(error?.message || '')
-  const match = message.match(/'([^']+)' column/i)
-  return match?.[1] || ''
-}
-
-async function updatePageRecord(supabase, id, payload) {
-  let candidatePayload = { ...payload }
-
-  while (true) {
-    const attempt = await supabase.from('pages').update(candidatePayload).eq('id', id).select('*').single()
-    if (!attempt.error) {
-      return attempt
-    }
-
-    const missingColumn = getMissingColumnName(attempt.error)
-    if (!missingColumn || !OPTIONAL_PAGE_COLUMNS.includes(missingColumn) || !(missingColumn in candidatePayload)) {
-      return attempt
-    }
-
-    delete candidatePayload[missingColumn]
+export async function GET(request, { params }) {
+  try {
+    const unauthorized = await ensureAdmin(request)
+    if (unauthorized) return unauthorized
+    const { id } = await params
+    if (!id) return jsonError('Record id is required.', 400)
+    const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
+    if (response) return response
+    const { data, error } = await supabase.from('pages').select('*').eq('id', id).maybeSingle()
+    if (error) return jsonError(`Database query failed: ${error.message}`, 500, [])
+    if (!data) return jsonError('Page not found.', 404)
+    return jsonOk(data)
+  } catch (error) {
+    return jsonError(`Internal server error: ${error.message}`, 500, [])
   }
 }
 
 export async function PATCH(request, { params }) {
-  const unauthorized = await ensureAdmin(request)
-  if (unauthorized) return unauthorized
+  try {
+    const { context: adminContext, response: unauthorized } = await requireAdminContext(request)
+    if (unauthorized) return unauthorized
+    const { id } = await params
+    if (!id) return jsonError('Record id is required.', 400)
+    const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
+    if (response) return response
+    const body = await readJsonBody(request)
+    if (!body || typeof body !== 'object') return jsonError('Invalid request body.', 400)
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
-  if (response) return response
+    const { data: existingRecord, error: existingError } = await supabase
+      .from('pages').select('*').eq('id', id).maybeSingle()
+    if (existingError) return jsonError(`Failed to load record: ${existingError.message}`, 500)
+    if (!existingRecord) return jsonError('Record not found.', 404)
 
-  const id = params?.id
-  if (!id) return jsonError('Page id is required.', 400)
-
-  const body = await readJsonBody(request)
-  if (!body) return jsonError('Invalid request body.', 400)
-
-  const { data: existingPage, error: existingPageError } = await supabase.from('pages').select('*').eq('id', id).maybeSingle()
-  if (existingPageError) return jsonError(`Failed to load page: ${existingPageError.message}`, 500)
-  if (!existingPage) return jsonError('Page not found.', 404)
-
-  const update = {}
-  const allowed = ['title', 'description', 'seo_title', 'seo_description', 'canonical_url', 'status']
-  for (const key of allowed) {
-    if (key in body) update[key] = body[key]
-  }
-  if ('slug' in body || !existingPage.slug) {
-    const nextSlug = generateSlug(body.slug || body.title || existingPage.title)
-    const slugValidation = validateSlug(nextSlug)
-    if (!slugValidation.valid) {
-      return jsonError(slugValidation.error, 400)
+    const canEditAnyPage = hasProfilePermission(adminContext.profile, 'pages', 'publish')
+    if (!canEditAnyPage && existingRecord.created_by && existingRecord.created_by !== adminContext.user.id) {
+      return jsonError('This account can only edit its own drafts.', 403)
     }
 
-    const { data: existingSlug, error: slugLookupError } = await supabase
-      .from('pages')
-      .select('id')
-      .eq('slug', nextSlug)
-      .neq('id', id)
-      .maybeSingle()
+    const payload = sanitizeEntityPayload(body, config)
+    if (!Object.keys(payload).length) return jsonError('No writable fields provided.', 400)
 
-    if (slugLookupError) return jsonError(`Failed to validate page slug: ${slugLookupError.message}`, 500)
-    if (existingSlug) return jsonError('A page with this slug already exists', 400)
-    update.slug = nextSlug
-  }
-  if ('status' in update) {
-    update.status = update.status === 'published' ? 'published' : 'draft'
-    update.published_at = update.status === 'published' ? (existingPage.published_at || new Date().toISOString()) : null
-  }
-
-  const { data, error } = await updatePageRecord(supabase, id, update)
-  if (error) return jsonError(`Failed to update page: ${error.message}`, 500)
-
-  let warning = null
-  if (
-    existingPage?.slug &&
-    existingPage.slug !== data?.slug &&
-    (existingPage.status === 'published' || data?.status === 'published')
-  ) {
-    try {
-      await createSlugRedirectRecord(supabase, {
-        fromPath: normalizePagePath(existingPage.slug),
-        toPath: normalizePagePath(data?.slug),
-        statusCode: 301,
-      })
-    } catch (redirectError) {
-      warning = `Page updated, but the slug redirect could not be created: ${redirectError.message}`
+    if (normalizeCmsStatus(payload.status) === 'published' && !canEditAnyPage) {
+      return jsonError('This account does not have permission to publish pages.', 403)
     }
-  }
 
-  revalidateCmsPaths([normalizePagePath(existingPage?.slug), normalizePagePath(data?.slug), '/sitemap.xml'])
-  revalidateAllCmsPages()
-  return jsonOk(data, warning ? { warning } : {})
+    if (payload.slug) {
+      const nextSlug = normalizeCmsSlug(payload.slug)
+      try {
+        await assertSlugAvailable(supabase, {
+          table: 'pages', slug: nextSlug, slugField: 'slug', currentId: id, contentType: 'page',
+        })
+      } catch (error) {
+        return jsonError(error.message, error.status || 500)
+      }
+      payload.slug = nextSlug
+    }
+
+    if ('status' in payload) {
+      Object.assign(payload, buildPublishFields({
+        nextStatus: normalizeCmsStatus(payload.status),
+        existing: existingRecord,
+        requestedPublishedAt: body.published_at,
+      }))
+    }
+
+    const { data, error } = await supabase.from('pages').update(payload).eq('id', id).select('*').single()
+    if (error) return jsonError(`Failed to update page: ${error.message}`, 500)
+
+    const previousSlug = existingRecord?.slug || ''
+    const currentSlug = data?.slug || ''
+    let warning = null
+    if (previousSlug && currentSlug && previousSlug !== currentSlug) {
+      try {
+        await createSlugRedirectRecord(supabase, {
+          fromPath: `/${previousSlug}`, toPath: `/${currentSlug}`, statusCode: 301,
+        })
+      } catch (redirectError) {
+        warning = `Page updated, but slug redirect could not be created: ${redirectError.message}`
+      }
+      await reassignSeoMetadataSlug(supabase, { fromSlug: previousSlug, toSlug: currentSlug }).catch(() => {})
+    }
+
+    const revalidation = revalidateCmsMutation('page', { slug: currentSlug, previousSlug })
+    const responseData = currentSlug
+      ? { ...data, canonical_public_url: getCanonicalPublicUrl('page', currentSlug) }
+      : data
+    if (!revalidation.ok) {
+      return jsonError('Page updated, but cache revalidation failed. Please retry publishing.', 500, responseData)
+    }
+    return jsonOk(responseData, { publication: buildCmsMutationMeta('page', responseData, revalidation), ...(warning ? { warning } : {}) })
+  } catch (error) {
+    return jsonError(`Internal server error: ${error.message}`, 500)
+  }
 }
 
 export async function DELETE(request, { params }) {
-  const unauthorized = await ensureAdmin(request)
-  if (unauthorized) return unauthorized
-
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
-  if (response) return response
-
-  const id = params?.id
-  if (!id) return jsonError('Page id is required.', 400)
-
-  const { data: page } = await supabase.from('pages').select('slug').eq('id', id).maybeSingle()
-  const { error } = await supabase.from('pages').delete().eq('id', id)
-  if (error) return jsonError(`Failed to delete page: ${error.message}`, 500)
-  revalidateCmsPaths([normalizePagePath(page?.slug), '/sitemap.xml'])
-  revalidateAllCmsPages()
-  return jsonOk({ id, deleted: true })
+  try {
+    const { context: adminContext, response: unauthorized } = await requireAdminContext(request)
+    if (unauthorized) return unauthorized
+    const { id } = await params
+    if (!id) return jsonError('Record id is required.', 400)
+    const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
+    if (response) return response
+    const { data: existingRecord } = await supabase.from('pages').select('*').eq('id', id).maybeSingle()
+    if (existingRecord && existingRecord.created_by && existingRecord.created_by !== adminContext.user.id && !hasProfilePermission(adminContext.profile, 'pages', 'publish')) {
+      return jsonError('This account can only delete its own drafts.', 403)
+    }
+    const { error } = await supabase.from('pages').delete().eq('id', id)
+    if (error) return jsonError(`Failed to delete page: ${error.message}`, 500)
+    if (existingRecord?.slug) {
+      await clearSeoMetadataForSlug(supabase, existingRecord.slug).catch(() => {})
+    }
+    const revalidation = revalidateCmsMutation('page', { previousSlug: existingRecord?.slug || '' })
+    if (!revalidation.ok) {
+      return jsonError('Page deleted, but cache revalidation failed. Please retry.', 500, { id, deleted: true })
+    }
+    return jsonOk({ id, deleted: true }, { revalidation })
+  } catch (error) {
+    return jsonError(`Internal server error: ${error.message}`, 500)
+  }
 }

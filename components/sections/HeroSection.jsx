@@ -59,6 +59,11 @@ export default function HeroSection({ section }) {
             {safeString(content.subheading, section?.description || '')}
           </p>
         ) : null}
+        {content.text ? (
+          <p className={`mx-auto mt-4 max-w-3xl whitespace-pre-line text-slate-300 ${bodyClass(style)}`}>
+            {safeString(content.text)}
+          </p>
+        ) : null}
         {buttons.length ? (
           <div className="mt-8 flex flex-wrap gap-3">
             {buttons.map((button, index) => (

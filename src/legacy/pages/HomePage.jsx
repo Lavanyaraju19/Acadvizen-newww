@@ -1545,6 +1545,9 @@ export default function HomePage({ cmsData = {} }) {
             <div
               ref={caseStudiesPreviewRef}
               className="flex snap-x snap-mandatory gap-6 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              tabIndex={0}
+              role="region"
+              aria-label="Case studies carousel"
             >
               {courseCaseStudies.slice(0, 3).map((item) => (
                 <ShowcaseWideCard

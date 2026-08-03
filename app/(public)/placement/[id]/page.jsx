@@ -11,7 +11,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }) {
-  const id = params?.id || ''
+  const { id } = await params
   const placement = id ? await fetchPlacementById(id) : null
 
   return buildMetadata({

@@ -50,8 +50,12 @@ test.describe('CMS Redirect Pipeline', () => {
     test.skip(!destructiveCmsTestConfig.enabled, 'Destructive CMS E2E tests are blocked by the staging safety guard.')
 
     const supabase = createSupabaseAdminClient()
-    expect(destructiveCmsTestConfig.environment).toBe('staging')
-    expect(destructiveCmsTestConfig.targetProjectRef).toBe(destructiveCmsTestConfig.expectedProjectRef)
+    expect(['staging', 'disposable']).toContain(destructiveCmsTestConfig.environment)
+    if (destructiveCmsTestConfig.environment === 'staging') {
+      expect(destructiveCmsTestConfig.targetProjectRef).toBe(destructiveCmsTestConfig.expectedProjectRef)
+    } else {
+      expect(destructiveCmsTestConfig.isDisposableLocal).toBe(true)
+    }
     const createdRedirectIds = []
 
     const cases = [
@@ -70,8 +74,12 @@ test.describe('CMS Redirect Pipeline', () => {
 
         const redirectResponse = await fetchManual(`${redirectCase.fromPath}?utm_source=e2e&case=${redirectCase.label}`)
         expect(redirectResponse.status, `${redirectCase.label} old URL should return 301`).toBe(301)
+        // The redirect may be served by middleware (absolute Location, required
+        // by the edge Response/Headers contract) or by the page-level redirect()
+        // call (relative Location). Both are valid - compare the resolved path.
+        const locationUrl = new URL(redirectResponse.headers.get('location'), E2E_BASE_URL)
         expect(
-          redirectResponse.headers.get('location'),
+          `${locationUrl.pathname}${locationUrl.search}`,
           `${redirectCase.label} old URL should point at the expected public target`
         ).toBe(`${redirectCase.toPath}?utm_source=e2e&case=${redirectCase.label}`)
 

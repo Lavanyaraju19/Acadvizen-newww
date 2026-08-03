@@ -11,7 +11,13 @@ const {
   getDestructiveCmsTestConfig,
 } = require('./safety')
 
-for (const envFile of ['.env.test.local', '.env.local', '.env']) {
+// Loading order matters: the server that Playwright drives reads .env.local as its
+// authoritative source (Next.js loads .env.local ahead of .env.test.local/.env for every
+// NODE_ENV except 'test'). To ensure the E2E runner submits the SAME credentials and
+// Supabase project the server validates, load .env.local first (first-file-wins with
+// override:false). .env.local must point at a disposable/staging Supabase project - see
+// e2e/safety.js's KNOWN_PRODUCTION_PROJECT_REFS hard block for the confirmed-production ref.
+for (const envFile of ['.env.local', '.env.test.local', '.env']) {
   const envPath = path.join(__dirname, '..', envFile)
   if (fs.existsSync(envPath)) {
     dotenv.config({ path: envPath, override: false, quiet: true })
@@ -84,11 +90,14 @@ async function loginAdmin(page) {
     }
   }
 
+  // Exercise the exact browser flow a real administrator uses:
+  // 1. Render /admin-login and wait for React hydration (interactive fields + enabled submit).
   await expect(page.getByRole('heading', { name: 'Admin Login' })).toBeVisible({ timeout: 20000 })
   await page.waitForFunction(() => {
     const emailField = document.querySelector('#admin-email')
     const passwordField = document.querySelector('#admin-password')
-    if (!(emailField instanceof HTMLElement) || !(passwordField instanceof HTMLElement)) {
+    const submitButton = document.querySelector('button[type="submit"]')
+    if (!(emailField instanceof HTMLElement) || !(passwordField instanceof HTMLElement) || !(submitButton instanceof HTMLButtonElement)) {
       return false
     }
 
@@ -99,64 +108,38 @@ async function loginAdmin(page) {
       emailRect.height > 0 &&
       passwordRect.width > 0 &&
       passwordRect.height > 0 &&
+      !submitButton.disabled &&
       !document.body.innerText.includes('Loading...')
     )
   }, { timeout: 20000 })
 
-  const emailField = page.locator('#admin-email')
-  const passwordField = page.locator('#admin-password')
-  await emailField.fill(E2E_ADMIN_EMAIL)
-  await passwordField.fill(E2E_ADMIN_PASSWORD)
+  // 2. Capture the login and session-sync responses BEFORE submitting.
+  const loginResponsePromise = page.waitForResponse(
+    (response) => response.url().includes('/api/admin/login') && response.request().method() === 'POST',
+    { timeout: 20000 }
+  )
+  const sessionSyncPromise = page.waitForResponse(
+    (response) => response.url().includes('/api/admin/session') && response.request().method() === 'POST'
+  ).catch(() => null)
 
-  const loginResponsePromise = page.waitForResponse((response) => (
-    response.url().includes('/api/admin/login') &&
-    response.request().method() === 'POST'
-  ), { timeout: 20000 })
+  // 3. Fill the controlled React inputs and click the real submit button.
+  await page.fill('#admin-email', E2E_ADMIN_EMAIL)
+  await page.fill('#admin-password', E2E_ADMIN_PASSWORD)
+  await page.click('button[type="submit"]')
 
-  const sessionSyncPromise = page.waitForResponse((response) => (
-    response.url().includes('/api/admin/session') &&
-    response.request().method() === 'POST'
-  ), { timeout: 20000 }).catch(() => null)
-
-  await page.click('button[type="submit"], button:has-text("Sign in")')
-
+  // 4. Assert the login mutation succeeded.
   const loginResponse = await loginResponsePromise
   const loginPayload = await loginResponse.json().catch(() => null)
-  if (!loginResponse.ok || loginPayload?.success === false) {
+  if (!loginResponse.ok() || loginPayload?.success === false) {
     throw new Error(loginPayload?.error || `Login failed with status ${loginResponse.status()}.`)
   }
 
-  const sessionSyncResponse = await sessionSyncPromise
-  if (sessionSyncResponse) {
-    const sessionPayload = await sessionSyncResponse.json().catch(() => null)
-    if (!sessionSyncResponse.ok || sessionPayload?.success === false) {
-      throw new Error(sessionPayload?.error || `Admin session sync failed with status ${sessionSyncResponse.status()}.`)
-    }
-  }
+  // 5. Let the optional session sync settle (it re-sets the admin cookie server-side).
+  await sessionSyncPromise
 
-  try {
-    await page.waitForURL(/\/admin($|\/)/, { timeout: 20000 })
-  } catch {
-    const errorElement = page.locator('text=Sign in failed, text=Access denied, text=Unable to sign in')
-    if (await errorElement.count() > 0) {
-      throw new Error('Login failed - authentication error')
-    }
-    const finalUrl = page.url()
-    if (!finalUrl.includes('/admin')) {
-      throw new Error(`Login failed - redirected to ${finalUrl} instead of /admin`)
-    }
-  }
-
-  await page.waitForLoadState('domcontentloaded')
-  try {
-    await waitForAdminShell(page)
-  } catch {
-    if (page.url().includes('/admin-login')) {
-      await page.goto('/admin', { waitUntil: 'domcontentloaded' })
-    }
-
-    await waitForAdminShell(page)
-  }
+  // 6. Wait for the client-side navigation to /admin and the admin shell to mount.
+  await page.waitForURL(/\/admin($|\/)/, { timeout: 20000 })
+  await waitForAdminShell(page)
 }
 
 async function checkAndHandleSessionError(page) {

@@ -7,7 +7,7 @@ const fs = require('fs')
 const path = require('path')
 
 const supabaseUrl = 'https://hhfccftkfryesjirauwf.supabase.co'
-const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhoZmNjZnRrZnJ5ZXNqaXJhdXdmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTk0NTYwMiwiZXhwIjoyMDg1NTIxNjAyfQ.FQtYdnz-hdF68TDFZ9FnVvUFZiAZr7nHrjZO0Ij7ytE'
+const supabaseServiceKey = 'process.env.SUPABASE_SERVICE_ROLE_KEY'
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 

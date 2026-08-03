@@ -4,12 +4,40 @@ export const dynamic = 'force-dynamic'
 import { notFound } from 'next/navigation'
 import { permanentRedirect, redirect } from 'next/navigation'
 import DynamicPageRenderer from '../../../components/cms/DynamicPageRenderer'
-import { fetchCmsPageBySlug, fetchLocationPageBySlug, fetchRedirectByPath, fetchSeoBySlug } from '../../../lib/cmsServer'
+import CityPageRenderer from '../../../components/cms/CityPageRenderer'
+import CityCoursePageRenderer from '../../../components/cms/CityCoursePageRenderer'
+import LocationPageRenderer from '../../../components/cms/LocationPageRenderer'
+import ServicePageRenderer from '../../../components/cms/ServicePageRenderer'
+import { fetchCmsPageBySlug, fetchRedirectByPath, fetchSeoBySlug } from '../../../lib/cmsServer'
 import { buildMetadata } from '../../lib/seo'
 import { isPublicCmsEnabled } from '../../lib/publicCms'
 
+function ensureRenderableSections(page) {
+  if (!page) return page
+  if (Array.isArray(page.sections) && page.sections.some((section) => section?.visibility !== false)) return page
+  const text = page.description || page.seo_description || page.title
+  if (!text) return page
+  return {
+    ...page,
+    sections: [
+      {
+        id: `fallback-${page.id || page.slug}`,
+        page_id: page.id,
+        type: 'custom_rich_text',
+        order_index: 0,
+        visibility: true,
+        content_json: {
+          heading: page.title,
+          text,
+        },
+        style_json: {},
+      },
+    ],
+  }
+}
+
 export async function generateMetadata({ params }) {
-  const slug = params?.slug
+  const { slug } = await params
   if (!slug) return buildMetadata({ title: 'Page', description: 'Acadvizen dynamic page.', path: '/' })
 
   if (!isPublicCmsEnabled()) {
@@ -20,14 +48,10 @@ export async function generateMetadata({ params }) {
     })
   }
 
-  const [page, locationPage, seo] = await Promise.all([fetchCmsPageBySlug(slug), fetchLocationPageBySlug(slug), fetchSeoBySlug(slug)])
-  const resolved = page || locationPage
+  const [page, seo] = await Promise.all([fetchCmsPageBySlug(slug), fetchSeoBySlug(slug)])
+  const resolved = page
   if (!resolved) {
-    return buildMetadata({
-      title: 'Page Not Found',
-      description: 'This page does not exist.',
-      path: `/${slug}`,
-    })
+    notFound()
   }
 
   const metadata = buildMetadata({
@@ -42,7 +66,7 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function Page({ params }) {
-  const slug = params?.slug
+  const { slug } = await params
   const pathname = slug ? `/${slug}` : '/'
   const redirectRule = await fetchRedirectByPath(pathname)
   if (redirectRule?.to_path) {
@@ -56,17 +80,31 @@ export default async function Page({ params }) {
     notFound()
   }
 
-  const [page, locationPage, seo] = await Promise.all([
+  const [page, seo] = await Promise.all([
     fetchCmsPageBySlug(slug),
-    fetchLocationPageBySlug(slug),
     fetchSeoBySlug(slug),
   ])
 
-  const resolved = page || locationPage
+  if (!page) notFound()
+
+  if (page.source === 'city_page') {
+    return <CityPageRenderer cityPage={page.raw} />
+  }
+
+  if (page.source === 'location') {
+    return <LocationPageRenderer locationRecord={page.raw.id ? page.raw : null} locationSlug={page.raw.locationSlug} />
+  }
+
+  if (page.source === 'city_course') {
+    return <CityCoursePageRenderer cityRecord={page.raw.id ? page.raw : null} citySlug={page.raw.citySlug} />
+  }
+
+  if (page.source === 'service_page') {
+    return <ServicePageRenderer servicePage={page.raw} />
+  }
+
+  const resolved = ensureRenderableSections(page)
   if (!resolved) notFound()
-  // Only use CMS renderer if the page has actual sections with content.
-  // If sections array is empty, show 404 to avoid blank page.
-  if (!resolved.sections?.length) notFound()
   return (
     <>
       {seo?.schema_json && typeof seo.schema_json === 'object' ? (

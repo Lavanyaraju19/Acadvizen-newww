@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import DynamicSectionRenderer from '../../../components/sections/DynamicSectionRenderer'
 import { Surface } from '../../../src/components/ui/Surface'
@@ -35,6 +35,7 @@ const SECTION_TYPES = [
   'community_events_feed',
   'cta_block_ref',
   'lead_form',
+  'form_embed',
 ]
 
 const EMPTY_PAGE_FORM = {
@@ -89,6 +90,7 @@ const EMPTY_SECTION_FORM = {
   successMessage: '',
   errorMessage: '',
   validationMessage: '',
+  formId: '',
   bgColor: '',
   textColor: '',
   headingSize: 'md',
@@ -218,6 +220,7 @@ function formFromContent(content = {}) {
     successMessage: content.success_message || '',
     errorMessage: content.error_message || '',
     validationMessage: content.validation_message || '',
+    formId: content.form_id || '',
     rawJson: JSON.stringify(content, null, 2),
   }
 }
@@ -328,6 +331,9 @@ function contentFromForm(form) {
     payload.success_message = form.successMessage || undefined
     payload.error_message = form.errorMessage || undefined
     payload.validation_message = form.validationMessage || undefined
+  } else if (form.type === 'form_embed') {
+    payload.form_id = form.formId || undefined
+    payload.heading = form.heading || undefined
   } else if (form.successMessage) {
     payload.success_message = form.successMessage
   }
@@ -345,7 +351,7 @@ function contentFromForm(form) {
   if (form.rawJson?.trim()) {
     try {
       const raw = JSON.parse(form.rawJson)
-      return { ...cleaned, ...(raw || {}) }
+      return { ...(raw || {}), ...cleaned }
     } catch {
       return cleaned
     }
@@ -401,12 +407,14 @@ export default function PageBuilderClient() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState('')
+  const [liveUrl, setLiveUrl] = useState('')
   const [bootstrapped, setBootstrapped] = useState(false)
   const [selectedPageId, setSelectedPageId] = useState('')
   const [pageForm, setPageForm] = useState(EMPTY_PAGE_FORM)
   const [sectionForm, setSectionForm] = useState(createEmptySectionForm())
   const [draggingId, setDraggingId] = useState('')
   const [previewMode, setPreviewMode] = useState(false)
+  const pageDetailsFormRef = useRef(null)
 
   const selectedPage = useMemo(() => pages.find((page) => page.id === selectedPageId) || null, [pages, selectedPageId])
   const sections = useMemo(
@@ -541,6 +549,7 @@ export default function PageBuilderClient() {
     setSelectedPageId('')
     setPageForm(EMPTY_PAGE_FORM)
     setSectionForm(createEmptySectionForm())
+    setLiveUrl('')
   }
 
   function beginEditSection(section) {
@@ -565,20 +574,39 @@ export default function PageBuilderClient() {
     })
     await loadPages(json.data?.id)
     clearAutosave('page', json.data?.id)
-    setStatus(successMessage)
+    const finalLiveUrl = json.publication?.canonical_public_url || json.data?.canonical_public_url || ''
+    setLiveUrl(finalLiveUrl)
+    setStatus(finalLiveUrl ? `${successMessage} Live URL: ${finalLiveUrl}` : successMessage)
     return json.data
+  }
+
+  function getCurrentPageForm(nextStatus = pageForm.status) {
+    const form = pageDetailsFormRef.current
+    if (!form) return { ...pageForm, status: nextStatus }
+
+    return {
+      ...pageForm,
+      title: form.elements.page_title?.value || pageForm.title,
+      slug: form.elements.page_slug?.value || pageForm.slug,
+      description: form.elements['pagebuilder-page-description']?.value || pageForm.description,
+      seo_title: form.elements.page_seo_title?.value || pageForm.seo_title,
+      seo_description: form.elements['pagebuilder-seo-description']?.value || pageForm.seo_description,
+      canonical_url: form.elements.page_canonical_url?.value || pageForm.canonical_url,
+      status: nextStatus || form.elements.page_status?.value || pageForm.status,
+    }
   }
 
   async function handleSavePage(event) {
     event.preventDefault()
-    if (!pageForm.title.trim()) {
+    const currentPageForm = getCurrentPageForm()
+    if (!currentPageForm.title.trim()) {
       setStatus('Page title is required.')
       return
     }
     setSaving(true)
     setStatus('')
     try {
-      await persistPage(pageForm, pageForm.status === 'published' ? 'Page published.' : 'Page saved.')
+      await persistPage(currentPageForm, currentPageForm.status === 'published' ? 'Page published.' : 'Page saved.')
     } catch (error) {
       setStatus(error?.message || 'Failed to save page.')
     } finally {
@@ -587,11 +615,11 @@ export default function PageBuilderClient() {
   }
 
   async function savePageWithStatus(nextStatus) {
-    if (!pageForm.title.trim()) {
+    const nextForm = getCurrentPageForm(nextStatus)
+    if (!nextForm.title.trim()) {
       setStatus('Page title is required.')
       return
     }
-    const nextForm = { ...pageForm, status: nextStatus }
     setPageForm(nextForm)
     setSaving(true)
     setStatus('')
@@ -917,7 +945,7 @@ export default function PageBuilderClient() {
         </aside>
 
         <div className="space-y-6">
-          <form onSubmit={handleSavePage} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+          <form ref={pageDetailsFormRef} data-testid="page-details-form" onSubmit={handleSavePage} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <h3 className="text-base font-semibold text-slate-100">Page Details</h3>
@@ -973,12 +1001,17 @@ export default function PageBuilderClient() {
               <button type="submit" disabled={saving} className="rounded-xl bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-200 disabled:opacity-70">
                 {saving ? 'Saving...' : 'Save Page'}
               </button>
-              <button type="button" disabled={saving} onClick={() => savePageWithStatus('published')} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05] disabled:opacity-70">
+              <button type="button" data-testid="publish-page-button" disabled={saving} onClick={() => savePageWithStatus('published')} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05] disabled:opacity-70">
                 Publish Page
               </button>
-              <button type="button" disabled={saving} onClick={() => savePageWithStatus('draft')} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05] disabled:opacity-70">
+              <button type="button" data-testid="save-page-draft-button" disabled={saving} onClick={() => savePageWithStatus('draft')} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05] disabled:opacity-70">
                 Save Draft
               </button>
+              {liveUrl && pageForm.status === 'published' ? (
+                <button type="button" disabled={saving} onClick={() => window.open(liveUrl, '_blank', 'noopener,noreferrer')} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05] disabled:opacity-70">
+                  View Live Page
+                </button>
+              ) : null}
               {pageForm.id ? (
                 <>
                   <button type="button" disabled={saving} onClick={handleDuplicatePage} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05] disabled:opacity-70">
@@ -1045,7 +1078,12 @@ export default function PageBuilderClient() {
                                 <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"/>
                               </svg>
                             </div>
-                            <button type="button" onClick={() => beginEditSection(section)} className="flex-1 text-left">
+                            <button
+                              type="button"
+                              data-testid={`page-section-edit-${section.id}`}
+                              onClick={() => beginEditSection(section)}
+                              className="flex-1 text-left"
+                            >
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-semibold text-slate-100 capitalize">
                                   {section.type.replace(/_/g, ' ')}

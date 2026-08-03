@@ -130,11 +130,18 @@ export default function PopupManagerClient() {
           : popupForm.exclude_pages,
       }
       
-      const method = popupForm.id ? 'PUT' : 'POST'
+      // The [id] route only implements PATCH/DELETE (no PUT handler), so updating an existing
+      // popup via PUT has always 405'd - this was never exercised until a real save-then-save
+      // browser flow hit it, since prior testing only ever POSTed fresh records or PATCHed directly.
+      const method = popupForm.id ? 'PATCH' : 'POST'
       const endpoint = popupForm.id ? `/api/cms/popups/${popupForm.id}` : '/api/cms/popups'
-      
-      await adminApiFetch(endpoint, { method, body: payload })
+
+      const json = await adminApiFetch(endpoint, { method, body: payload })
       await loadPopups()
+      // Repopulate the whole form (including id) from the saved row, not just the selected-id
+      // tracker - otherwise popupForm.id stays empty and the next Save silently creates a
+      // duplicate popup instead of updating the one just made.
+      if (json?.data) selectPopup(json.data)
       setStatus('Popup saved successfully.')
     } catch (error) {
       setStatus(error?.message || 'Failed to save popup.')
@@ -171,6 +178,12 @@ export default function PopupManagerClient() {
         body: { is_active: !popup.is_active }
       })
       await loadPopups()
+      // Enable/Disable only ever updated the `popups` list, never the bound `popupForm` state -
+      // so the next edit's Save Popup click would silently resend the STALE is_active value and
+      // revert the toggle. Keep the open form in sync with what was just persisted.
+      if (popupForm.id === popup.id) {
+        setPopupForm((prev) => ({ ...prev, is_active: !popup.is_active }))
+      }
       setStatus(`Popup ${popup.is_active ? 'disabled' : 'enabled'}.`)
     } catch (error) {
       setStatus(error?.message || 'Failed to update popup.')
@@ -279,6 +292,18 @@ export default function PopupManagerClient() {
                       />
                     </label>
                   )}
+
+                  <label className="text-xs text-slate-400">
+                    Status
+                    <select
+                      value={popupForm.status}
+                      onChange={(e) => setPopupForm({ ...popupForm, status: e.target.value })}
+                      className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                    >
+                      <option value="draft">Draft</option>
+                      <option value="published">Published</option>
+                    </select>
+                  </label>
                 </div>
               </div>
 

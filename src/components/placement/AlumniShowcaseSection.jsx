@@ -67,6 +67,9 @@ export function AlumniShowcaseSection({
           <div
             ref={sliderRef}
             className="mt-6 flex snap-x snap-mandatory gap-5 overflow-x-auto px-1 pb-3 [scrollbar-width:none] sm:gap-6 [&::-webkit-scrollbar]:hidden"
+            tabIndex={0}
+            role="region"
+            aria-label="Alumni showcase carousel"
           >
             {students.map((student) => (
               <article

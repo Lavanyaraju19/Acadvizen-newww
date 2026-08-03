@@ -25,7 +25,7 @@ export async function GET(request) {
       : { context: null, response: null }
     if (adminAccess.response) return adminAccess.response
 
-    const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: Boolean(adminAccess.context) })
+    const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: Boolean(adminAccess.context) })
     if (response) return response
 
     const limit = parseInt(searchParams.get('limit') || '100')
@@ -50,7 +50,7 @@ export async function POST(request) {
     const unauthorized = await ensureAdmin(request)
     if (unauthorized) return unauthorized
 
-    const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+    const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
     if (response) return response
 
     const body = await readJsonBody(request)

@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import Script from 'next/script'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { META_PIXEL_ID, trackPageView } from '../lib/metaPixel'
 
 const EXCLUDED_PREFIXES = ['/admin', '/dashboard']
@@ -16,15 +16,20 @@ function isTrackedPublicPath(pathname = '') {
 
 export default function MetaPixel() {
   const pathname = usePathname() || ''
-  const searchParams = useSearchParams()
-  const search = useMemo(() => searchParams?.toString() || '', [searchParams])
-  const pathWithSearch = `${pathname}${search ? `?${search}` : ''}`
   const enabled = isTrackedPublicPath(pathname)
 
+  // Deliberately not next/navigation's useSearchParams(): that hook requires the
+  // component to sit inside a <Suspense> boundary, and Suspense anywhere in the
+  // render path forces Next.js into streaming mode - which makes notFound() render
+  // the not-found UI with an HTTP 200 status instead of a real 404 (a documented
+  // Next.js App Router limitation, not something specific to this page). Tracking is
+  // a client-only side effect anyway, so reading the query string straight off
+  // window.location inside the effect gets the same value without that trade-off.
   useEffect(() => {
     if (!enabled) return
-    trackPageView(pathWithSearch)
-  }, [enabled, pathWithSearch])
+    const search = typeof window !== 'undefined' ? window.location.search : ''
+    trackPageView(`${pathname}${search}`)
+  }, [enabled, pathname])
 
   if (!enabled) return null
 

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import { cookies, headers } from 'next/headers'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { getServerSupabaseClient, hasValidSupabaseServiceRoleKey } from '../../../lib/supabaseServer'
 import { logger } from '../../../lib/productionLogger'
+import { getCmsCacheTargets, CMS_CONTENT_TYPES } from '../../../lib/cmsPublishing'
 import {
   canAccessAdminProfile,
   enrichAdminProfile,
@@ -10,19 +11,24 @@ import {
   inferCmsPermissionFromPath,
 } from '../../../lib/adminPermissions'
 
-const CMS_PUBLIC_PATHS = [
+export const CMS_PUBLIC_PATHS = [
   '/',
   '/about',
   '/achievements',
+  '/blog',
+  '/blog/category',
+  '/blog/tag',
+  '/blog/author',
   '/contact',
   '/courses',
   '/placement',
-  '/testimonials',
   '/projects',
   '/soft-skills',
   '/hire-from-us',
   '/tools',
-  '/blog',
+  '/testimonials',
+  '/sitemap.xml',
+  '/robots.txt',
 ]
 
 // ── Standardized JSON responses ─────────────────────────────────────────
@@ -33,7 +39,6 @@ export function jsonOk(data = null, extra = {}) {
 
 export function jsonError(error, status = 500, data = null) {
   const httpStatus = (typeof status === 'number' && status >= 400 && status <= 599) ? status : 500
-  // Never expose stack traces in production
   const message = typeof error === 'string' ? error : (error?.message || 'Request failed.')
   return NextResponse.json(
     { success: false, data, error: message },
@@ -43,34 +48,36 @@ export function jsonError(error, status = 500, data = null) {
 
 // ── Auth helpers ────────────────────────────────────────────────────────
 
-function readAuthorizationHeader(request) {
+async function readAuthorizationHeader(request) {
   const direct = request?.headers?.get?.('authorization')
   if (direct) return direct
   try {
-    return headers().get('authorization')
+    const headerStore = await headers()
+    return headerStore.get('authorization')
   } catch {
     return ''
   }
 }
 
-function readAdminCookie(request) {
+async function readAdminCookie(request) {
   const direct = request?.cookies?.get?.('acadvizen_admin_session')?.value
   if (direct) return direct
   try {
-    return cookies().get('acadvizen_admin_session')?.value
+    const cookieStore = await cookies()
+    return cookieStore.get('acadvizen_admin_session')?.value
   } catch {
     return ''
   }
 }
 
-function getBearerToken(request) {
-  const authorization = String(readAuthorizationHeader(request) || '')
+async function getBearerToken(request) {
+  const authorization = String(await readAuthorizationHeader(request) || '')
   if (!authorization.toLowerCase().startsWith('bearer ')) return ''
   return authorization.slice(7).trim()
 }
 
-export function hasAdminAuthorizationHint(request) {
-  return Boolean(getBearerToken(request) || readAdminCookie(request))
+export async function hasAdminAuthorizationHint(request) {
+  return Boolean(await getBearerToken(request) || await readAdminCookie(request))
 }
 
 function getErrorMessage(error) {
@@ -101,8 +108,8 @@ function isTokenRefreshNeeded(error) {
   return message.includes('expired') || message.includes('jwt') || message.includes('token')
 }
 
-export function getSupabaseClientOrResponse(request, options = {}) {
-  const authToken = getBearerToken(request)
+export async function getSupabaseClientOrResponse(request, options = {}) {
+  const authToken = await getBearerToken(request)
   const preferServiceRole = options?.preferServiceRole === true && hasValidSupabaseServiceRoleKey()
   const supabase = preferServiceRole
     ? getServerSupabaseClient({ preferServiceRole: true })
@@ -120,12 +127,12 @@ export function getSupabaseClientOrResponse(request, options = {}) {
   return { supabase, response: null }
 }
 
-export function isAdminRequest(request) {
-  return Boolean(getBearerToken(request))
+export async function isAdminRequest(request) {
+  return Boolean(await getBearerToken(request))
 }
 
 export async function resolveAdminContext(request) {
-  const authToken = getBearerToken(request) || readAdminCookie(request)
+  const authToken = await getBearerToken(request) || await readAdminCookie(request)
   if (!authToken) {
     return { ok: false, status: 401, error: 'Admin session expired. Please sign in again.' }
   }
@@ -295,7 +302,7 @@ export async function ensureAdmin(request, permissionOverride = null) {
 }
 
 export async function getOptionalAdminContext(request, permissionOverride = null) {
-  if (!hasAdminAuthorizationHint(request)) {
+  if (!(await hasAdminAuthorizationHint(request))) {
     return {
       context: null,
       response: null,
@@ -335,15 +342,67 @@ export function revalidateCmsPaths(paths = []) {
     )
   )
 
+  const errors = []
   unique.forEach((path) => {
     try {
       revalidatePath(path)
-    } catch {
-      // ignore revalidation failures so the write action itself can still succeed
+    } catch (error) {
+      errors.push({ path, error: error?.message || String(error) })
+      logger.warn('CMS path revalidation failed.', { path, error: error?.message || String(error) })
     }
   })
+
+  return {
+    ok: errors.length === 0,
+    paths: unique,
+    errors,
+  }
 }
 
 export function revalidateAllCmsPages(extraPaths = []) {
-  revalidateCmsPaths([...CMS_PUBLIC_PATHS, ...extraPaths])
+  return revalidateCmsPaths([...CMS_PUBLIC_PATHS, ...extraPaths])
+}
+
+export function revalidateCmsMutation(contentType, options = {}) {
+  const targets = getCmsCacheTargets(contentType, {
+    slug: options.slug,
+    previousSlug: options.previousSlug,
+    extraPaths: [...CMS_PUBLIC_PATHS, ...(options.extraPaths || [])],
+    extraTags: options.extraTags || [],
+  })
+
+  const errors = []
+  for (const path of targets.paths) {
+    try {
+      revalidatePath(path)
+    } catch (error) {
+      errors.push({ target: path, type: 'path', error: error?.message || String(error) })
+    }
+  }
+
+  for (const tag of targets.tags) {
+    try {
+      revalidateTag(tag)
+    } catch (error) {
+      errors.push({ target: tag, type: 'tag', error: error?.message || String(error) })
+    }
+  }
+
+  const result = {
+    ok: errors.length === 0,
+    paths: targets.paths,
+    tags: targets.tags,
+    errors,
+  }
+
+  if (!result.ok) {
+    logger.warn('CMS mutation revalidation failed.', {
+      content_type: contentType,
+      slug: options.slug,
+      previous_slug: options.previousSlug,
+      errors: result.errors,
+    })
+  }
+
+  return result
 }

@@ -56,7 +56,10 @@ function createEmptyCity() {
     meta_keywords: '',
     og_image_url: '',
     canonical_url: '',
-    is_active: true,
+    // Draft-first, matching every other CMS entity (Companies/Internships/Banners/Popups/Forms/
+    // Locations) - a brand-new city was previously published (is_active: true) the instant it
+    // was created, with no real "Save Draft" step despite the Enable/Disable buttons implying one.
+    is_active: false,
     priority: 0,
   }
 }
@@ -190,9 +193,13 @@ export default function CityBuilderClient() {
       
       const method = cityForm.id ? 'PATCH' : 'POST'
       const endpoint = cityForm.id ? `/api/cms/cities/${cityForm.id}` : '/api/cms/cities'
-      
-      await adminApiFetch(endpoint, { method, body: payload })
+
+      const json = await adminApiFetch(endpoint, { method, body: payload })
       await loadCities()
+      // Repopulate the whole form (including id) from the saved row, not just the selected-id
+      // tracker - otherwise cityForm.id stays empty and the next Save silently creates a
+      // duplicate city page instead of updating the one just made.
+      if (json?.data) selectCity(json.data)
       setStatus('City page saved successfully.')
     } catch (error) {
       setStatus(error?.message || 'Failed to save city page.')
@@ -251,6 +258,12 @@ export default function CityBuilderClient() {
         body: { is_active: !city.is_active }
       })
       await loadCities()
+      // Enable/Disable only ever updated the `cities` list, never the bound `cityForm` state -
+      // so the next edit's Save City Page click would silently resend the STALE is_active value
+      // and revert the toggle. Keep the open form in sync with what was just persisted.
+      if (cityForm.id === city.id) {
+        setCityForm((prev) => ({ ...prev, is_active: !city.is_active }))
+      }
       setStatus(`City page ${city.is_active ? 'disabled' : 'enabled'}.`)
     } catch (error) {
       setStatus(error?.message || 'Failed to update city page.')
@@ -1050,6 +1063,17 @@ export default function CityBuilderClient() {
                   <Eye className="w-4 h-4 inline mr-2" />
                   {previewMode ? 'Edit' : 'Preview'}
                 </button>
+
+                {selectedCityId && cityForm.slug ? (
+                  <a
+                    href={`/digital-marketing-course-in-${cityForm.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-4 py-2 rounded-xl border border-teal-400/30 text-teal-200 hover:bg-teal-400/10"
+                  >
+                    View live &#8599;
+                  </a>
+                ) : null}
               </div>
 
               {status && (
@@ -1140,7 +1164,7 @@ export default function CityBuilderClient() {
               </div>
               
               <div className="mt-4 text-sm text-slate-400">
-                <p><strong>URL:</strong> /{cityForm.slug}</p>
+                <p><strong>URL:</strong> /digital-marketing-course-in-{cityForm.slug}</p>
                 <p><strong>Status:</strong> {cityForm.is_active ? 'Published' : 'Draft'}</p>
               </div>
             </div>

@@ -153,6 +153,9 @@ export function AboutPage() {
             <div
               ref={trainerSliderRef}
               className="mt-6 flex snap-x snap-mandatory gap-6 overflow-x-auto px-1 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              tabIndex={0}
+              role="region"
+              aria-label="Trainers carousel"
             >
               {aboutTrainers.map((trainer, index) => (
                 <article

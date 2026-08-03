@@ -30,6 +30,8 @@ import {
   Download,
   Layers,
   LayoutTemplate,
+  FolderOpen,
+  Sparkles,
 } from 'lucide-react'
 import { Surface } from '../../src/components/ui/Surface'
 import { CustomCursor } from '../../src/components/ui/CustomCursor'
@@ -63,6 +65,9 @@ const adminNav = [
   { path: '/admin/popups', label: 'Popups', icon: Search },
   { path: '/admin/banners', label: 'Banners', icon: ImageIcon },
   { path: '/admin/cities', label: 'Cities', icon: MapPin },
+  { path: '/admin/locations', label: 'Locations', icon: MapPin },
+  { path: '/admin/service-pages', label: 'Service Pages', icon: Sparkles },
+  { path: '/admin/resources', label: 'Resources', icon: FolderOpen },
   { path: '/admin/media', label: 'Media', icon: ImageIcon },
   { path: '/admin/users', label: 'Users', icon: Users },
   { path: '/admin/trust', label: 'Trust & Conversion', icon: Handshake },
@@ -197,8 +202,71 @@ export default function AdminLayoutClient({ children }) {
     }
 
     try {
-      const payload = await fetchAdminSession()
-      const accessToken = await getAdminAccessToken()
+      let payload = null
+      let accessToken = ''
+
+      try {
+        payload = await fetchAdminSession()
+        accessToken = await getAdminAccessToken()
+      } catch (error) {
+        const message = error?.message || 'Unable to open the admin dashboard.'
+
+        if (isTransientAdminError(error)) {
+          setAdminState((prev) => ({
+            ...prev,
+            loading: false,
+            error: verifiedOnce ? '' : message,
+            reconnecting: true,
+          }))
+          return
+        }
+
+        if (isSessionAuthFailure(error)) {
+          const recovered = await sessionManager.refreshIfNeeded(true)
+          if (recovered) {
+            setRetryNonce((value) => value + 1)
+            return
+          }
+
+          const fallbackPayload = await fetch('/api/admin/session', {
+            method: 'GET',
+            cache: 'no-store',
+            credentials: 'same-origin',
+          }).catch(() => null)
+
+          if (fallbackPayload?.ok) {
+            const fallbackJson = await fallbackPayload.json().catch(() => null)
+            if (fallbackJson?.success) {
+              setAdminState({
+                loading: false,
+                error: '',
+                user: fallbackJson?.data?.user || null,
+                profile: fallbackJson?.data?.profile || null,
+                accessToken: '',
+                reconnecting: false,
+              })
+              setVerifiedOnce(true)
+              setGuardTimedOut(false)
+              return
+            }
+          }
+
+          await handleConfirmedAuthFailure(message)
+          return
+        }
+
+        await clearAdminSession()
+        setVerifiedOnce(false)
+        setAdminState({
+          loading: false,
+          error: message,
+          user: null,
+          profile: null,
+          accessToken: '',
+          reconnecting: false,
+        })
+        return
+      }
 
       setAdminState({
         loading: false,
@@ -212,27 +280,6 @@ export default function AdminLayoutClient({ children }) {
       setGuardTimedOut(false)
     } catch (error) {
       const message = error?.message || 'Unable to open the admin dashboard.'
-
-      if (isTransientAdminError(error)) {
-        setAdminState((prev) => ({
-          ...prev,
-          loading: false,
-          error: verifiedOnce ? '' : message,
-          reconnecting: true,
-        }))
-        return
-      }
-
-      if (isSessionAuthFailure(error)) {
-        const recovered = await sessionManager.refreshIfNeeded(true)
-        if (recovered) {
-          setRetryNonce((value) => value + 1)
-          return
-        }
-        await handleConfirmedAuthFailure(message)
-        return
-      }
-
       await clearAdminSession()
       setVerifiedOnce(false)
       setAdminState({

@@ -23,7 +23,8 @@ async function fetchByAuthor(slug) {
 }
 
 export default async function Page({ params }) {
-  const [{ author, posts }, siteData] = await Promise.all([fetchByAuthor(params?.slug), fetchCmsSiteData()])
+  const { slug } = await params
+  const [{ author, posts }, siteData] = await Promise.all([fetchByAuthor(slug), fetchCmsSiteData()])
   const uiCopy = siteData?.settings?.ui_copy && typeof siteData.settings.ui_copy === 'object'
     ? siteData.settings.ui_copy
     : {}

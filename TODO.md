@@ -1,33 +1,33 @@
-# Production Hardening - Prioritized Task List
+# E2E Admin Auth Fix — Task Progress
 
-## Audit Snapshot - 2026-07-28
-- [x] Reviewed current Git status and confirmed an already-dirty worktree
-- [x] Confirmed active stack is Next.js 14 App Router with mixed JS/TS and Supabase
-- [x] Confirmed README is stale and still describes an old Vite/React Router architecture
-- [x] Identified critical blockers in auth bootstrap, blog consistency, footer location links, FAQ rendering, and type-check readiness
+## Root cause (confirmed)
+The E2E runner (`e2e/utils.js`, `playwright.config.js`) loads env files in order
+`['.env.test.local', '.env.local', '.env']` with `override:false`, so
+`.env.test.local` (local disposable Supabase `127.0.0.1:54321`, email len 19 /
+pass len 11) wins over `.env.local` (staging Supabase
+`hhfccftkfryesjirauwf.supabase.co`, email len 23 / pass len 19).
 
-## Priority 1 - Build and Runtime Blockers
-- [x] Repair browser Supabase bootstrap so admin auth works when public env vars are missing from the bundle
-- [x] Fix the current TypeScript blocker in `lib/rateLimiter.ts`
-- [ ] Run `npm run build` to completion and fix remaining production build failures
-- [ ] Run lint and capture real results
+The Next.js server on port 3200 runs with `.env.local` (staging). The browser
+submits the `.env.test.local` credentials to the staging `/api/admin/login`,
+which returns `Invalid email or password.`.
 
-## Priority 2 - CMS to Public Consistency
-- [x] Unify public blog visibility rules and shared published-blog fetching
-- [x] Stop homepage latest-post logic from merging legacy fallback posts with CMS-published posts
-- [x] Switch homepage FAQ rendering back to valid CMS-managed FAQ items when available
-- [x] Fix footer location links so each label points to its own URL instead of a shared homepage/base URL
-- [ ] Audit homepage section duplication root cause and remove any real duplicate rendering path
+Verified:
+- `.env.local` staging creds login OK against `https://hhfccftkfryesjirauwf.supabase.co` (status 200).
+- `.env.test.local` creds OK only against local `127.0.0.1:54321`.
+- No server/credential mismatch after precedence fix.
 
-## Priority 3 - Security and Server Controls
-- [x] Keep admin/session APIs on runtime-loaded browser auth instead of a frozen null client
-- [ ] Review server-side permission coverage for key CMS write routes
-- [ ] Standardize API success/error response shapes across critical CMS routes
-- [ ] Verify no browser-exposed service-role usage remains
+## Steps
+- [x] Diagnose root cause
+- [x] Delete temporary debug/credential scripts
+- [x] Fix env loading precedence: `.env.local` first in `e2e/utils.js` + `playwright.config.js`
+- [x] Run focused auth suite — run #1: PASSED (6/6, `test-results/.last-run.json` status=passed)
+- [x] Run focused auth suite — run #2: PASSED (6/6, `test-results/.last-run.json` status=passed)
+- [x] Run focused auth suite — run #3: PASSED (6/6, `test-results/.last-run.json` status=passed, "6 passed (19.9s)")
+- [x] Three consecutive focused auth-suite runs achieved
+- [ ] Continue CMS workflow (pages publish-to-live, etc.)
+- [ ] Full E2E suite x2
+- [ ] Final security + git report
 
-## Priority 4 - Production Verification
-- [ ] Update production documentation to match the actual Next.js architecture
-- [ ] Run responsive and smoke tests on the main public and admin routes
-- [ ] Run E2E coverage for at least blog, homepage, and admin login flows
-- [ ] Produce final readiness report with only command-backed claims
+## Test command
+`npm run test:e2e -- --project=chromium e2e/admin-auth.spec.js --workers=1`
 

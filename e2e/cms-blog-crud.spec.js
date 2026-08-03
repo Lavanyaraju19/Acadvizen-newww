@@ -102,6 +102,14 @@ async function readPublicBody(browser, path) {
   }
 }
 
+async function fetchPublicResponse(path) {
+  const response = await fetch(new URL(path, process.env.E2E_BASE_URL || 'http://127.0.0.1:3200'), { redirect: 'manual' })
+  return {
+    status: response.status,
+    body: await response.text(),
+  }
+}
+
 test.describe('CMS Blog CRUD', () => {
   test.describe.configure({ mode: 'serial' })
   test.skip(!hasE2ECredentials, 'E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD are required for CMS blog CRUD tests')
@@ -121,7 +129,10 @@ test.describe('CMS Blog CRUD', () => {
 
     const supabase = createSupabaseAdminClient()
     const safetyConfig = destructiveCmsTestConfig
-    expect(safetyConfig.environment).toBe('staging')
+    expect(['staging', 'disposable']).toContain(safetyConfig.environment)
+    if (safetyConfig.environment === 'disposable') {
+      expect(safetyConfig.isDisposableLocal).toBe(true)
+    }
 
     const adminContext = await browser.newContext()
     const adminPage = await adminContext.newPage()
@@ -161,8 +172,10 @@ test.describe('CMS Blog CRUD', () => {
       await publicPage.goto('/blog', { waitUntil: 'domcontentloaded' })
       await expect(publicPage.getByText(initialTitle)).toHaveCount(0)
 
-      await publicPage.goto(`/blog/${baseSlug}`, { waitUntil: 'domcontentloaded' })
-      await expect(publicPage.getByText('Blog not found.')).toBeVisible()
+      const draftPublicResponse = await fetchPublicResponse(`/blog/${baseSlug}`)
+      expect([200, 404]).toContain(draftPublicResponse.status)
+      expect(draftPublicResponse.body).toMatch(/Blog not found\.|Page not found/)
+      expect(draftPublicResponse.body).not.toContain(initialTitle)
 
       expect(await readPublicBody(browser, '/sitemap.xml')).not.toContain(`/blog/${baseSlug}`)
 
@@ -178,13 +191,13 @@ test.describe('CMS Blog CRUD', () => {
         return blog?.status || ''
       }, { timeout: 15000 }).toBe('published')
 
+      await publicPage.goto(`/blog/${baseSlug}`, { waitUntil: 'domcontentloaded' })
+      await expect(publicPage.getByRole('heading', { name: initialTitle })).toBeVisible()
+
       await expect.poll(async () => {
         await publicPage.goto('/blog', { waitUntil: 'domcontentloaded' })
         return await publicPage.getByText(initialTitle).count()
       }, { timeout: 15000 }).toBeGreaterThan(0)
-
-      await publicPage.goto(`/blog/${baseSlug}`, { waitUntil: 'domcontentloaded' })
-      await expect(publicPage.getByRole('heading', { name: initialTitle })).toBeVisible()
 
       await expect.poll(async () => {
         return await readPublicBody(browser, '/sitemap.xml')
@@ -219,8 +232,10 @@ test.describe('CMS Blog CRUD', () => {
       await publicPage.goto('/blog', { waitUntil: 'domcontentloaded' })
       await expect(publicPage.getByText(updatedTitle)).toHaveCount(0)
 
-      await publicPage.goto(`/blog/${baseSlug}`, { waitUntil: 'domcontentloaded' })
-      await expect(publicPage.getByText('Blog not found.')).toBeVisible()
+      const unpublishedPublicResponse = await fetchPublicResponse(`/blog/${baseSlug}`)
+      expect([200, 404]).toContain(unpublishedPublicResponse.status)
+      expect(unpublishedPublicResponse.body).toMatch(/Blog not found\.|Page not found/)
+      expect(unpublishedPublicResponse.body).not.toContain(updatedTitle)
 
       await expect.poll(async () => {
         return await readPublicBody(browser, '/sitemap.xml')

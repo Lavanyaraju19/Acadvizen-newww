@@ -22,7 +22,7 @@ export async function GET(request) {
 
   const includeInactive = Boolean(adminAccess.context)
   const limit = parsePositiveInt(searchParams.get('limit'), 500)
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: includeInactive })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: includeInactive })
   if (response) return response
 
   let query = supabase
@@ -44,7 +44,7 @@ export async function POST(request) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await readJsonBody(request)

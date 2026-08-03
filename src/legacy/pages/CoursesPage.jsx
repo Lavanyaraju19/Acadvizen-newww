@@ -297,6 +297,9 @@ export function CoursesPage() {
           <div
             ref={projectSliderRef}
             className="relative z-10 mt-8 flex snap-x snap-mandatory gap-6 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            tabIndex={0}
+            role="region"
+            aria-label="Projects carousel"
           >
             {courseProjects.slice(0, 5).map((project) => (
               <ShowcaseWideCard
@@ -345,6 +348,9 @@ export function CoursesPage() {
             <div
               ref={caseStudySliderRef}
               className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              tabIndex={0}
+              role="region"
+              aria-label="Case studies carousel"
             >
               {courseCaseStudies.slice(0, 3).map((item) => (
                 <ShowcaseWideCard

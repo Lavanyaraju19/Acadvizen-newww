@@ -13,14 +13,34 @@ export interface CSRFConfig {
   allowMissingOrigin?: boolean
 }
 
-const DEFAULT_CONFIG: CSRFConfig = {
-  allowedOrigins: [
-    'http://localhost:3000',
+// The app's own configured URL must always be an allowed origin - a hardcoded list here
+// previously only matched port 3000 and the two production domains, so any other host/port
+// this app is actually served from (a different local dev port, a staging deployment, a
+// disposable test environment) would have every real-browser admin save rejected with a 403,
+// even though a same-origin browser request is exactly what CSRF protection is meant to allow.
+function getDefaultAllowedOrigins(): string[] {
+  const origins = new Set([
     'https://acadvizen.com',
     'https://www.acadvizen.com',
-  ],
-  requireReferer: false,
-  allowMissingOrigin: true,
+    'http://localhost:3000',
+  ])
+  for (const envVar of [process.env.NEXT_PUBLIC_APP_URL, process.env.NEXT_PUBLIC_SITE_URL]) {
+    if (!envVar) continue
+    try {
+      origins.add(new URL(envVar).origin)
+    } catch {
+      // Ignore an invalid/unset URL rather than failing CSRF setup.
+    }
+  }
+  return Array.from(origins)
+}
+
+function getDefaultConfig(): CSRFConfig {
+  return {
+    allowedOrigins: getDefaultAllowedOrigins(),
+    requireReferer: false,
+    allowMissingOrigin: true,
+  }
 }
 
 /**
@@ -71,7 +91,7 @@ export function validateCSRF(
   request: Request,
   config: Partial<CSRFConfig> = {}
 ): { passed: boolean; error?: string } {
-  const merged: CSRFConfig = { ...DEFAULT_CONFIG, ...config }
+  const merged: CSRFConfig = { ...getDefaultConfig(), ...config }
   const method = request.method.toUpperCase()
 
   // Safe methods don't need CSRF protection

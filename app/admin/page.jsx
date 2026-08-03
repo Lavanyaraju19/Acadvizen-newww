@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { 
   LayoutDashboard, 
@@ -45,6 +45,7 @@ export const dynamic = 'force-dynamic'
 export default function Page() {
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const notificationsRef = useRef(null)
   const [systemStatus, setSystemStatus] = useState({
     database: 'online',
     storage: 'online',
@@ -66,7 +67,7 @@ export default function Page() {
 
   useEffect(() => {
     loadNotifications()
-    // Check system status every 30 seconds
+    checkSystemStatus()
     const interval = setInterval(checkSystemStatus, 30000)
     return () => clearInterval(interval)
   }, [])
@@ -87,15 +88,38 @@ export default function Page() {
   }
 
   async function checkSystemStatus() {
-    // In production, this would check actual service status
-    // For now, it simulates the checks
-    setSystemStatus({
-      database: 'online',
-      storage: 'online',
-      auth: 'online',
+    const nextStatus = {
+      database: 'unknown',
+      storage: 'unknown',
+      auth: 'unknown',
       email: 'unknown',
-      api: 'online',
-    })
+      api: 'unknown',
+    }
+
+    try {
+      const health = await fetch('/api/health', { cache: 'no-store' })
+      nextStatus.api = health.ok ? 'online' : 'warning'
+    } catch {
+      nextStatus.api = 'offline'
+    }
+
+    try {
+      await adminApiFetch('/api/admin/session', { cache: 'no-store' })
+      nextStatus.auth = 'online'
+    } catch {
+      nextStatus.auth = 'offline'
+    }
+
+    try {
+      await adminApiFetch('/api/cms/health/scan', { cache: 'no-store' })
+      nextStatus.database = 'online'
+      nextStatus.storage = 'online'
+    } catch {
+      nextStatus.database = 'warning'
+      nextStatus.storage = 'warning'
+    }
+
+    setSystemStatus(nextStatus)
   }
 
   async function markNotificationAsRead(id) {
@@ -109,6 +133,29 @@ export default function Page() {
       console.error('Failed to mark notification as read:', error)
     }
   }
+
+  async function markAllNotificationsAsRead() {
+    if (!unreadCount) return
+    try {
+      await adminApiFetch('/api/admin/notifications', {
+        method: 'POST',
+      })
+      await loadNotifications()
+    } catch (error) {
+      console.error('Failed to mark notifications as read:', error)
+    }
+  }
+
+  function showNotifications() {
+    notificationsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const activityItems = notifications.slice(0, 5).map((notification) => ({
+    id: notification.id,
+    title: notification.title || 'Notification',
+    message: notification.message || '',
+    created_at: notification.created_at,
+  }))
 
   function getStatusColor(status) {
     if (status === 'online') return 'text-green-400'
@@ -142,6 +189,9 @@ export default function Page() {
           </a>
           <button
             type="button"
+            onClick={showNotifications}
+            data-testid="dashboard-notifications-button"
+            aria-label="Show notifications"
             className="relative p-2 rounded-lg border border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.05]"
           >
             <Bell className="w-5 h-5" />
@@ -263,7 +313,7 @@ export default function Page() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Notifications */}
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+        <div ref={notificationsRef} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-semibold text-slate-100 flex items-center gap-2">
               <Bell className="w-5 h-5 text-teal-400" />
@@ -272,6 +322,8 @@ export default function Page() {
             {unreadCount > 0 && (
               <button
                 type="button"
+                onClick={markAllNotificationsAsRead}
+                data-testid="dashboard-mark-all-notifications-read"
                 className="text-xs text-teal-300 hover:text-teal-200"
               >
                 Mark all read
@@ -324,32 +376,25 @@ export default function Page() {
             <Activity className="w-5 h-5 text-teal-400" />
             Recent Activity
           </h3>
-          <div className="space-y-2">
-            <div className="p-3 rounded-lg bg-white/[0.02] border border-white/10">
-              <div className="text-sm text-slate-300">
-                <span className="font-medium text-slate-200">System</span> ran health scan
-              </div>
-              <div className="text-xs text-slate-500 mt-1">Just now</div>
+          {activityItems.length === 0 ? (
+            <div className="text-center text-slate-400 text-sm py-8">
+              No recent activity
             </div>
-            <div className="p-3 rounded-lg bg-white/[0.02] border border-white/10">
-              <div className="text-sm text-slate-300">
-                <span className="font-medium text-slate-200">Admin</span> updated settings
-              </div>
-              <div className="text-xs text-slate-500 mt-1">5 minutes ago</div>
+          ) : (
+            <div className="space-y-2">
+              {activityItems.map((item) => (
+                <div key={item.id} className="p-3 rounded-lg bg-white/[0.02] border border-white/10">
+                  <div className="text-sm text-slate-300">
+                    <span className="font-medium text-slate-200">{item.title}</span>
+                    {item.message ? ` ${item.message}` : ''}
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    {item.created_at ? new Date(item.created_at).toLocaleString() : 'Time unavailable'}
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="p-3 rounded-lg bg-white/[0.02] border border-white/10">
-              <div className="text-sm text-slate-300">
-                <span className="font-medium text-slate-200">Editor</span> created new blog post
-              </div>
-              <div className="text-xs text-slate-500 mt-1">1 hour ago</div>
-            </div>
-            <div className="p-3 rounded-lg bg-white/[0.02] border border-white/10">
-              <div className="text-sm text-slate-300">
-                <span className="font-medium text-slate-200">Backup</span> completed successfully
-              </div>
-              <div className="text-xs text-slate-500 mt-1">2 hours ago</div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </Surface>

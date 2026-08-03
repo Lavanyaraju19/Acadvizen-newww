@@ -1,302 +1,118 @@
+import { NextResponse } from 'next/server'
+import { getEntityConfig, sanitizeEntityPayload } from '../../../../lib/cmsEntities'
+import { validateEntity } from '../../../../lib/validation'
 import {
+  requireAdminContext,
   getSupabaseClientOrResponse,
   getOptionalAdminContext,
-  requireAdminContext,
   jsonError,
   jsonOk,
-  revalidateAllCmsPages,
-  revalidateCmsPaths,
   parsePositiveInt,
+  revalidateCmsMutation,
   readJsonBody,
 } from '../_utils'
-import { convertPlainTextToBlocks, normalizeInlineImages } from '../../../../lib/blogContent'
+import { hasProfilePermission } from '../../../../lib/adminPermissions'
+import {
+  assertSlugAvailable,
+  buildCmsMutationMeta,
+  buildPublishFields,
+  getCanonicalPublicUrl,
+  normalizeCmsSlug,
+  normalizeCmsStatus,
+} from '../../../../lib/cmsPublishing'
 
 export const dynamic = 'force-dynamic'
 
-function logBlogError(message, error, meta = {}) {
-  console.error(`[cms/blogs] ${message}`, {
-    error: error?.message || error,
-    ...meta,
-  })
-}
-
-function sanitizeSlug(value = '') {
-  return String(value || '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)+/g, '')
-}
-
-function normalizeList(value) {
-  if (Array.isArray(value)) {
-    return value.map((item) => String(item || '').trim()).filter(Boolean)
-  }
-  if (typeof value === 'string') {
-    return value
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean)
-  }
-  return []
-}
-
-function normalizeBlocks(value) {
-  if (!Array.isArray(value)) return []
-  return value
-    .map((block, index) => ({
-      order_index: Number.isFinite(Number(block?.order_index)) ? Number(block.order_index) : index,
-      block_type: String(block?.block_type || block?.type || 'paragraph'),
-      content_json: block?.content_json && typeof block.content_json === 'object' ? block.content_json : {},
-    }))
-    .filter((block) => block.block_type)
-}
-
-function mergeContentJson(body, { existingContentJson = null, normalizedBlocks = null, inlineImages = null } = {}) {
-  const next =
-    body?.content_json && typeof body.content_json === 'object'
-      ? { ...body.content_json }
-      : existingContentJson && typeof existingContentJson === 'object'
-        ? { ...existingContentJson }
-        : {}
-
-  if (normalizedBlocks !== null) {
-    if (normalizedBlocks.length) next.blocks = normalizedBlocks
-    else delete next.blocks
-  }
-
-  if (inlineImages !== null) {
-    if (inlineImages.some(Boolean)) next.inline_images = inlineImages
-    else delete next.inline_images
-  }
-
-  return Object.keys(next).length ? next : null
-}
-
-function buildBlogWriteInput(body, { existingContentJson = null } = {}) {
-  if (!body || typeof body !== 'object') {
-    return { error: 'Invalid request body.' }
-  }
-
-  const title = String(body.title || '').trim()
-  const slug = sanitizeSlug(body.slug || title)
-
-  if (!title) return { error: 'title is required.' }
-  if (!slug) return { error: 'slug is required.' }
-
-  const shouldAutoGenerateBlocks = body.auto_generate_blocks === true
-  const inlineImages =
-    'inline_images' in body || shouldAutoGenerateBlocks || Array.isArray(body?.content_json?.inline_images)
-      ? normalizeInlineImages(body.inline_images || body?.content_json?.inline_images || [])
-      : null
-
-  const normalizedBlocks = shouldAutoGenerateBlocks
-    ? normalizeBlocks(convertPlainTextToBlocks(body.content || '', { inlineImages: inlineImages || [] }))
-    : ('blocks' in body || Array.isArray(body?.content_json?.blocks)
-      ? normalizeBlocks(body.blocks ?? body.content_json?.blocks ?? [])
-      : null)
-
-  const status = body.status === 'published' ? 'published' : 'draft'
-  const contentJson = mergeContentJson(body, {
-    existingContentJson,
-    normalizedBlocks,
-    inlineImages,
-  })
-
-  return {
-    payload: {
-      title,
-      slug,
-      description: body.description || body.excerpt || null,
-      content: body.content || null,
-      content_json: contentJson,
-      featured_image: body.featured_image || null,
-      seo_title: body.seo_title || null,
-      seo_description: body.seo_description || null,
-      author_id: body.author_id || null,
-      og_image: body.og_image || null,
-      noindex: body.noindex === true,
-      faq_schema: body.faq_schema && typeof body.faq_schema === 'object' ? body.faq_schema : null,
-      tags: normalizeList(body.tags),
-      categories: normalizeList(body.categories),
-      status,
-      published_at: status === 'published' ? body.published_at || new Date().toISOString() : body.published_at || null,
-    },
-    normalizedBlocks,
-  }
-}
-
-async function ensureUniqueSlug(supabase, slug, excludeId = '') {
-  const nextSlug = sanitizeSlug(slug)
-  if (!nextSlug) return null
-
-  let query = supabase.from('blogs').select('id,slug').eq('slug', nextSlug).limit(1)
-  if (excludeId) query = query.neq('id', excludeId)
-  const { data, error } = await query.maybeSingle()
-
-  if (error) {
-    logBlogError('Slug lookup failed.', error, { slug: nextSlug, excludeId })
-    throw new Error(`Failed to validate the blog slug: ${error.message}`)
-  }
-
-  return data || null
-}
-
-async function attachBlocks(supabase, blogs, includeBlocks) {
-  if (!includeBlocks || !Array.isArray(blogs) || !blogs.length) return blogs
-  const ids = blogs.map((blog) => blog.id).filter(Boolean)
-  if (!ids.length) return blogs
-
-  const { data: blocks, error } = await supabase
-    .from('blog_content_blocks')
-    .select('*')
-    .in('blog_id', ids)
-    .order('order_index', { ascending: true })
-
-  if (error) {
-    logBlogError('Block lookup failed.', error, { ids })
-    return blogs.map((blog) => ({
-      ...blog,
-      blocks: Array.isArray(blog?.content_json?.blocks) ? blog.content_json.blocks : [],
-    }))
-  }
-
-  const grouped = (blocks || []).reduce((acc, block) => {
-    if (!acc[block.blog_id]) acc[block.blog_id] = []
-    acc[block.blog_id].push(block)
-    return acc
-  }, {})
-
-  return blogs.map((blog) => ({
-    ...blog,
-    blocks: grouped[blog.id] || (Array.isArray(blog?.content_json?.blocks) ? blog.content_json.blocks : []),
-  }))
-}
-
-async function replaceBlogBlocks(supabase, blogId, blocks) {
-  const normalized = normalizeBlocks(blocks)
-  const { error: deleteError } = await supabase.from('blog_content_blocks').delete().eq('blog_id', blogId)
-  if (deleteError) {
-    logBlogError('Failed to clear previous blog blocks.', deleteError, { blogId })
-    throw new Error(`Failed to replace blog blocks: ${deleteError.message}`)
-  }
-
-  if (!normalized.length) return
-
-  const payload = normalized.map((block) => ({
-    blog_id: blogId,
-    order_index: block.order_index,
-    block_type: block.block_type,
-    content_json: block.content_json,
-  }))
-
-  const { error: insertError } = await supabase.from('blog_content_blocks').insert(payload)
-  if (insertError) {
-    logBlogError('Failed to insert blog blocks.', insertError, { blogId, count: payload.length })
-    throw new Error(`Failed to save blog blocks: ${insertError.message}`)
-  }
-}
+const ENTITY = 'blogs'
+const config = getEntityConfig(ENTITY)
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url)
-  const wantsDrafts = searchParams.get('include_drafts') === '1'
-  const adminAccess = wantsDrafts
-    ? await getOptionalAdminContext(request, { resource: 'blogs', action: 'read' })
-    : { context: null, response: null }
-  if (adminAccess.response) return adminAccess.response
+  try {
+    const adminAccess = await getOptionalAdminContext(request)
+    if (adminAccess.response) return adminAccess.response
+    const isAdmin = Boolean(adminAccess.context)
+    const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: isAdmin })
+    if (response) return response
 
-  const includeDrafts = Boolean(adminAccess.context)
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: includeDrafts })
-  if (response) return response
+    const { searchParams } = new URL(request.url)
+    const limit = parsePositiveInt(searchParams.get('limit'), 250)
+    const slug = searchParams.get('slug')
+    const status = searchParams.get('status')
 
-  const slug = searchParams.get('slug')
-  const id = searchParams.get('id')
-  const includeBlocks = searchParams.get('include_blocks') === '1' || Boolean(slug || id)
-  const limit = parsePositiveInt(searchParams.get('limit'), 100)
+    let query = supabase.from('blogs').select('*').limit(limit || 250).order('published_at', { ascending: false })
+    if (slug) query = query.eq('slug', normalizeCmsSlug(slug))
+    if (status && isAdmin) query = query.eq('status', normalizeCmsStatus(status))
+    if (!isAdmin) query = query.eq('status', 'published')
 
-  let query = supabase.from('blogs').select('*').order('updated_at', { ascending: false }).limit(limit || 100)
-  if (!includeDrafts) query = query.eq('status', 'published')
-  if (slug) query = query.eq('slug', sanitizeSlug(slug))
-  if (id) query = query.eq('id', id)
-
-  const { data, error } = await query
-  if (error) {
-    logBlogError('Blog lookup failed.', error, { slug, id, includeDrafts, limit })
-    return jsonError(`Database query failed: ${error.message}`, 500, [])
+    const { data, error } = await query
+    if (error) return jsonError(`Database query failed: ${error.message}`, 500, [])
+    return jsonOk(data || [])
+  } catch (error) {
+    return jsonError(`Internal server error: ${error.message}`, 500, [])
   }
-
-  const withBlocks = await attachBlocks(supabase, data || [], includeBlocks)
-  return jsonOk(withBlocks || [])
 }
 
 export async function POST(request) {
-  const adminAccess = await requireAdminContext(request, { resource: 'blogs', action: 'create' })
-  if (adminAccess.response) return adminAccess.response
-
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
-  if (response) return response
-
-  const body = await readJsonBody(request)
-  const existingId = String(body?.id || '').trim()
-  const { data: existingBlog, error: existingBlogError } = existingId
-    ? await supabase.from('blogs').select('id,slug,content_json').eq('id', existingId).maybeSingle()
-    : { data: null, error: null }
-
-  if (existingBlogError) {
-    logBlogError('Existing blog lookup failed.', existingBlogError, { id: existingId })
-    return jsonError(`Failed to load the existing blog: ${existingBlogError.message}`, 500)
-  }
-  if (existingId && !existingBlog) {
-    return jsonError('The blog you are trying to update no longer exists.', 404)
-  }
-
-  const writeInput = buildBlogWriteInput(body, { existingContentJson: existingBlog?.content_json || null })
-  if (writeInput.error) return jsonError(writeInput.error, 400)
-
-  const { payload, normalizedBlocks } = writeInput
-  if (payload.status === 'published') {
-    const publishAccess = await requireAdminContext(request, { resource: 'blogs', action: 'publish' })
-    if (publishAccess.response) return publishAccess.response
-  }
-
-  const roleSlugs = new Set(adminAccess.context.profile?.effective_role_slugs || [])
-  if (roleSlugs.has('author') && !adminAccess.context.profile?.is_full_admin) {
-    payload.author_id = adminAccess.context.user.id
-  }
-
   try {
-    const conflict = await ensureUniqueSlug(supabase, payload.slug, existingId)
-    if (conflict) {
-      return jsonError(`A blog with slug "${payload.slug}" already exists.`, 409)
+    const { context: adminContext, response: unauthorized } = await requireAdminContext(request)
+    if (unauthorized) return unauthorized
+
+    const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
+    if (response) return response
+
+    const body = await readJsonBody(request)
+    if (!body || typeof body !== 'object') return jsonError('Invalid request body.', 400)
+
+    const validation = validateEntity('blogs', body)
+    if (!validation.valid) return jsonError(validation.errors.join('; '), 400)
+
+    const payload = sanitizeEntityPayload(body, config)
+    if (!Object.keys(payload).length) return jsonError('No writable fields provided.', 400)
+
+    if (!body.id && adminContext?.user?.id) {
+      payload.created_by = adminContext.user.id
     }
+
+    if (normalizeCmsStatus(payload.status) === 'published' && !hasProfilePermission(adminContext.profile, 'blogs', 'publish')) {
+      return jsonError('This account does not have permission to publish blogs.', 403)
+    }
+
+    if (payload.slug || (!body.id && body.title)) {
+      const nextSlug = normalizeCmsSlug(payload.slug || body.title)
+      try {
+        await assertSlugAvailable(supabase, {
+          table: 'blogs',
+          slug: nextSlug,
+          slugField: 'slug',
+          currentId: body.id || '',
+          contentType: 'blog',
+        })
+      } catch (error) {
+        return jsonError(error.message, error.status || 500)
+      }
+      payload.slug = nextSlug
+    }
+
+    if ('status' in payload) {
+      Object.assign(payload, buildPublishFields({
+        nextStatus: normalizeCmsStatus(payload.status),
+        existing: {},
+        requestedPublishedAt: body.published_at,
+      }))
+    }
+
+    const upsertPayload = { ...payload, id: body.id || undefined }
+    const { data, error } = await supabase.from('blogs').upsert(upsertPayload, { onConflict: 'id' }).select('*').single()
+    if (error) return jsonError(`Failed to save blog: ${error.message}`, 500)
+
+    const slugValue = data?.slug || ''
+    const revalidation = revalidateCmsMutation('blog', { slug: slugValue })
+    const responseData = slugValue ? { ...data, canonical_public_url: getCanonicalPublicUrl('blog', slugValue) } : data
+    if (!revalidation.ok) {
+      return jsonError('Blog saved, but cache revalidation failed. Please retry publishing.', 500, responseData)
+    }
+    return jsonOk(responseData, { publication: buildCmsMutationMeta('blog', responseData, revalidation) })
   } catch (error) {
-    return jsonError(error?.message || 'Unable to validate the blog slug.', 500)
-  }
-
-  try {
-    const query = existingId
-      ? supabase.from('blogs').update(payload).eq('id', existingId).select('*').single()
-      : supabase.from('blogs').insert(payload).select('*').single()
-
-    const { data, error } = await query
-    if (error) {
-      logBlogError('Blog write failed.', error, { id: existingId || null, slug: payload.slug })
-      return jsonError(`Failed to save blog: ${error.message}`, 500)
-    }
-
-    if (normalizedBlocks !== null) {
-      await replaceBlogBlocks(supabase, data.id, normalizedBlocks)
-    }
-
-    const [withBlocks] = await attachBlocks(supabase, [data], true)
-    revalidateCmsPaths(['/blog', `/blog/${existingBlog?.slug || data.slug}`, `/blog/${data.slug}`, '/sitemap.xml'])
-    revalidateAllCmsPages(['/blog', '/sitemap.xml'])
-    return jsonOk(withBlocks || data)
-  } catch (error) {
-    logBlogError('Unhandled blog save failure.', error, {
-      id: existingId || null,
-      slug: payload.slug,
-    })
-    return jsonError(error?.message || 'Failed to save blog.', 500)
+    return jsonError(`Internal server error: ${error.message}`, 500)
   }
 }

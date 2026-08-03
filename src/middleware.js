@@ -71,6 +71,84 @@ async function fetchPublicRedirect(pathname) {
   }
 }
 
+function isSingleCmsSlugPath(pathname = '') {
+  const segments = String(pathname || '').split('/').filter(Boolean)
+  if (segments.length !== 1) return false
+  const slug = segments[0]
+  if (!slug || slug.includes('.')) return false
+  const reserved = new Set([
+    'about',
+    'achievements',
+    'admin',
+    'admin-login',
+    'api',
+    'blog',
+    'contact',
+    'courses',
+    'dashboard',
+    'forgot-password',
+    'hire-from-us',
+    'login',
+    'maintenance',
+    'placement',
+    'privacy-policy',
+    'projects',
+    'register',
+    'sales',
+    'soft-skills',
+    'terms-of-service',
+    'testimonials',
+    'tools',
+  ])
+  return !reserved.has(slug)
+}
+
+async function fetchCmsPagePrivacy(pathname) {
+  if (!isSingleCmsSlugPath(pathname)) return null
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || ''
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  const anonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
+  const key = serviceKey || anonKey
+  if (!supabaseUrl || !key) return null
+
+  const slug = pathname.replace(/^\/+|\/+$/g, '')
+  const url = new URL('/rest/v1/pages', supabaseUrl)
+  url.searchParams.set('select', 'id,slug,status')
+  url.searchParams.set('slug', `eq.${slug}`)
+  url.searchParams.set('limit', '1')
+
+  const response = await fetch(url, {
+    headers: {
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+    },
+    cache: 'no-store',
+  })
+  if (!response.ok) return null
+
+  const rows = await response.json().catch(() => [])
+  const page = Array.isArray(rows) ? rows[0] : null
+  if (!page?.id) return null
+  return {
+    exists: true,
+    published: String(page.status || '').toLowerCase() === 'published',
+  }
+}
+
+function cmsNotFoundResponse() {
+  return new Response('Page not found', {
+    status: 404,
+    headers: {
+      'content-type': 'text/plain; charset=utf-8',
+      'x-robots-tag': 'noindex',
+    },
+  })
+}
+
 export default async function middleware(request) {
   const { pathname, search } = request.nextUrl
   const method = request.method.toUpperCase()
@@ -91,6 +169,11 @@ export default async function middleware(request) {
   }
 
   try {
+    const cmsPrivacy = await fetchCmsPagePrivacy(pathname)
+    if (cmsPrivacy?.exists && !cmsPrivacy.published) {
+      return cmsNotFoundResponse()
+    }
+
     const redirectRule = await fetchPublicRedirect(pathname)
     if (!redirectRule?.toPath || redirectRule.toPath === pathname) {
       return NextResponse.next()

@@ -8,7 +8,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 const ADMIN_EMAIL = 'operation@acadvizen.com'
-const ADMIN_PASSWORD = 'Admin@Acadvizen2026'
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error('Missing env vars: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.')

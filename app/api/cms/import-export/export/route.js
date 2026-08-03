@@ -15,7 +15,7 @@ export async function GET(request) {
   const type = searchParams.get('type')
   const format = searchParams.get('format') || 'json'
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   try {

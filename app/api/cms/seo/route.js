@@ -13,7 +13,7 @@ import {
 export const dynamic = 'force-dynamic'
 
 export async function GET(request) {
-  const { supabase, response } = getSupabaseClientOrResponse()
+  const { supabase, response } = await getSupabaseClientOrResponse()
   if (response) return response
 
   const { searchParams } = new URL(request.url)
@@ -36,7 +36,7 @@ export async function POST(request) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await readJsonBody(request)

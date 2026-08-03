@@ -12,6 +12,8 @@ export function StudentDashboard() {
   const [enrollments, setEnrollments] = useState([])
   const [tools, setTools] = useState([])
   const [resources, setResources] = useState([])
+  const [curriculum, setCurriculum] = useState({})
+  const [expandedModuleId, setExpandedModuleId] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -51,8 +53,39 @@ export function StudentDashboard() {
         .order('created_at', { ascending: false })
         .limit(20)
       if (resData) setResources(resData)
+
+      const { data: moduleData } = await supabase
+        .from('lms_modules')
+        .select('*')
+        .in('course_id', courseIds)
+        .order('order_index', { ascending: true })
+
+      if (moduleData && moduleData.length > 0) {
+        const moduleIds = moduleData.map((m) => m.id)
+        const { data: lessonData } = await supabase
+          .from('lms_lessons')
+          .select('*')
+          .in('module_id', moduleIds)
+          .order('order_index', { ascending: true })
+
+        const lessonsByModule = {}
+        for (const lesson of lessonData || []) {
+          if (!lessonsByModule[lesson.module_id]) lessonsByModule[lesson.module_id] = []
+          lessonsByModule[lesson.module_id].push(lesson)
+        }
+
+        const byCourse = {}
+        for (const lmsModule of moduleData) {
+          if (!byCourse[lmsModule.course_id]) byCourse[lmsModule.course_id] = []
+          byCourse[lmsModule.course_id].push({ ...lmsModule, lessons: lessonsByModule[lmsModule.id] || [] })
+        }
+        setCurriculum(byCourse)
+      } else {
+        setCurriculum({})
+      }
     } else {
       setResources([])
+      setCurriculum({})
     }
 
     setLoading(false)
@@ -141,6 +174,65 @@ export function StudentDashboard() {
               </div>
             )}
           </div>
+
+          {enrollments.some((course) => (curriculum[course.id] || []).length > 0) && (
+            <div className="mb-10">
+              <h2 className="text-xl md:text-2xl font-semibold text-slate-50 mb-4">Course Curriculum</h2>
+              <div className="space-y-6">
+                {enrollments
+                  .filter((course) => (curriculum[course.id] || []).length > 0)
+                  .map((course) => (
+                    <Surface key={course.id} className="p-6">
+                      <h3 className="text-lg font-semibold text-slate-50">{course.title}</h3>
+                      <div className="mt-4 space-y-2">
+                        {curriculum[course.id].map((lmsModule) => (
+                          <div key={lmsModule.id} className="rounded-xl border border-white/10 bg-white/[0.02]">
+                            <button
+                              type="button"
+                              onClick={() => setExpandedModuleId((prev) => (prev === lmsModule.id ? '' : lmsModule.id))}
+                              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+                            >
+                              <span className="text-sm font-semibold text-slate-100">{lmsModule.title}</span>
+                              <span className="text-xs text-slate-400">
+                                {(lmsModule.lessons || []).length} lesson{(lmsModule.lessons || []).length === 1 ? '' : 's'}
+                                {expandedModuleId === lmsModule.id ? ' −' : ' +'}
+                              </span>
+                            </button>
+                            {expandedModuleId === lmsModule.id && (
+                              <div className="border-t border-white/10 px-4 py-3 space-y-3">
+                                {lmsModule.description && <p className="text-xs text-slate-400">{lmsModule.description}</p>}
+                                {(lmsModule.lessons || []).length === 0 ? (
+                                  <p className="text-xs text-slate-500">No lessons published in this module yet.</p>
+                                ) : (
+                                  lmsModule.lessons.map((lesson) => (
+                                    <div key={lesson.id} className="rounded-lg bg-white/[0.02] px-3 py-2">
+                                      <p className="text-sm font-medium text-slate-100">{lesson.title}</p>
+                                      {lesson.content && (
+                                        <p className="mt-1 text-xs text-slate-300 line-clamp-3">{lesson.content}</p>
+                                      )}
+                                      {lesson.file_url && (
+                                        <a
+                                          href={lesson.file_url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="mt-2 inline-block text-xs font-semibold text-teal-300 hover:text-teal-200"
+                                        >
+                                          Open lesson material -&gt;
+                                        </a>
+                                      )}
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </Surface>
+                  ))}
+              </div>
+            </div>
+          )}
 
           <div className="mb-10">
             <h2 className="text-xl md:text-2xl font-semibold text-slate-50 mb-4">Available Tools</h2>

@@ -13,7 +13,7 @@ export async function POST(request, { params }) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const { id, versionId } = params
@@ -30,10 +30,12 @@ export async function POST(request, { params }) {
   }
 
   // Update the page with version data
+  // Note: page_versions stores the snapshot under `content_json`, but the pages
+  // table's own jsonb content column is named `content`.
   const { data: page, error: updateError } = await supabase
     .from('pages')
     .update({
-      content_json: version.content_json,
+      content: version.content_json,
       seo_title: version.seo_title,
       seo_description: version.seo_description,
       status: version.status,

@@ -76,7 +76,7 @@ export async function GET(request) {
   const unauthorized = await ensureAdmin(request, { resource: 'leads', action: 'read' })
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const { searchParams } = new URL(request.url)
@@ -92,7 +92,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const { supabase, response } = getSupabaseClientOrResponse()
+  const { supabase, response } = await getSupabaseClientOrResponse()
   if (response) return response
 
   const body = await readJsonBody(request)

@@ -22,7 +22,7 @@ async function fetchByCategory(slug) {
 }
 
 export default async function Page({ params }) {
-  const slug = params?.slug
+  const { slug } = await params
   const [items, siteData] = await Promise.all([fetchByCategory(slug), fetchCmsSiteData()])
   const uiCopy = siteData?.settings?.ui_copy && typeof siteData.settings.ui_copy === 'object'
     ? siteData.settings.ui_copy

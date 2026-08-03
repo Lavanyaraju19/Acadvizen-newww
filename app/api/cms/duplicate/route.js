@@ -3,7 +3,13 @@ import {
   getSupabaseClientOrResponse,
   jsonError,
   jsonOk,
+  revalidateCmsMutation,
 } from '../_utils'
+import {
+  assertSlugAvailable,
+  buildCmsMutationMeta,
+  normalizeCmsSlug,
+} from '../../../../lib/cmsPublishing'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,7 +17,7 @@ export async function POST(request) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await request.json()
@@ -47,12 +53,23 @@ export async function POST(request) {
     if (!original) throw new Error('Original item not found')
 
     // Generate new slug
-    newSlug = `${original.slug}-copy`
+    newSlug = normalizeCmsSlug(`${original.slug || original.title || original.name}-copy`)
     
     // Check if slug exists, if so add timestamp
-    const { data: existing } = await supabase.from(table).select('id').eq('slug', newSlug).single()
-    if (existing) {
-      newSlug = `${original.slug}-copy-${Date.now()}`
+    try {
+      await assertSlugAvailable(supabase, {
+        table,
+        slug: newSlug,
+        contentType: type,
+      })
+    } catch (error) {
+      if (error.status !== 409) throw error
+      newSlug = normalizeCmsSlug(`${original.slug || original.title || original.name}-copy-${Date.now()}`)
+      await assertSlugAvailable(supabase, {
+        table,
+        slug: newSlug,
+        contentType: type,
+      })
     }
 
     // Remove id and create new record
@@ -64,8 +81,10 @@ export async function POST(request) {
     const { data: newItem, error } = await supabase.from(table).insert(itemData).select('*').single()
     if (error) throw error
 
-    return jsonOk(newItem)
+    const contentType = type === 'city' ? 'city_page' : type
+    const revalidation = revalidateCmsMutation(contentType, { slug: newItem?.slug })
+    return jsonOk(newItem, { publication: buildCmsMutationMeta(contentType, newItem, revalidation) })
   } catch (error) {
-    return jsonError(`Duplication failed: ${error.message}`, 200)
+    return jsonError(`Duplication failed: ${error.message}`, error.status || 500)
   }
 }

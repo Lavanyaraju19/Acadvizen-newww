@@ -19,7 +19,7 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url)
     const includeDrafts = searchParams.get('include_drafts') === '1'
-    const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: includeDrafts })
+    const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: includeDrafts })
     if (response) return response
 
     const limit = parseInt(searchParams.get('limit') || '100')
@@ -44,7 +44,7 @@ export async function POST(request) {
     const unauthorized = await ensureAdmin(request)
     if (unauthorized) return unauthorized
 
-    const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+    const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
     if (response) return response
 
     const body = await readJsonBody(request)

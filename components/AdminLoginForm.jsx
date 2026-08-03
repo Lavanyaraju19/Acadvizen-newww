@@ -62,7 +62,7 @@ export default function AdminLoginForm() {
         <h1 className="text-2xl font-semibold text-slate-50">Admin Login</h1>
         <p className="mt-2 text-sm text-slate-400">Sign in with your Supabase admin account.</p>
 
-        <form className="mt-6 space-y-4" onSubmit={handleLogin}>
+        <form className="mt-6 space-y-4" onSubmit={handleLogin} data-testid="admin-login-form">
           <div>
             <label className="block text-xs uppercase tracking-[0.2em] text-slate-400" htmlFor="admin-email">
               Email
@@ -71,6 +71,7 @@ export default function AdminLoginForm() {
               id="admin-email"
               name="email"
               type="email"
+              data-testid="admin-email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-300"
@@ -85,6 +86,7 @@ export default function AdminLoginForm() {
               id="admin-password"
               name="password"
               type="password"
+              data-testid="admin-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-300"
@@ -94,6 +96,7 @@ export default function AdminLoginForm() {
           {error && <div className="text-sm text-rose-300">{error}</div>}
           <button
             type="submit"
+            data-testid="admin-login-submit"
             disabled={loading}
             className="w-full rounded-xl bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-200 disabled:opacity-70"
           >

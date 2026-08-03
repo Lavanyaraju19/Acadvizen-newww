@@ -3,7 +3,7 @@ const path = require('node:path')
 const dotenv = require('dotenv')
 const { defineConfig, devices } = require('@playwright/test')
 
-const envFiles = ['.env.test.local', '.env.local', '.env']
+const envFiles = ['.env.local', '.env.test.local', '.env']
 for (const envFile of envFiles) {
   const envPath = path.join(__dirname, envFile)
   if (fs.existsSync(envPath)) {

@@ -78,7 +78,7 @@ export function ProjectsPage() {
               </div>
             </div>
 
-            <div ref={projectSliderRef} className="mt-9 flex snap-x snap-mandatory gap-6 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div ref={projectSliderRef} className="mt-9 flex snap-x snap-mandatory gap-6 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" tabIndex={0} role="region" aria-label="Projects carousel">
               {courseProjects.map((project) => (
                 <ShowcaseWideCard
                   key={`${project.projectLabel}-${project.title}`}
@@ -132,7 +132,7 @@ export function ProjectsPage() {
             </div>
 
             <div className="relative z-10 mt-9">
-              <div ref={caseStudySliderRef} className="flex snap-x snap-mandatory gap-6 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div ref={caseStudySliderRef} className="flex snap-x snap-mandatory gap-6 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" tabIndex={0} role="region" aria-label="Case studies carousel">
                 {courseCaseStudies.map((item) => (
                   <ShowcaseWideCard
                     key={`${item.caseStudyLabel}-${item.title}`}

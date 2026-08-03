@@ -17,6 +17,7 @@ export default function Page() {
         entity="companies"
         title="Company Profiles"
         subtitle="Create, update, and remove company records with logos, hiring status, and links."
+        publicUrlPattern="/companies/{slug}"
         fields={[
           { key: 'company_name', label: 'Company Name' },
           { key: 'logo', label: 'Logo', type: 'file', bucket: 'site-assets', accept: 'image/*' },
@@ -24,6 +25,7 @@ export default function Page() {
           { key: 'website_url', label: 'Website URL', full: true },
           { key: 'hiring_status', label: 'Hiring Status' },
           { key: 'is_featured', label: 'Featured', type: 'checkbox' },
+          { key: 'is_active', label: 'Published (visible on /companies)', type: 'checkbox' },
         ]}
       />
     </Surface>

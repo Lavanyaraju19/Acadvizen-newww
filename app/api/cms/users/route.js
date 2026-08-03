@@ -41,7 +41,7 @@ export async function GET(request) {
     if (unauthorized) return unauthorized
 
     const { searchParams } = new URL(request.url)
-    const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+    const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
     if (response) return response
 
     const limit = parseInt(searchParams.get('limit') || '100')
@@ -78,7 +78,7 @@ export async function POST(request) {
     const unauthorized = await ensureAdmin(request, { resource: 'users', action: 'create' })
     if (unauthorized) return unauthorized
 
-    const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+    const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
     if (response) return response
 
     const body = await readJsonBody(request)

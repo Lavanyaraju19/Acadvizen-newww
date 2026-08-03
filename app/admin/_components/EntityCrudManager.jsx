@@ -68,6 +68,8 @@ export default function EntityCrudManager({
   showDelete = true,
   compact = false,
   pageSize = 10,
+  publicUrlPattern = '',
+  slugKey = 'slug',
 }) {
   const [items, setItems] = useState([])
   const [selectedId, setSelectedId] = useState('')
@@ -79,6 +81,7 @@ export default function EntityCrudManager({
   const [page, setPage] = useState(1)
 
   const selected = useMemo(() => items.find((item) => item.id === selectedId) || null, [items, selectedId])
+  const liveUrl = publicUrlPattern && selected?.[slugKey] ? publicUrlPattern.replace('{slug}', selected[slugKey]) : ''
   const filteredItems = useMemo(() => {
     const query = search.trim().toLowerCase()
     if (!query) return items
@@ -389,6 +392,16 @@ export default function EntityCrudManager({
               >
                 Delete
               </button>
+            ) : null}
+            {liveUrl ? (
+              <a
+                href={liveUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-lg border border-teal-400/30 px-3 py-2 text-xs text-teal-200 hover:bg-teal-400/10"
+              >
+                View live &#8599;
+              </a>
             ) : null}
           </div>
         </form>

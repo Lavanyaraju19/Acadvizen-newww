@@ -9,6 +9,15 @@ function extractProjectRef(url: string) {
   }
 }
 
+function isLocalSupabaseUrl(url: string) {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase()
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1'
+  } catch {
+    return false
+  }
+}
+
 function decodeJwtPayload(token: string) {
   try {
     const parts = token.split('.')
@@ -19,24 +28,44 @@ function decodeJwtPayload(token: string) {
   }
 }
 
-function keyMatchesProject(url: string, key: string) {
-  const projectRef = extractProjectRef(url)
-  if (!projectRef || !key) return false
+function keyMatchesProject(url: string, key: string, expectedRole?: string) {
+  if (!url || !key) return false
   const payload = decodeJwtPayload(key)
-  return payload?.ref === projectRef
+  if (!payload) return false
+
+  if (expectedRole && payload.role !== expectedRole) return false
+
+  if (isLocalSupabaseUrl(url)) {
+    return true
+  }
+
+  const projectRef = extractProjectRef(url)
+  if (!projectRef) return false
+  return payload.ref === projectRef
 }
 
 export function hasValidSupabaseAnonKey() {
-  return keyMatchesProject(SUPABASE_URL, SUPABASE_ANON_KEY)
+  return keyMatchesProject(SUPABASE_URL, SUPABASE_ANON_KEY, 'anon')
 }
 
 export function hasValidSupabaseServiceRoleKey() {
-  return keyMatchesProject(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+  return keyMatchesProject(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, 'service_role')
 }
 
 type ServerClientOptions = {
   authToken?: string | null
   preferServiceRole?: boolean
+}
+
+function noStoreSupabaseFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+  return fetch(input, {
+    ...init,
+    cache: 'no-store',
+    next: {
+      ...(init as RequestInit & { next?: Record<string, unknown> }).next,
+      revalidate: 0,
+    },
+  } as RequestInit)
 }
 
 export function getServerSupabaseClient(options: ServerClientOptions = {}) {
@@ -71,7 +100,9 @@ export function getServerSupabaseClient(options: ServerClientOptions = {}) {
       persistSession: false,
       autoRefreshToken: false,
     },
-    global: globalHeaders ? { headers: globalHeaders } : undefined,
+    global: {
+      ...(globalHeaders ? { headers: globalHeaders } : {}),
+      fetch: noStoreSupabaseFetch,
+    },
   })
 }
-

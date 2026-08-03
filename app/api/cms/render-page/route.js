@@ -3,7 +3,7 @@ import { getSupabaseClientOrResponse, isAdminRequest, jsonError, jsonOk } from '
 export const dynamic = 'force-dynamic'
 
 export async function GET(request) {
-  const { supabase, response } = getSupabaseClientOrResponse()
+  const { supabase, response } = await getSupabaseClientOrResponse()
   if (response) return response
 
   const { searchParams } = new URL(request.url)

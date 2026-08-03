@@ -1,182 +1,224 @@
+import { getEntityConfig, sanitizeEntityPayload } from '../../../../lib/cmsEntities'
+import { validateEntity } from '../../../../lib/validation'
 import {
-  ensureAdmin,
+  requireAdminContext,
   getSupabaseClientOrResponse,
   getOptionalAdminContext,
   jsonError,
   jsonOk,
-  normalizePagePath,
   parsePositiveInt,
-  revalidateAllCmsPages,
-  revalidateCmsPaths,
+  revalidateCmsMutation,
   readJsonBody,
 } from '../_utils'
+import { hasProfilePermission } from '../../../../lib/adminPermissions'
+import {
+  assertSlugAvailable,
+  buildCmsMutationMeta,
+  buildPublishFields,
+  getCanonicalPublicUrl,
+  normalizeCmsSlug,
+  normalizeCmsStatus,
+} from '../../../../lib/cmsPublishing'
 import { createSlugRedirectRecord } from '../../../../lib/redirects'
-import { generateSlug, validateSlug } from '../../../../lib/slugUtils'
 
 export const dynamic = 'force-dynamic'
 
-const OPTIONAL_PAGE_COLUMNS = ['canonical_url', 'published_at']
+const ENTITY = 'pages'
+const config = getEntityConfig(ENTITY)
+const OPTIONAL_PAGE_COLUMNS = new Set([
+  'canonical_url',
+  'og_image',
+  'noindex',
+  'content',
+  'sections_json',
+  'page_template_id',
+  'parent_id',
+  'order_index',
+  'is_active',
+  'is_published',
+  'published_at',
+  'scheduled_publish_at',
+  'scheduled_unpublish_at',
+])
 
-function getMissingColumnName(error) {
+function getMissingPageColumn(error) {
   const message = String(error?.message || '')
-  const match = message.match(/'([^']+)' column/i)
-  return match?.[1] || ''
+  const quotedMatch = message.match(/'([^']+)' column/i)
+  if (quotedMatch?.[1]) return quotedMatch[1]
+  const dottedMatch = message.match(/pages\.([a-zA-Z0-9_]+)/)
+  if (dottedMatch?.[1]) return dottedMatch[1]
+  return ''
 }
 
 async function savePageRecord(supabase, payload) {
-  let candidatePayload = { ...payload }
+  let nextPayload = { ...payload }
+  const strippedColumns = []
 
   while (true) {
-    const attempt = await supabase
+    const result = await supabase
       .from('pages')
-      .upsert(candidatePayload, { onConflict: 'id' })
+      .upsert(nextPayload, { onConflict: 'id' })
       .select('*')
       .single()
 
-    if (!attempt.error) {
-      return attempt
+    if (!result.error) {
+      return { ...result, strippedColumns }
     }
 
-    const missingColumn = getMissingColumnName(attempt.error)
-    if (!missingColumn || !OPTIONAL_PAGE_COLUMNS.includes(missingColumn) || !(missingColumn in candidatePayload)) {
-      return attempt
+    const missingColumn = getMissingPageColumn(result.error)
+    if (!missingColumn || !OPTIONAL_PAGE_COLUMNS.has(missingColumn) || !(missingColumn in nextPayload)) {
+      return { ...result, strippedColumns }
     }
 
-    delete candidatePayload[missingColumn]
+    strippedColumns.push(missingColumn)
+    const { [missingColumn]: _removed, ...remainingPayload } = nextPayload
+    nextPayload = remainingPayload
   }
 }
 
-export async function GET(request) {
-  const { searchParams } = new URL(request.url)
-  const wantsDrafts = searchParams.get('include_drafts') === '1'
-  const adminAccess = wantsDrafts
-    ? await getOptionalAdminContext(request, { resource: 'pages', action: 'read' })
-    : { context: null, response: null }
-  if (adminAccess.response) return adminAccess.response
+async function attachSections(supabase, pages = []) {
+  const pageIds = pages.map((page) => page?.id).filter(Boolean)
+  if (!pageIds.length) return pages.map((page) => ({ ...page, sections: [] }))
 
-  const includeDrafts = Boolean(adminAccess.context)
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: includeDrafts })
-  if (response) return response
-
-  const slug = searchParams.get('slug')
-  const id = searchParams.get('id')
-  const includeSections = searchParams.get('include_sections') === '1'
-  const limit = parsePositiveInt(searchParams.get('limit'), 100)
-
-  let query = supabase.from('pages').select('*').order('updated_at', { ascending: false }).limit(limit || 100)
-  if (!includeDrafts) query = query.eq('status', 'published')
-  if (slug) query = query.eq('slug', slug)
-  if (id) query = query.eq('id', id)
-
-  const { data, error } = await query
-  if (error) return jsonError(`Database query failed: ${error.message}`, 500, [])
-
-  if (!includeSections) return jsonOk(data || [])
-  const pageIds = (data || []).map((item) => item.id).filter(Boolean)
-  if (!pageIds.length) return jsonOk((data || []).map((item) => ({ ...item, sections: [] })))
-
-  const { data: sections, error: sectionsError } = await supabase
+  const { data, error } = await supabase
     .from('sections')
     .select('*')
     .in('page_id', pageIds)
     .order('order_index', { ascending: true })
 
-  if (sectionsError) return jsonError(`Sections query failed: ${sectionsError.message}`, 500, data || [])
+  if (error) throw new Error(`Sections query failed: ${error.message}`)
 
-  const grouped = (sections || []).reduce((acc, section) => {
+  const grouped = (data || []).reduce((acc, section) => {
     if (!acc[section.page_id]) acc[section.page_id] = []
     acc[section.page_id].push(section)
     return acc
   }, {})
 
-  return jsonOk((data || []).map((page) => ({ ...page, sections: grouped[page.id] || [] })))
+  return pages.map((page) => ({ ...page, sections: grouped[page.id] || [] }))
+}
+
+export async function GET(request) {
+  try {
+    const adminAccess = await getOptionalAdminContext(request)
+    if (adminAccess.response) return adminAccess.response
+    const isAdmin = Boolean(adminAccess.context)
+    const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: isAdmin })
+    if (response) return response
+
+    const { searchParams } = new URL(request.url)
+    const limit = parsePositiveInt(searchParams.get('limit'), 250)
+    const slug = searchParams.get('slug')
+    const status = searchParams.get('status')
+    const includeSections = searchParams.get('include_sections') === '1'
+
+    let query = supabase.from('pages').select('*').limit(limit || 250).order('updated_at', { ascending: false })
+    if (slug) query = query.eq('slug', normalizeCmsSlug(slug))
+    if (status && isAdmin) query = query.eq('status', normalizeCmsStatus(status))
+    if (!isAdmin) query = query.eq('status', 'published')
+
+    const { data, error } = await query
+    if (error) return jsonError(`Database query failed: ${error.message}`, 500, [])
+    if (!includeSections) return jsonOk(data || [])
+    try {
+      return jsonOk(await attachSections(supabase, data || []))
+    } catch (sectionsError) {
+      return jsonError(sectionsError.message, 500, data || [])
+    }
+  } catch (error) {
+    return jsonError(`Internal server error: ${error.message}`, 500, [])
+  }
 }
 
 export async function POST(request) {
-  const unauthorized = await ensureAdmin(request)
-  if (unauthorized) return unauthorized
+  try {
+    const { context: adminContext, response: unauthorized } = await requireAdminContext(request)
+    if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
-  if (response) return response
+    const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
+    if (response) return response
 
-  const body = await readJsonBody(request)
-  if (!body?.title) {
-    return jsonError('title is required.', 400)
-  }
+    const body = await readJsonBody(request)
+    if (!body || typeof body !== 'object') return jsonError('Invalid request body.', 400)
 
-  const slug = generateSlug(body.slug || body.title)
-  const slugValidation = validateSlug(slug)
-  if (!slugValidation.valid) {
-    return jsonError(slugValidation.error, 400)
-  }
+    const validation = validateEntity('pages', body)
+    if (!validation.valid) return jsonError(validation.errors.join('; '), 400)
 
-  const existingPageId = body.id || ''
-  const { data: existingPage, error: existingPageError } = existingPageId
-    ? await supabase.from('pages').select('*').eq('id', existingPageId).maybeSingle()
-    : { data: null, error: null }
+    const payload = sanitizeEntityPayload(body, config)
+    if (!Object.keys(payload).length) return jsonError('No writable fields provided.', 400)
 
-  if (existingPageError) {
-    return jsonError(`Failed to load existing page: ${existingPageError.message}`, 500)
-  }
-
-  // Ensure slug uniqueness
-  let existingSlugQuery = supabase
-    .from('pages')
-    .select('id')
-    .eq('slug', slug)
-
-  if (existingPageId) {
-    existingSlugQuery = existingSlugQuery.neq('id', existingPageId)
-  }
-
-  const { data: existingSlug, error: existingSlugError } = await existingSlugQuery.maybeSingle()
-
-  if (existingSlugError) {
-    return jsonError(`Failed to validate page slug: ${existingSlugError.message}`, 500)
-  }
-
-  if (existingSlug) {
-    return jsonError('A page with this slug already exists', 400)
-  }
-
-  const nextStatus = body.status === 'published' ? 'published' : 'draft'
-  const payload = {
-    id: existingPageId || undefined,
-    title: String(body.title).trim(),
-    slug,
-    description: body.description || null,
-    seo_title: body.seo_title || null,
-    seo_description: body.seo_description || null,
-    canonical_url: body.canonical_url || null,
-    status: nextStatus,
-    published_at:
-      nextStatus === 'published'
-        ? (existingPage?.published_at || body.published_at || new Date().toISOString())
-        : null,
-  }
-
-  const { data, error } = await savePageRecord(supabase, payload)
-
-  if (error) return jsonError(`Failed to save page: ${error.message}`, 500)
-
-  let warning = null
-  if (
-    existingPage?.slug &&
-    existingPage.slug !== data?.slug &&
-    (existingPage.status === 'published' || data?.status === 'published')
-  ) {
-    try {
-      await createSlugRedirectRecord(supabase, {
-        fromPath: normalizePagePath(existingPage.slug),
-        toPath: normalizePagePath(data?.slug),
-        statusCode: 301,
-      })
-    } catch (redirectError) {
-      warning = `Page saved, but the slug redirect could not be created: ${redirectError.message}`
+    if (!body.id && adminContext?.user?.id) {
+      payload.created_by = adminContext.user.id
     }
-  }
 
-  revalidateCmsPaths([normalizePagePath(existingPage?.slug), normalizePagePath(data?.slug), '/sitemap.xml'])
-  revalidateAllCmsPages()
-  return jsonOk(data, warning ? { warning } : {})
+    if (normalizeCmsStatus(payload.status) === 'published' && !hasProfilePermission(adminContext.profile, 'pages', 'publish')) {
+      return jsonError('This account does not have permission to publish pages.', 403)
+    }
+
+    let existingRecord = null
+    if (body.id) {
+      const { data: existing, error: existingError } = await supabase
+        .from('pages')
+        .select('*')
+        .eq('id', body.id)
+        .maybeSingle()
+      if (existingError) return jsonError(`Failed to load existing page: ${existingError.message}`, 500)
+      existingRecord = existing || null
+    }
+
+    if (payload.slug || (!body.id && body.title)) {
+      const nextSlug = normalizeCmsSlug(payload.slug || body.title)
+      try {
+        await assertSlugAvailable(supabase, {
+          table: 'pages',
+          slug: nextSlug,
+          slugField: 'slug',
+          currentId: body.id || '',
+          contentType: 'page',
+        })
+      } catch (error) {
+        return jsonError(error.message, error.status || 500)
+      }
+      payload.slug = nextSlug
+    }
+
+    if ('status' in payload) {
+      Object.assign(payload, buildPublishFields({
+        nextStatus: normalizeCmsStatus(payload.status),
+        existing: existingRecord || {},
+        requestedPublishedAt: body.published_at,
+      }))
+    }
+
+    const upsertPayload = { ...payload, id: body.id || undefined }
+    const { data, error, strippedColumns } = await savePageRecord(supabase, upsertPayload)
+    if (error) return jsonError(`Failed to save page: ${error.message}`, 500)
+
+    const previousSlug = existingRecord?.slug || ''
+    const slugValue = data?.slug || ''
+    let warning = null
+    if (previousSlug && slugValue && previousSlug !== slugValue) {
+      try {
+        await createSlugRedirectRecord(supabase, {
+          fromPath: `/${previousSlug}`,
+          toPath: `/${slugValue}`,
+          statusCode: 301,
+        })
+      } catch (redirectError) {
+        warning = `Page saved, but slug redirect could not be created: ${redirectError.message}`
+      }
+    }
+
+    const revalidation = revalidateCmsMutation('page', { slug: slugValue, previousSlug })
+    const responseData = slugValue ? { ...data, canonical_public_url: getCanonicalPublicUrl('page', slugValue) } : data
+    if (!revalidation.ok) {
+      return jsonError('Page saved, but cache revalidation failed. Please retry publishing.', 500, responseData)
+    }
+    return jsonOk(responseData, {
+      publication: buildCmsMutationMeta('page', responseData, revalidation),
+      ...(strippedColumns?.length ? { schema_compatibility: { stripped_optional_columns: strippedColumns } } : {}),
+      ...(warning ? { warning } : {}),
+    })
+  } catch (error) {
+    return jsonError(`Internal server error: ${error.message}`, 500)
+  }
 }

@@ -137,7 +137,7 @@ test.describe('CMS direct API permissions', () => {
     const createdDraftPayload = await readJson(createDraftResponse)
     const createdDraft = createdDraftPayload?.data
     expect(createdDraft?.id).toBeTruthy()
-    expect(createdDraft?.author_id).toBe(author.id)
+    expect(createdDraft?.created_by).toBe(author.id)
     blogsToCleanup.push({ id: createdDraft.id, slug: createdDraft.slug })
 
     const ownUpdateResponse = await request.patch(`/api/cms/blogs/${createdDraft.id}`, {
@@ -168,13 +168,13 @@ test.describe('CMS direct API permissions', () => {
     const supabase = createSupabaseAdminClient()
     const { data: storedDraft } = await supabase
       .from('blogs')
-      .select('id,title,status,author_id')
+      .select('id,title,status,created_by')
       .eq('id', createdDraft.id)
       .single()
 
     expect(storedDraft?.title).toBe(`${draftTitle} Updated`)
     expect(storedDraft?.status).toBe('draft')
-    expect(storedDraft?.author_id).toBe(author.id)
+    expect(storedDraft?.created_by).toBe(author.id)
   })
 
   test('allows an editor to publish content but still blocks user management', async ({ request }) => {

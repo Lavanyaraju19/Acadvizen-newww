@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 export const dynamicParams = true
 
 import BlogLayout from '../../../../components/BlogLayout'
-import { permanentRedirect, redirect } from 'next/navigation'
+import { notFound, permanentRedirect, redirect } from 'next/navigation'
 import { buildMetadata } from '../../../lib/seo'
 import { buildTocFromBlocks, estimateReadingMinutes } from '../../../../lib/blogBlockUtils'
 import { convertPlainTextToBlocks, parseBlogContent } from '../../../../lib/blogContent'
@@ -79,18 +79,15 @@ async function getBlogData(slug) {
   }
 }
 
-export async function generateStaticParams() {
-  return []
-}
-
 export async function generateMetadata({ params }) {
-  const data = await getBlogData(params?.slug)
+  const { slug } = await params
+  const data = await getBlogData(slug)
   const blog = data.blog
   if (!blog) {
     return buildMetadata({
       title: 'Blog',
       description: 'Latest digital marketing insights from Acadvizen.',
-      path: `/blog/${params?.slug || ''}`,
+      path: `/blog/${slug || ''}`,
     })
   }
 
@@ -111,7 +108,7 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function Page({ params }) {
-  const requestedSlug = params?.slug || ''
+  const { slug: requestedSlug } = await params
   const redirectRule = await fetchRedirectByPath(`/blog/${requestedSlug}`)
   if (redirectRule?.to_path) {
     if ((redirectRule.status_code || redirectRule.redirect_type) === 301) {
@@ -128,11 +125,7 @@ export default async function Page({ params }) {
   const [data, siteData] = await Promise.all([getBlogData(requestedSlug), fetchCmsSiteData()])
   const blog = data.blog
   if (!blog) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-slate-300">Blog not found.</div>
-      </div>
-    )
+    notFound()
   }
 
   const companyName = siteData?.settings?.company_name || 'Acadvizen'

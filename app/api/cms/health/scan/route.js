@@ -7,11 +7,16 @@ import {
 
 export const dynamic = 'force-dynamic'
 
+function isMissingRelationError(error) {
+  const message = String(error?.message || '').toLowerCase()
+  return error?.code === 'PGRST205' || (message.includes('schema cache') && message.includes('health_scans')) || (message.includes('relation') && message.includes('does not exist'))
+}
+
 export async function POST(request) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   // Get current user
@@ -26,7 +31,15 @@ export async function POST(request) {
     scanned_by: user?.id,
   })
 
-  if (error) return jsonError(`Failed to save health scan: ${error.message}`, 200)
+  if (error) {
+    if (isMissingRelationError(error)) {
+      return jsonOk({
+        ...healthResults,
+        schema_warning: `health_scans table is not available: ${error.message}`,
+      })
+    }
+    return jsonError(`Failed to save health scan: ${error.message}`, 500, healthResults)
+  }
   return jsonOk(healthResults)
 }
 
@@ -34,7 +47,7 @@ export async function GET(request) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   // Get latest health scan
@@ -43,14 +56,24 @@ export async function GET(request) {
     .select('*')
     .order('scan_date', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
 
-  if (error) return jsonError(`Failed to fetch health scan: ${error.message}`, 200, null)
+  if (error) {
+    if (isMissingRelationError(error)) {
+      const healthResults = await runHealthChecks(supabase)
+      return jsonOk({
+        ...healthResults,
+        schema_warning: `health_scans table is not available: ${error.message}`,
+      })
+    }
+    return jsonError(`Failed to fetch health scan: ${error.message}`, 500, null)
+  }
   return jsonOk(data)
 }
 
 async function runHealthChecks(supabase) {
   const results = {
+    scan_date: new Date().toISOString(),
     seo_missing_meta_titles: 0,
     seo_missing_meta_descriptions: 0,
     seo_missing_h1: 0,

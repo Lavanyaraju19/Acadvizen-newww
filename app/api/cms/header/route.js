@@ -53,13 +53,15 @@ const defaultHeaderSettings = {
 }
 
 export async function GET(request) {
-  const { supabase, response } = getSupabaseClientOrResponse(request)
+  const { supabase, response } = await getSupabaseClientOrResponse(request)
   if (response) return response
 
   try {
     const { data, error } = await supabase
       .from('header_settings')
       .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(1)
       .maybeSingle()
 
     if (error) {
@@ -79,7 +81,7 @@ export async function POST(request) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await readJsonBody(request)
@@ -126,6 +128,7 @@ export async function POST(request) {
     const { data: existing } = await supabase
       .from('header_settings')
       .select('id')
+      .order('updated_at', { ascending: false })
       .limit(1)
       .maybeSingle()
 

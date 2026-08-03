@@ -15,7 +15,7 @@ export async function GET(request) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse()
+  const { supabase, response } = await getSupabaseClientOrResponse()
   if (response) return response
 
   const { data, error } = await supabase
@@ -32,7 +32,7 @@ export async function PUT(request) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await readJsonBody(request)

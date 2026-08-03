@@ -215,14 +215,38 @@ export default function FormBuilderClient() {
         fields: formFields,
       }
       
-      const method = formSettings.id ? 'PUT' : 'POST'
+      // The [id] route only implements PATCH/DELETE (no PUT handler), so updating an existing
+      // form via PUT has always 405'd - the same class of bug found in Banners/Popups.
+      const method = formSettings.id ? 'PATCH' : 'POST'
       const endpoint = formSettings.id ? `/api/cms/forms/${formSettings.id}` : '/api/cms/forms'
-      
-      await adminApiFetch(endpoint, { method, body: payload })
+
+      const json = await adminApiFetch(endpoint, { method, body: payload })
       await loadForms()
+      // Repopulate the whole editor (including id) from the saved row, not just the selected-id
+      // tracker - otherwise formSettings.id stays empty and the next Save silently creates a
+      // duplicate form instead of updating the one just made.
+      if (json?.data) selectForm(json.data)
       setStatus('Form saved successfully.')
     } catch (error) {
       setStatus(error?.message || 'Failed to save form.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function deleteForm() {
+    if (!selectedFormId) return
+    if (!window.confirm('Delete this form? This also deletes its stored submissions.')) return
+    setSaving(true)
+    setStatus('')
+    try {
+      await adminApiFetch(`/api/cms/forms/${selectedFormId}`, { method: 'DELETE' })
+      resetForm()
+      setSelectedFormId('')
+      await loadForms()
+      setStatus('Form deleted.')
+    } catch (error) {
+      setStatus(error?.message || 'Failed to delete form.')
     } finally {
       setSaving(false)
     }
@@ -560,6 +584,18 @@ export default function FormBuilderClient() {
                 />
                 Store submissions
               </label>
+
+              <label className="text-xs text-slate-400">
+                Status
+                <select
+                  value={formSettings.status}
+                  onChange={(e) => setFormSettings({ ...formSettings, status: e.target.value })}
+                  className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                >
+                  <option value="draft">Draft</option>
+                  <option value="published">Published (visible on the public site)</option>
+                </select>
+              </label>
             </div>
             
             <div className="mt-4 flex gap-2">
@@ -574,16 +610,28 @@ export default function FormBuilderClient() {
               </button>
               
               {selectedFormId && (
-                <button
-                  type="button"
-                  onClick={exportSubmissions}
-                  className="px-4 py-2 rounded-xl border border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.05]"
-                >
-                  <Download className="w-4 h-4 inline mr-2" />
-                  Export CSV
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={exportSubmissions}
+                    className="px-4 py-2 rounded-xl border border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.05]"
+                  >
+                    <Download className="w-4 h-4 inline mr-2" />
+                    Export CSV
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={deleteForm}
+                    disabled={saving}
+                    className="px-4 py-2 rounded-xl border border-red-400/30 bg-red-500/10 text-red-300 hover:bg-red-500/20"
+                  >
+                    <Trash2 className="w-4 h-4 inline mr-2" />
+                    Delete Form
+                  </button>
+                </>
               )}
-              
+
               <button
                 type="button"
                 onClick={() => setPreviewMode(!previewMode)}

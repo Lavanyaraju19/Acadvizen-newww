@@ -14,6 +14,8 @@ const CustomCursor = dynamic(() => import('../ui/CustomCursor').then((mod) => mo
 const BottomDockNav = dynamic(() => import('../BottomDockNav').then((mod) => mod.BottomDockNav), {
   ssr: false,
 })
+const BannerSlot = dynamic(() => import('../../../components/cms/BannerSlot'), { ssr: false })
+const PopupEngine = dynamic(() => import('../../../components/cms/PopupEngine'), { ssr: false })
 
 function normalizeMenuItems(value = []) {
   if (!Array.isArray(value)) return []
@@ -363,7 +365,15 @@ export function PublicLayout({ children }) {
 
       <div className="h-[110px] sm:h-[112px]" />
 
+      <BannerSlot type="sidebar" />
+      <BannerSlot type="floating" />
+      <BannerSlot type="popup" />
+      <PopupEngine />
+
       <main className="flex-1 relative z-10 pb-28 md:pb-32">
+        <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
+          <BannerSlot type="hero" />
+        </div>
         {children}
       </main>
 
@@ -396,6 +406,10 @@ export function PublicLayout({ children }) {
       </div>
 
       <BottomDockNav />
+
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <BannerSlot type="footer" />
+      </div>
 
       <footer className="relative z-10 mt-8">
         <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-teal-400/40 to-transparent" />

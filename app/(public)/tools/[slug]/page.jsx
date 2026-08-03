@@ -2,20 +2,17 @@ export const revalidate = 0
 export const dynamic = 'force-dynamic'
 
 import DynamicPageRenderer from '../../../../components/cms/DynamicPageRenderer'
+import { permanentRedirect, redirect } from 'next/navigation'
 import { buildMetadata } from '../../../lib/seo'
 import { fetchToolBySlug } from '../../../lib/contentMeta'
-import { fetchCmsPageByAnySlug } from '../../../../lib/cmsServer'
+import { fetchCmsPageByAnySlug, fetchRedirectByPath } from '../../../../lib/cmsServer'
 import { isPublicCmsEnabled } from '../../../lib/publicCms'
 import ToolDetailLegacyClient from '../../../legacy-fallback/ToolDetailLegacyClient'
 
 export const dynamicParams = true
 
-export async function generateStaticParams() {
-  return []
-}
-
 export async function generateMetadata({ params }) {
-  const slug = params?.slug || ''
+  const { slug } = await params
   if (isPublicCmsEnabled()) {
     const cmsPage = await fetchCmsPageByAnySlug([`tool-${slug}`, `tools-${slug}`])
     if (cmsPage) {
@@ -38,10 +35,25 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function Page({ params }) {
-  const slug = params?.slug || ''
+  const { slug } = await params
+  const redirectRule = await fetchRedirectByPath(`/tools/${slug}`)
+  if (redirectRule?.to_path) {
+    if ((redirectRule.status_code || redirectRule.redirect_type) === 301) {
+      permanentRedirect(redirectRule.to_path)
+    }
+    redirect(redirectRule.to_path)
+  }
+
   if (isPublicCmsEnabled()) {
     const cmsPage = await fetchCmsPageByAnySlug([`tool-${slug}`, `tools-${slug}`])
-    if (cmsPage) return <DynamicPageRenderer page={cmsPage} />
+    if (cmsPage) {
+      return (
+        <DynamicPageRenderer
+          page={cmsPage}
+          breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Tools', href: '/tools' }, { label: cmsPage.title || 'Tool' }]}
+        />
+      )
+    }
   }
   return <ToolDetailLegacyClient />
 }

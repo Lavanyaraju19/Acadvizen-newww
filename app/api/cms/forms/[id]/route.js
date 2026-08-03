@@ -13,13 +13,14 @@ export const dynamic = 'force-dynamic'
 export async function GET(request, { params }) {
   const { searchParams } = new URL(request.url)
   const includeDrafts = searchParams.get('include_drafts') === '1'
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: includeDrafts })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: includeDrafts })
   if (response) return response
 
+  const { id } = await params
   const { data, error } = await supabase
     .from('forms')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (error) return jsonError(`Database query failed: ${error.message}`, 404)
@@ -33,10 +34,11 @@ export async function PATCH(request, { params }) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await readJsonBody(request)
+  const { id } = await params
   
   // Allowed fields for update
   const allowedFields = [
@@ -68,7 +70,7 @@ export async function PATCH(request, { params }) {
   const { data, error } = await supabase
     .from('forms')
     .update(updateData)
-    .eq('id', params.id)
+    .eq('id', id)
     .select('*')
     .single()
 
@@ -84,14 +86,16 @@ export async function DELETE(request, { params }) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
+
+  const { id } = await params
 
   // First check if form exists
   const { data: existingForm } = await supabase
     .from('forms')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (!existingForm) {
@@ -103,14 +107,14 @@ export async function DELETE(request, { params }) {
     await supabase
       .from('form_submissions')
       .delete()
-      .eq('form_id', params.id)
+      .eq('form_id', id)
   }
 
   // Delete the form
   const { error } = await supabase
     .from('forms')
     .delete()
-    .eq('id', params.id)
+    .eq('id', id)
 
   if (error) return jsonError(`Failed to delete form: ${error.message}`, 500)
 

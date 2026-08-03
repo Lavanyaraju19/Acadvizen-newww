@@ -1,11 +1,12 @@
 import {
-  ensureAdmin,
   getSupabaseClientOrResponse,
   jsonError,
   jsonOk,
   readJsonBody,
-  revalidateAllCmsPages,
+  requireAdminContext,
+  revalidateCmsMutation,
 } from '../../_utils'
+import { buildCmsMutationMeta } from '../../../../../lib/cmsPublishing'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,10 +32,10 @@ function inferWorkflowPermission(newStatus = '') {
 
 export async function POST(request) {
   const body = await readJsonBody(request)
-  const unauthorized = await ensureAdmin(request, inferWorkflowPermission(body?.new_status))
-  if (unauthorized) return unauthorized
+  const adminAccess = await requireAdminContext(request, inferWorkflowPermission(body?.new_status))
+  if (adminAccess.response) return adminAccess.response
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const { entity_type, entity_id, new_status } = body
@@ -43,19 +44,21 @@ export async function POST(request) {
     return jsonError('Missing required fields: entity_type, entity_id, new_status', 400)
   }
 
-  // Get current user
-  const { data: { user } } = await supabase.auth.getUser()
-
   // Call the workflow function
   const { data, error } = await supabase.rpc('advance_workflow', {
     p_entity_type: entity_type,
     p_entity_id: entity_id,
     p_new_status: new_status,
-    p_user_id: user?.id,
+    p_user_id: adminAccess.context.user?.id,
   })
 
   if (error) return jsonError(`Failed to advance workflow: ${error.message}`, 500)
-  
-  revalidateAllCmsPages()
-  return jsonOk(data)
+
+  const table = entity_type === 'blog' || entity_type === 'blogs' ? 'blogs' : 'pages'
+  const contentType = table === 'blogs' ? 'blog' : 'page'
+  const { data: record } = await supabase.from(table).select('*').eq('id', entity_id).maybeSingle()
+  const revalidation = revalidateCmsMutation(contentType, { slug: record?.slug })
+  return jsonOk(data, {
+    publication: buildCmsMutationMeta(contentType, record || { id: entity_id, status: new_status }, revalidation),
+  })
 }

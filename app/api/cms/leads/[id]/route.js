@@ -38,7 +38,7 @@ export async function PATCH(request, { params }) {
   const id = params?.id
   if (!id) return jsonError('Lead id is required.', 400)
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await readJsonBody(request)
@@ -69,7 +69,7 @@ export async function DELETE(request, { params }) {
   const id = params?.id
   if (!id) return jsonError('Lead id is required.', 400)
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const { error } = await supabase.from('leads').delete().eq('id', id)

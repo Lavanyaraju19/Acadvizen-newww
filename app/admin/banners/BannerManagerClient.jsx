@@ -150,11 +150,20 @@ export default function BannerManagerClient() {
           : bannerForm.page_targeting,
       }
       
-      const method = bannerForm.id ? 'PUT' : 'POST'
+      // The [id] route only implements PATCH/DELETE (no PUT handler), so updating an existing
+      // banner via PUT has always 405'd - this was never exercised until a real save-then-save
+      // browser flow hit it, since prior testing only ever POSTed fresh records or PATCHed directly.
+      const method = bannerForm.id ? 'PATCH' : 'POST'
       const endpoint = bannerForm.id ? `/api/cms/banners/${bannerForm.id}` : '/api/cms/banners'
-      
-      await adminApiFetch(endpoint, { method, body: payload })
+
+      const json = await adminApiFetch(endpoint, { method, body: payload })
       await loadBanners()
+      // A brand-new banner has no id yet when the form is first submitted. Syncing only the
+      // selected-id tracker (and not bannerForm.id) left saveBanner() thinking every subsequent
+      // save was still a create, silently producing a duplicate banner on the very next Save
+      // click - selectBanner() correctly repopulates the whole form, including id, from the row
+      // the server just returned, so the next save is a real update.
+      if (json?.data) selectBanner(json.data)
       setStatus('Banner saved successfully.')
     } catch (error) {
       setStatus(error?.message || 'Failed to save banner.')
@@ -191,6 +200,12 @@ export default function BannerManagerClient() {
         body: { is_active: !banner.is_active }
       })
       await loadBanners()
+      // Enable/Disable only ever updated the `banners` list, never the bound `bannerForm` state -
+      // so the next edit's Save Banner click would silently resend the STALE is_active value and
+      // revert the toggle. Keep the open form in sync with what was just persisted.
+      if (bannerForm.id === banner.id) {
+        setBannerForm((prev) => ({ ...prev, is_active: !banner.is_active }))
+      }
       setStatus(`Banner ${banner.is_active ? 'disabled' : 'enabled'}.`)
     } catch (error) {
       setStatus(error?.message || 'Failed to update banner.')
@@ -266,7 +281,7 @@ export default function BannerManagerClient() {
                   <span className={`w-2 h-2 rounded-full ${banner.is_active ? 'bg-green-400' : 'bg-slate-500'}`} />
                 </div>
                 <div className="text-xs opacity-70 mt-1">
-                  {banner.type} • Priority: {banner.priority}
+                  {banner.type} • {banner.status || 'draft'} • Priority: {banner.priority}
                 </div>
               </button>
             ))}
@@ -312,6 +327,18 @@ export default function BannerManagerClient() {
                       onChange={(e) => setBannerForm({ ...bannerForm, priority: parseInt(e.target.value) || 0 })}
                       className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
                     />
+                  </label>
+
+                  <label className="text-xs text-slate-400">
+                    Status
+                    <select
+                      value={bannerForm.status}
+                      onChange={(e) => setBannerForm({ ...bannerForm, status: e.target.value })}
+                      className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                    >
+                      <option value="draft">Draft</option>
+                      <option value="published">Published</option>
+                    </select>
                   </label>
                 </div>
               </div>

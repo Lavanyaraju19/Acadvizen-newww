@@ -52,7 +52,9 @@ export default function ResourcesAdminClient() {
   const fields = useMemo(
     () => [
       { key: 'title', label: 'Title' },
+      { key: 'slug', label: 'URL Slug (auto-generated from title, editable)' },
       { key: 'description', label: 'Description', type: 'textarea', rows: 4, full: true },
+      { key: 'content', label: 'Page Content (shown on the resource\'s own public page)', type: 'textarea', rows: 6, full: true },
       { key: 'file_url', label: 'File URL', type: 'file', bucket: 'documents', accept: '.pdf,.doc,.docx,.ppt,.pptx,.zip,image/*,video/*' },
       { key: 'external_url', label: 'External URL' },
       { key: 'course_id', label: 'Course', type: 'select', options: courseOptions },
@@ -69,7 +71,9 @@ export default function ResourcesAdminClient() {
           { value: 'llm_link', label: 'LLM Link' },
         ],
       },
-      { key: 'order_index', label: 'Order Index', type: 'number' },
+      { key: 'seo_title', label: 'SEO Title', full: true },
+      { key: 'seo_description', label: 'SEO Description', type: 'textarea', rows: 2, full: true },
+      { key: 'order_index', label: 'Order Index', type: 'number', default: 0 },
       { key: 'is_active', label: 'Published', type: 'checkbox' },
     ],
     [courseOptions, toolOptions]
@@ -89,6 +93,7 @@ export default function ResourcesAdminClient() {
         entity="resources"
         title="Resources"
         subtitle="Manage downloadable resources and link them to courses and tools."
+        publicUrlPattern="/resources/{slug}"
         fields={fields}
       />
       {status ? <p className="mt-3 text-sm text-slate-300">{status}</p> : null}

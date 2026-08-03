@@ -13,33 +13,50 @@ export async function PATCH(request, { params }) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await readJsonBody(request)
   const { id } = params
 
-  // Allowed fields for update
+  // Allowed fields for update - this list previously referenced columns that don't exist on
+  // popups at all (trigger_delay, show_once_per_session, button_text, button_link, background_
+  // color, text_color) while omitting real ones (name, type, status, show_frequency,
+  // target_pages, exclude_pages, html_content, custom_frequency_days, close_button, overlay,
+  // mobile/tablet/desktop_enabled) - so most of a real edit was silently dropped on every save.
   const allowedFields = [
-    'title',
-    'content',
-    'image_url',
+    'name',
+    'type',
     'trigger_type',
-    'trigger_delay',
-    'show_once_per_session',
-    'is_active',
+    'trigger_value',
+    'content',
+    'html_content',
+    'image_url',
+    'close_button',
+    'overlay',
+    'mobile_enabled',
+    'tablet_enabled',
+    'desktop_enabled',
+    'show_frequency',
+    'custom_frequency_days',
     'start_date',
     'end_date',
-    'button_text',
-    'button_link',
-    'background_color',
-    'text_color'
+    'target_pages',
+    'exclude_pages',
+    'is_active',
+    'status',
   ]
 
   const updateData = {}
   for (const field of allowedFields) {
     if (body[field] !== undefined) {
-      updateData[field] = body[field]
+      // start_date/end_date are timestamptz columns - an empty date picker sends '', which
+      // Postgres rejects outright ("invalid input syntax for type timestamp").
+      if ((field === 'start_date' || field === 'end_date') && body[field] === '') {
+        updateData[field] = null
+      } else {
+        updateData[field] = body[field]
+      }
     }
   }
 
@@ -59,7 +76,7 @@ export async function DELETE(request, { params }) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const { supabase, response } = getSupabaseClientOrResponse(request, { preferServiceRole: true })
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const { id } = params

@@ -284,6 +284,7 @@ export default function BlogManagerClient() {
   const [blocks, setBlocks] = useState([])
   const [editorMode, setEditorMode] = useState('simple')
   const [status, setStatus] = useState('')
+  const [liveUrl, setLiveUrl] = useState('')
   const [saving, setSaving] = useState(false)
   const [loadingBlogs, setLoadingBlogs] = useState(true)
   const [dragActive, setDragActive] = useState(false)
@@ -660,6 +661,8 @@ export default function BlogManagerClient() {
         body: payload,
       })
       const savedBlog = json.data
+      const finalLiveUrl = json.publication?.canonical_public_url || savedBlog?.canonical_public_url || ''
+      setLiveUrl(finalLiveUrl)
       const savedId = savedBlog?.id || form.id
       if (savedBlog) {
         setItems((prev) => {
@@ -671,7 +674,8 @@ export default function BlogManagerClient() {
       } else {
         clearSavedDraft()
       }
-      setStatus(editorMode === 'simple' ? 'Blog saved from Simple Copy-Paste mode.' : 'Blog saved.')
+      const saveMessage = editorMode === 'simple' ? 'Blog saved from Simple Copy-Paste mode.' : 'Blog saved.'
+      setStatus(finalLiveUrl && savedBlog?.status === 'published' ? `${saveMessage} Live URL: ${finalLiveUrl}` : saveMessage)
     } catch (error) {
       setStatus(error?.message || 'Failed to save blog.')
     } finally {
@@ -1380,6 +1384,11 @@ export default function BlogManagerClient() {
             {form.slug ? (
               <Link href={`/blog/${form.slug}`} target="_blank" className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05]">
                 Preview
+              </Link>
+            ) : null}
+            {liveUrl && form.status === 'published' ? (
+              <Link href={liveUrl} target="_blank" className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05]">
+                View Live Page
               </Link>
             ) : null}
           </div>

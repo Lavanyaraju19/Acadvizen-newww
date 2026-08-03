@@ -3,7 +3,7 @@ import { getSupabaseClientOrResponse, jsonError, jsonOk } from '../_utils'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const { supabase, response } = getSupabaseClientOrResponse()
+  const { supabase, response } = await getSupabaseClientOrResponse()
   if (response) return response
 
   // Use maybeSingle for all queries to avoid PGRST116 errors on empty tables
