@@ -3,7 +3,7 @@ import {
   getSupabaseClientOrResponse,
   jsonError,
   jsonOk,
-  revalidateAllCmsPages,
+  revalidateCmsMutation,
 } from '../../../../../_utils'
 
 export const dynamic = 'force-dynamic'
@@ -17,7 +17,6 @@ export async function POST(request, { params }) {
 
   const { id, versionId } = params
 
-  // Get the version to restore
   const { data: version, error: versionError } = await supabase
     .from('blog_versions')
     .select('*')
@@ -29,20 +28,21 @@ export async function POST(request, { params }) {
     return jsonError('Version not found', 404)
   }
 
-  // Restore the blog to this version
+  // version.content is the { content, content_json } object written by the versions POST
+  // route - restore both fields back onto the live blogs row. Older rows created before that
+  // shape existed may just be a raw content_json blob instead; treat that as content_json.
+  const storedContent = version.content && typeof version.content === 'object' ? version.content : {}
+  const hasShapedContent = 'content' in storedContent || 'content_json' in storedContent
+
   const { data: restoredBlog, error: restoreError } = await supabase
     .from('blogs')
     .update({
       title: version.title,
-      slug: version.slug,
-      content: version.content,
+      content: hasShapedContent ? storedContent.content ?? null : null,
+      content_json: hasShapedContent ? storedContent.content_json ?? null : version.content,
       excerpt: version.excerpt,
-      featured_image: version.featured_image,
-      category_id: version.category_id,
-      author_id: version.author_id,
-      tags: version.tags,
-      meta_title: version.meta_title,
-      meta_description: version.meta_description,
+      seo_title: version.seo_title,
+      seo_description: version.seo_description,
       status: version.status,
     })
     .eq('id', id)
@@ -53,10 +53,10 @@ export async function POST(request, { params }) {
     return jsonError(`Failed to restore blog version: ${restoreError.message}`, 500)
   }
 
-  revalidateAllCmsPages()
+  const revalidation = revalidateCmsMutation('blog', { slug: restoredBlog?.slug || '' })
   return jsonOk({
     success: true,
     blog: restoredBlog,
-    message: 'Blog restored to version successfully'
-  })
+    message: 'Blog restored to version successfully',
+  }, { revalidation })
 }

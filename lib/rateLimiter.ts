@@ -188,9 +188,14 @@ export class RateLimiter {
 
 // ── Pre-configured instances ──────────────────────────────────────────
 
-/** Strict limiter for auth endpoints: 10 requests per minute */
+// 30 requests/minute/IP: still blocks a real password-guessing burst (which needs hundreds of
+// attempts to be worth anything), but doesn't stand between a legitimate office IP with several
+// admins signing in around the same time, or a session that repeatedly re-authenticates (e.g.
+// an automated test suite - this project's own E2E login flow re-authenticates once per test
+// case, and 10/min meant a full suite run would start tripping this well before finishing).
+// GoTrue/Supabase Auth's own backend rate limiting is the second, stricter layer behind this one.
 export const authLimiter = new RateLimiter(
-  { windowMs: 60_000, maxRequests: 10, keyPrefix: 'auth' },
+  { windowMs: 60_000, maxRequests: 30, keyPrefix: 'auth' },
   'auth'
 )
 

@@ -123,8 +123,13 @@ async function loginAdmin(page) {
   ).catch(() => null)
 
   // 3. Fill the controlled React inputs and click the real submit button.
-  await page.fill('#admin-email', E2E_ADMIN_EMAIL)
-  await page.fill('#admin-password', E2E_ADMIN_PASSWORD)
+  // WebKit + page.fill() doesn't reliably fire the input events React's onChange depends on for
+  // these two fields - the DOM value visibly updates but the component's own email/password
+  // state stays empty, so the form submits with "Please enter email and password." even though
+  // the fields look filled. pressSequentially types real keystrokes (matching what an actual
+  // person does) and is unaffected in every engine, Chromium/Firefox included.
+  await page.locator('#admin-email').pressSequentially(E2E_ADMIN_EMAIL, { delay: 10 })
+  await page.locator('#admin-password').pressSequentially(E2E_ADMIN_PASSWORD, { delay: 10 })
   await page.click('button[type="submit"]')
 
   // 4. Assert the login mutation succeeded.
@@ -180,7 +185,14 @@ async function fillForm(page, fields) {
         await checkbox.check()
       }
     } else if (await element.isVisible()) {
-      await element.fill(String(value))
+      const tagName = await element.evaluate((node) => node.tagName)
+      if (tagName === 'SELECT') {
+        await element.selectOption(String(value))
+      } else {
+        // See loginAdmin() above - page.fill() on a React-controlled text input doesn't
+        // reliably fire the events its onChange depends on in WebKit specifically.
+        await element.pressSequentially(String(value), { delay: 10 })
+      }
     }
   }
 }
@@ -243,17 +255,17 @@ async function browserApiFetch(page, url, options = {}) {
   return result.json
 }
 
-async function readPublicBody(browser, targetPath) {
-  const context = await browser.newContext()
-  const page = await context.newPage()
-  try {
-    const response = await page.goto(targetPath, { waitUntil: 'domcontentloaded' })
-    return {
-      status: response?.status?.() || 0,
-      body: await page.locator('body').innerText(),
-    }
-  } finally {
-    await context.close()
+// Plain HTTP fetch, not page.goto() + DOM query: this is used exclusively to read raw
+// text/XML endpoints like /sitemap.xml, not rendered HTML pages. Navigating a real browser to
+// an XML response hands it to that browser's built-in XML viewer, whose DOM shape (and
+// whether/how fast `body` innerText() resolves) differs per engine - Firefox's XML viewer in
+// particular left `locator('body').innerText()` hanging until the 30s test timeout. A direct
+// fetch reads the same bytes without depending on any browser's XML-rendering quirks.
+async function readPublicBody(_browser, targetPath) {
+  const response = await fetch(new URL(targetPath, E2E_BASE_URL).toString(), { cache: 'no-store' })
+  return {
+    status: response.status,
+    body: await response.text(),
   }
 }
 
@@ -263,6 +275,17 @@ async function verifyRecordExists(page, recordSelector) {
 
 async function verifyRecordNotExists(page, recordSelector) {
   await expect(page.locator(recordSelector)).not.toBeVisible()
+}
+
+// Next.js's own <Link> prefetch-then-navigate race: if a navigation starts before an in-flight
+// RSC payload prefetch finishes, Next logs this and transparently falls back to a full
+// navigation - the page still loads correctly either way. It's a documented, benign Next.js
+// message that surfaces more often under fast automated clicking than real human navigation,
+// and Firefox/WebKit's request-cancellation timing surfaces it more readily than Chromium's -
+// not a defect in this app to "fix" by suppressing prefetch. Shared here so every spec
+// asserting zero console errors filters it the same way instead of each rediscovering it.
+function isBenignConsoleMessage(text) {
+  return /Failed to fetch RSC payload for .* Falling back to browser navigation/.test(text)
 }
 
 module.exports = {
@@ -286,4 +309,5 @@ module.exports = {
   fillForm,
   verifyRecordExists,
   verifyRecordNotExists,
+  isBenignConsoleMessage,
 }

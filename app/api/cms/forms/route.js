@@ -69,6 +69,12 @@ export async function POST(request) {
       send_email: body.sendEmail || false,
       email_to: body.emailTo || null,
       email_subject: body.emailSubject || null,
+      webhook_enabled: body.webhookEnabled || false,
+      webhook_url: body.webhookUrl || null,
+      autoresponder_enabled: body.autoresponderEnabled || false,
+      autoresponder_email_field: body.autoresponderEmailField || null,
+      autoresponder_subject: body.autoresponderSubject || null,
+      autoresponder_body: body.autoresponderBody || null,
       store_submissions: body.storeSubmissions !== false,
       status: body.status === 'published' ? 'published' : 'draft',
     }

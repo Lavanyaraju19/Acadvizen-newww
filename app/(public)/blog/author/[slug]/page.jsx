@@ -4,6 +4,23 @@ export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { getServerSupabaseClient } from '../../../../../lib/supabaseServer'
 import { fetchCmsSiteData } from '../../../../../lib/cmsServer'
+import { buildMetadata } from '../../../../lib/seo'
+
+export async function generateMetadata({ params }) {
+  const { slug } = await params
+  const supabase = getServerSupabaseClient()
+  const { data: author } = slug && supabase
+    ? await supabase.from('authors').select('name,bio').eq('slug', slug).maybeSingle()
+    : { data: null }
+  if (!author) {
+    return buildMetadata({ title: 'Author', description: 'Acadvizen blog author.', path: `/blog/author/${slug}`, noindex: true })
+  }
+  return buildMetadata({
+    title: `${author.name} - Author`,
+    description: author.bio || `Articles written by ${author.name} on the Acadvizen blog.`,
+    path: `/blog/author/${slug}`,
+  })
+}
 
 async function fetchByAuthor(slug) {
   const supabase = getServerSupabaseClient()

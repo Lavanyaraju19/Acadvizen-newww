@@ -18,10 +18,15 @@ export async function GET(request) {
 
   const { searchParams } = new URL(request.url)
   const type = searchParams.get('type')
+  const folder = searchParams.get('folder')
+  const folderId = searchParams.get('folder_id')
   const limit = parsePositiveInt(searchParams.get('limit'), 200)
 
   let query = supabase.from('media').select('*').order('created_at', { ascending: false }).limit(limit || 200)
   if (type) query = query.eq('type', type)
+  if (folder) query = query.eq('folder', folder)
+  if (folderId === 'none') query = query.is('folder_id', null)
+  else if (folderId) query = query.eq('folder_id', folderId)
   const { data, error } = await query
 
   if (error) return jsonError(`Database query failed: ${error.message}`, 500, [])
@@ -55,6 +60,10 @@ export async function POST(request) {
     size: body.size ?? null,
     alt_text: body.alt_text || null,
     caption: body.caption || null,
+    folder: body.folder || null,
+    folder_id: body.folder_id || null,
+    name: body.name || null,
+    tags: Array.isArray(body.tags) ? body.tags : [],
   }
 
   const { data, error } = await supabase.from('media').insert(payload).select('*').single()

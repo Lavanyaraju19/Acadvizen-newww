@@ -5,6 +5,7 @@ import {
   getSupabaseClientOrResponse,
   jsonError,
   jsonOk,
+  logAuditEvent,
   revalidateCmsMutation,
   readJsonBody,
 } from '../../_utils'
@@ -93,6 +94,21 @@ export async function PATCH(request, { params }) {
     const { data, error } = await supabase.from('pages').update(payload).eq('id', id).select('*').single()
     if (error) return jsonError(`Failed to update page: ${error.message}`, 500)
 
+    // Snapshot the post-edit state into page_versions on every save so History/Compare/Restore
+    // (components/admin/VersionHistory.jsx) has something to show - this used to only happen if
+    // something explicitly POSTed to /versions, which nothing in the app did.
+    const { error: versionError } = await supabase.rpc('create_page_version', {
+      p_page_id: id,
+      p_content_json: data.content,
+      p_seo_title: data.seo_title,
+      p_seo_description: data.seo_description,
+      p_status: data.status,
+      p_notes: null,
+      p_change_summary: 'Saved from editor',
+    })
+    if (versionError) console.error('[cms] Failed to snapshot page version', versionError)
+    await logAuditEvent(supabase, { userId: adminContext.user.id, action: 'update', entityType: 'pages', entityId: id, changes: payload, request })
+
     const previousSlug = existingRecord?.slug || ''
     const currentSlug = data?.slug || ''
     let warning = null
@@ -134,6 +150,7 @@ export async function DELETE(request, { params }) {
     }
     const { error } = await supabase.from('pages').delete().eq('id', id)
     if (error) return jsonError(`Failed to delete page: ${error.message}`, 500)
+    await logAuditEvent(supabase, { userId: adminContext.user.id, action: 'delete', entityType: 'pages', entityId: id, changes: { deleted_slug: existingRecord?.slug || null }, request })
     if (existingRecord?.slug) {
       await clearSeoMetadataForSlug(supabase, existingRecord.slug).catch(() => {})
     }

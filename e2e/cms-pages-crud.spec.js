@@ -135,16 +135,19 @@ test.describe('CMS Pages CRUD', () => {
       await expect(adminPage.getByText('Syncing current website content...')).toHaveCount(0, { timeout: 30000 })
       await expect(adminPage.getByText('Loading pages...')).toHaveCount(0, { timeout: 30000 })
 
+      // pressSequentially, not fill(): WebKit doesn't reliably fire the input events these
+      // React-controlled fields' onChange depends on with fill() - see loginAdmin() in utils.js.
       await adminPage.getByRole('button', { name: 'New Page' }).click()
       await expect(adminPage.locator('#page_title')).toHaveValue('')
-      await adminPage.locator('#page_title').fill(title)
+      await adminPage.locator('#page_title').pressSequentially(title, { delay: 10 })
       await expect(adminPage.locator('#page_slug')).toHaveValue(/acadvizen-e2e-page-/i)
 
-      await adminPage.locator('#page_slug').fill(firstSlug)
-      await adminPage.locator('#pagebuilder-page-description').fill(`${title} page description`)
-      await adminPage.locator('#page_seo_title').fill(seoTitle)
-      await adminPage.locator('#page_canonical_url').fill(absoluteUrl(`/${firstSlug}`))
-      await adminPage.locator('#pagebuilder-seo-description').fill(seoDescription)
+      await adminPage.locator('#page_slug').clear()
+      await adminPage.locator('#page_slug').pressSequentially(firstSlug, { delay: 10 })
+      await adminPage.locator('#pagebuilder-page-description').pressSequentially(`${title} page description`, { delay: 10 })
+      await adminPage.locator('#page_seo_title').pressSequentially(seoTitle, { delay: 10 })
+      await adminPage.locator('#page_canonical_url').pressSequentially(absoluteUrl(`/${firstSlug}`), { delay: 10 })
+      await adminPage.locator('#pagebuilder-seo-description').pressSequentially(seoDescription, { delay: 10 })
 
       const draftSavePayload = await browserApiFetch(adminPage, '/api/cms/pages', {
         method: 'POST',

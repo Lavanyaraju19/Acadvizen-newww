@@ -542,6 +542,139 @@ export default function PrecisionSectionFields({ sectionForm, setSectionForm }) 
     </div>
   )
 
+  const renderMapEditors = () => (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+      <div>
+        <div className="text-sm font-semibold text-slate-100">Map</div>
+        <div className="text-xs text-slate-400">
+          Paste a Google Maps embed URL (Maps &rarr; Share &rarr; Embed a map &rarr; copy the src=&quot;...&quot; value),
+          an address, or both.
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <InputField label="Embed URL" value={sectionForm.embedUrl} onChange={(value) => updateField('embedUrl', value)} className="md:col-span-2" />
+        <TextAreaField label="Address" value={sectionForm.address} onChange={(value) => updateField('address', value)} rows={3} className="md:col-span-2" />
+      </div>
+    </div>
+  )
+
+  const renderPricingEditors = () => (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-sm font-semibold text-slate-100">Pricing plans</div>
+          <div className="text-xs text-slate-400">Edit each plan&apos;s price, features, and button separately.</div>
+        </div>
+        <button
+          type="button"
+          onClick={() =>
+            addArrayItem('planItems', {
+              name: '', price: '', period: '', description: '', badge: '',
+              featuresText: '', buttonLabel: '', buttonHref: '', highlighted: false,
+            })
+          }
+          className="rounded-lg border border-white/10 px-3 py-1 text-xs text-slate-200 hover:bg-white/[0.05]"
+        >
+          Add plan
+        </button>
+      </div>
+      <div className="mt-4 space-y-3">
+        {(sectionForm.planItems || []).length === 0 ? (
+          <div className="text-xs text-slate-500">No plans yet.</div>
+        ) : (
+          (sectionForm.planItems || []).map((plan, index) => (
+            <SectionItemShell
+              key={`plan-${index}`}
+              title={`Plan ${index + 1}`}
+              subtitle={plan.name || ''}
+              onMoveUp={() => moveArrayItem('planItems', index, 'up')}
+              onMoveDown={() => moveArrayItem('planItems', index, 'down')}
+              onDelete={() => removeArrayItem('planItems', index)}
+            >
+              <InputField label="Plan Name" value={plan.name} onChange={(value) => updateArrayItem('planItems', index, { name: value })} />
+              <InputField label="Badge (optional)" value={plan.badge} onChange={(value) => updateArrayItem('planItems', index, { badge: value })} />
+              <InputField label="Price" value={plan.price} onChange={(value) => updateArrayItem('planItems', index, { price: value })} placeholder="₹9,999" />
+              <InputField label="Billing Period" value={plan.period} onChange={(value) => updateArrayItem('planItems', index, { period: value })} placeholder="month" />
+              <TextAreaField label="Description" value={plan.description} onChange={(value) => updateArrayItem('planItems', index, { description: value })} rows={2} className="md:col-span-2" />
+              <TextAreaField
+                label="Features (one per line)"
+                value={plan.featuresText}
+                onChange={(value) => updateArrayItem('planItems', index, { featuresText: value })}
+                rows={4}
+                className="md:col-span-2"
+              />
+              <InputField label="Button Text" value={plan.buttonLabel} onChange={(value) => updateArrayItem('planItems', index, { buttonLabel: value })} />
+              <InputField label="Button URL" value={plan.buttonHref} onChange={(value) => updateArrayItem('planItems', index, { buttonHref: value })} />
+              <label className="flex items-center gap-2 text-xs text-slate-400 md:col-span-2">
+                <input
+                  type="checkbox"
+                  checked={Boolean(plan.highlighted)}
+                  onChange={(event) => updateArrayItem('planItems', index, { highlighted: event.target.checked })}
+                  className="rounded border-white/10 bg-white/[0.03]"
+                />
+                Highlight this plan (e.g. &quot;Most Popular&quot;)
+              </label>
+            </SectionItemShell>
+          ))
+        )}
+      </div>
+    </div>
+  )
+
+  const renderTeamEditors = () => (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-sm font-semibold text-slate-100">Team members</div>
+          <div className="text-xs text-slate-400">Edit each team member&apos;s photo, role, and bio separately.</div>
+        </div>
+        <button
+          type="button"
+          onClick={() => addArrayItem('teamMembers', { name: '', role: '', bio: '', photo: '' })}
+          className="rounded-lg border border-white/10 px-3 py-1 text-xs text-slate-200 hover:bg-white/[0.05]"
+        >
+          Add member
+        </button>
+      </div>
+      <div className="mt-4 space-y-3">
+        {(sectionForm.teamMembers || []).length === 0 ? (
+          <div className="text-xs text-slate-500">No team members yet.</div>
+        ) : (
+          (sectionForm.teamMembers || []).map((member, index) => (
+            <SectionItemShell
+              key={`team-${index}`}
+              title={`Member ${index + 1}`}
+              subtitle={member.name || ''}
+              onMoveUp={() => moveArrayItem('teamMembers', index, 'up')}
+              onMoveDown={() => moveArrayItem('teamMembers', index, 'down')}
+              onDelete={() => removeArrayItem('teamMembers', index)}
+            >
+              <InputField label="Name" value={member.name} onChange={(value) => updateArrayItem('teamMembers', index, { name: value })} />
+              <InputField label="Role" value={member.role} onChange={(value) => updateArrayItem('teamMembers', index, { role: value })} />
+              <InputField label="Photo URL" value={member.photo} onChange={(value) => updateArrayItem('teamMembers', index, { photo: value })} className="md:col-span-2" />
+              <TextAreaField label="Bio" value={member.bio} onChange={(value) => updateArrayItem('teamMembers', index, { bio: value })} rows={3} className="md:col-span-2" />
+            </SectionItemShell>
+          ))
+        )}
+      </div>
+    </div>
+  )
+
+  const renderCustomHtmlEditors = () => (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+      <div>
+        <div className="text-sm font-semibold text-slate-100">Custom HTML</div>
+        <div className="text-xs text-slate-400">
+          Renders exactly as written - use this for embeds or layouts the visual fields below can&apos;t express.
+          Leave blank to fall back to the plain Paragraph Text field instead.
+        </div>
+      </div>
+      <div className="mt-4">
+        <TextAreaField label="Raw HTML" value={sectionForm.html} onChange={(value) => updateField('html', value)} rows={8} className="md:col-span-2" />
+      </div>
+    </div>
+  )
+
   const renderFormEmbedEditors = () => {
     const forms = publishedForms
     return (
@@ -590,6 +723,14 @@ export default function PrecisionSectionFields({ sectionForm, setSectionForm }) 
       return renderTestimonialEditors()
     case 'gallery':
       return renderGalleryEditors()
+    case 'pricing':
+      return renderPricingEditors()
+    case 'team':
+      return renderTeamEditors()
+    case 'map':
+      return renderMapEditors()
+    case 'custom_rich_text':
+      return renderCustomHtmlEditors()
     case 'lead_form':
       return renderLeadFormEditors()
     case 'form_embed':

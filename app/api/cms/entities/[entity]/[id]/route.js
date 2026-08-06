@@ -4,6 +4,8 @@ import {
   getSupabaseClientOrResponse,
   jsonError,
   jsonOk,
+  logAuditEvent,
+  requireAdminContext,
   revalidateCmsMutation,
   readJsonBody,
 } from '../../../_utils'
@@ -48,7 +50,7 @@ export async function PATCH(request, { params }) {
     const csrfError = csrfProtection(request)
     if (csrfError) return csrfError
 
-    const unauthorized = await ensureAdmin(request)
+    const { context: adminContext, response: unauthorized } = await requireAdminContext(request)
     if (unauthorized) return unauthorized
 
     const { entity, id } = await params
@@ -108,6 +110,7 @@ export async function PATCH(request, { params }) {
 
     const { data, error } = await supabase.from(config.table).update(payload).eq('id', id).select('*').single()
     if (error) return jsonError(`Failed to update record: ${error.message}`, 500)
+    await logAuditEvent(supabase, { userId: adminContext.user.id, action: 'update', entityType: entity, entityId: id, changes: payload, request })
 
     const contentType = config.contentType || entity
     const previousSlug = config.slugField ? existingRecord?.[config.slugField] : ''
@@ -143,7 +146,7 @@ export async function DELETE(request, { params }) {
     const csrfError = csrfProtection(request)
     if (csrfError) return csrfError
 
-    const unauthorized = await ensureAdmin(request)
+    const { context: adminContext, response: unauthorized } = await requireAdminContext(request)
     if (unauthorized) return unauthorized
 
     const { entity, id } = await params
@@ -158,6 +161,14 @@ export async function DELETE(request, { params }) {
     const { data: existingRecord } = await supabase.from(config.table).select('*').eq('id', id).maybeSingle()
     const { error } = await supabase.from(config.table).delete().eq('id', id)
     if (error) return jsonError(`Failed to delete record: ${error.message}`, 500)
+    await logAuditEvent(supabase, {
+      userId: adminContext.user.id,
+      action: 'delete',
+      entityType: entity,
+      entityId: id,
+      changes: existingRecord ? { deleted_record_summary: existingRecord[config.slugField] || existingRecord.title || existingRecord.name || null } : null,
+      request,
+    })
     const contentType = config.contentType || entity
     const revalidation = revalidateCmsMutation(contentType, {
       previousSlug: config.slugField ? existingRecord?.[config.slugField] : '',

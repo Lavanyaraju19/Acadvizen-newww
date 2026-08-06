@@ -1,6 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
 import { MessageCircle, Phone } from 'lucide-react'
-import { useSiteCms } from '../hooks/useSiteCms'
 import { trackContact } from '../../lib/metaPixel'
 
 const dockItems = [
@@ -12,9 +11,11 @@ const dockItems = [
   { label: 'Projects', to: '/projects' },
 ]
 
-export function BottomDockNav() {
+// menus/settings come from PublicLayout's single useSiteCms() call (itself seeded by a
+// server-side fetch, see lib/siteCmsServer.js) - calling the hook again here would fire
+// the same four requests a second time on every page.
+export function BottomDockNav({ menus, settings }) {
   const location = useLocation()
-  const { menus, settings } = useSiteCms()
   const uiCopy = settings?.ui_copy && typeof settings.ui_copy === 'object' ? settings.ui_copy : {}
   const currentRoute = `${location.pathname}${location.hash || ''}`
   const uiDockItems = Array.isArray(uiCopy.bottom_dock_fallback_items)

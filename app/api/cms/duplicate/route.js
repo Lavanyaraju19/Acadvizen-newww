@@ -81,6 +81,32 @@ export async function POST(request) {
     const { data: newItem, error } = await supabase.from(table).insert(itemData).select('*').single()
     if (error) throw error
 
+    // Pages store their content in a separate `sections` table keyed by page_id - copying
+    // only the `pages` row (as this route did before) produced a "duplicate" with zero
+    // sections. Clone every section row the same way the section-level duplicate action does
+    // (app/api/cms/sections/route.js), just re-pointed at the new page.
+    if (type === 'page') {
+      const { data: sourceSections, error: sectionsError } = await supabase
+        .from('sections')
+        .select('*')
+        .eq('page_id', originalId)
+        .order('order_index', { ascending: true })
+      if (sectionsError) throw sectionsError
+
+      if (sourceSections?.length) {
+        const clonedSections = sourceSections.map((section) => ({
+          page_id: newItem.id,
+          type: section.type,
+          order_index: section.order_index,
+          content_json: section.content_json || {},
+          style_json: section.style_json || {},
+          visibility: section.visibility !== false,
+        }))
+        const { error: insertSectionsError } = await supabase.from('sections').insert(clonedSections)
+        if (insertSectionsError) throw insertSectionsError
+      }
+    }
+
     const contentType = type === 'city' ? 'city_page' : type
     const revalidation = revalidateCmsMutation(contentType, { slug: newItem?.slug })
     return jsonOk(newItem, { publication: buildCmsMutationMeta(contentType, newItem, revalidation) })

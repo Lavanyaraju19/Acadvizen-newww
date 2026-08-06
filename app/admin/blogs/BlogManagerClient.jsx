@@ -8,6 +8,7 @@ import { uploadFileAsset } from '../../../lib/storageUpload'
 import { adminApiFetch } from '../../../lib/adminApiClient'
 import BlogBlocksRenderer from '../../../components/blog/BlogBlocksRenderer'
 import AdaptiveImage from '../../../components/media/AdaptiveImage'
+import VersionHistory from '../../../components/admin/VersionHistory'
 
 const BLOCK_TYPES = ['heading', 'paragraph', 'list', 'quote', 'image', 'video', 'link']
 const INLINE_IMAGE_FIELDS = Array.from({ length: 6 }, (_, index) => ({
@@ -39,6 +40,17 @@ function toSlug(value = '') {
     .trim()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)+/g, '')
+}
+
+// Used only for the slug field's own onChange, where the user types directly into the field:
+// toSlug() strips a trailing hyphen, which is correct once (e.g. deriving a slug from a
+// finished title) but not on every keystroke - the character just typed is always at the end,
+// so a hyphen the user types would be stripped the instant it's typed and could never survive.
+function toSlugLive(value = '') {
+  return String(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+/, '')
 }
 
 function splitComma(value = '') {
@@ -110,6 +122,24 @@ function createEmptyInlineImages() {
   return ensureMinimumInlineImages([])
 }
 
+// <input type="datetime-local"> works in "YYYY-MM-DDTHH:mm" local-time strings, not ISO -
+// these convert at the form/API boundary so form state can stay a plain string the input
+// understands directly.
+function isoToDatetimeLocal(iso) {
+  if (!iso) return ''
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ''
+  const pad = (value) => String(value).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+function datetimeLocalToIso(value) {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toISOString()
+}
+
 function createEmptyFormState() {
   return {
     id: '',
@@ -124,6 +154,8 @@ function createEmptyFormState() {
     tags: '',
     categories: '',
     status: 'draft',
+    scheduled_publish_at: '',
+    scheduled_unpublish_at: '',
     author_id: '',
     og_image: '',
     noindex: false,
@@ -147,6 +179,8 @@ function createEditorStateFromItem(item) {
     tags: toComma(item?.tags),
     categories: toComma(item?.categories),
     status: item?.status || 'draft',
+    scheduled_publish_at: isoToDatetimeLocal(item?.scheduled_publish_at),
+    scheduled_unpublish_at: isoToDatetimeLocal(item?.scheduled_unpublish_at),
     author_id: item?.author_id || '',
     og_image: item?.og_image || '',
     noindex: item?.noindex === true,
@@ -638,7 +672,7 @@ export default function BlogManagerClient() {
           }))
       const payload = {
         title: form.title.trim(),
-        slug: form.slug?.trim() || toSlug(form.title),
+        slug: toSlug(form.slug?.trim() || form.title),
         description: form.description || null,
         excerpt: form.description || null,
         content: form.content || null,
@@ -649,6 +683,8 @@ export default function BlogManagerClient() {
         tags: splitComma(form.tags),
         categories: splitComma(form.categories),
         status: form.status === 'published' ? 'published' : 'draft',
+        scheduled_publish_at: datetimeLocalToIso(form.scheduled_publish_at),
+        scheduled_unpublish_at: datetimeLocalToIso(form.scheduled_unpublish_at),
         author_id: form.author_id || null,
         og_image: form.og_image || null,
         noindex: Boolean(form.noindex),
@@ -804,7 +840,15 @@ export default function BlogManagerClient() {
                 value={form.title}
                 onChange={(event) => {
                   userEditingIntentRef.current = true
-                  setForm((prev) => ({ ...prev, title: event.target.value, slug: prev.slug || toSlug(event.target.value) }))
+                  setForm((prev) => {
+                    // `prev.slug || ...` looked like "only auto-fill while slug is empty" but
+                    // actually sticks after the very first keystroke, since prev.slug becomes
+                    // truthy immediately - keep syncing only while slug still matches what
+                    // auto-generation would have produced from the title's previous value.
+                    const nextTitle = event.target.value
+                    const slugInSyncWithTitle = prev.slug === toSlug(prev.title)
+                    return { ...prev, title: nextTitle, slug: slugInSyncWithTitle ? toSlug(nextTitle) : prev.slug }
+                  })
                 }}
                 className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
               />
@@ -818,7 +862,7 @@ export default function BlogManagerClient() {
                 value={form.slug}
                 onChange={(event) => {
                   userEditingIntentRef.current = true
-                  setForm((prev) => ({ ...prev, slug: toSlug(event.target.value) }))
+                  setForm((prev) => ({ ...prev, slug: toSlugLive(event.target.value) }))
                 }}
                 className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
               />
@@ -1329,6 +1373,36 @@ export default function BlogManagerClient() {
               </select>
             </label>
             <label className="text-xs text-slate-400">
+              Go live at (optional)
+              <input
+                type="datetime-local"
+                value={form.scheduled_publish_at || ''}
+                onChange={(event) => {
+                  userEditingIntentRef.current = true
+                  setForm((prev) => ({ ...prev, scheduled_publish_at: event.target.value }))
+                }}
+                className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
+              />
+              <span className="mt-1 block text-[11px] text-slate-500">
+                Set Status to Published and pick a future time - the post stays hidden until then, then goes live on its own.
+              </span>
+            </label>
+            <label className="text-xs text-slate-400">
+              Take down at (optional)
+              <input
+                type="datetime-local"
+                value={form.scheduled_unpublish_at || ''}
+                onChange={(event) => {
+                  userEditingIntentRef.current = true
+                  setForm((prev) => ({ ...prev, scheduled_unpublish_at: event.target.value }))
+                }}
+                className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
+              />
+              <span className="mt-1 block text-[11px] text-slate-500">
+                The post automatically becomes hidden from visitors after this time.
+              </span>
+            </label>
+            <label className="text-xs text-slate-400">
               Author ID
               <input value={form.author_id} onChange={(event) => {
                 userEditingIntentRef.current = true
@@ -1377,9 +1451,16 @@ export default function BlogManagerClient() {
               {saving ? 'Saving...' : 'Save Blog'}
             </button>
             {form.id ? (
-              <button type="button" onClick={deleteBlog} disabled={saving} className="rounded-xl border border-rose-400/30 px-4 py-2 text-sm text-rose-200 hover:bg-rose-500/10">
-                Delete
-              </button>
+              <>
+                <VersionHistory
+                  entityType="blog"
+                  entityId={form.id}
+                  onRestore={() => loadBlogs(form.id, { forceSelection: true })}
+                />
+                <button type="button" onClick={deleteBlog} disabled={saving} className="rounded-xl border border-rose-400/30 px-4 py-2 text-sm text-rose-200 hover:bg-rose-500/10">
+                  Delete
+                </button>
+              </>
             ) : null}
             {form.slug ? (
               <Link href={`/blog/${form.slug}`} target="_blank" className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05]">

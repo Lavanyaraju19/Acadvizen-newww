@@ -1,20 +1,20 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { 
-  X, 
-  Save, 
-  RotateCw, 
-  RotateCcw, 
-  FlipHorizontal, 
+import {
+  X,
+  Save,
+  RotateCw,
+  RotateCcw,
+  FlipHorizontal,
   FlipVertical,
-  Crop,
   Download,
   Undo,
   Redo,
   ZoomIn,
   ZoomOut,
-  Check
+  Check,
+  Crop as CropIcon,
 } from 'lucide-react'
 
 export default function ImageEditor({ imageUrl, onSave, onClose }) {
@@ -28,10 +28,10 @@ export default function ImageEditor({ imageUrl, onSave, onClose }) {
   const [format, setFormat] = useState('image/jpeg')
   const [history, setHistory] = useState([])
   const [historyIndex, setHistoryIndex] = useState(-1)
-  const [isCropping, setIsCropping] = useState(false)
-  const [cropArea, setCropArea] = useState(null)
-  const [dragStart, setDragStart] = useState(null)
   const [outputSize, setOutputSize] = useState({ width: 0, height: 0 })
+  const [cropMode, setCropMode] = useState(false)
+  const [cropRect, setCropRect] = useState(null)
+  const [dragStart, setDragStart] = useState(null)
 
   const loadImage = useCallback((src) => {
     const img = new Image()
@@ -52,43 +52,100 @@ export default function ImageEditor({ imageUrl, onSave, onClose }) {
     }
   }, [imageUrl, loadImage])
 
-  function drawImage(img, rot, fh, fv, scl, crop = null) {
+  function drawImage(img, rot, fh, fv, scl) {
     const canvas = canvasRef.current
     if (!canvas || !img) return
 
     const ctx = canvas.getContext('2d')
-    
-    if (crop) {
-      canvas.width = crop.width
-      canvas.height = crop.height
-    } else {
-      canvas.width = img.width
-      canvas.height = img.height
-    }
+    canvas.width = img.width
+    canvas.height = img.height
 
     ctx.save()
     ctx.translate(canvas.width / 2, canvas.height / 2)
     ctx.rotate((rot * Math.PI) / 180)
     ctx.scale(fh ? -1 : 1, fv ? -1 : 1)
     ctx.scale(scl, scl)
-    
-    if (crop) {
-      ctx.drawImage(
-        img,
-        crop.x,
-        crop.y,
-        crop.width,
-        crop.height,
-        -img.width / 2,
-        -img.height / 2,
-        img.width,
-        img.height
-      )
-    } else {
-      ctx.drawImage(img, -img.width / 2, -img.height / 2)
-    }
-    
+    ctx.drawImage(img, -img.width / 2, -img.height / 2)
     ctx.restore()
+  }
+
+  // Crop operates on the flattened raster currently painted on the canvas (post
+  // rotate/flip/zoom) rather than trying to compose a crop rectangle with those
+  // transforms mathematically - copying the visible pixels into a fresh canvas and
+  // treating that as the new base image is simpler and can't drift out of sync with
+  // whatever the user is currently looking at.
+  function toCanvasCoords(clientX, clientY) {
+    const canvas = canvasRef.current
+    if (!canvas) return { x: 0, y: 0 }
+    const rect = canvas.getBoundingClientRect()
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+    return {
+      x: Math.max(0, Math.min(canvas.width, (clientX - rect.left) * scaleX)),
+      y: Math.max(0, Math.min(canvas.height, (clientY - rect.top) * scaleY)),
+    }
+  }
+
+  function startCropMode() {
+    setCropMode(true)
+    setCropRect(null)
+  }
+
+  function cancelCrop() {
+    setCropMode(false)
+    setCropRect(null)
+    setDragStart(null)
+  }
+
+  function handleCropPointerDown(e) {
+    if (!cropMode) return
+    const point = toCanvasCoords(e.clientX, e.clientY)
+    setDragStart(point)
+    setCropRect({ x: point.x, y: point.y, width: 0, height: 0 })
+  }
+
+  function handleCropPointerMove(e) {
+    if (!cropMode || !dragStart) return
+    const point = toCanvasCoords(e.clientX, e.clientY)
+    setCropRect({
+      x: Math.min(dragStart.x, point.x),
+      y: Math.min(dragStart.y, point.y),
+      width: Math.abs(point.x - dragStart.x),
+      height: Math.abs(point.y - dragStart.y),
+    })
+  }
+
+  function handleCropPointerUp() {
+    setDragStart(null)
+  }
+
+  function applyCrop() {
+    const canvas = canvasRef.current
+    if (!canvas || !cropRect || cropRect.width < 4 || cropRect.height < 4) return
+
+    const width = Math.round(cropRect.width)
+    const height = Math.round(cropRect.height)
+    const cropped = document.createElement('canvas')
+    cropped.width = width
+    cropped.height = height
+    cropped.getContext('2d').drawImage(canvas, Math.round(cropRect.x), Math.round(cropRect.y), width, height, 0, 0, width, height)
+
+    const next = new Image()
+    next.onload = () => {
+      setImage(next)
+      setRotation(0)
+      setFlipH(false)
+      setFlipV(false)
+      setScale(1)
+      setOutputSize({ width: next.width, height: next.height })
+      const state = { img: next, rotation: 0, flipH: false, flipV: false }
+      setHistory((prev) => [...prev.slice(0, historyIndex + 1), state])
+      setHistoryIndex((prev) => prev + 1)
+      setCropMode(false)
+      setCropRect(null)
+      drawImage(next, 0, false, false, 1)
+    }
+    next.src = cropped.toDataURL('image/png')
   }
 
   function saveToHistory() {
@@ -208,6 +265,40 @@ export default function ImageEditor({ imageUrl, onSave, onClose }) {
         <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
           {/* Tools Sidebar */}
           <aside className="space-y-4">
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+              <h4 className="text-sm font-semibold text-slate-100 mb-3">Crop</h4>
+              {cropMode ? (
+                <div className="space-y-2">
+                  <p className="text-xs text-slate-400">Drag on the image to select a crop area.</p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={applyCrop}
+                      disabled={!cropRect || cropRect.width < 4 || cropRect.height < 4}
+                      className="flex-1 px-3 py-2 rounded-lg bg-teal-500/20 text-teal-300 hover:bg-teal-500/30 disabled:opacity-30 text-sm"
+                    >
+                      Apply Crop
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelCrop}
+                      className="px-3 py-2 rounded-lg border border-white/10 text-slate-300 hover:bg-white/[0.05] text-sm"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={startCropMode}
+                  className="w-full p-3 rounded-lg border border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.05] flex items-center justify-center gap-2 text-sm"
+                >
+                  <CropIcon className="w-4 h-4" /> Start Crop
+                </button>
+              )}
+            </div>
+
             <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
               <h4 className="text-sm font-semibold text-slate-100 mb-3">Transform</h4>
               <div className="grid grid-cols-2 gap-2">
@@ -344,10 +435,30 @@ export default function ImageEditor({ imageUrl, onSave, onClose }) {
           {/* Canvas Area */}
           <main>
             <div className="rounded-xl border border-white/10 bg-slate-900 p-4 flex items-center justify-center min-h-[400px]">
-              <canvas
-                ref={canvasRef}
-                className="max-w-full max-h-[600px] object-contain"
-              />
+              <div
+                className="relative inline-block"
+                onPointerDown={handleCropPointerDown}
+                onPointerMove={handleCropPointerMove}
+                onPointerUp={handleCropPointerUp}
+                onPointerLeave={handleCropPointerUp}
+                style={{ cursor: cropMode ? 'crosshair' : 'default', touchAction: cropMode ? 'none' : 'auto' }}
+              >
+                <canvas
+                  ref={canvasRef}
+                  className="max-w-full max-h-[600px] object-contain block"
+                />
+                {cropMode && cropRect && canvasRef.current && (
+                  <div
+                    className="absolute border-2 border-teal-400 bg-teal-400/10 pointer-events-none"
+                    style={{
+                      left: `${(cropRect.x / canvasRef.current.width) * 100}%`,
+                      top: `${(cropRect.y / canvasRef.current.height) * 100}%`,
+                      width: `${(cropRect.width / canvasRef.current.width) * 100}%`,
+                      height: `${(cropRect.height / canvasRef.current.height) * 100}%`,
+                    }}
+                  />
+                )}
+              </div>
             </div>
 
             {/* Action Buttons */}

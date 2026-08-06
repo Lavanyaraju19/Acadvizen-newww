@@ -18,12 +18,11 @@ import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 import { BlogSection } from '../../components/BlogSection'
 import TabbedFaqAccordion from '../../components/faq/TabbedFaqAccordion'
-import { blogs as localBlogs } from '../../../data/blogs'
 import AdaptiveImage from '../../../components/media/AdaptiveImage'
 import { resolveToolLogoCandidates } from '../../../lib/toolMedia'
 import { trackLead } from '../../../lib/metaPixel'
 import { supabase } from '../../lib/supabaseClient'
-import { canonicalizeKnownBlogSlug } from '../../../lib/blogSlugResolver'
+import { canonicalizeKnownBlogSlug, SAFE_LOCAL_BLOGS } from '../../../lib/blogSlugResolver'
 import {
   programOverview,
   skillBottomPlatforms,
@@ -306,9 +305,22 @@ export default function HomePage({ cmsData = {} }) {
   }
 
   const loadBlogPosts = useCallback(async () => {
-    let { data, error } = await fetchPublicData('blog-posts', { limit: 6 })
+    const { data, error } = await fetchPublicData('blog-posts', { limit: 6 })
 
-    if (error || !Array.isArray(data)) {
+    // The CMS API and the local blog registry are both external-ish data sources (network
+    // response / hand-maintained array literal) - never trust their shape. One malformed
+    // record must never crash the whole homepage render.
+    const normalizedPosts = Array.isArray(data)
+      ? data.filter((post) => {
+          const isValid = post !== null && typeof post === 'object'
+          if (!isValid && process.env.NODE_ENV !== 'production') {
+            console.warn('[HomePage] Skipping malformed blog post from CMS API.', post)
+          }
+          return isValid
+        })
+      : []
+
+    if (error || normalizedPosts.length === 0) {
       setBlogPosts([])
       return
     }
@@ -322,25 +334,33 @@ export default function HomePage({ cmsData = {} }) {
       return null
     }
 
-    const hydrated = data.map((post, idx) => {
-      const canonicalSlug = canonicalizeKnownBlogSlug(post.slug)
-      const local = localBlogs.find((item) => item.slug === canonicalSlug || item.id === post.id)
-      return {
+    const seenSlugs = new Set()
+    const hydrated = []
+    normalizedPosts.forEach((post, idx) => {
+      const canonicalSlug = canonicalizeKnownBlogSlug(post?.slug)
+      const local = SAFE_LOCAL_BLOGS.find(
+        (item) => item?.slug === canonicalSlug || (post?.id != null && item?.id === post.id)
+      )
+      const resolvedSlug = local?.slug || canonicalSlug || post?.slug || ''
+      if (!resolvedSlug || seenSlugs.has(resolvedSlug)) return
+      seenSlugs.add(resolvedSlug)
+
+      hydrated.push({
         ...post,
-        slug: canonicalSlug || post.slug,
         ...(local || {}),
-        title: pickFirstNonEmpty(local?.title, post.title),
-        excerpt: pickFirstNonEmpty(local?.excerpt, post.excerpt),
-        content: pickFirstNonEmpty(local?.content, post.content),
+        slug: resolvedSlug,
+        title: pickFirstNonEmpty(local?.title, post?.title),
+        excerpt: pickFirstNonEmpty(local?.excerpt, post?.excerpt),
+        content: pickFirstNonEmpty(local?.content, post?.content),
         featured_image: pickFirstNonEmpty(
           local?.image,
           local?.featured_image,
-          post.featured_image,
-          post.image,
+          post?.featured_image,
+          post?.image,
           idx === 0 ? '/blog-images/image1.jpg' : `/blog-images/image${idx + 1}.jpg`
         ),
-        published_at: pickFirstNonEmpty(post.published_at, post.created_at, local?.created_at),
-      }
+        published_at: pickFirstNonEmpty(post?.published_at, post?.created_at, local?.created_at),
+      })
     })
     setBlogPosts(hydrated.slice(0, 6))
   }, [])

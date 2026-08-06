@@ -358,6 +358,7 @@ export default function Page() {
                       <button
                         type="button"
                         onClick={() => markNotificationAsRead(notification.id)}
+                        aria-label={`Mark "${notification.title || 'notification'}" as read`}
                         className="p-1 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]"
                       >
                         <CheckCircle className="w-4 h-4" />

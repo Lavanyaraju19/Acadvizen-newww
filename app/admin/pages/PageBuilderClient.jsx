@@ -2,13 +2,18 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import DynamicSectionRenderer from '../../../components/sections/DynamicSectionRenderer'
+import VersionHistory from '../../../components/admin/VersionHistory'
 import { Surface } from '../../../src/components/ui/Surface'
 import PrecisionSectionFields from './PrecisionSectionFields'
 import { LIVE_SYNC_TARGETS } from '../../../lib/livePageTargets'
 import { adminApiFetch } from '../../../lib/adminApiClient'
 import { saveAutosave, loadAutosave, clearAutosave, useAutosave } from '../../../lib/autosave'
-import { generateSlug } from '../../../lib/slugUtils'
+import { generateSlug, generateSlugLive } from '../../../lib/slugUtils'
 
 const SECTION_TYPES = [
   'hero',
@@ -23,6 +28,9 @@ const SECTION_TYPES = [
   'cta_banner',
   'stats_section',
   'feature_cards',
+  'pricing',
+  'team',
+  'map',
   'custom_rich_text',
   'testimonials_feed',
   'placement_feed',
@@ -47,6 +55,26 @@ const EMPTY_PAGE_FORM = {
   seo_description: '',
   canonical_url: '',
   status: 'draft',
+  scheduled_publish_at: '',
+  scheduled_unpublish_at: '',
+}
+
+// <input type="datetime-local"> works in "YYYY-MM-DDTHH:mm" local-time strings, not ISO -
+// these convert at the form/API boundary so pageForm state can stay a plain string the
+// input understands directly.
+function isoToDatetimeLocal(iso) {
+  if (!iso) return ''
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ''
+  const pad = (value) => String(value).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+function datetimeLocalToIso(value) {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toISOString()
 }
 
 const EMPTY_SECTION_FORM = {
@@ -71,6 +99,11 @@ const EMPTY_SECTION_FORM = {
   testimonialItems: [],
   galleryItems: [],
   statItems: [],
+  planItems: [],
+  teamMembers: [],
+  embedUrl: '',
+  address: '',
+  html: '',
   padding: 'md',
   alignment: 'left',
   mobileHidden: false,
@@ -110,6 +143,10 @@ const EMPTY_SECTION_FORM = {
 
 function toSlug(value = '') {
   return generateSlug(value)
+}
+
+function toSlugLive(value = '') {
+  return generateSlugLive(value)
 }
 
 function parseLines(value = '') {
@@ -202,6 +239,26 @@ function formFromContent(content = {}) {
     testimonialItems: safeArray(content.items).map((item) => ({ name: item?.name || '', role: item?.role || '', quote: item?.quote || '' })),
     galleryItems: safeArray(content.items).map((item) => ({ src: item?.src || '', alt: item?.alt || '', caption: item?.caption || '' })),
     statItems: safeArray(content.stats).map((item) => ({ label: item?.label || '', value: item?.value || '' })),
+    planItems: safeArray(content.plans).map((item) => ({
+      name: item?.name || '',
+      price: item?.price || '',
+      period: item?.period || '',
+      description: item?.description || '',
+      badge: item?.badge || '',
+      highlighted: Boolean(item?.highlighted),
+      featuresText: safeArray(item?.features).join('\n'),
+      buttonLabel: item?.button?.label || '',
+      buttonHref: item?.button?.href || '',
+    })),
+    teamMembers: safeArray(content.members).map((item) => ({
+      name: item?.name || '',
+      role: item?.role || '',
+      bio: item?.bio || '',
+      photo: item?.photo || '',
+    })),
+    embedUrl: content.embed_url || '',
+    address: content.address || '',
+    html: content.html || '',
     padding: content.padding || 'md',
     alignment: content.alignment || 'left',
     mobileHidden: Boolean(content.mobile_hidden),
@@ -321,6 +378,32 @@ function contentFromForm(form) {
       .filter((item) => item?.src)
       .map((item) => ({ src: item.src || '', alt: item.alt || '', caption: item.caption || '' }))
   }
+  if (form.type === 'pricing') {
+    payload.plans = safeArray(form.planItems)
+      .filter((item) => item?.name)
+      .map((item) => ({
+        name: item.name || '',
+        price: item.price || '',
+        period: item.period || '',
+        description: item.description || '',
+        badge: item.badge || '',
+        highlighted: Boolean(item.highlighted),
+        features: parseLines(item.featuresText),
+        ...(item.buttonLabel || item.buttonHref ? { button: { label: item.buttonLabel || 'Get Started', href: item.buttonHref || '#' } } : {}),
+      }))
+  }
+  if (form.type === 'team') {
+    payload.members = safeArray(form.teamMembers)
+      .filter((item) => item?.name)
+      .map((item) => ({ name: item.name || '', role: item.role || '', bio: item.bio || '', photo: item.photo || '' }))
+  }
+  if (form.type === 'map') {
+    payload.embed_url = form.embedUrl || undefined
+    payload.address = form.address || undefined
+  }
+  if (form.type === 'custom_rich_text') {
+    payload.html = form.html || undefined
+  }
   if (form.type === 'lead_form') {
     payload.name_label = form.nameLabel || undefined
     payload.email_label = form.emailLabel || undefined
@@ -402,7 +485,91 @@ function fieldAttrs(name) {
   }
 }
 
+// Drag handle + row for one section in the list, backed by @dnd-kit/sortable instead of the
+// native HTML5 draggable API (no visual drop indicator, no touch support, easy to drop on the
+// wrong target). All mutating actions are passed in as callbacks so this stays a pure
+// presentation component.
+function SortableSectionRow({ section, index, isLast, isSelected, onEdit, onMoveUp, onMoveDown, onDuplicate, onCopy, onToggleVisibility, onDelete, onInsertAfter }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: section.id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div
+        className={`rounded-xl border p-3 transition-all ${isSelected ? 'border-teal-300/50 bg-teal-300/10' : 'border-white/10 bg-white/[0.02]'} ${isDragging ? 'opacity-50 shadow-lg' : ''}`}
+      >
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-300 touch-none"
+            title="Drag to reorder"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"/>
+            </svg>
+          </button>
+          <button
+            type="button"
+            data-testid={`page-section-edit-${section.id}`}
+            onClick={() => onEdit(section)}
+            className="flex-1 text-left"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-slate-100 capitalize">
+                {section.type.replace(/_/g, ' ')}
+              </span>
+              <span className="text-xs text-slate-500">#{index + 1}</span>
+              {section.visibility === false && (
+                <span className="text-xs text-slate-500">(hidden)</span>
+              )}
+            </div>
+            <div className="text-xs text-slate-400 truncate">{describeSection(section)}</div>
+          </button>
+          <div className="flex items-center gap-1">
+            <button type="button" onClick={() => onMoveUp(index)} disabled={index === 0} className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] disabled:opacity-30" title="Move Up">
+              ↑
+            </button>
+            <button type="button" onClick={() => onMoveDown(index)} disabled={isLast} className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] disabled:opacity-30" title="Move Down">
+              ↓
+            </button>
+            <button type="button" onClick={() => onDuplicate(section.id)} className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]" title="Duplicate">
+              📋
+            </button>
+            <button type="button" onClick={() => onCopy(section)} className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]" title="Copy (paste on any page)">
+              ⧉
+            </button>
+            <button type="button" onClick={() => onToggleVisibility(section)} className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]" title={section.visibility ? 'Hide' : 'Show'}>
+              {section.visibility ? '👁️' : '👁️‍🗨️'}
+            </button>
+            <button type="button" onClick={() => onDelete(section.id)} className="p-1.5 rounded-lg border border-rose-400/30 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10" title="Delete">
+              🗑️
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Insert Section Between */}
+      <div className="flex justify-center -mt-1">
+        <button
+          type="button"
+          onClick={() => onInsertAfter(index)}
+          className="text-xs text-teal-400 hover:text-teal-300 px-2 py-1"
+          title="Insert section after"
+        >
+          + Insert after
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function PageBuilderClient() {
+  const searchParams = useSearchParams()
   const [pages, setPages] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -412,8 +579,17 @@ export default function PageBuilderClient() {
   const [selectedPageId, setSelectedPageId] = useState('')
   const [pageForm, setPageForm] = useState(EMPTY_PAGE_FORM)
   const [sectionForm, setSectionForm] = useState(createEmptySectionForm())
-  const [draggingId, setDraggingId] = useState('')
   const [previewMode, setPreviewMode] = useState(false)
+  const [reorderHistory, setReorderHistory] = useState([])
+  const [reorderPointer, setReorderPointer] = useState(-1)
+  const [sectionClipboard, setSectionClipboard] = useState(null)
+  // KeyboardSensor makes section reordering operable without a mouse (Space to pick up, Arrow
+  // keys to move, Space to drop, Escape to cancel) - a pointer-only DndContext fails WCAG 2.1.1
+  // for any drag-and-drop interaction with no keyboard equivalent.
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
   const pageDetailsFormRef = useRef(null)
 
   const selectedPage = useMemo(() => pages.find((page) => page.id === selectedPageId) || null, [pages, selectedPageId])
@@ -465,6 +641,8 @@ export default function PageBuilderClient() {
             seo_description: page.seo_description || '',
             canonical_url: page.canonical_url || '',
             status: page.status || 'draft',
+            scheduled_publish_at: isoToDatetimeLocal(page.scheduled_publish_at),
+            scheduled_unpublish_at: isoToDatetimeLocal(page.scheduled_unpublish_at),
           })
         }
       } else {
@@ -484,7 +662,7 @@ export default function PageBuilderClient() {
       setBootstrapped(false)
       setStatus('')
       try {
-        const pages = await loadPages()
+        const pages = await loadPages(searchParams.get('page') || undefined)
         setBootstrapped(true)
         
         // Check for autosaved drafts
@@ -522,6 +700,34 @@ export default function PageBuilderClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('acadvizen_section_clipboard')
+      if (raw) setSectionClipboard(JSON.parse(raw))
+    } catch { /* private-browsing storage denial is non-fatal */ }
+  }, [])
+
+  // Reorder history is scoped to whichever page is open - a stack of section ids from one
+  // page is meaningless once a different page (different ids) is selected.
+  useEffect(() => {
+    setReorderHistory([])
+    setReorderPointer(-1)
+  }, [selectedPageId])
+
+  useEffect(() => {
+    function onKeyDown(event) {
+      const tag = document.activeElement?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'z') return
+      event.preventDefault()
+      if (event.shiftKey) redoReorder()
+      else undoReorder()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reorderHistory, reorderPointer, sections])
+
   function setFormFromAutosave(autosaveData) {
     if (autosaveData?.pageForm) {
       setPageForm(autosaveData.pageForm)
@@ -542,6 +748,8 @@ export default function PageBuilderClient() {
       seo_description: page.seo_description || '',
       canonical_url: page.canonical_url || '',
       status: page.status || 'draft',
+      scheduled_publish_at: isoToDatetimeLocal(page.scheduled_publish_at),
+      scheduled_unpublish_at: isoToDatetimeLocal(page.scheduled_unpublish_at),
     })
   }
 
@@ -570,7 +778,12 @@ export default function PageBuilderClient() {
   async function persistPage(nextForm, successMessage) {
     const json = await adminApiFetch('/api/cms/pages', {
       method: 'POST',
-      body: { ...nextForm, slug: nextForm.slug?.trim() || toSlug(nextForm.title) },
+      body: {
+        ...nextForm,
+        slug: toSlug(nextForm.slug?.trim() || nextForm.title),
+        scheduled_publish_at: datetimeLocalToIso(nextForm.scheduled_publish_at),
+        scheduled_unpublish_at: datetimeLocalToIso(nextForm.scheduled_unpublish_at),
+      },
     })
     await loadPages(json.data?.id)
     clearAutosave('page', json.data?.id)
@@ -593,6 +806,8 @@ export default function PageBuilderClient() {
       seo_description: form.elements['pagebuilder-seo-description']?.value || pageForm.seo_description,
       canonical_url: form.elements.page_canonical_url?.value || pageForm.canonical_url,
       status: nextStatus || form.elements.page_status?.value || pageForm.status,
+      scheduled_publish_at: form.elements.page_scheduled_publish_at?.value ?? pageForm.scheduled_publish_at,
+      scheduled_unpublish_at: form.elements.page_scheduled_unpublish_at?.value ?? pageForm.scheduled_unpublish_at,
     }
   }
 
@@ -659,8 +874,10 @@ export default function PageBuilderClient() {
         body: { type: 'page', id: pageForm.id },
       })
       if (newItem.data) {
-        // Navigate to the duplicated page
-        window.location.href = `/admin/pages?pageId=${newItem.data.id}`
+        // ?page= is read on mount (see searchParams.get('page') above) to auto-select this
+        // page - a previous ?pageId= here was never actually read anywhere, so duplicating a
+        // page silently dropped the admin back on whatever page was already selected.
+        window.location.href = `/admin/pages?page=${newItem.data.id}`
       }
     } catch (error) {
       setStatus(error?.message || 'Failed to duplicate page.')
@@ -776,19 +993,44 @@ export default function PageBuilderClient() {
       setStatus(error?.message || 'Failed to reorder sections.')
     } finally {
       setSaving(false)
-      setDraggingId('')
     }
   }
 
-  function onDropSection(targetId) {
-    if (!draggingId || draggingId === targetId) return
-    const copy = sections.slice()
-    const fromIndex = copy.findIndex((item) => item.id === draggingId)
-    const toIndex = copy.findIndex((item) => item.id === targetId)
-    if (fromIndex < 0 || toIndex < 0) return
-    const [moved] = copy.splice(fromIndex, 1)
-    copy.splice(toIndex, 0, moved)
-    reorderSections(copy)
+  // Undo/redo is scoped to reordering: it's the one section action that's cleanly and safely
+  // reversible (same ids, just order_index changes). Create/delete/content-edit undo would need
+  // to fabricate new ids on every step and was judged too easy to get subtly wrong - reordering
+  // is the one that's genuinely robust to ship.
+  function pushReorderHistory(before, after) {
+    setReorderHistory((prev) => [...prev.slice(0, reorderPointer + 1), { before: before.map((s) => s.id), after: after.map((s) => s.id) }])
+    setReorderPointer((prev) => prev + 1)
+  }
+
+  function reorderTo(idsInOrder) {
+    const target = idsInOrder.map((id) => sections.find((s) => s.id === id)).filter(Boolean)
+    if (target.length) reorderSections(target)
+  }
+
+  function undoReorder() {
+    if (reorderPointer < 0) return
+    reorderTo(reorderHistory[reorderPointer].before)
+    setReorderPointer((prev) => prev - 1)
+  }
+
+  function redoReorder() {
+    if (reorderPointer >= reorderHistory.length - 1) return
+    reorderTo(reorderHistory[reorderPointer + 1].after)
+    setReorderPointer((prev) => prev + 1)
+  }
+
+  function handleSectionDragEnd(event) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = sections.findIndex((s) => s.id === active.id)
+    const newIndex = sections.findIndex((s) => s.id === over.id)
+    if (oldIndex < 0 || newIndex < 0) return
+    const reordered = arrayMove(sections, oldIndex, newIndex)
+    pushReorderHistory(sections, reordered)
+    reorderSections(reordered)
   }
 
   function moveSectionUp(index) {
@@ -796,6 +1038,7 @@ export default function PageBuilderClient() {
     const newSections = [...sections]
     const [moved] = newSections.splice(index, 1)
     newSections.splice(index - 1, 0, moved)
+    pushReorderHistory(sections, newSections)
     reorderSections(newSections)
   }
 
@@ -804,7 +1047,72 @@ export default function PageBuilderClient() {
     const newSections = [...sections]
     const [moved] = newSections.splice(index, 1)
     newSections.splice(index + 1, 0, moved)
+    pushReorderHistory(sections, newSections)
     reorderSections(newSections)
+  }
+
+  function copySection(section) {
+    const payload = { type: section.type, content_json: section.content_json || {}, style_json: section.style_json || {} }
+    setSectionClipboard(payload)
+    try { sessionStorage.setItem('acadvizen_section_clipboard', JSON.stringify(payload)) } catch { /* private-browsing storage denial is non-fatal */ }
+    setStatus(`Copied "${section.type.replace(/_/g, ' ')}" section - open any page and click Paste to add it there.`)
+  }
+
+  async function pasteSection() {
+    if (!sectionClipboard || !selectedPage) return
+    setSaving(true)
+    setStatus('')
+    try {
+      await adminApiFetch('/api/cms/sections', {
+        method: 'POST',
+        body: {
+          page_id: selectedPage.id,
+          type: sectionClipboard.type,
+          content_json: sectionClipboard.content_json,
+          style_json: sectionClipboard.style_json,
+          order_index: sections.length,
+          visibility: true,
+        },
+      })
+      await loadPages(selectedPageId)
+      setStatus('Section pasted.')
+    } catch (error) {
+      setStatus(error?.message || 'Failed to paste section.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function saveCurrentPageAsTemplate() {
+    if (!pageForm.id) return
+    const name = window.prompt('Template name:', `${pageForm.title || 'Untitled'} Template`)
+    if (!name || !name.trim()) return
+    setSaving(true)
+    setStatus('')
+    try {
+      await adminApiFetch('/api/cms/templates', {
+        method: 'POST',
+        body: {
+          name: name.trim(),
+          description: `Created from "${pageForm.title || pageForm.slug}"`,
+          template_type: 'landing',
+          template_data: {
+            sections: sections.map((section, index) => ({
+              type: section.type,
+              order_index: Number.isFinite(section.order_index) ? section.order_index : index,
+              content_json: section.content_json || {},
+              style_json: section.style_json || {},
+              visibility: section.visibility !== false,
+            })),
+          },
+        },
+      })
+      setStatus(`Saved as template "${name.trim()}". Find it under Templates to reuse or apply to new pages.`)
+    } catch (error) {
+      setStatus(error?.message || 'Failed to save as template.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function saveReusableBlock() {
@@ -873,7 +1181,7 @@ export default function PageBuilderClient() {
             Build pages visually by adding, reordering, and customizing sections. No coding required.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="relative z-[60] flex gap-2">
           <button type="button" onClick={() => setPreviewMode(!previewMode)} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.05]">
             {previewMode ? 'Edit Mode' : 'Preview Mode'}
           </button>
@@ -970,11 +1278,19 @@ export default function PageBuilderClient() {
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <label className="text-xs text-slate-400">
                 Page Title
-                <input {...fieldAttrs('page_title')} value={pageForm.title} onChange={(event) => setPageForm((prev) => ({ ...prev, title: event.target.value, slug: prev.slug || toSlug(event.target.value) }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+                <input {...fieldAttrs('page_title')} value={pageForm.title} onChange={(event) => setPageForm((prev) => {
+                  // Keep auto-generating the slug from the title only while the slug is still
+                  // exactly what auto-generation would have produced from the title's previous
+                  // value - `prev.slug || ...` looked equivalent but actually "sticks" after the
+                  // very first keystroke, since prev.slug becomes truthy immediately.
+                  const nextTitle = event.target.value
+                  const slugInSyncWithTitle = prev.slug === toSlug(prev.title)
+                  return { ...prev, title: nextTitle, slug: slugInSyncWithTitle ? toSlug(nextTitle) : prev.slug }
+                })} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
               </label>
               <label className="text-xs text-slate-400">
                 Slug
-                <input {...fieldAttrs('page_slug')} value={pageForm.slug} onChange={(event) => setPageForm((prev) => ({ ...prev, slug: toSlug(event.target.value) }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+                <input {...fieldAttrs('page_slug')} value={pageForm.slug} onChange={(event) => setPageForm((prev) => ({ ...prev, slug: toSlugLive(event.target.value) }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
               </label>
               <TextAreaField label="Page Description" value={pageForm.description} onChange={(value) => setPageForm((prev) => ({ ...prev, description: value }))} rows={3} />
               <label className="text-xs text-slate-400">
@@ -986,6 +1302,33 @@ export default function PageBuilderClient() {
                     </option>
                   ))}
                 </select>
+              </label>
+              <div />
+              <label className="text-xs text-slate-400">
+                Go live at (optional)
+                <input
+                  type="datetime-local"
+                  {...fieldAttrs('page_scheduled_publish_at')}
+                  value={pageForm.scheduled_publish_at || ''}
+                  onChange={(event) => setPageForm((prev) => ({ ...prev, scheduled_publish_at: event.target.value }))}
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
+                />
+                <span className="mt-1 block text-[11px] text-slate-500">
+                  Set Publish Status to Published and pick a future time - the page stays hidden from visitors until then, then goes live on its own.
+                </span>
+              </label>
+              <label className="text-xs text-slate-400">
+                Take down at (optional)
+                <input
+                  type="datetime-local"
+                  {...fieldAttrs('page_scheduled_unpublish_at')}
+                  value={pageForm.scheduled_unpublish_at || ''}
+                  onChange={(event) => setPageForm((prev) => ({ ...prev, scheduled_unpublish_at: event.target.value }))}
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
+                />
+                <span className="mt-1 block text-[11px] text-slate-500">
+                  The page automatically becomes hidden from visitors after this time, without needing to come back and unpublish it manually.
+                </span>
               </label>
               <label className="text-xs text-slate-400">
                 SEO Title
@@ -1017,6 +1360,10 @@ export default function PageBuilderClient() {
                   <button type="button" disabled={saving} onClick={handleDuplicatePage} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05] disabled:opacity-70">
                     Duplicate
                   </button>
+                  <button type="button" disabled={saving || !sections.length} onClick={saveCurrentPageAsTemplate} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05] disabled:opacity-70">
+                    Save as Template
+                  </button>
+                  <VersionHistory entityType="page" entityId={pageForm.id} onRestore={() => loadPages(pageForm.id)} />
                   <button type="button" disabled={saving} onClick={handleDeletePage} className="rounded-xl border border-rose-400/30 px-4 py-2 text-sm text-rose-200 hover:bg-rose-500/10 disabled:opacity-70">
                     Delete Page
                   </button>
@@ -1057,104 +1404,47 @@ export default function PageBuilderClient() {
                   ))}
                 </div>
 
-                <div className="mt-4 space-y-2">
+                <div className="mt-4 flex items-center gap-2">
+                  <button type="button" onClick={undoReorder} disabled={reorderPointer < 0} className="px-2 py-1 rounded-lg border border-white/10 text-xs text-slate-300 hover:bg-white/[0.05] disabled:opacity-30" title="Undo reorder (Ctrl+Z)">
+                    ↶ Undo
+                  </button>
+                  <button type="button" onClick={redoReorder} disabled={reorderPointer >= reorderHistory.length - 1} className="px-2 py-1 rounded-lg border border-white/10 text-xs text-slate-300 hover:bg-white/[0.05] disabled:opacity-30" title="Redo reorder (Ctrl+Shift+Z)">
+                    ↷ Redo
+                  </button>
+                  {sectionClipboard ? (
+                    <button type="button" onClick={pasteSection} disabled={!selectedPage || saving} className="px-2 py-1 rounded-lg border border-teal-500/30 bg-teal-500/10 text-xs text-teal-300 hover:bg-teal-500/20 disabled:opacity-30" title="Paste copied section here">
+                      ⧉ Paste &quot;{sectionClipboard.type.replace(/_/g, ' ')}&quot;
+                    </button>
+                  ) : null}
+                </div>
+
+                <div className="mt-2 space-y-2">
                   {!selectedPage ? (
                     <div className="text-sm text-slate-400">Select a page first.</div>
                   ) : sections.length === 0 ? (
                     <div className="text-sm text-slate-400">No sections yet. Add one or import the current live page copy.</div>
                   ) : (
-                    sections.map((section, index) => (
-                      <div key={section.id}>
-                        <div
-                          draggable
-                          onDragStart={() => setDraggingId(section.id)}
-                          onDragOver={(event) => event.preventDefault()}
-                          onDrop={() => onDropSection(section.id)}
-                          className={`rounded-xl border p-3 transition-all ${sectionForm.id === section.id ? 'border-teal-300/50 bg-teal-300/10' : 'border-white/10 bg-white/[0.02]'} ${draggingId === section.id ? 'opacity-50' : ''}`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="cursor-grab text-slate-500 hover:text-slate-300">
-                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"/>
-                              </svg>
-                            </div>
-                            <button
-                              type="button"
-                              data-testid={`page-section-edit-${section.id}`}
-                              onClick={() => beginEditSection(section)}
-                              className="flex-1 text-left"
-                            >
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-semibold text-slate-100 capitalize">
-                                  {section.type.replace(/_/g, ' ')}
-                                </span>
-                                <span className="text-xs text-slate-500">#{index + 1}</span>
-                                {section.visibility === false && (
-                                  <span className="text-xs text-slate-500">(hidden)</span>
-                                )}
-                              </div>
-                              <div className="text-xs text-slate-400 truncate">{describeSection(section)}</div>
-                            </button>
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => moveSectionUp(index)}
-                                disabled={index === 0}
-                                className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] disabled:opacity-30"
-                                title="Move Up"
-                              >
-                                ↑
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => moveSectionDown(index)}
-                                disabled={index === sections.length - 1}
-                                className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] disabled:opacity-30"
-                                title="Move Down"
-                              >
-                                ↓
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => duplicateSection(section.id)}
-                                className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]"
-                                title="Duplicate"
-                              >
-                                📋
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => toggleVisibility(section)}
-                                className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]"
-                                title={section.visibility ? 'Hide' : 'Show'}
-                              >
-                                {section.visibility ? '👁️' : '👁️‍🗨️'}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => deleteSection(section.id)}
-                                className="p-1.5 rounded-lg border border-rose-400/30 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
-                                title="Delete"
-                              >
-                                🗑️
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Insert Section Between */}
-                        <div className="flex justify-center -mt-1">
-                          <button
-                            type="button"
-                            onClick={() => { resetSectionForm(); setSectionForm(prev => ({ ...prev, insertAfterIndex: index })); }}
-                            className="text-xs text-teal-400 hover:text-teal-300 px-2 py-1"
-                            title="Insert section after"
-                          >
-                            + Insert after
-                          </button>
-                        </div>
-                      </div>
-                    ))
+                    <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
+                      <SortableContext items={sections.map((section) => section.id)} strategy={verticalListSortingStrategy}>
+                        {sections.map((section, index) => (
+                          <SortableSectionRow
+                            key={section.id}
+                            section={section}
+                            index={index}
+                            isLast={index === sections.length - 1}
+                            isSelected={sectionForm.id === section.id}
+                            onEdit={beginEditSection}
+                            onMoveUp={moveSectionUp}
+                            onMoveDown={moveSectionDown}
+                            onDuplicate={duplicateSection}
+                            onCopy={copySection}
+                            onToggleVisibility={toggleVisibility}
+                            onDelete={deleteSection}
+                            onInsertAfter={(insertIndex) => { resetSectionForm(); setSectionForm((prev) => ({ ...prev, insertAfterIndex: insertIndex })); }}
+                          />
+                        ))}
+                      </SortableContext>
+                    </DndContext>
                   )}
                 </div>
               </div>
@@ -1162,7 +1452,12 @@ export default function PageBuilderClient() {
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
                 <h3 className="text-base font-semibold text-slate-100">4. Preview</h3>
                 <p className="mt-1 text-xs text-slate-400">Preview the page with the current section edits before publishing.</p>
-                <div className="mt-4 max-h-[620px] overflow-auto rounded-2xl border border-white/10 bg-[#020617] p-2">
+                <div
+                  className="mt-4 max-h-[620px] overflow-auto rounded-2xl border border-white/10 bg-[#020617] p-2"
+                  tabIndex={0}
+                  role="region"
+                  aria-label="Section preview"
+                >
                   {previewSections.length === 0 ? (
                     <div className="p-6 text-sm text-slate-400">Select or create a section to preview it here.</div>
                   ) : (
@@ -1274,6 +1569,35 @@ export default function PageBuilderClient() {
       </div>
 
       {status ? <p className="mt-4 text-sm text-slate-300">{status}</p> : null}
+
+      {previewMode ? (
+        <div className="fixed inset-0 z-50 flex flex-col bg-[#020617]">
+          <div className="flex items-center justify-between gap-4 border-b border-white/10 bg-[#050b12] px-6 py-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-teal-200">Live Preview</p>
+              <p className="mt-0.5 text-sm text-slate-300">
+                {pageForm.title || 'Untitled page'} · /{pageForm.slug || ''} · assembled from current unsaved edits, exactly as it will render publicly
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPreviewMode(false)}
+              className="rounded-xl bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-200"
+            >
+              Exit Preview
+            </button>
+          </div>
+          <div className="flex-1 overflow-auto">
+            {previewSections.length === 0 ? (
+              <div className="p-10 text-center text-sm text-slate-400">This page has no sections yet - add one to see it here.</div>
+            ) : (
+              previewSections.map((section) => (
+                <DynamicSectionRenderer key={section.id || `${section.type}-${section.order_index}`} section={section} />
+              ))
+            )}
+          </div>
+        </div>
+      ) : null}
     </Surface>
   )
 }

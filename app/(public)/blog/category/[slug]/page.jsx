@@ -4,6 +4,21 @@ export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { getServerSupabaseClient } from '../../../../../lib/supabaseServer'
 import { fetchCmsSiteData } from '../../../../../lib/cmsServer'
+import { buildMetadata } from '../../../../lib/seo'
+
+export async function generateMetadata({ params }) {
+  const { slug } = await params
+  const supabase = getServerSupabaseClient()
+  const { data: taxonomy } = slug && supabase
+    ? await supabase.from('blog_categories').select('name').eq('slug', slug).maybeSingle()
+    : { data: null }
+  const label = taxonomy?.name || slug
+  return buildMetadata({
+    title: `${label} Articles`,
+    description: `Browse Acadvizen blog posts in the "${label}" category.`,
+    path: `/blog/category/${slug}`,
+  })
+}
 
 async function fetchByCategory(slug) {
   const supabase = getServerSupabaseClient()

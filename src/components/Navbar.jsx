@@ -2,16 +2,19 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Image from 'next/image'
 import { useAuth } from '../contexts/AuthContext'
-import { useSiteCms } from '../hooks/useSiteCms'
 import { canAccessAdminProfile, isFullAdminProfile } from '../../lib/adminPermissions'
+import { buildMenuTree, pruneMenuTree } from '../../lib/menuTree'
+import { DesktopNavItem, MobileNavAccordionItem } from '../../components/cms/NavDropdown'
 
 function ensureAchievementsLink(items = []) {
   const normalized = Array.isArray(items) ? items.filter(Boolean) : []
-  const hasAchievements = normalized.some((item) => {
-    const title = String(item?.title || '').trim().toLowerCase()
-    const url = String(item?.url || '').trim().toLowerCase()
-    return title === 'achievements' || url === '/achievements'
-  })
+  const hasAchievements = normalized
+    .filter((item) => !item?.parent_id) // only a top-level match counts; a dropdown child with this title/url shouldn't suppress the top-level fallback link
+    .some((item) => {
+      const title = String(item?.title || '').trim().toLowerCase()
+      const url = String(item?.url || '').trim().toLowerCase()
+      return title === 'achievements' || url === '/achievements'
+    })
 
   if (hasAchievements) return normalized
 
@@ -28,9 +31,11 @@ function ensureAchievementsLink(items = []) {
   return nextItems
 }
 
-export function Navbar() {
+// menus/settings come from PublicLayout's single useSiteCms() call (itself seeded by a
+// server-side fetch, see lib/siteCmsServer.js) - calling the hook again here would fire
+// the same four requests a second time on every page.
+export function Navbar({ menus, settings }) {
   const { user, profile, signOut, loading } = useAuth()
-  const { menus, settings } = useSiteCms()
   const [showConfirm, setShowConfirm] = useState(false)
   const [showPanel, setShowPanel] = useState(false)
   const uiCopy = settings?.ui_copy && typeof settings.ui_copy === 'object' ? settings.ui_copy : {}
@@ -54,8 +59,13 @@ export function Navbar() {
     { title: 'Contact', url: '/contact', target: '_self' },
   ]
   const headerLinks = ensureAchievementsLink(Array.isArray(menus?.header) && menus.header.length
-    ? menus.header.filter((item) => !item.parent_id)
+    ? menus.header
     : (uiFallbackLinks.length ? uiFallbackLinks : fallbackHeaderLinks))
+  // Prune per-surface visibility on the built tree, not the flat list beforehand - filtering
+  // the flat list first would orphan a hidden parent's still-visible children, incorrectly
+  // promoting them to top-level instead of hiding the whole branch with their parent.
+  const desktopHeaderTree = pruneMenuTree(buildMenuTree(headerLinks), 'desktop_visible')
+  const mobileHeaderTree = pruneMenuTree(buildMenuTree(headerLinks), 'mobile_visible')
   const logoSrc = '/logo-mark.png'
   const brandLabel = String(uiCopy.nav_brand_label || settings?.company_name || 'Acadvizen')
   const dashboardLabel = String(uiCopy.nav_dashboard_label || 'Dashboard')
@@ -102,15 +112,12 @@ export function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-6 ml-auto">
-            {headerLinks.map((item) => (
-              <Link
-                key={`${item.title}-${item.url}`}
-                to={item.url}
-                target={item.target || '_self'}
-                className="text-slate-200 hover:text-white text-base font-semibold transition-colors"
-              >
-                {item.title}
-              </Link>
+            {desktopHeaderTree.map((item) => (
+              <DesktopNavItem
+                key={item.id || `${item.title}-${item.url}`}
+                item={item}
+                linkClassName="text-slate-200 hover:text-white text-base font-semibold transition-colors"
+              />
             ))}
           </div>
 
@@ -161,7 +168,7 @@ export function Navbar() {
             className="absolute inset-0 bg-black/50"
             onClick={() => setShowPanel(false)}
           />
-          <aside className="absolute right-0 top-0 h-full w-full max-w-sm bg-slate-950 border-l border-white/10 shadow-2xl p-6 flex flex-col">
+          <aside className="absolute right-0 top-0 h-dvh w-full max-w-sm overflow-y-auto bg-slate-950 border-l border-white/10 shadow-2xl p-6 flex flex-col">
             <div className="flex items-center justify-between">
               <div className="text-sm font-semibold text-slate-200">{menuLabel}</div>
               <button onClick={() => setShowPanel(false)} className="text-slate-400 hover:text-slate-200">
@@ -169,17 +176,13 @@ export function Navbar() {
               </button>
             </div>
 
-            <div className="mt-6 space-y-3 text-sm text-slate-200">
-              {headerLinks.map((item) => (
-                <Link
-                  key={`mobile-${item.title}-${item.url}`}
-                  to={item.url}
-                  target={item.target || '_self'}
-                  onClick={() => setShowPanel(false)}
-                  className="block rounded-lg px-3 py-2 hover:bg-white/[0.05]"
-                >
-                  {item.title}
-                </Link>
+            <div className="mt-6 space-y-1 text-sm text-slate-200 overflow-x-hidden">
+              {mobileHeaderTree.map((item) => (
+                <MobileNavAccordionItem
+                  key={item.id || `mobile-${item.title}-${item.url}`}
+                  item={item}
+                  onNavigate={() => setShowPanel(false)}
+                />
               ))}
             </div>
 

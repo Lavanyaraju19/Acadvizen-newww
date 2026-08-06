@@ -1,4 +1,4 @@
-import { ensureAdmin, getSupabaseClientOrResponse, jsonError, jsonOk, readJsonBody } from '../_utils'
+import { ensureAdmin, getSupabaseClientOrResponse, jsonError, jsonOk, readJsonBody, revalidateAllCmsPages } from '../_utils'
 import { importCmsTemplates } from '../../../../lib/cmsImportTemplates'
 import { buildLivePageTemplates } from '../../../../lib/livePageSync'
 import { LIVE_SYNC_TARGETS } from '../../../../lib/livePageTargets'
@@ -50,9 +50,16 @@ export async function POST(request) {
       count: summary.length,
       slugs: summary.map((item) => item.slug),
     })
+    // upsertPageBySlug writes directly to `pages`/`page_sections`, bypassing the pages
+    // CRUD route that normally triggers revalidateCmsMutation - without this, a synced
+    // page's public route wouldn't be told anything changed.
+    const revalidation = revalidateAllCmsPages(
+      summary.map((item) => `/${String(item.slug || '').replace(/^\/+/, '')}`)
+    )
     return jsonOk({
       imported: summary,
       count: summary.length,
+      revalidation,
     })
   } catch (error) {
     console.error('[cms-import] import-live-pages:failed', {

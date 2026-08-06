@@ -3,6 +3,7 @@ const { createClient } = require('@supabase/supabase-js')
 const {
   E2E_ADMIN_EMAIL,
   E2E_ADMIN_PASSWORD,
+  E2E_BASE_URL,
   createScopedCmsValue,
   destructiveCmsTestConfig,
   loginAdmin,
@@ -91,15 +92,15 @@ async function deleteBlogById(supabase, id) {
   }
 }
 
-async function readPublicBody(browser, path) {
-  const context = await browser.newContext()
-  const page = await context.newPage()
-  try {
-    await page.goto(path, { waitUntil: 'domcontentloaded' })
-    return await page.locator('body').innerText()
-  } finally {
-    await context.close()
-  }
+// Plain HTTP fetch, not page.goto() + DOM query: this is used exclusively to read /sitemap.xml,
+// raw XML rather than a rendered page. Navigating a real browser to an XML response hands it to
+// that browser's built-in XML viewer, whose DOM shape (and whether/how fast `body` innerText()
+// resolves) differs per engine - Firefox's XML viewer in particular left
+// `locator('body').innerText()` hanging until the 30s test timeout. A direct fetch reads the
+// same bytes without depending on any browser's XML-rendering quirks.
+async function readPublicBody(_browser, path) {
+  const response = await fetch(new URL(path, E2E_BASE_URL).toString(), { cache: 'no-store' })
+  return await response.text()
 }
 
 async function fetchPublicResponse(path) {
@@ -172,6 +173,9 @@ test.describe('CMS Blog CRUD', () => {
       await publicPage.goto('/blog', { waitUntil: 'domcontentloaded' })
       await expect(publicPage.getByText(initialTitle)).toHaveCount(0)
 
+      await publicPage.goto('/', { waitUntil: 'domcontentloaded' })
+      await expect(publicPage.getByRole('heading', { level: 3, name: initialTitle })).toHaveCount(0)
+
       const draftPublicResponse = await fetchPublicResponse(`/blog/${baseSlug}`)
       expect([200, 404]).toContain(draftPublicResponse.status)
       expect(draftPublicResponse.body).toMatch(/Blog not found\.|Page not found/)
@@ -198,6 +202,17 @@ test.describe('CMS Blog CRUD', () => {
         await publicPage.goto('/blog', { waitUntil: 'domcontentloaded' })
         return await publicPage.getByText(initialTitle).count()
       }, { timeout: 15000 }).toBeGreaterThan(0)
+
+      // The homepage's "From the Blog" section hydrates its post list client-side, on a
+      // deferred requestIdleCallback/setTimeout (see loadBlogPosts in
+      // src/legacy/pages/HomePage.jsx) - navigate once and poll the already-loaded page's
+      // DOM in place. Re-navigating on every poll tick (as the /blog checks above do) would
+      // reset the page before that deferred fetch ever gets a chance to resolve, since
+      // domcontentloaded fires well before the idle-callback fires.
+      await publicPage.goto('/', { waitUntil: 'domcontentloaded' })
+      await expect.poll(async () => {
+        return await publicPage.getByRole('heading', { level: 3, name: initialTitle }).count()
+      }, { timeout: 15000 }).toBe(1)
 
       await expect.poll(async () => {
         return await readPublicBody(browser, '/sitemap.xml')
@@ -231,6 +246,11 @@ test.describe('CMS Blog CRUD', () => {
 
       await publicPage.goto('/blog', { waitUntil: 'domcontentloaded' })
       await expect(publicPage.getByText(updatedTitle)).toHaveCount(0)
+
+      await publicPage.goto('/', { waitUntil: 'domcontentloaded' })
+      await expect.poll(async () => {
+        return await publicPage.getByRole('heading', { level: 3, name: updatedTitle }).count()
+      }, { timeout: 15000 }).toBe(0)
 
       const unpublishedPublicResponse = await fetchPublicResponse(`/blog/${baseSlug}`)
       expect([200, 404]).toContain(unpublishedPublicResponse.status)

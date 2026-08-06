@@ -15,9 +15,14 @@ as $$
 $$;
 
 -- Add workflow status columns
+-- created_by is included here (not just in the workflow-specific columns) because
+-- get_workflow_queue() below is a `language sql` function and its body references
+-- pages.created_by/blogs.created_by directly - SQL-language functions are validated against
+-- the current schema at CREATE time, so a fresh bootstrap fails immediately if that column
+-- doesn't exist yet, rather than only failing when the function is later called.
 alter table public.pages
-add column if not exists workflow_status text default 'draft' check (workflow_status in ('draft', 'review', 'approved', 'published')),
 add column if not exists created_by uuid references public.profiles(id),
+add column if not exists workflow_status text default 'draft' check (workflow_status in ('draft', 'review', 'approved', 'published')),
 add column if not exists reviewed_by uuid references public.profiles(id),
 add column if not exists reviewed_at timestamptz,
 add column if not exists approved_by uuid references public.profiles(id),
@@ -26,8 +31,8 @@ add column if not exists published_by uuid references public.profiles(id),
 add column if not exists published_at timestamptz;
 
 alter table public.blogs
-add column if not exists workflow_status text default 'draft' check (workflow_status in ('draft', 'review', 'approved', 'published')),
 add column if not exists created_by uuid references public.profiles(id),
+add column if not exists workflow_status text default 'draft' check (workflow_status in ('draft', 'review', 'approved', 'published')),
 add column if not exists reviewed_by uuid references public.profiles(id),
 add column if not exists reviewed_at timestamptz,
 add column if not exists approved_by uuid references public.profiles(id),
@@ -67,7 +72,7 @@ begin
   end if;
   
   -- Get current status
-  execute format('SELECT workflow_status FROM %s WHERE id = $1', v_table_name)
+  execute format('SELECT workflow_status FROM %I WHERE id = $1', v_table_name)
   into v_current_status
   using p_entity_id;
   
@@ -87,30 +92,30 @@ begin
   -- Update workflow status
   if p_new_status = 'review' then
     execute format('
-      UPDATE %s 
+      UPDATE %I 
       SET workflow_status = $1, reviewed_by = $2, reviewed_at = now()
       WHERE id = $3
     ', v_table_name)
     using p_new_status, p_user_id, p_entity_id;
   elsif p_new_status = 'approved' then
     execute format('
-      UPDATE %s 
+      UPDATE %I 
       SET workflow_status = $1, approved_by = $2, approved_at = now()
       WHERE id = $3
     ', v_table_name)
     using p_new_status, p_user_id, p_entity_id;
   elsif p_new_status = 'published' then
     execute format('
-      UPDATE %s 
+      UPDATE %I 
       SET workflow_status = $1, published_by = $2, published_at = now(), status = ''published''
       WHERE id = $3
     ', v_table_name)
     using p_new_status, p_user_id, p_entity_id;
   elsif p_new_status = 'draft' then
     execute format('
-      UPDATE %s 
+      UPDATE %I 
       SET workflow_status = $1, status = ''draft''
-      WHERE id = $2
+      WHERE id = $3
     ', v_table_name)
     using p_new_status, p_entity_id;
   end if;

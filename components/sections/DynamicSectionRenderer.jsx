@@ -7,8 +7,11 @@ import ImageSection from './ImageSection'
 import DataFeedSection from './DataFeedSection'
 import LeadFormSection from './LeadFormSection'
 import FormEmbedSection from './FormEmbedSection'
+import MapSection from './MapSection'
+import PricingSection from './PricingSection'
 import RichTextSection from './RichTextSection'
 import StatsSection from './StatsSection'
+import TeamSection from './TeamSection'
 import TestimonialSection from './TestimonialSection'
 import TextSection from './TextSection'
 import ThreeColumnSection from './ThreeColumnSection'
@@ -28,6 +31,9 @@ const SECTION_COMPONENTS = {
   cta_banner: CtaBannerSection,
   stats_section: StatsSection,
   feature_cards: FeatureCardsSection,
+  pricing: PricingSection,
+  team: TeamSection,
+  map: MapSection,
   custom_rich_text: RichTextSection,
   testimonials_feed: DataFeedSection,
   placement_feed: DataFeedSection,

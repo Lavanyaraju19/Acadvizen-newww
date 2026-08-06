@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSupabaseClient, hasValidSupabaseServiceRoleKey } from '../../../../lib/supabaseServer'
 import { canAccessAdminProfile, enrichAdminProfile } from '../../../../lib/adminPermissions'
 import { logger } from '../../../../lib/productionLogger'
+import { authLimiter } from '../../../../lib/rateLimiter'
 
 export const runtime = 'nodejs'
 
@@ -132,6 +133,17 @@ async function readProfile(accessToken, userId) {
 }
 
 export async function POST(request) {
+  // authLimiter (10 requests/min/IP) already existed in lib/rateLimiter.ts but was never wired
+  // into the one endpoint it was built for - admin login had no app-layer brute-force
+  // protection of its own at all.
+  const rateLimit = authLimiter.check(`login:${authLimiter.getClientIP(request)}`)
+  if (!rateLimit.allowed) {
+    return jsonResponse(
+      { success: false, data: null, error: `Too many login attempts. Please try again in ${rateLimit.retryAfter} seconds.` },
+      429
+    )
+  }
+
   let body = null
 
   try {

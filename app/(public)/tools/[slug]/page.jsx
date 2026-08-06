@@ -8,6 +8,9 @@ import { fetchToolBySlug } from '../../../lib/contentMeta'
 import { fetchCmsPageByAnySlug, fetchRedirectByPath } from '../../../../lib/cmsServer'
 import { isPublicCmsEnabled } from '../../../lib/publicCms'
 import ToolDetailLegacyClient from '../../../legacy-fallback/ToolDetailLegacyClient'
+import Breadcrumbs from '../../../../components/cms/templates/Breadcrumbs'
+import JsonLd from '../../../../components/cms/templates/JsonLd'
+import { buildBreadcrumbSchema, buildWebPageSchema } from '../../../../lib/structuredData'
 
 export const dynamicParams = true
 
@@ -55,5 +58,20 @@ export default async function Page({ params }) {
       )
     }
   }
-  return <ToolDetailLegacyClient />
+  const tool = await fetchToolBySlug(slug)
+  const toolName = tool?.name || 'Tool Details'
+  const breadcrumbItems = [
+    { label: 'Home', href: '/', path: '/' },
+    { label: 'Tools', href: '/tools', path: '/tools' },
+    { label: toolName, path: `/tools/${slug}` },
+  ]
+
+  return (
+    <>
+      <JsonLd id="tool-breadcrumbs" data={buildBreadcrumbSchema(breadcrumbItems)} />
+      <JsonLd id="tool-schema" data={buildWebPageSchema({ name: toolName, description: tool?.description, path: `/tools/${slug}` })} />
+      <Breadcrumbs items={breadcrumbItems} />
+      <ToolDetailLegacyClient />
+    </>
+  )
 }

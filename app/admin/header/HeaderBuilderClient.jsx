@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Surface } from '../../../src/components/ui/Surface'
 import { adminApiFetch } from '../../../lib/adminApiClient'
 import { uploadFileAsset } from '../../../lib/storageUpload'
+import { isValidNavUrl } from '../../../lib/linkValidation'
 import { 
   Save, 
   Eye, 
@@ -180,16 +181,6 @@ export default function HeaderBuilderClient() {
     }
   }
 
-  // Validate URL
-  function isValidUrl(url) {
-    if (!url) return true
-    try {
-      new URL(url.startsWith('http') ? url : `https://${url}`)
-      return true
-    } catch {
-      return false
-    }
-  }
 
   // Check for circular references
   function hasCircularReference(itemId, parentId, navItems) {
@@ -707,8 +698,14 @@ export default function HeaderBuilderClient() {
                   type="text"
                   value={settings.logo_link}
                   onChange={(e) => setSettings({ ...settings, logo_link: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                  placeholder="/ or https://example.com"
+                  className={`mt-1 w-full px-3 py-2 text-sm rounded-lg border bg-white/[0.03] text-slate-100 ${
+                    !isValidNavUrl(settings.logo_link) && settings.logo_link ? 'border-rose-400/30' : 'border-white/10'
+                  }`}
                 />
+                {!isValidNavUrl(settings.logo_link) && settings.logo_link && (
+                  <span className="mt-1 block text-[11px] text-rose-300">Enter a path starting with / or a full https:// URL.</span>
+                )}
               </label>
             </div>
           )}
@@ -740,12 +737,20 @@ export default function HeaderBuilderClient() {
               
               <label className="text-xs text-slate-400">
                 Link URL (optional)
+                {/* type="text" not "url" - a native url input rejects relative paths like "/courses",
+                    which is the common case here, not an edge case. */}
                 <input
-                  type="url"
+                  type="text"
                   value={settings.announcement_link}
                   onChange={(e) => setSettings({ ...settings, announcement_link: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                  placeholder="/ or https://example.com"
+                  className={`mt-1 w-full px-3 py-2 text-sm rounded-lg border bg-white/[0.03] text-slate-100 ${
+                    !isValidNavUrl(settings.announcement_link) && settings.announcement_link ? 'border-rose-400/30' : 'border-white/10'
+                  }`}
                 />
+                {!isValidNavUrl(settings.announcement_link) && settings.announcement_link && (
+                  <span className="mt-1 block text-[11px] text-rose-300">Enter a path starting with / or a full https:// URL.</span>
+                )}
               </label>
               
               <div className="grid gap-3 md:grid-cols-2">
@@ -859,8 +864,14 @@ export default function HeaderBuilderClient() {
                       type="text"
                       value={settings.primary_cta_link}
                       onChange={(e) => setSettings({ ...settings, primary_cta_link: e.target.value })}
-                      className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                      placeholder="/ or https://example.com"
+                      className={`mt-1 w-full px-3 py-2 text-sm rounded-lg border bg-white/[0.03] text-slate-100 ${
+                        !isValidNavUrl(settings.primary_cta_link) && settings.primary_cta_link ? 'border-rose-400/30' : 'border-white/10'
+                      }`}
                     />
+                    {!isValidNavUrl(settings.primary_cta_link) && settings.primary_cta_link && (
+                      <span className="mt-1 block text-[11px] text-rose-300">Enter a path starting with / or a full https:// URL.</span>
+                    )}
                   </label>
                 </div>
                 
@@ -917,8 +928,14 @@ export default function HeaderBuilderClient() {
                       type="text"
                       value={settings.secondary_cta_link}
                       onChange={(e) => setSettings({ ...settings, secondary_cta_link: e.target.value })}
-                      className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                      placeholder="/ or https://example.com"
+                      className={`mt-1 w-full px-3 py-2 text-sm rounded-lg border bg-white/[0.03] text-slate-100 ${
+                        !isValidNavUrl(settings.secondary_cta_link) && settings.secondary_cta_link ? 'border-rose-400/30' : 'border-white/10'
+                      }`}
                     />
+                    {!isValidNavUrl(settings.secondary_cta_link) && settings.secondary_cta_link && (
+                      <span className="mt-1 block text-[11px] text-rose-300">Enter a path starting with / or a full https:// URL.</span>
+                    )}
                   </label>
                 </div>
               </div>

@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { Navbar } from '../Navbar'
 import { Facebook, Instagram, Linkedin, Youtube } from 'lucide-react'
 import { useSiteCms } from '../../hooks/useSiteCms'
+import { buildMenuTree, pruneMenuTree } from '../../../lib/menuTree'
 
 const CustomCursor = dynamic(() => import('../ui/CustomCursor').then((mod) => mod.CustomCursor), {
   ssr: false,
@@ -86,6 +87,37 @@ function normalizeFooterColumnLinks(value = []) {
     .filter((item) => item.label && item.link)
 }
 
+function FooterLinkGroup({ item }) {
+  return (
+    <div>
+      <Link
+        to={item.url}
+        target={item.target || '_self'}
+        data-cursor="hover"
+        className="group relative inline-flex text-sm text-slate-400 transition-colors hover:text-slate-100"
+      >
+        {item.title}
+        <span className="pointer-events-none absolute left-0 -bottom-1 h-px w-full origin-left scale-x-0 bg-gradient-to-r from-teal-300 to-sky-300 transition-transform duration-300 group-hover:scale-x-100" />
+      </Link>
+      {Array.isArray(item.children) && item.children.length ? (
+        <div className="mt-2 flex flex-col gap-2 border-l border-white/10 pl-3">
+          {item.children.map((child) => (
+            <Link
+              key={child.id || `${child.title}-${child.url}`}
+              to={child.url}
+              target={child.target || '_self'}
+              data-cursor="hover"
+              className="text-xs text-slate-500 transition-colors hover:text-slate-200"
+            >
+              {child.title}
+            </Link>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 function normalizeSocialItems(value = []) {
   if (!Array.isArray(value)) return []
   return value
@@ -98,10 +130,10 @@ function normalizeSocialItems(value = []) {
     .filter((item) => item.platform && item.url)
 }
 
-export function PublicLayout({ children }) {
+export function PublicLayout({ children, initialSiteCmsData = null }) {
   const [headerVisible, setHeaderVisible] = useState(true)
   const lastScrollYRef = useRef(0)
-  const { settings, menus, headerSettings, footerSettings, locations } = useSiteCms()
+  const { settings, menus, headerSettings, footerSettings, locations } = useSiteCms(initialSiteCmsData)
   const uiCopy = settings?.ui_copy && typeof settings.ui_copy === 'object' ? settings.ui_copy : {}
 
   // Header Settings from header_settings table with fallbacks
@@ -208,8 +240,8 @@ export function PublicLayout({ children }) {
     : (dynamicLocationLinks.length ? dynamicLocationLinks : fallbackLocationLinks)
   const uiFooterFallback = normalizeMenuItems(uiCopy.footer_fallback_links)
   const uiLegalFallback = normalizeMenuItems(uiCopy.legal_fallback_links)
-  const footerLinks = Array.isArray(menus?.footer) && menus.footer.length
-    ? menus.footer.filter((item) => !item.parent_id)
+  const footerLinksRaw = Array.isArray(menus?.footer) && menus.footer.length
+    ? menus.footer
     : (uiFooterFallback.length ? uiFooterFallback : [
         { title: 'Home', url: '/' },
         { title: 'Course Catalog', url: '/courses' },
@@ -217,12 +249,17 @@ export function PublicLayout({ children }) {
         { title: 'Hiring Partners', url: '/contact' },
         { title: 'Enroll Today', url: '/register' },
       ])
-  const legalLinks = Array.isArray(menus?.legal) && menus.legal.length
-    ? menus.legal.filter((item) => !item.parent_id)
+  const legalLinksRaw = Array.isArray(menus?.legal) && menus.legal.length
+    ? menus.legal
     : (uiLegalFallback.length ? uiLegalFallback : [
         { title: 'Terms of Service', url: '/terms-of-service' },
         { title: 'Privacy Policy', url: '/privacy-policy' },
       ])
+  // The footer's own layout is already a fully-expanded list of links, not an interactive
+  // header - a child menu item there just renders as an indented sub-item under its parent,
+  // no hover/click dropdown needed.
+  const footerLinks = pruneMenuTree(buildMenuTree(footerLinksRaw), 'desktop_visible')
+  const legalLinks = pruneMenuTree(buildMenuTree(legalLinksRaw), 'desktop_visible')
   const companyName = settings?.company_name || uiCopy.nav_brand_label || 'Acadvizen'
   const designTokens = settings?.design_tokens && typeof settings.design_tokens === 'object' ? settings.design_tokens : {}
   const footerNavHeading = String(uiCopy.footer_nav_heading || 'Academy Index')
@@ -360,7 +397,7 @@ export function PublicLayout({ children }) {
           </div>
         )}
 
-        <Navbar />
+        <Navbar menus={menus} settings={settings} />
       </div>
 
       <div className="h-[110px] sm:h-[112px]" />
@@ -405,7 +442,7 @@ export function PublicLayout({ children }) {
         </div>
       </div>
 
-      <BottomDockNav />
+      <BottomDockNav menus={menus} settings={settings} />
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <BannerSlot type="footer" />
@@ -439,16 +476,7 @@ export function PublicLayout({ children }) {
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{footerNavHeading}</p>
                 <div className="mt-4 flex flex-col gap-3">
                   {footerLinks.map((item) => (
-                    <Link
-                      key={`${item.title}-${item.url}`}
-                      to={item.url}
-                      target={item.target || '_self'}
-                      data-cursor="hover"
-                      className="group relative inline-flex text-sm text-slate-400 transition-colors hover:text-slate-100"
-                    >
-                      {item.title}
-                      <span className="pointer-events-none absolute left-0 -bottom-1 h-px w-full origin-left scale-x-0 bg-gradient-to-r from-teal-300 to-sky-300 transition-transform duration-300 group-hover:scale-x-100" />
-                    </Link>
+                    <FooterLinkGroup key={item.id || `${item.title}-${item.url}`} item={item} />
                   ))}
                 </div>
               </div>
@@ -457,16 +485,7 @@ export function PublicLayout({ children }) {
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{footerLegalHeading}</p>
                 <div className="mt-4 flex flex-col gap-3">
                   {legalLinks.map((item) => (
-                    <Link
-                      key={`${item.title}-${item.url}`}
-                      to={item.url}
-                      target={item.target || '_self'}
-                      data-cursor="hover"
-                      className="group relative inline-flex text-sm text-slate-400 transition-colors hover:text-slate-100"
-                    >
-                      {item.title}
-                      <span className="pointer-events-none absolute left-0 -bottom-1 h-px w-full origin-left scale-x-0 bg-gradient-to-r from-teal-300 to-sky-300 transition-transform duration-300 group-hover:scale-x-100" />
-                    </Link>
+                    <FooterLinkGroup key={item.id || `${item.title}-${item.url}`} item={item} />
                   ))}
                 </div>
 

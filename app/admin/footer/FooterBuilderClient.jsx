@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Surface } from '../../../src/components/ui/Surface'
 import { adminApiFetch } from '../../../lib/adminApiClient'
 import { uploadFileAsset } from '../../../lib/storageUpload'
+import { isValidNavUrl, isValidAbsoluteUrl } from '../../../lib/linkValidation'
 import { 
   Save, 
   Eye, 
@@ -67,16 +68,6 @@ function generateUUID() {
 }
 
 // Validation functions
-function isValidUrl(url) {
-  if (!url) return true
-  try {
-    new URL(url)
-    return true
-  } catch {
-    return false
-  }
-}
-
 function isValidEmail(email) {
   if (!email) return true
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -1021,10 +1012,10 @@ export default function FooterBuilderClient() {
                                 onChange={(e) => updateLink(column.id, link.id, 'url', e.target.value)}
                                 placeholder="Link URL"
                                 className={`px-3 py-1.5 text-sm rounded-lg border bg-white/[0.03] text-slate-100 pr-20 ${
-                                  !isValidUrl(link.url) && link.url ? 'border-rose-400/30' : 'border-white/10'
+                                  !isValidNavUrl(link.url) && link.url ? 'border-rose-400/30' : 'border-white/10'
                                 }`}
                               />
-                              {!isValidUrl(link.url) && link.url && (
+                              {!isValidNavUrl(link.url) && link.url && (
                                 <span className="absolute right-8 top-1/2 -translate-y-1/2 text-rose-400">
                                   <AlertCircle className="w-4 h-4" />
                                 </span>
@@ -1273,10 +1264,10 @@ export default function FooterBuilderClient() {
                             value={social.url}
                             onChange={(e) => updateSocialLink(social.id, 'url', e.target.value)}
                             className={`mt-1 w-full px-3 py-2 text-sm rounded-lg border bg-white/[0.03] text-slate-100 pr-20 ${
-                              !isValidUrl(social.url) && social.url ? 'border-rose-400/30' : 'border-white/10'
+                              !isValidAbsoluteUrl(social.url) && social.url ? 'border-rose-400/30' : 'border-white/10'
                             }`}
                           />
-                          {!isValidUrl(social.url) && social.url && (
+                          {!isValidAbsoluteUrl(social.url) && social.url && (
                             <span className="absolute right-8 top-1/2 -translate-y-1/2 text-rose-400">
                               <AlertCircle className="w-4 h-4" />
                             </span>
@@ -1561,10 +1552,10 @@ export default function FooterBuilderClient() {
                               onChange={(e) => updateLegalLink(link.id, 'url', e.target.value)}
                               placeholder="Link URL"
                               className={`px-3 py-1.5 text-sm rounded-lg border bg-white/[0.03] text-slate-100 pr-20 ${
-                                !isValidUrl(link.url) && link.url ? 'border-rose-400/30' : 'border-white/10'
+                                !isValidNavUrl(link.url) && link.url ? 'border-rose-400/30' : 'border-white/10'
                               }`}
                             />
-                            {!isValidUrl(link.url) && link.url && (
+                            {!isValidNavUrl(link.url) && link.url && (
                               <span className="absolute right-8 top-1/2 -translate-y-1/2 text-rose-400">
                                 <AlertCircle className="w-4 h-4" />
                               </span>

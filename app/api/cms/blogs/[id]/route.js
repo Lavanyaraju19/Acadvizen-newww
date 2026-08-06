@@ -5,6 +5,7 @@ import {
   getSupabaseClientOrResponse,
   jsonError,
   jsonOk,
+  logAuditEvent,
   revalidateCmsMutation,
   readJsonBody,
 } from '../../_utils'
@@ -92,6 +93,23 @@ export async function PATCH(request, { params }) {
     const { data, error } = await supabase.from('blogs').update(payload).eq('id', id).select('*').single()
     if (error) return jsonError(`Failed to update blog: ${error.message}`, 500)
 
+    // Snapshot the post-edit state into blog_versions on every save, same as the pages route -
+    // see app/api/cms/pages/[id]/route.js for why this needs to be automatic rather than
+    // relying on something explicitly POSTing to /versions.
+    const { error: versionError } = await supabase.rpc('create_blog_version', {
+      p_blog_id: id,
+      p_title: data.title,
+      p_content: { content: data.content ?? null, content_json: data.content_json ?? null },
+      p_excerpt: data.excerpt ?? data.description ?? null,
+      p_seo_title: data.seo_title,
+      p_seo_description: data.seo_description,
+      p_status: data.status,
+      p_notes: null,
+      p_change_summary: 'Saved from editor',
+    })
+    if (versionError) console.error('[cms] Failed to snapshot blog version', versionError)
+    await logAuditEvent(supabase, { userId: adminContext.user.id, action: 'update', entityType: 'blogs', entityId: id, changes: payload, request })
+
     const previousSlug = existingRecord?.slug || ''
     const currentSlug = data?.slug || ''
     let warning = null
@@ -132,6 +150,7 @@ export async function DELETE(request, { params }) {
     }
     const { error } = await supabase.from('blogs').delete().eq('id', id)
     if (error) return jsonError(`Failed to delete blog: ${error.message}`, 500)
+    await logAuditEvent(supabase, { userId: adminContext.user.id, action: 'delete', entityType: 'blogs', entityId: id, changes: { deleted_slug: existingRecord?.slug || null }, request })
     const revalidation = revalidateCmsMutation('blog', { previousSlug: existingRecord?.slug || '' })
     if (!revalidation.ok) {
       return jsonError('Blog deleted, but cache revalidation failed. Please retry.', 500, { id, deleted: true })

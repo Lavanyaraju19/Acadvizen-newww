@@ -4,13 +4,14 @@ export const dynamicParams = true
 
 import BlogLayout from '../../../../components/BlogLayout'
 import { notFound, permanentRedirect, redirect } from 'next/navigation'
-import { buildMetadata } from '../../../lib/seo'
+import { buildMetadata, siteConfig } from '../../../lib/seo'
 import { buildTocFromBlocks, estimateReadingMinutes } from '../../../../lib/blogBlockUtils'
 import { convertPlainTextToBlocks, parseBlogContent } from '../../../../lib/blogContent'
 import { getServerSupabaseClient } from '../../../../lib/supabaseServer'
 import { fetchCmsSiteData, fetchRedirectByPath } from '../../../../lib/cmsServer'
 import { canonicalizeKnownBlogSlug } from '../../../../lib/blogSlugResolver'
 import { fetchPublishedPublicBlogBySlug, fetchRelatedPublishedBlogs } from '../../../../lib/publicBlogData'
+import Breadcrumbs from '../../../../components/cms/templates/Breadcrumbs'
 
 function pickFirst(...values) {
   for (const value of values) {
@@ -133,13 +134,18 @@ export default async function Page({ params }) {
     ? siteData.settings.ui_copy
     : {}
 
-  const canonicalUrl = `https://acadvizen.com/blog/${blog.slug}`
+  const canonicalUrl = `${siteConfig.siteUrl}/blog/${blog.slug}`
+  const breadcrumbItems = [
+    { label: 'Home', href: '/' },
+    { label: 'Blog', href: '/blog' },
+    { label: blog.title },
+  ]
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://acadvizen.com/' },
-      { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://acadvizen.com/blog' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${siteConfig.siteUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: `${siteConfig.siteUrl}/blog` },
       { '@type': 'ListItem', position: 3, name: blog.title, item: canonicalUrl },
     ],
   }
@@ -160,7 +166,7 @@ export default async function Page({ params }) {
       name: companyName,
       logo: {
         '@type': 'ImageObject',
-        url: 'https://acadvizen.com/logo.png',
+        url: `${siteConfig.siteUrl}/logo.png`,
       },
     },
     mainEntityOfPage: {
@@ -178,6 +184,7 @@ export default async function Page({ params }) {
       {faqSchema ? (
         <script id="schema-blog-faq" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       ) : null}
+      <Breadcrumbs items={breadcrumbItems} />
       <BlogLayout
         blog={blog}
         toc={data.toc}

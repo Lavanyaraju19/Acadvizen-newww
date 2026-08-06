@@ -59,16 +59,17 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co https://*.vercel-insights.com https://www.googletagmanager.com https://connect.facebook.net",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co https://*.vercel-insights.com https://www.googletagmanager.com https://connect.facebook.net https://www.google.com https://www.gstatic.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data: blob: https://*.supabase.co https://logo.clearbit.com https://images.unsplash.com https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://www.googletagmanager.com https://www.google-analytics.com https://www.facebook.com",
+              "img-src 'self' data: blob: https://*.supabase.co https://logo.clearbit.com https://images.unsplash.com https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://www.googletagmanager.com https://www.google-analytics.com https://www.facebook.com https://www.gstatic.com",
               "font-src 'self' https://fonts.gstatic.com",
               [
                 "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
                 configuredSupabaseOrigin,
-                "https://*.vercel-insights.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://connect.facebook.net https://www.facebook.com",
+                "https://*.vercel-insights.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://connect.facebook.net https://www.facebook.com https://www.google.com",
               ].filter(Boolean).join(' '),
-              "frame-src 'self' https://*.supabase.co https://www.googletagmanager.com",
+              // https://www.google.com/recaptcha/ - only reached when NEXT_PUBLIC_RECAPTCHA_SITE_KEY is configured (see components/cms/FormEmbedRenderer.jsx)
+              "frame-src 'self' https://*.supabase.co https://www.googletagmanager.com https://www.google.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

@@ -107,8 +107,10 @@ test.describe('Admin Auth', () => {
           window.localStorage.clear()
           window.sessionStorage.clear()
         })
-        await page.fill('#admin-email', E2E_ADMIN_EMAIL)
-        await page.fill('#admin-password', `${E2E_ADMIN_PASSWORD}-invalid`)
+        // page.fill() doesn't reliably fire the input events this React-controlled form's
+        // onChange depends on in WebKit - see loginAdmin() in utils.js for the same fix.
+        await page.locator('#admin-email').pressSequentially(E2E_ADMIN_EMAIL, { delay: 10 })
+        await page.locator('#admin-password').pressSequentially(`${E2E_ADMIN_PASSWORD}-invalid`, { delay: 10 })
         await page.click('button[type="submit"], button:has-text("Sign in")')
 
         await expect(page).toHaveURL(/\/admin-login/)

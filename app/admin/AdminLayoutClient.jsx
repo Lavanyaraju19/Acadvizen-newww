@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -32,6 +32,7 @@ import {
   LayoutTemplate,
   FolderOpen,
   Sparkles,
+  History,
 } from 'lucide-react'
 import { Surface } from '../../src/components/ui/Surface'
 import { CustomCursor } from '../../src/components/ui/CustomCursor'
@@ -70,6 +71,7 @@ const adminNav = [
   { path: '/admin/resources', label: 'Resources', icon: FolderOpen },
   { path: '/admin/media', label: 'Media', icon: ImageIcon },
   { path: '/admin/users', label: 'Users', icon: Users },
+  { path: '/admin/audit-log', label: 'Audit Log', icon: History },
   { path: '/admin/trust', label: 'Trust & Conversion', icon: Handshake },
   { path: '/admin/landing-seo', label: 'Landing SEO', icon: MapPinned },
   { path: '/admin/leads', label: 'Leads', icon: Inbox },
@@ -132,9 +134,20 @@ export default function AdminLayoutClient({ children }) {
   const isLoginLikePath = pathname === '/admin/login' || pathname === '/admin-login'
   const user = adminState.user
   const profile = adminState.profile
+  // verifyAdminAccess reads user/profile through this ref instead of depending on adminState
+  // directly: adminState.user/profile are freshly-parsed objects on every successful
+  // verification, so a reference-identity dependency on them would recreate the callback (and
+  // re-run the effect that calls it) after every single successful check - an infinite
+  // verify -> new state -> new callback -> re-run effect -> verify loop that hammers
+  // /api/admin/session continuously. See the verifyAdminAccess useCallback below.
+  const adminStateRef = useRef(adminState)
+  useEffect(() => {
+    adminStateRef.current = adminState
+  }, [adminState])
   const visibleAdminNav = useMemo(() => adminNav.filter((nav) => {
     if (!profile) return false
     if (nav.path.startsWith('/admin/users')) return hasProfilePermission(profile, 'users', 'read')
+    if (nav.path.startsWith('/admin/audit-log')) return hasProfilePermission(profile, 'analytics', 'read')
     if (nav.path.startsWith('/admin/settings') || nav.path.startsWith('/admin/header') || nav.path.startsWith('/admin/footer') || nav.path.startsWith('/admin/menus') || nav.path.startsWith('/admin/redirects') || nav.path.startsWith('/admin/sitemap') || nav.path.startsWith('/admin/robots') || nav.path.startsWith('/admin/import-export')) {
       return hasProfilePermission(profile, 'settings', 'read')
     }
@@ -186,7 +199,7 @@ export default function AdminLayoutClient({ children }) {
   const verifyAdminAccess = useCallback(async () => {
     if (isLoginLikePath) return
 
-    const shouldBlockRender = !verifiedOnce || !adminState.user || !adminState.profile
+    const shouldBlockRender = !verifiedOnce || !adminStateRef.current.user || !adminStateRef.current.profile
 
     if (shouldBlockRender) {
       setAdminState((prev) => ({
@@ -292,8 +305,6 @@ export default function AdminLayoutClient({ children }) {
       })
     }
   }, [
-    adminState.profile,
-    adminState.user,
     clearAdminSession,
     handleConfirmedAuthFailure,
     isLoginLikePath,
@@ -505,7 +516,10 @@ export default function AdminLayoutClient({ children }) {
         </div>
       </div>
 
-      <div data-admin-root className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      {/* scroll-mt-28 keeps content that gets scrolled into view (focus jumps, anchor links,
+          automated interaction) clear of the sticky header above - without it, an element right
+          at the scroll boundary can end up rendered directly under the sticky header's hit area. */}
+      <div data-admin-root className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 scroll-mt-28 [&_*]:scroll-mt-28">
         {children}
       </div>
     </div>

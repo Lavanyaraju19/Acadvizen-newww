@@ -744,7 +744,7 @@
 `,
     created_at: '2026-03-11T10:00:00.000Z',
   },
-  ,{
+  {
     id: 'blog-10',
     slug: 'death-of-the-link-birth-of-the-answer-geo-2026',
     title: 'The Death of the Link, The Birth of the Answer: Navigating the GEO Revolution in 2026',

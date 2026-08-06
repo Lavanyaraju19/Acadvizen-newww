@@ -22,6 +22,7 @@ export async function GET() {
     .from('menus')
     .select('*')
     .eq('is_active', true)
+    .eq('status', 'published')
     .order('menu_location', { ascending: true })
     .order('order_index', { ascending: true })
 

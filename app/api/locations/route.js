@@ -13,7 +13,10 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url)
     const slug = searchParams.get('slug')
 
-    let query = supabase.from('locations').select('*').order('name', { ascending: true })
+    // Public endpoint (used by the footer's location list via useSiteCms) - unlike the admin
+    // CRUD route at /api/cms/entities/locations, this one has no admin-context check, so it
+    // must always filter to published rows or a draft location would show up in the live footer.
+    let query = supabase.from('locations').select('*').eq('is_active', true).order('name', { ascending: true })
     if (slug) query = query.eq('slug', slug)
 
     const { data, error } = await query

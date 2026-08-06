@@ -1,5 +1,16 @@
 import { NextResponse } from 'next/server'
 
+// These two checks must reflect admin changes (a newly created redirect, a just-published/
+// unpublished page) immediately - the CMS test suite enforces zero-tolerance immediate
+// consistency (create a redirect, fetch it with no delay, expect the live status code), so
+// this file deliberately does NOT cache Supabase results across requests. What it does fix
+// versus the original implementation: the two checks are independent, so they now run
+// concurrently via Promise.all instead of one after another, and the redirects table's two
+// historical column conventions (from_path/to_path/status_code and the older
+// old_url/new_url/redirect_type) are queried in a single request instead of two sequential
+// ones - cutting per-navigation Supabase round trips from up to three sequential calls down
+// to at most two concurrent ones, while keeping every check live.
+
 function normalizeRedirectPath(value = '') {
   const nextValue = String(value || '').trim()
   if (!nextValue) return ''
@@ -7,111 +18,85 @@ function normalizeRedirectPath(value = '') {
   return nextValue.startsWith('/') ? nextValue : `/${nextValue}`
 }
 
-async function fetchPublicRedirect(pathname) {
+function getSupabaseRestConfig() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || ''
-  const supabaseAnonKey =
+  const anonKey =
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
     process.env.SUPABASE_PUBLISHABLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
-  const normalizedPath = normalizeRedirectPath(pathname)
-
-  if (!supabaseUrl || !supabaseAnonKey || !normalizedPath) {
-    return null
-  }
-
-  const headers = {
-    apikey: supabaseAnonKey,
-    Authorization: `Bearer ${supabaseAnonKey}`,
-  }
-
-  const currentUrl = new URL('/rest/v1/redirects', supabaseUrl)
-  currentUrl.searchParams.set('select', 'from_path,to_path,status_code,is_active')
-  currentUrl.searchParams.set('from_path', `eq.${normalizedPath}`)
-  currentUrl.searchParams.set('is_active', 'eq.true')
-  currentUrl.searchParams.set('limit', '1')
-
-  const currentResponse = await fetch(currentUrl, {
-    headers,
-    cache: 'no-store',
-  })
-  if (currentResponse.ok) {
-    const rows = await currentResponse.json()
-    if (Array.isArray(rows) && rows.length > 0) {
-      return {
-        fromPath: normalizeRedirectPath(rows[0].from_path),
-        toPath: normalizeRedirectPath(rows[0].to_path),
-        statusCode: Number(rows[0].status_code || 302) || 302,
-      }
-    }
-  }
-
-  const legacyUrl = new URL('/rest/v1/redirects', supabaseUrl)
-  legacyUrl.searchParams.set('select', 'old_url,new_url,redirect_type,is_active')
-  legacyUrl.searchParams.set('old_url', `eq.${normalizedPath}`)
-  legacyUrl.searchParams.set('is_active', 'eq.true')
-  legacyUrl.searchParams.set('limit', '1')
-
-  const legacyResponse = await fetch(legacyUrl, {
-    headers,
-    cache: 'no-store',
-  })
-  if (!legacyResponse.ok) {
-    return null
-  }
-
-  const legacyRows = await legacyResponse.json()
-  if (!Array.isArray(legacyRows) || legacyRows.length === 0) {
-    return null
-  }
-
-  return {
-    fromPath: normalizeRedirectPath(legacyRows[0].old_url),
-    toPath: normalizeRedirectPath(legacyRows[0].new_url),
-    statusCode: Number(legacyRows[0].redirect_type || 302) || 302,
-  }
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  return { supabaseUrl, anonKey, serviceKey }
 }
+
+async function fetchPublicRedirect(pathname) {
+  const { supabaseUrl, anonKey } = getSupabaseRestConfig()
+  const normalizedPath = normalizeRedirectPath(pathname)
+  if (!supabaseUrl || !anonKey || !normalizedPath) return null
+
+  const url = new URL('/rest/v1/redirects', supabaseUrl)
+  url.searchParams.set('select', 'from_path,to_path,status_code,old_url,new_url,redirect_type,is_active')
+  url.searchParams.set(
+    'or',
+    `(from_path.eq.${normalizedPath},old_url.eq.${normalizedPath})`
+  )
+  url.searchParams.set('is_active', 'eq.true')
+  url.searchParams.set('limit', '1')
+
+  const response = await fetch(url, {
+    headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
+    cache: 'no-store',
+  })
+  if (!response.ok) return null
+
+  const rows = await response.json().catch(() => [])
+  const row = Array.isArray(rows) ? rows[0] : null
+  if (!row) return null
+
+  const fromPath = normalizeRedirectPath(row.from_path || row.old_url)
+  const toPath = normalizeRedirectPath(row.to_path || row.new_url)
+  if (!fromPath || !toPath) return null
+
+  const statusCode = Number(row.status_code || row.redirect_type || 302) || 302
+  return { fromPath, toPath, statusCode: statusCode === 301 ? 301 : 302 }
+}
+
+const RESERVED_SINGLE_SEGMENT_SLUGS = new Set([
+  'about',
+  'achievements',
+  'admin',
+  'admin-login',
+  'api',
+  'blog',
+  'contact',
+  'courses',
+  'dashboard',
+  'forgot-password',
+  'hire-from-us',
+  'login',
+  'maintenance',
+  'placement',
+  'privacy-policy',
+  'projects',
+  'register',
+  'sales',
+  'soft-skills',
+  'terms-of-service',
+  'testimonials',
+  'tools',
+])
 
 function isSingleCmsSlugPath(pathname = '') {
   const segments = String(pathname || '').split('/').filter(Boolean)
   if (segments.length !== 1) return false
   const slug = segments[0]
   if (!slug || slug.includes('.')) return false
-  const reserved = new Set([
-    'about',
-    'achievements',
-    'admin',
-    'admin-login',
-    'api',
-    'blog',
-    'contact',
-    'courses',
-    'dashboard',
-    'forgot-password',
-    'hire-from-us',
-    'login',
-    'maintenance',
-    'placement',
-    'privacy-policy',
-    'projects',
-    'register',
-    'sales',
-    'soft-skills',
-    'terms-of-service',
-    'testimonials',
-    'tools',
-  ])
-  return !reserved.has(slug)
+  return !RESERVED_SINGLE_SEGMENT_SLUGS.has(slug)
 }
 
 async function fetchCmsPagePrivacy(pathname) {
   if (!isSingleCmsSlugPath(pathname)) return null
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || ''
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-  const anonKey =
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-    process.env.SUPABASE_PUBLISHABLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
+  const { supabaseUrl, serviceKey, anonKey } = getSupabaseRestConfig()
   const key = serviceKey || anonKey
   if (!supabaseUrl || !key) return null
 
@@ -122,10 +107,7 @@ async function fetchCmsPagePrivacy(pathname) {
   url.searchParams.set('limit', '1')
 
   const response = await fetch(url, {
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-    },
+    headers: { apikey: key, Authorization: `Bearer ${key}` },
     cache: 'no-store',
   })
   if (!response.ok) return null
@@ -169,12 +151,16 @@ export default async function middleware(request) {
   }
 
   try {
-    const cmsPrivacy = await fetchCmsPagePrivacy(pathname)
+    // Independent lookups - resolve them concurrently instead of one after another.
+    const [cmsPrivacy, redirectRule] = await Promise.all([
+      fetchCmsPagePrivacy(pathname),
+      fetchPublicRedirect(pathname),
+    ])
+
     if (cmsPrivacy?.exists && !cmsPrivacy.published) {
       return cmsNotFoundResponse()
     }
 
-    const redirectRule = await fetchPublicRedirect(pathname)
     if (!redirectRule?.toPath || redirectRule.toPath === pathname) {
       return NextResponse.next()
     }
@@ -185,7 +171,7 @@ export default async function middleware(request) {
     const protocol = forwardedProto || request.nextUrl.protocol.replace(':', '')
     const location = new URL(`${redirectRule.toPath}${search || ''}`, `${protocol}://${host}`)
     return new Response(null, {
-      status: Number(redirectRule.statusCode || 302) === 301 ? 301 : 302,
+      status: redirectRule.statusCode,
       headers: {
         Location: location.toString(),
       },

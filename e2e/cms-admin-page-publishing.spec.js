@@ -8,6 +8,7 @@ const {
   destructiveCmsTestConfig,
   hasSupabaseAdminEnv,
   loginAdmin,
+  isBenignConsoleMessage,
 } = require('./utils')
 
 const TITLE = 'Dropshipping Course in Bangalore'
@@ -391,7 +392,9 @@ test.describe('Admin dashboard page publishing proof', () => {
     const adminContext = await browser.newContext()
     const adminPage = await adminContext.newPage()
     adminPage.on('console', (message) => {
-      if (message.type() === 'error') consoleErrors.push(message.text())
+      if (message.type() !== 'error') return
+      if (isBenignConsoleMessage(message.text())) return
+      consoleErrors.push(message.text())
     })
     adminPage.on('response', (response) => {
       if (response.url().includes('/api/') && response.status() >= 400) {
@@ -435,12 +438,15 @@ test.describe('Admin dashboard page publishing proof', () => {
       await expect(adminPage.getByText('Loading pages...')).toHaveCount(0, { timeout: 30000 })
       await adminPage.getByRole('button', { name: 'New Page' }).click()
 
-      await adminPage.locator('#page_title').fill(TITLE)
-      await adminPage.locator('#page_slug').fill(INITIAL_SLUG)
-      await adminPage.locator('#pagebuilder-page-description').fill(`${MARKER} standard page description ${runId}`)
-      await adminPage.locator('#page_seo_title').fill(TITLE)
-      await adminPage.locator('#page_canonical_url').fill(expectedCanonicalUrl(INITIAL_SLUG))
-      await adminPage.locator('#pagebuilder-seo-description').fill(seoDescription)
+      // pressSequentially, not fill(): WebKit doesn't reliably fire the input events these
+      // React-controlled fields' onChange depends on with fill() - see loginAdmin() in utils.js.
+      await adminPage.locator('#page_title').pressSequentially(TITLE, { delay: 10 })
+      await adminPage.locator('#page_slug').clear()
+      await adminPage.locator('#page_slug').pressSequentially(INITIAL_SLUG, { delay: 10 })
+      await adminPage.locator('#pagebuilder-page-description').pressSequentially(`${MARKER} standard page description ${runId}`, { delay: 10 })
+      await adminPage.locator('#page_seo_title').pressSequentially(TITLE, { delay: 10 })
+      await adminPage.locator('#page_canonical_url').pressSequentially(expectedCanonicalUrl(INITIAL_SLUG), { delay: 10 })
+      await adminPage.locator('#pagebuilder-seo-description').pressSequentially(seoDescription, { delay: 10 })
       evidence.screenshots.admin_edit = await attachScreenshot(testInfo, adminPage, '02-admin-page-edit')
 
       const draftSave = await waitForPageApiResponse(adminPage, async () => {
@@ -456,9 +462,9 @@ test.describe('Admin dashboard page publishing proof', () => {
       await expect.poll(async () => (await findPageById(supabase, createdPageId))?.status || '', { timeout: 15000 }).toBe('draft')
       evidence.database.draft = recordSummary(await findPageById(supabase, createdPageId))
 
-      await adminPage.locator('#pagebuilder-heading').fill(TITLE)
-      await adminPage.locator('#pagebuilder-subheading').fill(`${MARKER} staging preview subheading ${runId}`)
-      await adminPage.locator('#pagebuilder-paragraph-text').fill(initialBody)
+      await adminPage.locator('#pagebuilder-heading').pressSequentially(TITLE, { delay: 10 })
+      await adminPage.locator('#pagebuilder-subheading').pressSequentially(`${MARKER} staging preview subheading ${runId}`, { delay: 10 })
+      await adminPage.locator('#pagebuilder-paragraph-text').pressSequentially(initialBody, { delay: 10 })
       await expect(adminPage.locator('#pagebuilder-heading')).toHaveValue(TITLE)
       await expect(adminPage.locator('#pagebuilder-paragraph-text')).toHaveValue(initialBody)
       await adminPage.getByRole('button', { name: 'Add Section', exact: true }).click()
@@ -519,7 +525,8 @@ test.describe('Admin dashboard page publishing proof', () => {
 
       await adminPage.getByTestId(`page-section-edit-${createdSectionId}`).click()
       await expect(adminPage.getByRole('button', { name: 'Update Section' })).toBeVisible({ timeout: 30000 })
-      await adminPage.locator('#pagebuilder-paragraph-text').fill(updatedBody)
+      await adminPage.locator('#pagebuilder-paragraph-text').clear()
+      await adminPage.locator('#pagebuilder-paragraph-text').pressSequentially(updatedBody, { delay: 10 })
       const sectionUpdate = await waitForSectionPatchApiResponse(adminPage, createdSectionId, async () => {
         await adminPage.getByRole('button', { name: 'Update Section' }).click()
       })
@@ -565,8 +572,10 @@ test.describe('Admin dashboard page publishing proof', () => {
       }))
       expect(evidence.database.updated_section.some((section) => section.contains_updated_content)).toBe(true)
 
-      await adminPage.locator('#page_slug').fill(UPDATED_SLUG)
-      await adminPage.locator('#page_canonical_url').fill(expectedCanonicalUrl(UPDATED_SLUG))
+      await adminPage.locator('#page_slug').clear()
+      await adminPage.locator('#page_slug').pressSequentially(UPDATED_SLUG, { delay: 10 })
+      await adminPage.locator('#page_canonical_url').clear()
+      await adminPage.locator('#page_canonical_url').pressSequentially(expectedCanonicalUrl(UPDATED_SLUG), { delay: 10 })
       const slugPublish = await waitForPageApiResponse(adminPage, async () => {
         await adminPage.getByTestId('publish-page-button').click()
       })

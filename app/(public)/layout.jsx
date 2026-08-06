@@ -1,5 +1,7 @@
 import { PublicLayout } from '../../src/components/Layout/PublicLayout'
+import { fetchSiteCmsData } from '../../lib/siteCmsServer'
 
-export default function SiteLayout({ children }) {
-  return <PublicLayout>{children}</PublicLayout>
+export default async function SiteLayout({ children }) {
+  const siteCmsData = await fetchSiteCmsData()
+  return <PublicLayout initialSiteCmsData={siteCmsData}>{children}</PublicLayout>
 }

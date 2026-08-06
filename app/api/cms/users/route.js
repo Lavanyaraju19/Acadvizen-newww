@@ -8,16 +8,6 @@ import {
 } from '../_utils'
 
 export const dynamic = 'force-dynamic'
-const MANAGED_ROLE_SLUGS = new Set([
-  'super_admin',
-  'admin',
-  'editor',
-  'author',
-  'reviewer',
-  'viewer',
-  'seo_manager',
-  'content_writer',
-])
 
 function isTableNotFoundError(error) {
   if (!error) return false
@@ -88,16 +78,17 @@ export async function POST(request) {
     }
 
     const roleSlug = String(body.role || 'viewer').trim().toLowerCase()
-    if (!MANAGED_ROLE_SLUGS.has(roleSlug)) {
-      return jsonError('Invalid role value.', 400)
-    }
 
+    // Any role that actually exists in the `roles` table is valid here - built-in or
+    // custom, created either by the seed migration or through Admin > Users > Manage Roles.
+    // This used to also require membership in a hardcoded slug set, which silently rejected
+    // every custom role an admin created through the UI.
     const { data: targetRole, error: targetRoleError } = await findRoleRecord(supabase, roleSlug)
     if (targetRoleError) {
       return jsonError(`Failed to load role: ${targetRoleError.message}`, 500)
     }
     if (!targetRole) {
-      return jsonError(`The role "${roleSlug}" is not configured. Apply the RBAC seed migration first.`, 503)
+      return jsonError(`The role "${roleSlug}" does not exist. Create it first under Manage Roles.`, 400)
     }
 
     const { data: existingUser } = await supabase

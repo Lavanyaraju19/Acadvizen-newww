@@ -4,6 +4,7 @@ const {
   E2E_ADMIN_EMAIL,
   E2E_ADMIN_PASSWORD,
   loginAdmin,
+  isBenignConsoleMessage,
 } = require('./utils')
 
 const hasE2ECredentials = Boolean(E2E_ADMIN_EMAIL && E2E_ADMIN_PASSWORD)
@@ -33,7 +34,9 @@ test.describe('Admin dashboard module', () => {
     }
 
     page.on('console', (message) => {
-      if (message.type() === 'error') consoleErrors.push(message.text())
+      if (message.type() !== 'error') return
+      if (isBenignConsoleMessage(message.text())) return
+      consoleErrors.push(message.text())
     })
     page.on('response', async (response) => {
       const url = response.url()

@@ -39,33 +39,29 @@ export async function PATCH(request, { params }) {
 
   const body = await readJsonBody(request)
   const { id } = await params
-  
-  // Allowed fields for update
-  const allowedFields = [
-    'name',
-    'description', 
-    'fields',
-    'success_message',
-    'error_message',
-    'redirect_url',
-    'send_email',
-    'email_to',
-    'email_subject',
-    'store_submissions',
-    'status'
-  ]
 
+  // The form builder client sends camelCase keys (sendEmail, successMessage, ...) matching
+  // the POST/upsert route's mapping - this must mirror that mapping exactly, not check for
+  // snake_case column names on the body, or every field below name/description/fields/status
+  // (which happen to be spelled the same in both cases) silently fails to persist on edit.
   const updateData = {}
-  for (const field of allowedFields) {
-    if (body[field] !== undefined) {
-      updateData[field] = body[field]
-    }
-  }
-
-  // Trim name if provided
-  if (updateData.name) {
-    updateData.name = String(updateData.name).trim()
-  }
+  if (body.name !== undefined) updateData.name = String(body.name).trim()
+  if (body.description !== undefined) updateData.description = body.description || null
+  if (body.fields !== undefined) updateData.fields = body.fields || []
+  if (body.successMessage !== undefined) updateData.success_message = body.successMessage
+  if (body.errorMessage !== undefined) updateData.error_message = body.errorMessage
+  if (body.redirectUrl !== undefined) updateData.redirect_url = body.redirectUrl || null
+  if (body.sendEmail !== undefined) updateData.send_email = Boolean(body.sendEmail)
+  if (body.emailTo !== undefined) updateData.email_to = body.emailTo || null
+  if (body.emailSubject !== undefined) updateData.email_subject = body.emailSubject || null
+  if (body.webhookEnabled !== undefined) updateData.webhook_enabled = Boolean(body.webhookEnabled)
+  if (body.webhookUrl !== undefined) updateData.webhook_url = body.webhookUrl || null
+  if (body.autoresponderEnabled !== undefined) updateData.autoresponder_enabled = Boolean(body.autoresponderEnabled)
+  if (body.autoresponderEmailField !== undefined) updateData.autoresponder_email_field = body.autoresponderEmailField || null
+  if (body.autoresponderSubject !== undefined) updateData.autoresponder_subject = body.autoresponderSubject || null
+  if (body.autoresponderBody !== undefined) updateData.autoresponder_body = body.autoresponderBody || null
+  if (body.storeSubmissions !== undefined) updateData.store_submissions = body.storeSubmissions !== false
+  if (body.status !== undefined) updateData.status = body.status === 'published' ? 'published' : 'draft'
 
   const { data, error } = await supabase
     .from('forms')

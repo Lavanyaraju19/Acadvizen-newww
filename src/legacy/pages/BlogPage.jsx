@@ -5,9 +5,8 @@ import { supabase } from '../../lib/supabaseClient'
 import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
-import { blogs as localBlogs } from '../../../data/blogs'
 import AdaptiveImage from '../../../components/media/AdaptiveImage'
-import { canonicalizeKnownBlogSlug } from '../../../lib/blogSlugResolver'
+import { canonicalizeKnownBlogSlug, SAFE_LOCAL_BLOGS } from '../../../lib/blogSlugResolver'
 
 export function BlogPage() {
   const [posts, setPosts] = useState([])
@@ -21,23 +20,25 @@ export function BlogPage() {
     return null
   }, [])
   const mergeWithLocal = useCallback((post) => {
-    const canonicalSlug = canonicalizeKnownBlogSlug(post.slug)
-    const local = localBlogs.find((item) => item.slug === canonicalSlug || item.id === post.id)
+    const canonicalSlug = canonicalizeKnownBlogSlug(post?.slug)
+    const local = SAFE_LOCAL_BLOGS.find(
+      (item) => item?.slug === canonicalSlug || (post?.id != null && item?.id === post.id)
+    )
     return {
-      ...post,
-      slug: canonicalSlug || post.slug,
+      ...(post || {}),
+      slug: local?.slug || canonicalSlug || post?.slug || '',
       ...(local || {}),
-      title: pickFirstNonEmpty(local?.title, post.title),
-      excerpt: pickFirstNonEmpty(local?.excerpt, post.excerpt),
-      content: pickFirstNonEmpty(local?.content, post.content),
+      title: pickFirstNonEmpty(local?.title, post?.title),
+      excerpt: pickFirstNonEmpty(local?.excerpt, post?.excerpt),
+      content: pickFirstNonEmpty(local?.content, post?.content),
       featured_image: pickFirstNonEmpty(
         local?.image,
         local?.featured_image,
-        post.featured_image,
-        post.image,
+        post?.featured_image,
+        post?.image,
         '/blog-images/image1.jpg'
       ),
-      published_at: pickFirstNonEmpty(post.published_at, post.created_at, local?.created_at),
+      published_at: pickFirstNonEmpty(post?.published_at, post?.created_at, local?.created_at),
     }
   }, [pickFirstNonEmpty])
   const formatPublishedDate = (value) => {
@@ -55,7 +56,7 @@ export function BlogPage() {
     const { data } = await fetchPublicData('blog-posts')
     const fetched = Array.isArray(data) ? data.map(mergeWithLocal) : []
 
-    const localFallback = localBlogs.map((post) =>
+    const localFallback = SAFE_LOCAL_BLOGS.map((post) =>
       mergeWithLocal({
         ...post,
         featured_image: post.image,

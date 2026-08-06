@@ -10,6 +10,9 @@ import {
 export const dynamic = 'force-dynamic'
 
 export async function GET(request, { params }) {
+  const unauthorized = await ensureAdmin(request)
+  if (unauthorized) return unauthorized
+
   const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 

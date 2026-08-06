@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import HomePage from '../src/legacy/pages/HomePage'
 import { fetchAllHomepageData } from '../lib/homepageCmsData'
+import { fetchSiteCmsData } from '../lib/siteCmsServer'
 import { PublicLayout } from '../src/components/Layout/PublicLayout'
 import { buildMetadata } from './lib/seo'
 
@@ -18,11 +19,15 @@ export async function generateMetadata() {
 }
 
 export default async function Page() {
-  // Fetch all CMS data for homepage
-  const cmsData = await fetchAllHomepageData()
+  // Fetch homepage content and shared header/footer/site data in parallel - both are
+  // independent reads, so there is no reason to wait on one before starting the other.
+  const [cmsData, siteCmsData] = await Promise.all([
+    fetchAllHomepageData(),
+    fetchSiteCmsData(),
+  ])
 
   return (
-    <PublicLayout>
+    <PublicLayout initialSiteCmsData={siteCmsData}>
       <HomePage cmsData={cmsData} />
     </PublicLayout>
   )

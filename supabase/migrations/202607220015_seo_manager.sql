@@ -106,10 +106,10 @@ create table if not exists public.sitemap_settings (
   updated_at timestamptz not null default now()
 );
 
--- Insert default sitemap settings (idempotent: only seed when the table is genuinely empty)
+-- Insert default sitemap settings
 insert into public.sitemap_settings (include_pages, include_blogs, include_courses, include_cities)
-select true, true, true, true
-where not exists (select 1 from public.sitemap_settings);
+values (true, true, true, true)
+on conflict do nothing;
 
 -- Indexes
 create index if not exists idx_pages_exclude_sitemap on public.pages(exclude_from_sitemap) where exclude_from_sitemap = true;

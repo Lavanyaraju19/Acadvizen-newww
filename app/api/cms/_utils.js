@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies, headers } from 'next/headers'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { getServerSupabaseClient, hasValidSupabaseServiceRoleKey } from '../../../lib/supabaseServer'
+import { csrfProtection } from '../../../lib/csrf'
 import { logger } from '../../../lib/productionLogger'
 import { getCmsCacheTargets, CMS_CONTENT_TYPES } from '../../../lib/cmsPublishing'
 import {
@@ -270,6 +271,18 @@ function resolveRequiredPermission(request, permissionOverride = null) {
 }
 
 export async function requireAdminContext(request, permissionOverride = null) {
+  // Centralized here instead of per-route: csrfProtection() was only ever wired into 2 of the
+  // ~60 mutating CMS API routes (the generic entities routes), leaving every dedicated route
+  // (pages, blogs, forms, media, templates, users, banners, popups, ...) with no Origin/Referer
+  // check at all. The admin session cookie is SameSite=Lax + httpOnly, which already blocks the
+  // classic cross-site auto-submit CSRF attack, but that's one layer, not defense in depth - and
+  // every route already calls requireAdminContext/ensureAdmin, so this is the one place that
+  // guarantees every admin-authenticated mutation gets checked without having to touch 60 files.
+  const csrfError = csrfProtection(request)
+  if (csrfError) {
+    return { context: null, response: csrfError, requiredPermission: null }
+  }
+
   const result = await resolveAdminContext(request)
   if (!result.ok) {
     return {
@@ -405,4 +418,28 @@ export function revalidateCmsMutation(contentType, options = {}) {
   }
 
   return result
+}
+
+// ── Audit log ────────────────────────────────────────────────────────────
+// The audit_log table and log_audit() RPC (supabase/migrations/20260722_user_management_rbac.sql)
+// existed but nothing in the app ever called them, so "who changed what and when" was untracked
+// despite the schema being there. This is a best-effort, fire-and-forget write (using the same
+// service-role client the caller already has) - a logging failure must never fail the actual
+// mutation it's describing, so errors are only logged, never thrown.
+export async function logAuditEvent(supabase, { userId, action, entityType, entityId, changes, request } = {}) {
+  if (!supabase || !userId || !action || !entityType) return
+  try {
+    const { error } = await supabase.rpc('log_audit', {
+      p_user_id: userId,
+      p_action: action,
+      p_entity_type: entityType,
+      p_entity_id: entityId || null,
+      p_changes: changes && typeof changes === 'object' ? changes : {},
+      p_ip_address: request ? (request.headers?.get?.('x-forwarded-for') || '').split(',')[0]?.trim() || null : null,
+      p_user_agent: request ? request.headers?.get?.('user-agent') || null : null,
+    })
+    if (error) logger.warn('Audit log write failed.', { action, entity_type: entityType, entity_id: entityId, error: error.message })
+  } catch (error) {
+    logger.warn('Audit log write threw.', { action, entity_type: entityType, entity_id: entityId, error: error?.message || String(error) })
+  }
 }

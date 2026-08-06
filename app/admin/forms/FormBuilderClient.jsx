@@ -28,9 +28,12 @@ const FIELD_TYPES = [
   { type: 'checkbox', label: 'Checkbox', icon: '☐' },
   { type: 'radio', label: 'Radio Group', icon: '●' },
   { type: 'date', label: 'Date', icon: '📅' },
+  { type: 'time', label: 'Time', icon: '🕐' },
+  { type: 'url', label: 'URL', icon: '🔗' },
   { type: 'file', label: 'File Upload', icon: '📎' },
+  { type: 'image', label: 'Image Upload', icon: '🖼' },
   { type: 'hidden', label: 'Hidden Field', icon: '🔒' },
-  { type: 'html', label: 'Custom HTML', icon: '</>' },
+  { type: 'html', label: 'Static HTML Block', icon: '</>' },
 ]
 
 function createEmptyField(type = 'text') {
@@ -39,6 +42,7 @@ function createEmptyField(type = 'text') {
     type,
     label: '',
     placeholder: '',
+    htmlContent: '',
     required: false,
     options: type === 'select' || type === 'radio' ? [''] : [],
     defaultValue: '',
@@ -76,6 +80,12 @@ export default function FormBuilderClient() {
     sendEmail: false,
     emailTo: '',
     emailSubject: '',
+    webhookEnabled: false,
+    webhookUrl: '',
+    autoresponderEnabled: false,
+    autoresponderEmailField: '',
+    autoresponderSubject: '',
+    autoresponderBody: '',
     storeSubmissions: true,
     status: 'draft',
   })
@@ -84,11 +94,23 @@ export default function FormBuilderClient() {
   const [saving, setSaving] = useState(false)
   const [previewMode, setPreviewMode] = useState(false)
   const [expandedFields, setExpandedFields] = useState(new Set())
+  const [showSubmissions, setShowSubmissions] = useState(false)
+  const [submissions, setSubmissions] = useState([])
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false)
+  const [submissionSearch, setSubmissionSearch] = useState('')
+  const [submissionDateFrom, setSubmissionDateFrom] = useState('')
+  const [submissionDateTo, setSubmissionDateTo] = useState('')
+  const [mailStatus, setMailStatus] = useState({ smtpConfigured: false, recaptchaConfigured: false })
+  const [webhookTestStatus, setWebhookTestStatus] = useState('')
+  const [testingWebhook, setTestingWebhook] = useState(false)
 
   const selectedForm = forms.find(f => f.id === selectedFormId)
 
   useEffect(() => {
     loadForms()
+    adminApiFetch('/api/cms/settings/mail-status', { cache: 'no-store' })
+      .then((json) => { if (json?.data) setMailStatus(json.data) })
+      .catch(() => {})
   }, [])
 
   async function loadForms() {
@@ -114,6 +136,12 @@ export default function FormBuilderClient() {
         sendEmail: form.send_email || false,
         emailTo: form.email_to || '',
         emailSubject: form.email_subject || '',
+        webhookEnabled: form.webhook_enabled || false,
+        webhookUrl: form.webhook_url || '',
+        autoresponderEnabled: form.autoresponder_enabled || false,
+        autoresponderEmailField: form.autoresponder_email_field || '',
+        autoresponderSubject: form.autoresponder_subject || '',
+        autoresponderBody: form.autoresponder_body || '',
         storeSubmissions: form.store_submissions !== false,
         status: form.status || 'draft',
       })
@@ -134,9 +162,32 @@ export default function FormBuilderClient() {
       sendEmail: false,
       emailTo: '',
       emailSubject: '',
+      webhookEnabled: false,
+      webhookUrl: '',
+      autoresponderEnabled: false,
+      autoresponderEmailField: '',
+      autoresponderSubject: '',
+      autoresponderBody: '',
       storeSubmissions: true,
       status: 'draft',
     })
+  }
+
+  async function testWebhook() {
+    if (!formSettings.webhookUrl) return
+    setTestingWebhook(true)
+    setWebhookTestStatus('')
+    try {
+      await adminApiFetch(`/api/cms/forms/${formSettings.id || 'new'}/test-webhook`, {
+        method: 'POST',
+        body: { webhookUrl: formSettings.webhookUrl, formName: formSettings.name },
+      })
+      setWebhookTestStatus('Test payload delivered successfully.')
+    } catch (error) {
+      setWebhookTestStatus(error?.message || 'Webhook test failed.')
+    } finally {
+      setTestingWebhook(false)
+    }
   }
 
   function addField(type) {
@@ -275,6 +326,38 @@ export default function FormBuilderClient() {
     }
   }
 
+  async function loadSubmissions() {
+    if (!selectedFormId) return
+    setLoadingSubmissions(true)
+    try {
+      const json = await adminApiFetch(`/api/cms/forms/${selectedFormId}/submissions`, { cache: 'no-store' })
+      setSubmissions(Array.isArray(json.data) ? json.data : [])
+    } catch (error) {
+      setStatus(error?.message || 'Failed to load submissions.')
+    } finally {
+      setLoadingSubmissions(false)
+    }
+  }
+
+  function viewSubmissions() {
+    setShowSubmissions(true)
+    loadSubmissions()
+  }
+
+  function submissionCellText(value) {
+    if (value === null || value === undefined) return ''
+    if (typeof value === 'object') return value.url ? value.name || value.url : JSON.stringify(value)
+    return String(value)
+  }
+
+  const filteredSubmissions = submissions.filter((submission) => {
+    if (submissionDateFrom && new Date(submission.created_at) < new Date(submissionDateFrom)) return false
+    if (submissionDateTo && new Date(submission.created_at) > new Date(`${submissionDateTo}T23:59:59`)) return false
+    if (!submissionSearch.trim()) return true
+    const haystack = Object.values(submission.submission_data || {}).map(submissionCellText).join(' ').toLowerCase()
+    return haystack.includes(submissionSearch.trim().toLowerCase())
+  })
+
   function FieldEditor({ field, index }) {
     const isExpanded = expandedFields.has(field.id)
     
@@ -361,6 +444,19 @@ export default function FormBuilderClient() {
         
         {isExpanded && (
           <div className="p-4 space-y-4 border-t border-white/10">
+            {field.type === 'html' ? (
+              <div>
+                <label className="text-xs text-slate-400">Block Content</label>
+                <p className="mt-0.5 mb-2 text-[11px] text-slate-500">
+                  This renders as-is wherever the field appears in the form - use it for instructions, disclaimers, or a small formatted note.
+                </p>
+                <RichTextEditor
+                  content={field.htmlContent || ''}
+                  onChange={(html) => updateField(field.id, { htmlContent: html })}
+                  placeholder="Add instructions or a note for visitors..."
+                />
+              </div>
+            ) : null}
             <div className="grid gap-4 md:grid-cols-2">
               <label className="text-xs text-slate-400">
                 Placeholder
@@ -469,6 +565,59 @@ export default function FormBuilderClient() {
                 </div>
               </div>
             )}
+
+            <div className="p-3 rounded-lg border border-white/10 bg-white/[0.02]">
+              <label className="text-xs text-slate-300 flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={Boolean(field.conditional?.enabled)}
+                  onChange={(e) => updateField(field.id, { conditional: { ...field.conditional, enabled: e.target.checked } })}
+                  className="rounded border-white/10 bg-white/[0.03]"
+                />
+                Only show this field conditionally
+              </label>
+              {field.conditional?.enabled ? (
+                <div className="mt-3 grid gap-3 md:grid-cols-3">
+                  <label className="text-xs text-slate-400">
+                    When field
+                    <select
+                      value={field.conditional.fieldId}
+                      onChange={(e) => updateField(field.id, { conditional: { ...field.conditional, fieldId: e.target.value } })}
+                      className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                    >
+                      <option value="">Select a field...</option>
+                      {formFields.filter((f) => f.id !== field.id && f.type !== 'html' && f.type !== 'hidden').map((f) => (
+                        <option key={f.id} value={f.id}>{f.label || f.id}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="text-xs text-slate-400">
+                    Operator
+                    <select
+                      value={field.conditional.operator}
+                      onChange={(e) => updateField(field.id, { conditional: { ...field.conditional, operator: e.target.value } })}
+                      className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                    >
+                      <option value="equals">equals</option>
+                      <option value="not_equals">does not equal</option>
+                      <option value="contains">contains</option>
+                      <option value="is_empty">is empty</option>
+                      <option value="is_not_empty">is not empty</option>
+                    </select>
+                  </label>
+                  <label className="text-xs text-slate-400">
+                    Value
+                    <input
+                      type="text"
+                      value={field.conditional.value}
+                      disabled={field.conditional.operator === 'is_empty' || field.conditional.operator === 'is_not_empty'}
+                      onChange={(e) => updateField(field.id, { conditional: { ...field.conditional, value: e.target.value } })}
+                      className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100 disabled:opacity-40"
+                    />
+                  </label>
+                </div>
+              ) : null}
+            </div>
           </div>
         )}
       </div>
@@ -565,16 +714,133 @@ export default function FormBuilderClient() {
                 />
               </label>
               
-              <label className="text-xs text-slate-400 flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formSettings.sendEmail}
-                  onChange={(e) => setFormSettings({ ...formSettings, sendEmail: e.target.checked })}
-                  className="rounded border-white/10 bg-white/[0.03]"
-                />
-                Send email notifications
-              </label>
-              
+              <div className={`md:col-span-2 rounded-xl border p-3 ${mailStatus.smtpConfigured ? 'border-emerald-400/20 bg-emerald-500/[0.04]' : 'border-amber-400/20 bg-amber-500/[0.04]'}`}>
+                <label className="text-xs text-slate-300 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formSettings.sendEmail}
+                    onChange={(e) => setFormSettings({ ...formSettings, sendEmail: e.target.checked })}
+                    className="rounded border-white/10 bg-white/[0.03]"
+                  />
+                  Send email notifications
+                </label>
+                <p className={`mt-1.5 text-[11px] ${mailStatus.smtpConfigured ? 'text-emerald-300/80' : 'text-amber-300/80'}`}>
+                  {mailStatus.smtpConfigured
+                    ? 'SMTP is configured - notification emails will be sent live on every submission.'
+                    : 'No outgoing mail server is configured yet - emails will not actually be sent until SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM are set as environment variables. Submissions are still stored and visible under "View Submissions" either way.'}
+                </p>
+                {formSettings.sendEmail ? (
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <label className="text-xs text-slate-400">
+                      Notify Email Address
+                      <input
+                        type="email"
+                        value={formSettings.emailTo}
+                        onChange={(e) => setFormSettings({ ...formSettings, emailTo: e.target.value })}
+                        placeholder="team@acadvizen.com"
+                        className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                      />
+                    </label>
+                    <label className="text-xs text-slate-400">
+                      Email Subject
+                      <input
+                        type="text"
+                        value={formSettings.emailSubject}
+                        onChange={(e) => setFormSettings({ ...formSettings, emailSubject: e.target.value })}
+                        placeholder="New form submission"
+                        className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                      />
+                    </label>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="md:col-span-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                <label className="text-xs text-slate-300 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formSettings.webhookEnabled}
+                    onChange={(e) => setFormSettings({ ...formSettings, webhookEnabled: e.target.checked })}
+                    className="rounded border-white/10 bg-white/[0.03]"
+                  />
+                  Webhook delivery (POST every submission to a URL - Zapier, Slack, a CRM, etc.)
+                </label>
+                {formSettings.webhookEnabled ? (
+                  <div className="mt-3 space-y-2">
+                    <input
+                      type="url"
+                      value={formSettings.webhookUrl}
+                      onChange={(e) => setFormSettings({ ...formSettings, webhookUrl: e.target.value })}
+                      placeholder="https://hooks.example.com/your-endpoint"
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                    />
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={testWebhook}
+                        disabled={testingWebhook || !formSettings.webhookUrl}
+                        className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.05] disabled:opacity-50 text-xs"
+                      >
+                        {testingWebhook ? 'Sending test...' : 'Send Test Webhook'}
+                      </button>
+                      {webhookTestStatus && <span className="text-[11px] text-slate-400">{webhookTestStatus}</span>}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="md:col-span-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                <label className="text-xs text-slate-300 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formSettings.autoresponderEnabled}
+                    onChange={(e) => setFormSettings({ ...formSettings, autoresponderEnabled: e.target.checked })}
+                    className="rounded border-white/10 bg-white/[0.03]"
+                  />
+                  Autoresponder (automatically email the person who submitted)
+                </label>
+                {!mailStatus.smtpConfigured && (
+                  <p className="mt-1.5 text-[11px] text-amber-300/80">Requires SMTP to be configured (see above) to actually send.</p>
+                )}
+                {formSettings.autoresponderEnabled ? (
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <label className="text-xs text-slate-400">
+                      Submitter&apos;s Email Comes From Field
+                      <select
+                        value={formSettings.autoresponderEmailField}
+                        onChange={(e) => setFormSettings({ ...formSettings, autoresponderEmailField: e.target.value })}
+                        className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                      >
+                        <option value="">Select an email field...</option>
+                        {formFields.filter((f) => f.type === 'email').map((f) => (
+                          <option key={f.id} value={f.id}>{f.label || f.id}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="text-xs text-slate-400">
+                      Subject
+                      <input
+                        type="text"
+                        value={formSettings.autoresponderSubject}
+                        onChange={(e) => setFormSettings({ ...formSettings, autoresponderSubject: e.target.value })}
+                        placeholder="Thank you for reaching out"
+                        className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                      />
+                    </label>
+                    <label className="text-xs text-slate-400 md:col-span-2">
+                      Message
+                      <textarea
+                        value={formSettings.autoresponderBody}
+                        onChange={(e) => setFormSettings({ ...formSettings, autoresponderBody: e.target.value })}
+                        rows={3}
+                        placeholder="Thanks for getting in touch - we'll respond within one business day."
+                        className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                      />
+                    </label>
+                  </div>
+                ) : null}
+              </div>
+
               <label className="text-xs text-slate-400 flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -611,6 +877,15 @@ export default function FormBuilderClient() {
               
               {selectedFormId && (
                 <>
+                  <button
+                    type="button"
+                    onClick={viewSubmissions}
+                    className="px-4 py-2 rounded-xl border border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.05]"
+                  >
+                    <Eye className="w-4 h-4 inline mr-2" />
+                    View Submissions
+                  </button>
+
                   <button
                     type="button"
                     onClick={exportSubmissions}
@@ -687,12 +962,15 @@ export default function FormBuilderClient() {
               
               <form className="space-y-4">
                 {formFields.map(field => (
+                  field.type === 'html' ? (
+                    <div key={field.id} className="text-sm text-slate-300" dangerouslySetInnerHTML={{ __html: field.htmlContent || '' }} />
+                  ) : field.type === 'hidden' ? null : (
                   <div key={field.id}>
                     <label className="block text-sm font-medium text-slate-200 mb-1">
                       {field.label}
                       {field.required && <span className="text-red-400 ml-1">*</span>}
                     </label>
-                    
+
                     {field.type === 'textarea' ? (
                       <textarea
                         placeholder={field.placeholder}
@@ -708,14 +986,17 @@ export default function FormBuilderClient() {
                       </select>
                     ) : field.type === 'checkbox' ? (
                       <input type="checkbox" className="rounded border-white/10 bg-white/[0.03]" />
+                    ) : field.type === 'file' || field.type === 'image' ? (
+                      <input type="file" disabled className="w-full text-sm text-slate-400" />
                     ) : (
                       <input
-                        type={field.type}
+                        type={['text', 'email', 'phone', 'number', 'date', 'time', 'url'].includes(field.type) ? (field.type === 'phone' ? 'tel' : field.type) : 'text'}
                         placeholder={field.placeholder}
                         className="w-full px-3 py-2 rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
                       />
                     )}
                   </div>
+                  )
                 ))}
                 
                 <button
@@ -733,6 +1014,103 @@ export default function FormBuilderClient() {
           )}
         </main>
       </div>
+
+      {showSubmissions && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="rounded-2xl border border-white/10 bg-[#050b12] p-6 max-w-5xl w-full max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-100">Submissions - {formSettings.name || 'Form'}</h3>
+                <p className="mt-1 text-sm text-slate-400">
+                  {filteredSubmissions.length} of {submissions.length} stored submission{submissions.length === 1 ? '' : 's'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSubmissions(false)}
+                className="px-3 py-2 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200"
+              >
+                Close
+              </button>
+            </div>
+
+            {!loadingSubmissions && submissions.length > 0 && (
+              <div className="flex flex-wrap gap-3 mb-4">
+                <input
+                  type="text"
+                  value={submissionSearch}
+                  onChange={(e) => setSubmissionSearch(e.target.value)}
+                  placeholder="Search submissions..."
+                  className="flex-1 min-w-[200px] px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                />
+                <label className="text-xs text-slate-400 flex items-center gap-2">
+                  From
+                  <input
+                    type="date"
+                    value={submissionDateFrom}
+                    onChange={(e) => setSubmissionDateFrom(e.target.value)}
+                    className="px-2 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                  />
+                </label>
+                <label className="text-xs text-slate-400 flex items-center gap-2">
+                  To
+                  <input
+                    type="date"
+                    value={submissionDateTo}
+                    onChange={(e) => setSubmissionDateTo(e.target.value)}
+                    className="px-2 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
+                  />
+                </label>
+              </div>
+            )}
+
+            {loadingSubmissions ? (
+              <div className="p-8 text-center text-slate-400">Loading submissions...</div>
+            ) : submissions.length === 0 ? (
+              <div className="p-8 text-center text-slate-400">No submissions yet.</div>
+            ) : filteredSubmissions.length === 0 ? (
+              <div className="p-8 text-center text-slate-400">No submissions match your filters.</div>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-white/10">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-white/10 bg-white/[0.02]">
+                      <th className="px-3 py-2 text-left text-xs font-semibold text-slate-400 uppercase">Submitted</th>
+                      <th className="px-3 py-2 text-left text-xs font-semibold text-slate-400 uppercase">Status</th>
+                      {formFields.filter(f => f.type !== 'html').map(field => (
+                        <th key={field.id} className="px-3 py-2 text-left text-xs font-semibold text-slate-400 uppercase">{field.label || field.id}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredSubmissions.map(submission => (
+                      <tr key={submission.id} className="border-b border-white/5">
+                        <td className="px-3 py-2 text-slate-300 whitespace-nowrap">{new Date(submission.created_at).toLocaleString()}</td>
+                        <td className="px-3 py-2 text-slate-300">{submission.status}</td>
+                        {formFields.filter(f => f.type !== 'html').map(field => {
+                          const value = submission.submission_data?.[field.id]
+                          const isUrl = value && typeof value === 'object' && value.url
+                          return (
+                            <td key={field.id} className="px-3 py-2 text-slate-300 max-w-[240px] truncate">
+                              {isUrl ? (
+                                <a href={value.url} target="_blank" rel="noopener noreferrer" className="text-teal-300 hover:underline">
+                                  {value.name || 'View file'}
+                                </a>
+                              ) : (
+                                submissionCellText(value)
+                              )}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </Surface>
   )
 }

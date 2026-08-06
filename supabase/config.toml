@@ -107,7 +107,7 @@ enabled = true
 # Port to use for the email testing server web interface.
 port = 55324
 # Uncomment to expose additional ports for testing user applications that send emails.
-# smtp_port = 54325
+smtp_port = 54325
 # pop3_port = 54326
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
@@ -204,7 +204,15 @@ anonymous_users = 30
 # Number of sessions that can be refreshed in a 5 minute interval per IP address.
 token_refresh = 150
 # Number of sign up and sign-in requests that can be made in a 5 minute interval per IP address (excludes anonymous users).
-sign_in_sign_ups = 30
+# Raised from the 30/5min default for this local disposable stack only - a single Playwright E2E
+# suite run performs 40-90+ real logins (every test that needs an authenticated admin calls
+# loginAdmin() independently) all from the same source IP (127.0.0.1), so the default was getting
+# exhausted mid-suite and produced "Invalid email or password" failures that had nothing to do with
+# credentials - they were GoTrue's own rate limiter, sitting below and independent of the app-level
+# authLimiter in lib/rateLimiter.ts. This file only governs the local `supabase start` stack used
+# for disposable/destructive testing; the real production Supabase project's auth rate limits are
+# configured separately in the Supabase Cloud dashboard and are unaffected by this value.
+sign_in_sign_ups = 1000
 # Number of OTP / Magic link verifications that can be made in a 5 minute interval per IP address.
 token_verifications = 30
 # Number of Web3 logins that can be made in a 5 minute interval per IP address.

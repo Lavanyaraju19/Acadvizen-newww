@@ -5,6 +5,7 @@ import {
   getOptionalAdminContext,
   jsonError,
   jsonOk,
+  logAuditEvent,
   parsePositiveInt,
   revalidateCmsMutation,
   readJsonBody,
@@ -196,6 +197,16 @@ export async function POST(request, { params }) {
       .single()
 
     if (error) return jsonError(`Failed to save record: ${error.message}`, 500)
+    // Awaited (not fire-and-forget) - on Vercel/serverless, work started after the response is
+    // sent can be frozen before it completes, so this needs to finish before we return.
+    await logAuditEvent(supabase, {
+      userId: adminContext.user.id,
+      action: body.id ? 'update' : 'create',
+      entityType: entity,
+      entityId: data?.id,
+      changes: payload,
+      request,
+    })
     const contentType = config.contentType || entity
     const slugValue = config.slugField ? data?.[config.slugField] : ''
     const revalidation = revalidateCmsMutation(contentType, { slug: slugValue })

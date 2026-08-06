@@ -13,6 +13,20 @@ export const dynamic = 'force-dynamic'
 
 const IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/tiff'])
 
+// This route had no size limit and no mime allowlist at all - any admin-authenticated request
+// could push an arbitrarily large file, or a file type never intended for the media library
+// (svg is deliberately excluded: an uploaded SVG can carry an embedded <script>, a stored-XSS
+// vector if it's ever opened directly rather than through next/image). 25MB covers the video
+// uploads the media library UI already advertises without leaving this unbounded.
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024
+const ALLOWED_UPLOAD_MIME = new Set([
+  'image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/tiff', 'image/gif',
+  'video/mp4', 'video/webm', 'video/quicktime',
+  'application/pdf',
+  'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+])
+
 function sanitizeBaseName(value = '') {
   return String(value || '')
     .toLowerCase()
@@ -94,6 +108,12 @@ export async function POST(request) {
     if (!bucket) return jsonError('bucket is required.', 400)
     if (!isAllowedCmsBucket(bucket)) return jsonError(`Unsupported upload bucket "${bucket}".`, 400)
     if (!(file instanceof File)) return jsonError('file is required.', 400)
+    if (!ALLOWED_UPLOAD_MIME.has(String(file.type || '').toLowerCase())) {
+      return jsonError(`Unsupported file type "${file.type || 'unknown'}".`, 400)
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return jsonError(`File is too large. Maximum size is ${Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))}MB.`, 400)
+    }
 
     const optimized = await optimizeUpload(file)
     const storagePath = buildStoragePath(file.name, optimized.extension)

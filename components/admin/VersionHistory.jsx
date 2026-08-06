@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { History, Restore, Eye, X, ChevronDown, ChevronUp, Clock, User, Compare } from 'lucide-react'
+import { History, RotateCcw, Eye, X, ChevronDown, ChevronUp, Clock, User, GitCompare } from 'lucide-react'
 import { adminApiFetch } from '../../lib/adminApiClient'
 
 export default function VersionHistory({ entityType, entityId, onRestore }) {
@@ -209,7 +209,7 @@ export default function VersionHistory({ entityType, entityId, onRestore }) {
                               className="p-2 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] disabled:opacity-30"
                               title="Select to compare"
                             >
-                              <Compare className="w-4 h-4" />
+                              <GitCompare className="w-4 h-4" />
                             </button>
                             {index > 0 && (
                               <button
@@ -218,7 +218,7 @@ export default function VersionHistory({ entityType, entityId, onRestore }) {
                                 className="p-2 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-300 hover:bg-teal-500/20"
                                 title="Restore this version"
                               >
-                                <Restore className="w-4 h-4" />
+                                <RotateCcw className="w-4 h-4" />
                               </button>
                             )}
                           </div>
@@ -285,7 +285,7 @@ export default function VersionHistory({ entityType, entityId, onRestore }) {
                                 onClick={() => handleRestore(version.id)}
                                 className="mt-4 w-full px-3 py-2 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-300 hover:bg-teal-500/20 text-sm"
                               >
-                                <Restore className="w-4 h-4 inline mr-1" />
+                                <RotateCcw className="w-4 h-4 inline mr-1" />
                                 Restore This Version
                               </button>
                             )}
@@ -372,7 +372,7 @@ export default function VersionHistory({ entityType, entityId, onRestore }) {
                       onClick={() => setComparing(true)}
                       className="w-full px-4 py-2 rounded-xl border border-teal-500/30 bg-teal-500/10 text-teal-300 hover:bg-teal-500/20"
                     >
-                      <Compare className="w-4 h-4 inline mr-2" />
+                      <GitCompare className="w-4 h-4 inline mr-2" />
                       Compare Selected Versions
                     </button>
                   </div>

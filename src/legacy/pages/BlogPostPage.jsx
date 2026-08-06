@@ -8,10 +8,9 @@ import { subscribeToTable } from '../../../lib/realtime'
 import { supabase } from '../../lib/supabaseClient'
 import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
-import { blogs as localBlogs } from '../../../data/blogs'
 import { parseBlogContent } from '../../../lib/blogContent'
 import AdaptiveImage from '../../../components/media/AdaptiveImage'
-import { findLocalBlogBySlug, resolveBlogSlug } from '../../../lib/blogSlugResolver'
+import { findLocalBlogBySlug, resolveBlogSlug, SAFE_LOCAL_BLOGS } from '../../../lib/blogSlugResolver'
 
 function MbaVsDigitalMarketingBody() {
   return (
@@ -159,7 +158,9 @@ export function BlogPostPage() {
     return null
   }, [])
   const mergeWithLocal = useCallback((incoming) => {
-    const local = localBlogs.find((item) => item.slug === incoming?.slug || item.id === incoming?.id || item.slug === slug)
+    const local = SAFE_LOCAL_BLOGS.find(
+      (item) => item?.slug === incoming?.slug || (incoming?.id != null && item?.id === incoming.id) || item?.slug === slug
+    )
     return {
       ...(incoming || {}),
       ...(local || {}),
@@ -218,7 +219,7 @@ export function BlogPostPage() {
 
   const loadPost = useCallback(async () => {
     setLoading(true)
-    const resolvedSlug = resolveBlogSlug(slug, localBlogs) || slug
+    const resolvedSlug = resolveBlogSlug(slug, SAFE_LOCAL_BLOGS) || slug
     const { data: bySlug } = await fetchPublicData('blog-posts', { slug: resolvedSlug })
     if (Array.isArray(bySlug) ? bySlug[0] : bySlug) {
       const row = Array.isArray(bySlug) ? bySlug[0] : bySlug
@@ -239,7 +240,7 @@ export function BlogPostPage() {
       return
     }
 
-    const fallbackPost = findLocalBlogBySlug(slug, localBlogs) || localBlogs.find((item) => item.id === resolvedSlug)
+    const fallbackPost = findLocalBlogBySlug(slug, SAFE_LOCAL_BLOGS) || SAFE_LOCAL_BLOGS.find((item) => item?.id === resolvedSlug)
     const mergedFallback = fallbackPost ? mergeWithLocal(fallbackPost) : null
     setPost(mergedFallback)
     if (mergedFallback) {

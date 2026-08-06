@@ -9,6 +9,9 @@ import { fetchCourseBySlug } from '../../../lib/contentMeta'
 import { fetchCmsPageByAnySlug, fetchLocationPageBySlug, fetchRedirectByPath } from '../../../../lib/cmsServer'
 import { isPublicCmsEnabled } from '../../../lib/publicCms'
 import CourseDetailLegacyClient from '../../../legacy-fallback/CourseDetailLegacyClient'
+import Breadcrumbs from '../../../../components/cms/templates/Breadcrumbs'
+import JsonLd from '../../../../components/cms/templates/JsonLd'
+import { buildBreadcrumbSchema, buildCourseSchema } from '../../../../lib/structuredData'
 
 export const dynamicParams = true
 
@@ -71,8 +74,26 @@ export default async function Page({ params }) {
     }
   }
 
+  const course = await fetchCourseBySlug(slug)
+  const courseTitle = course?.title || 'Course Details'
+  const breadcrumbItems = [
+    { label: 'Home', href: '/', path: '/' },
+    { label: 'Courses', href: '/courses', path: '/courses' },
+    { label: courseTitle, path: `/courses/${slug}` },
+  ]
+
   return (
     <>
+      <JsonLd id="course-breadcrumbs" data={buildBreadcrumbSchema(breadcrumbItems)} />
+      <JsonLd
+        id="course-schema"
+        data={buildCourseSchema({
+          name: courseTitle,
+          description: course?.short_description || course?.description,
+          path: `/courses/${slug}`,
+        })}
+      />
+      <Breadcrumbs items={breadcrumbItems} />
       <div className="sr-only">
         <Link href="/blog">Read latest blogs</Link>
         <Link href="/contact">Contact admissions</Link>

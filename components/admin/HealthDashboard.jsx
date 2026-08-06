@@ -94,6 +94,7 @@ export default function HealthDashboard() {
             type="button"
             onClick={runScan}
             disabled={loading}
+            aria-label={loading ? 'Scanning website health' : 'Run website health scan'}
             className="p-2 rounded-lg border border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.05] disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />

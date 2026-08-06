@@ -1,23 +1,14 @@
 import {
-  ensureAdmin,
   getSupabaseClientOrResponse,
   jsonError,
   jsonOk,
+  logAuditEvent,
   readJsonBody,
+  requireAdminContext,
 } from '../../_utils'
 
 export const dynamic = 'force-dynamic'
 
-const MANAGED_ROLE_SLUGS = new Set([
-  'super_admin',
-  'admin',
-  'editor',
-  'author',
-  'reviewer',
-  'viewer',
-  'seo_manager',
-  'content_writer',
-])
 const ALLOWED_APPROVALS = new Set(['pending', 'approved', 'rejected'])
 
 function normalizeRoleSlug(value = '') {
@@ -182,7 +173,7 @@ async function ensureSuperAdminRemovalIsSafe(supabase, userId, { nextRole = null
 }
 
 export async function PATCH(request, { params }) {
-  const unauthorized = await ensureAdmin(request, { resource: 'users', action: 'update' })
+  const { context: adminContext, response: unauthorized } = await requireAdminContext(request, { resource: 'users', action: 'update' })
   if (unauthorized) return unauthorized
 
   const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
@@ -200,7 +191,7 @@ export async function PATCH(request, { params }) {
   if ('full_name' in body) update.full_name = body.full_name || null
   if ('role' in body) {
     targetRole = normalizeRoleSlug(body.role)
-    if (!MANAGED_ROLE_SLUGS.has(targetRole)) return jsonError('Invalid role value.', 400)
+    if (!targetRole) return jsonError('Invalid role value.', 400)
     update.role = targetRole
   }
   if ('approval_status' in body) {
@@ -221,7 +212,7 @@ export async function PATCH(request, { params }) {
       return jsonError(`Failed to load the requested role: ${roleError.message}`, 500)
     }
     if (!roleRecord) {
-      return jsonError(`The role "${targetRole}" is not configured. Apply the RBAC seed migration first.`, 503)
+      return jsonError(`The role "${targetRole}" does not exist. Create it first under Manage Roles.`, 400)
     }
 
     const { error: deleteAssignmentsError } = await supabase
@@ -253,11 +244,12 @@ export async function PATCH(request, { params }) {
     .single()
 
   if (error) return jsonError(`Failed to update user: ${error.message}`, 500)
+  await logAuditEvent(supabase, { userId: adminContext.user.id, action: 'update', entityType: 'users', entityId: id, changes: update, request })
   return jsonOk(data)
 }
 
 export async function DELETE(request, { params }) {
-  const unauthorized = await ensureAdmin(request, { resource: 'users', action: 'delete' })
+  const { context: adminContext, response: unauthorized } = await requireAdminContext(request, { resource: 'users', action: 'delete' })
   if (unauthorized) return unauthorized
 
   const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
@@ -303,6 +295,14 @@ export async function DELETE(request, { params }) {
     .eq('id', id)
 
   if (error) return jsonError(`Failed to delete user: ${error.message}`, 500)
+  await logAuditEvent(supabase, {
+    userId: adminContext.user.id,
+    action: 'delete',
+    entityType: 'users',
+    entityId: id,
+    changes: { deleted_email: existingUser.email },
+    request,
+  })
 
   return jsonOk({ success: true, message: 'User deleted successfully' })
 }

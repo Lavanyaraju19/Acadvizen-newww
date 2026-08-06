@@ -45,15 +45,21 @@ async function fetchLocations() {
   }
 }
 
-export function useSiteCms() {
-  const [settings, setSettings] = useState(null)
-  const [menus, setMenus] = useState(EMPTY_MENUS)
-  const [headerSettings, setHeaderSettings] = useState(null)
-  const [footerSettings, setFooterSettings] = useState(null)
-  const [locations, setLocations] = useState([])
-  const [loading, setLoading] = useState(true)
+export function useSiteCms(initialData = null) {
+  const hasInitialData = Boolean(initialData)
+  const [settings, setSettings] = useState(initialData?.settings ?? null)
+  const [menus, setMenus] = useState(initialData?.menus ? { ...EMPTY_MENUS, ...initialData.menus } : EMPTY_MENUS)
+  const [headerSettings, setHeaderSettings] = useState(initialData?.headerSettings ?? null)
+  const [footerSettings, setFooterSettings] = useState(initialData?.footerSettings ?? null)
+  const [locations, setLocations] = useState(Array.isArray(initialData?.locations) ? initialData.locations : [])
+  const [loading, setLoading] = useState(!hasInitialData)
 
   useEffect(() => {
+    // The server already fetched this data (see lib/siteCmsServer.js) and it was passed
+    // in as initialData - re-fetching it client-side would just duplicate the same four
+    // requests on every navigation for no benefit.
+    if (hasInitialData) return undefined
+
     let active = true
 
     async function load() {
@@ -87,6 +93,8 @@ export function useSiteCms() {
     return () => {
       active = false
     }
+    // Intentionally mount-once: initialData is only meant to be evaluated on first render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return { settings, menus, headerSettings, footerSettings, locations, loading }
