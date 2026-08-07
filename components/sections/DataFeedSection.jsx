@@ -22,6 +22,9 @@ const TYPE_MAP = {
   metrics_counters: { table: 'student_metrics', activeField: 'is_active', orderField: 'order_index' },
   trust_badges_feed: { table: 'trust_badges', activeField: 'is_active', orderField: 'order_index' },
   community_events_feed: { table: 'community_events', activeField: 'is_active', orderField: 'event_date', ascending: false },
+  courses_feed: { table: 'courses', activeField: 'is_active', orderField: 'order_index' },
+  tools_feed: { table: 'tools_extended', activeField: 'is_active', orderField: 'order_index' },
+  company_logos_feed: { table: 'hiring_partners', activeField: 'is_active', orderField: 'order_index' },
 }
 
 async function fetchFeedRows(type, limit = 8) {
@@ -100,6 +103,47 @@ function renderItem(type, item) {
         {item.event_date ? <p className="mt-1 text-xs text-teal-200">{new Date(item.event_date).toLocaleDateString()}</p> : null}
         {item.description ? <p className="mt-2 text-sm text-slate-300">{item.description}</p> : null}
       </article>
+    )
+  }
+
+  if (type === 'courses_feed') {
+    return (
+      <article key={item.id} className="rounded-2xl border border-white/10 bg-[var(--section-card-bg,rgba(255,255,255,0.03))] p-5">
+        <p className="text-base font-semibold text-slate-100">{item.title}</p>
+        {item.short_description ? <p className="mt-2 text-sm text-slate-300">{item.short_description}</p> : null}
+        {item.duration ? <p className="mt-3 text-xs text-teal-200">{item.duration}</p> : null}
+        {item.slug ? (
+          <Link href={`/courses/${item.slug}`} className="mt-3 inline-block text-xs font-semibold text-teal-300 hover:text-teal-200">
+            Explore course →
+          </Link>
+        ) : null}
+      </article>
+    )
+  }
+
+  if (type === 'tools_feed') {
+    return (
+      <div key={item.id} className="rounded-2xl border border-white/10 bg-[var(--section-card-bg,rgba(255,255,255,0.03))] p-5 text-center">
+        {item.logo_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={item.logo_url} alt={item.name || item.title || ''} className="mx-auto h-10 w-10 object-contain" />
+        ) : null}
+        <p className="mt-3 text-sm font-semibold text-slate-100">{item.name || item.title}</p>
+        {item.category ? <p className="mt-1 text-xs text-slate-400">{item.category}</p> : null}
+      </div>
+    )
+  }
+
+  if (type === 'company_logos_feed') {
+    return (
+      <div key={item.id} className="flex items-center justify-center rounded-2xl border border-white/10 bg-[var(--section-card-bg,rgba(255,255,255,0.03))] p-5">
+        {item.logo_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={item.logo_url} alt={item.name || ''} className="h-8 w-auto object-contain" />
+        ) : (
+          <p className="text-sm font-semibold text-slate-100">{item.name}</p>
+        )}
+      </div>
     )
   }
 

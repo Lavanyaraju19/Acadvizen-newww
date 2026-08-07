@@ -3,7 +3,32 @@
 import { useEffect, useState } from 'react'
 import { Surface } from '../../../src/components/ui/Surface'
 import { adminApiFetch } from '../../../lib/adminApiClient'
-import { renderDynamicSections } from '../../../components/sections/DynamicSectionRenderer'
+import DynamicSectionRenderer from '../../../components/sections/DynamicSectionRenderer'
+
+// Feed-type sections pull live data via a server-only Supabase client (correct on the real public
+// page's server-rendered tree). This admin preview modal is a Client Component, so rendering them
+// here directly fires malformed direct-to-Supabase requests from the browser - show a placeholder
+// instead and point the admin at the generated page's live preview.
+const LIVE_DATA_ONLY_SECTION_TYPES = new Set([
+  'testimonials_feed', 'placement_feed', 'recruiters_feed', 'instructors_feed',
+  'certifications_feed', 'success_stories_feed', 'metrics_counters', 'trust_badges_feed',
+  'community_events_feed', 'cta_block_ref', 'courses_feed', 'tools_feed', 'company_logos_feed',
+])
+
+function renderTemplatePreviewSections(sections = []) {
+  return sections
+    .filter((section) => section?.visibility !== false)
+    .sort((a, b) => Number(a?.order_index || 0) - Number(b?.order_index || 0))
+    .map((section) =>
+      LIVE_DATA_ONLY_SECTION_TYPES.has(String(section?.type || '').toLowerCase()) ? (
+        <div key={section.id || `${section.type}-${section.order_index}`} className="border-t border-slate-200 bg-slate-50 p-6 text-center text-xs text-slate-500">
+          <span className="font-semibold text-slate-700">{section.type.replace(/_/g, ' ')}</span> pulls live data on the published page.
+        </div>
+      ) : (
+        <DynamicSectionRenderer key={section.id || `${section.type}-${section.order_index}`} section={section} />
+      )
+    )
+}
 import {
   Plus,
   Trash2,
@@ -25,19 +50,29 @@ import {
   Sparkles,
   History,
   RotateCcw,
+  Building2,
+  Trophy,
+  Rocket,
+  FileQuestion,
 } from 'lucide-react'
 
 const TEMPLATE_TYPES = [
   { id: 'homepage', label: 'Homepage', icon: Home },
-  { id: 'landing', label: 'Landing Page', icon: Layers },
-  { id: 'city', label: 'City Page', icon: MapPin },
-  { id: 'course', label: 'Course Page', icon: GraduationCap },
-  { id: 'blog', label: 'Blog Post', icon: BookOpen },
+  { id: 'landing', label: 'Generic Landing Page', icon: Layers },
+  { id: 'city', label: 'City Hub Page', icon: MapPin },
+  { id: 'location_course', label: 'Location Course Page', icon: MapPin },
+  { id: 'course', label: 'Main Course Page', icon: GraduationCap },
+  { id: 'short_course', label: 'Short Course Page', icon: Rocket },
+  { id: 'campaign', label: 'Campaign Page', icon: Sparkles },
+  { id: 'corporate_training', label: 'Corporate Training Page', icon: Building2 },
+  { id: 'placement', label: 'Placement Page', icon: Trophy },
+  { id: 'blog', label: 'Blog Landing Page', icon: BookOpen },
   { id: 'contact', label: 'Contact', icon: MessageSquare },
   { id: 'about', label: 'About', icon: User },
   { id: 'faq', label: 'FAQ', icon: HelpCircle },
   { id: 'privacy', label: 'Privacy Policy', icon: Shield },
   { id: 'terms', label: 'Terms of Service', icon: FileText },
+  { id: 'blank', label: 'Blank Page', icon: FileQuestion },
 ]
 
 const EMPTY_FORM = { name: '', description: '', template_type: 'landing', parent_template_id: '', is_default: false }
@@ -60,7 +95,14 @@ export default function PageTemplatesClient() {
 
   const [applyTemplate, setApplyTemplate] = useState(null)
   const [applyTitle, setApplyTitle] = useState('')
+  const [applySlug, setApplySlug] = useState('')
   const [applying, setApplying] = useState(false)
+  const [generatorCourses, setGeneratorCourses] = useState([])
+  const [generatorCities, setGeneratorCities] = useState([])
+  const [generatorAreas, setGeneratorAreas] = useState([])
+  const [generatorCourseId, setGeneratorCourseId] = useState('')
+  const [generatorCityId, setGeneratorCityId] = useState('')
+  const [generatorAreaId, setGeneratorAreaId] = useState('')
 
   const [versionsTemplate, setVersionsTemplate] = useState(null)
   const [versions, setVersions] = useState([])
@@ -190,6 +232,49 @@ export default function PageTemplatesClient() {
   function openApply(template) {
     setApplyTemplate(template)
     setApplyTitle(template.name)
+    setApplySlug('')
+    setGeneratorCourseId('')
+    setGeneratorCityId('')
+    setGeneratorAreaId('')
+    if (template.template_type === 'location_course' && !generatorCourses.length) {
+      loadGeneratorOptions()
+    }
+  }
+
+  async function loadGeneratorOptions() {
+    try {
+      const [coursesJson, citiesJson, locationsJson] = await Promise.all([
+        adminApiFetch('/api/cms/entities/courses?limit=200', { cache: 'no-store' }),
+        adminApiFetch('/api/cms/entities/cities?limit=200', { cache: 'no-store' }),
+        adminApiFetch('/api/cms/entities/locations?limit=200', { cache: 'no-store' }),
+      ])
+      setGeneratorCourses(Array.isArray(coursesJson.data) ? coursesJson.data : [])
+      setGeneratorCities(Array.isArray(citiesJson.data) ? citiesJson.data : [])
+      setGeneratorAreas(Array.isArray(locationsJson.data) ? locationsJson.data : [])
+    } catch {
+      // Generator selectors stay empty; admin can still type title/slug manually.
+    }
+  }
+
+  // Regenerates the suggested title/slug whenever the course or area selection changes, so the
+  // admin sees "Digital Marketing Course in JP Nagar" style suggestions - they can still edit
+  // both fields freely before creating the page.
+  function applyGeneratorSelection(nextCourseId, nextAreaId) {
+    const course = generatorCourses.find((item) => item.id === nextCourseId)
+    const area = generatorAreas.find((item) => item.id === nextAreaId)
+    if (course && area) {
+      const title = `${course.title} Course in ${area.name}`
+      setApplyTitle(title)
+      setApplySlug(
+        title
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '')
+      )
+    } else if (course) {
+      setApplyTitle(course.title)
+    }
   }
 
   async function submitApply() {
@@ -199,7 +284,7 @@ export default function PageTemplatesClient() {
     try {
       const json = await adminApiFetch(`/api/cms/templates/${applyTemplate.id}/apply`, {
         method: 'POST',
-        body: { title: applyTitle.trim() },
+        body: { title: applyTitle.trim(), slug: applySlug.trim() || undefined },
       })
       setApplyTemplate(null)
       if (json?.data?.id) {
@@ -462,7 +547,7 @@ export default function PageTemplatesClient() {
               <div className="p-8 text-center text-slate-400">This template has no sections yet.</div>
             ) : (
               <div className="rounded-xl border border-white/10 overflow-hidden bg-white">
-                {renderDynamicSections(previewData.data.sections)}
+                {renderTemplatePreviewSections(previewData.data.sections)}
               </div>
             )}
           </div>
@@ -480,6 +565,54 @@ export default function PageTemplatesClient() {
               </button>
             </div>
             <p className="text-sm text-slate-400 mb-4">Creates a new draft page pre-filled with this template&apos;s sections. You&apos;ll land in the Page Builder to finish it.</p>
+
+            {applyTemplate.template_type === 'location_course' ? (
+              <div className="mb-4 space-y-3 rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Generate from Course + Area (optional)</p>
+                <label className="block text-xs text-slate-400">
+                  Course
+                  <select
+                    value={generatorCourseId}
+                    onChange={(e) => { setGeneratorCourseId(e.target.value); applyGeneratorSelection(e.target.value, generatorAreaId) }}
+                    className="mt-1 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2 py-2 text-xs text-slate-100"
+                  >
+                    <option value="" className="bg-[#07101b]">Select a course...</option>
+                    {generatorCourses.map((course) => (
+                      <option key={course.id} value={course.id} className="bg-[#07101b]">{course.title}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block text-xs text-slate-400">
+                  City
+                  <select
+                    value={generatorCityId}
+                    onChange={(e) => { setGeneratorCityId(e.target.value); setGeneratorAreaId('') }}
+                    className="mt-1 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2 py-2 text-xs text-slate-100"
+                  >
+                    <option value="" className="bg-[#07101b]">Select a city...</option>
+                    {generatorCities.map((city) => (
+                      <option key={city.id} value={city.id} className="bg-[#07101b]">{city.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block text-xs text-slate-400">
+                  Area
+                  <select
+                    value={generatorAreaId}
+                    onChange={(e) => { setGeneratorAreaId(e.target.value); applyGeneratorSelection(generatorCourseId, e.target.value) }}
+                    disabled={!generatorCityId}
+                    className="mt-1 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2 py-2 text-xs text-slate-100 disabled:opacity-50"
+                  >
+                    <option value="" className="bg-[#07101b]">Select an area...</option>
+                    {generatorAreas.filter((area) => area.city_id === generatorCityId).map((area) => (
+                      <option key={area.id} value={area.id} className="bg-[#07101b]">{area.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <p className="text-[11px] text-slate-500">Selecting a course and area suggests a title and slug below - edit either before creating the page.</p>
+              </div>
+            ) : null}
+
             <label className="text-xs text-slate-400">
               New Page Title
               <input
@@ -488,6 +621,16 @@ export default function PageTemplatesClient() {
                 onChange={(e) => setApplyTitle(e.target.value)}
                 className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
                 autoFocus
+              />
+            </label>
+            <label className="mt-3 block text-xs text-slate-400">
+              Slug (optional - auto-generated from title if left blank)
+              <input
+                type="text"
+                value={applySlug}
+                onChange={(e) => setApplySlug(e.target.value)}
+                placeholder="digital-marketing-course-jp-nagar"
+                className="mt-1 w-full px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
               />
             </label>
             <div className="flex gap-2 pt-4">

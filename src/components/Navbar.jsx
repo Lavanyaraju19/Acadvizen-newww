@@ -5,6 +5,16 @@ import { useAuth } from '../contexts/AuthContext'
 import { canAccessAdminProfile, isFullAdminProfile } from '../../lib/adminPermissions'
 import { buildMenuTree, pruneMenuTree } from '../../lib/menuTree'
 import { DesktopNavItem, MobileNavAccordionItem } from '../../components/cms/NavDropdown'
+import { CourseMegaMenuPanel, CourseMobileMenu } from '../../components/cms/CourseMegaMenu'
+
+// Title-only, not URL-based: any admin-created menu item can legitimately point at /courses
+// (e.g. a "View All Programs" link, or a test/demo dropdown) without being THE primary Courses
+// nav entry - matching on URL made every such item wrongly render the mega menu instead of its
+// own configured children.
+function isCoursesNavItem(item) {
+  const title = String(item?.title || '').trim().toLowerCase()
+  return title === 'courses'
+}
 
 function ensureAchievementsLink(items = []) {
   const normalized = Array.isArray(items) ? items.filter(Boolean) : []
@@ -117,6 +127,8 @@ export function Navbar({ menus, settings }) {
                 key={item.id || `${item.title}-${item.url}`}
                 item={item}
                 linkClassName="text-slate-200 hover:text-white text-base font-semibold transition-colors"
+                renderPanel={isCoursesNavItem(item) ? (props) => <CourseMegaMenuPanel {...props} /> : undefined}
+                panelWidthPx={isCoursesNavItem(item) ? 640 : undefined}
               />
             ))}
           </div>
@@ -177,13 +189,17 @@ export function Navbar({ menus, settings }) {
             </div>
 
             <div className="mt-6 space-y-1 text-sm text-slate-200 overflow-x-hidden">
-              {mobileHeaderTree.map((item) => (
-                <MobileNavAccordionItem
-                  key={item.id || `mobile-${item.title}-${item.url}`}
-                  item={item}
-                  onNavigate={() => setShowPanel(false)}
-                />
-              ))}
+              {mobileHeaderTree.map((item) =>
+                isCoursesNavItem(item) ? (
+                  <CourseMobileMenu key={item.id || `mobile-${item.title}-${item.url}`} onNavigate={() => setShowPanel(false)} />
+                ) : (
+                  <MobileNavAccordionItem
+                    key={item.id || `mobile-${item.title}-${item.url}`}
+                    item={item}
+                    onNavigate={() => setShowPanel(false)}
+                  />
+                )
+              )}
             </div>
 
             <div className="mt-auto space-y-2">

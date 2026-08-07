@@ -60,8 +60,15 @@ function DropdownRow({ item, onNavigate }) {
   )
 }
 
-/** Desktop nav item - a plain link if it has no children, a hover/click dropdown if it does. */
-export function DesktopNavItem({ item, linkClassName }) {
+/**
+ * Desktop nav item - a plain link if it has no children, a hover/click dropdown if it does.
+ *
+ * `renderPanel` lets a caller (e.g. the course mega-menu) swap the default child-list panel for
+ * custom content while reusing this component's open/close state machine, hover-intent delay,
+ * outside-click handling, edge-aware alignment, and full keyboard support (Enter/Space/Arrow
+ * keys/Escape) rather than re-implementing accessible dropdown behavior a second time.
+ */
+export function DesktopNavItem({ item, linkClassName, renderPanel, panelWidthPx }) {
   const [open, setOpen] = useState(false)
   const [align, setAlign] = useState('left')
   const containerRef = useRef(null)
@@ -70,7 +77,8 @@ export function DesktopNavItem({ item, linkClassName }) {
   const buttonId = useId()
   const panelId = useId()
 
-  const itemHasChildren = hasChildren(item)
+  const itemHasChildren = hasChildren(item) || Boolean(renderPanel)
+  const effectivePanelWidth = panelWidthPx || PANEL_WIDTH_PX
 
   useEffect(() => () => {
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
@@ -101,9 +109,9 @@ export function DesktopNavItem({ item, linkClassName }) {
   useEffect(() => {
     if (!open || !containerRef.current) return
     const rect = containerRef.current.getBoundingClientRect()
-    const overflowsRight = rect.left + PANEL_WIDTH_PX > window.innerWidth - 16
+    const overflowsRight = rect.left + effectivePanelWidth > window.innerWidth - 16
     setAlign(overflowsRight ? 'right' : 'left')
-  }, [open])
+  }, [open, effectivePanelWidth])
 
   function openNow() {
     if (closeTimerRef.current) {
@@ -183,14 +191,15 @@ export function DesktopNavItem({ item, linkClassName }) {
           id={panelId}
           role="menu"
           aria-labelledby={buttonId}
-          onKeyDown={handlePanelKeyDown}
-          className={`absolute top-full z-[70] mt-3 w-72 rounded-2xl border border-white/10 bg-slate-950 p-2 shadow-[0_24px_60px_rgba(2,6,23,0.55)] ${
-            align === 'right' ? 'right-0' : 'left-0'
-          }`}
+          onKeyDown={renderPanel ? undefined : handlePanelKeyDown}
+          style={{ width: effectivePanelWidth }}
+          className={`absolute top-full z-[70] mt-3 rounded-2xl border border-white/10 bg-slate-950 shadow-[0_24px_60px_rgba(2,6,23,0.55)] ${
+            renderPanel ? '' : 'p-2'
+          } ${align === 'right' ? 'right-0' : 'left-0'}`}
         >
-          {item.children.map((child) => (
-            <DropdownRow key={child.id} item={child} onNavigate={closeNow} />
-          ))}
+          {renderPanel
+            ? renderPanel({ closeNow })
+            : item.children.map((child) => <DropdownRow key={child.id} item={child} onNavigate={closeNow} />)}
         </div>
       ) : null}
     </div>

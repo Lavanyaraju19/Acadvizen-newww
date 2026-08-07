@@ -79,6 +79,7 @@ export default function EntityCrudManager({
   const [form, setForm] = useState(buildDefaultForm(fields))
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [dynamicOptions, setDynamicOptions] = useState({})
 
   const selected = useMemo(() => items.find((item) => item.id === selectedId) || null, [items, selectedId])
   const liveUrl = publicUrlPattern && selected?.[slugKey] ? publicUrlPattern.replace('{slug}', selected[slugKey]) : ''
@@ -130,6 +131,33 @@ export default function EntityCrudManager({
   useEffect(() => {
     setPage(1)
   }, [search, entity])
+
+  useEffect(() => {
+    const relationFields = fields.filter((field) => field.type === 'select' && field.optionsFrom)
+    if (!relationFields.length) return
+    let cancelled = false
+    async function loadOptions() {
+      const next = {}
+      for (const field of relationFields) {
+        try {
+          const json = await adminApiFetch(`/api/cms/entities/${field.optionsFrom}?limit=500`, { cache: 'no-store' })
+          const rows = Array.isArray(json.data) ? json.data : []
+          next[field.key] = rows.map((row) => ({
+            value: row.id,
+            label: row[field.optionsLabelKey || 'name'] || row.id,
+          }))
+        } catch {
+          next[field.key] = []
+        }
+      }
+      if (!cancelled) setDynamicOptions((prev) => ({ ...prev, ...next }))
+    }
+    loadOptions()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entity])
 
   function beginCreate() {
     setSelectedId('')
@@ -332,7 +360,12 @@ export default function EntityCrudManager({
                   onChange={(event) => setForm((prev) => ({ ...prev, [field.key]: event.target.value }))}
                   className="mt-1 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2 py-2 text-xs text-slate-100"
                 >
-                  {(field.options || []).map((option) => (
+                  {field.allowEmpty !== false ? (
+                    <option value="" className="bg-[#07101b]">
+                      {field.emptyLabel || '—'}
+                    </option>
+                  ) : null}
+                  {(field.options || dynamicOptions[field.key] || []).map((option) => (
                     <option key={`${field.key}-${option.value}`} value={option.value} className="bg-[#07101b]">
                       {option.label}
                     </option>
