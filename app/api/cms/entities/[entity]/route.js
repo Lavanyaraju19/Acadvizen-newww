@@ -32,6 +32,7 @@ function applyFilters(query, request, config, isAdmin) {
   const pageId = searchParams.get('page_id')
   const blogId = searchParams.get('blog_id')
   const cityId = searchParams.get('city_id')
+  const groupId = searchParams.get('group_id')
   const key = searchParams.get('key')
   const courseSlug = searchParams.get('course_slug')
   const status = searchParams.get('status')
@@ -43,6 +44,7 @@ function applyFilters(query, request, config, isAdmin) {
   if (pageId && config.allowedFields?.includes('page_id')) next = next.eq('page_id', pageId)
   if (blogId && config.allowedFields?.includes('blog_id')) next = next.eq('blog_id', blogId)
   if (cityId && config.allowedFields?.includes('city_id')) next = next.eq('city_id', cityId)
+  if (groupId && config.allowedFields?.includes('group_id')) next = next.eq('group_id', groupId)
   if (courseSlug && config.allowedFields?.includes('course_slug')) next = next.eq('course_slug', courseSlug)
   if (key && config.slugField) next = next.eq(config.slugField, key)
 

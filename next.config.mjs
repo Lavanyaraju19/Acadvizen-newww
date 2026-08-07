@@ -61,7 +61,7 @@ const nextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co https://*.vercel-insights.com https://www.googletagmanager.com https://connect.facebook.net https://www.google.com https://www.gstatic.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data: blob: https://*.supabase.co https://logo.clearbit.com https://images.unsplash.com https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://www.googletagmanager.com https://www.google-analytics.com https://www.facebook.com https://www.gstatic.com",
+              "img-src 'self' data: blob: https://*.supabase.co https://logo.clearbit.com https://images.unsplash.com https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://www.googletagmanager.com https://www.google-analytics.com https://www.facebook.com https://www.gstatic.com https://*.basemaps.cartocdn.com",
               "font-src 'self' https://fonts.gstatic.com",
               [
                 "connect-src 'self' https://*.supabase.co wss://*.supabase.co",

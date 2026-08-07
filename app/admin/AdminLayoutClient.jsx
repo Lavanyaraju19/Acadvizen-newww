@@ -33,6 +33,9 @@ import {
   FolderOpen,
   Sparkles,
   History,
+  Link2,
+  Compass,
+  Map as MapIcon,
 } from 'lucide-react'
 import { Surface } from '../../src/components/ui/Surface'
 import { CustomCursor } from '../../src/components/ui/CustomCursor'
@@ -58,6 +61,7 @@ const adminNav = [
   { path: '/admin/blogs', label: 'Blogs', icon: BookOpen },
   { path: '/admin/blog-taxonomy', label: 'Blog Taxonomy', icon: Tags },
   { path: '/admin/courses', label: 'Courses', icon: GraduationCap },
+  { path: '/admin/course-details', label: 'Course Details', icon: FileText },
   { path: '/admin/tools', label: 'Tools', icon: Wrench },
   { path: '/admin/companies', label: 'Companies', icon: Building2 },
   { path: '/admin/internships', label: 'Internships', icon: School },
@@ -69,6 +73,9 @@ const adminNav = [
   { path: '/admin/locations', label: 'Locations', icon: MapPin },
   { path: '/admin/service-pages', label: 'Service Pages', icon: Sparkles },
   { path: '/admin/resources', label: 'Resources', icon: FolderOpen },
+  { path: '/admin/internal-links', label: 'Internal Links', icon: Link2 },
+  { path: '/admin/location-explorer', label: 'Location Explorer', icon: Compass },
+  { path: '/admin/learner-map', label: 'Learner Map', icon: MapIcon },
   { path: '/admin/media', label: 'Media', icon: ImageIcon },
   { path: '/admin/users', label: 'Users', icon: Users },
   { path: '/admin/audit-log', label: 'Audit Log', icon: History },

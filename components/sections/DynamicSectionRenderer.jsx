@@ -8,6 +8,8 @@ import DataFeedSection from './DataFeedSection'
 import LeadFormSection from './LeadFormSection'
 import FormEmbedSection from './FormEmbedSection'
 import MapSection from './MapSection'
+import LocationExplorerSection from './LocationExplorerSection'
+import InteractiveLearnerMapSection from './InteractiveLearnerMapSection'
 import PricingSection from './PricingSection'
 import RichTextSection from './RichTextSection'
 import StatsSection from './StatsSection'
@@ -45,8 +47,13 @@ const SECTION_COMPONENTS = {
   trust_badges_feed: DataFeedSection,
   community_events_feed: DataFeedSection,
   cta_block_ref: DataFeedSection,
+  courses_feed: DataFeedSection,
+  tools_feed: DataFeedSection,
+  company_logos_feed: DataFeedSection,
   lead_form: LeadFormSection,
   form_embed: FormEmbedSection,
+  location_explorer: LocationExplorerSection,
+  interactive_learner_map: InteractiveLearnerMapSection,
 }
 
 function normalizeType(type) {

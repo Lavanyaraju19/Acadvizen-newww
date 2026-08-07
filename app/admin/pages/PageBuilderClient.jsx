@@ -42,8 +42,13 @@ const SECTION_TYPES = [
   'trust_badges_feed',
   'community_events_feed',
   'cta_block_ref',
+  'courses_feed',
+  'tools_feed',
+  'company_logos_feed',
   'lead_form',
   'form_embed',
+  'location_explorer',
+  'interactive_learner_map',
 ]
 
 const EMPTY_PAGE_FORM = {
@@ -417,6 +422,19 @@ function contentFromForm(form) {
   } else if (form.type === 'form_embed') {
     payload.form_id = form.formId || undefined
     payload.heading = form.heading || undefined
+  } else if (form.type === 'location_explorer') {
+    payload.group_id = form.groupId || undefined
+    payload.cta_label = form.cta_label || undefined
+    payload.cta_url = form.cta_url || undefined
+  } else if (form.type === 'interactive_learner_map') {
+    payload.description = form.description || undefined
+    payload.height = Number(form.height) || undefined
+    payload.initialZoom = Number(form.initialZoom) || undefined
+    payload.mapStyle = form.mapStyle || undefined
+    payload.showSearch = form.showSearch !== false
+    payload.showGrowth = form.showGrowth !== false
+    payload.ctaLabel = form.ctaLabel || undefined
+    payload.ctaUrl = form.ctaUrl || undefined
   } else if (form.successMessage) {
     payload.success_message = form.successMessage
   }
@@ -566,6 +584,33 @@ function SortableSectionRow({ section, index, isLast, isSelected, onEdit, onMove
       </div>
     </div>
   )
+}
+
+// DataFeedSection (and any other component registered against these types in
+// DynamicSectionRenderer) is a server-only async component that queries Supabase directly with
+// server credentials. It renders correctly on the real public page (a genuine Server Component
+// tree), but this admin editor is a Client Component - trying to render an async server component
+// synchronously here doesn't await it correctly and, worse, its Supabase client falls back to
+// browser-exposed env vars and fires malformed direct-to-PostgREST requests. Rather than showing
+// live data here, the editor previews these sections with a static placeholder and points the
+// admin at the real public page for an accurate preview.
+const LIVE_DATA_ONLY_SECTION_TYPES = new Set([
+  'testimonials_feed', 'placement_feed', 'recruiters_feed', 'instructors_feed',
+  'certifications_feed', 'success_stories_feed', 'metrics_counters', 'trust_badges_feed',
+  'community_events_feed', 'cta_block_ref', 'courses_feed', 'tools_feed', 'company_logos_feed',
+  'location_explorer', 'interactive_learner_map',
+])
+
+function PreviewSafeSection({ section }) {
+  if (LIVE_DATA_ONLY_SECTION_TYPES.has(String(section?.type || '').toLowerCase())) {
+    return (
+      <div className="mx-4 my-3 rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-5 text-center text-xs text-slate-400">
+        <span className="font-semibold text-slate-300">{section.type.replace(/_/g, ' ')}</span> pulls live data on the
+        published page - publish or visit the live URL to see real content here.
+      </div>
+    )
+  }
+  return <DynamicSectionRenderer section={section} />
 }
 
 export default function PageBuilderClient() {
@@ -1461,7 +1506,7 @@ export default function PageBuilderClient() {
                   {previewSections.length === 0 ? (
                     <div className="p-6 text-sm text-slate-400">Select or create a section to preview it here.</div>
                   ) : (
-                    previewSections.map((section) => <DynamicSectionRenderer key={section.id || `${section.type}-${section.order_index}`} section={section} />)
+                    previewSections.map((section) => <PreviewSafeSection key={section.id || `${section.type}-${section.order_index}`} section={section} />)
                   )}
                 </div>
               </div>
@@ -1592,7 +1637,7 @@ export default function PageBuilderClient() {
               <div className="p-10 text-center text-sm text-slate-400">This page has no sections yet - add one to see it here.</div>
             ) : (
               previewSections.map((section) => (
-                <DynamicSectionRenderer key={section.id || `${section.type}-${section.order_index}`} section={section} />
+                <PreviewSafeSection key={section.id || `${section.type}-${section.order_index}`} section={section} />
               ))
             )}
           </div>

@@ -85,6 +85,7 @@ function SectionItemShell({ title, subtitle, onMoveUp, onMoveDown, onDelete, chi
 
 export default function PrecisionSectionFields({ sectionForm, setSectionForm }) {
   const [publishedForms, setPublishedForms] = useState([])
+  const [explorerGroups, setExplorerGroups] = useState([])
 
   useEffect(() => {
     if (sectionForm.type !== 'form_embed') return undefined
@@ -95,6 +96,21 @@ export default function PrecisionSectionFields({ sectionForm, setSectionForm }) 
       })
       .catch(() => {
         if (!cancelled) setPublishedForms([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [sectionForm.type])
+
+  useEffect(() => {
+    if (sectionForm.type !== 'location_explorer') return undefined
+    let cancelled = false
+    adminApiFetch('/api/cms/entities/location_explorer_groups?limit=200', { cache: 'no-store' })
+      .then((json) => {
+        if (!cancelled) setExplorerGroups(Array.isArray(json?.data) ? json.data : [])
+      })
+      .catch(() => {
+        if (!cancelled) setExplorerGroups([])
       })
     return () => {
       cancelled = true
@@ -708,6 +724,76 @@ export default function PrecisionSectionFields({ sectionForm, setSectionForm }) 
     )
   }
 
+  const renderLocationExplorerEditors = () => (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+      <div>
+        <div className="text-sm font-semibold text-slate-100">Location Explorer</div>
+        <div className="text-xs text-slate-400">
+          Pick a group built in Locations &rarr; Location Explorer. Optional overrides here replace that group&apos;s
+          heading/subheading/CTA on this page only.
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <label className="text-xs text-slate-400">
+          Group
+          <select
+            value={sectionForm.groupId || ''}
+            onChange={(event) => updateField('groupId', event.target.value)}
+            className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
+          >
+            <option value="">Select a group...</option>
+            {explorerGroups.map((group) => (
+              <option key={group.id} value={group.id} className="bg-[#07101b]">{group.name}</option>
+            ))}
+          </select>
+        </label>
+        <InputField label="Heading Override (optional)" value={sectionForm.heading} onChange={(value) => updateField('heading', value)} />
+        <TextAreaField label="Subheading Override (optional)" value={sectionForm.subheading} onChange={(value) => updateField('subheading', value)} rows={2} className="md:col-span-2" />
+        <InputField label="CTA Label Override (optional)" value={sectionForm.cta_label} onChange={(value) => updateField('cta_label', value)} />
+        <InputField label="CTA URL Override (optional)" value={sectionForm.cta_url} onChange={(value) => updateField('cta_url', value)} />
+      </div>
+    </div>
+  )
+
+  const renderLearnerMapEditors = () => (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+      <div>
+        <div className="text-sm font-semibold text-slate-100">Interactive Learner Map</div>
+        <div className="text-xs text-slate-400">
+          Pulls live pins from Learner Map &rarr; Locations. Configure the map viewport and visible chrome here.
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <InputField label="Heading" value={sectionForm.heading} onChange={(value) => updateField('heading', value)} />
+        <InputField label="Height (px)" type="number" value={sectionForm.height} onChange={(value) => updateField('height', value)} placeholder="520" />
+        <TextAreaField label="Description" value={sectionForm.description} onChange={(value) => updateField('description', value)} rows={2} className="md:col-span-2" />
+        <InputField label="Initial Zoom (1-18)" type="number" value={sectionForm.initialZoom} onChange={(value) => updateField('initialZoom', value)} placeholder="4" />
+        <label className="text-xs text-slate-400">
+          Style
+          <select
+            value={sectionForm.mapStyle || 'blue'}
+            onChange={(event) => updateField('mapStyle', event.target.value)}
+            className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100"
+          >
+            <option value="blue" className="bg-[#07101b]">Acadvizen Blue</option>
+            <option value="dark" className="bg-[#07101b]">Dark</option>
+            <option value="light" className="bg-[#07101b]">Light</option>
+          </select>
+        </label>
+        <InputField label="CTA Label (optional)" value={sectionForm.ctaLabel} onChange={(value) => updateField('ctaLabel', value)} />
+        <InputField label="CTA URL (optional)" value={sectionForm.ctaUrl} onChange={(value) => updateField('ctaUrl', value)} />
+        <label className="flex items-center gap-2 text-xs text-slate-400">
+          <input type="checkbox" checked={sectionForm.showSearch !== false} onChange={(event) => updateField('showSearch', event.target.checked)} className="rounded border-white/10 bg-white/[0.03]" />
+          Show search box
+        </label>
+        <label className="flex items-center gap-2 text-xs text-slate-400">
+          <input type="checkbox" checked={sectionForm.showGrowth !== false} onChange={(event) => updateField('showGrowth', event.target.checked)} className="rounded border-white/10 bg-white/[0.03]" />
+          Show growth % on pins
+        </label>
+      </div>
+    </div>
+  )
+
   switch (sectionForm.type) {
     case 'hero':
       return renderHeroEditors()
@@ -735,6 +821,10 @@ export default function PrecisionSectionFields({ sectionForm, setSectionForm }) 
       return renderLeadFormEditors()
     case 'form_embed':
       return renderFormEmbedEditors()
+    case 'location_explorer':
+      return renderLocationExplorerEditors()
+    case 'interactive_learner_map':
+      return renderLearnerMapEditors()
     default:
       return null
   }
