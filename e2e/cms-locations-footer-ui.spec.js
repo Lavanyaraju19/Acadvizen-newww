@@ -95,18 +95,24 @@ test.describe('Admin UI simulation - Cities and Locations/Footer', () => {
     const areaName = createScopedCmsValue('UI Area').replace(/-/g, ' ')
     const updatedIntro = 'Updated intro text via real Admin UI second save.'
 
+    // /admin/locations stacks a Cities panel and an Areas/Locations panel, each a separate
+    // EntityCrudManager instance with its own "New"/"Save"/"Delete" buttons and several shared
+    // field labels (SEO Title, Intro Text) - scope every interaction to the Locations panel so
+    // locators stay unambiguous regardless of what the Cities panel renders.
+    const locationsPanel = page.locator('section', { has: page.getByRole('heading', { name: 'Areas / Locations' }) })
+
     try {
       await gotoAndWaitForList(page, '/admin/locations', '/api/cms/entities/locations')
-      await page.getByRole('button', { name: 'New' }).click()
+      await locationsPanel.getByRole('button', { name: 'New' }).click()
 
-      await page.getByLabel('Area / Location Name').fill(areaName)
-      await page.getByLabel('SEO Title').fill(areaName)
-      await page.getByLabel('Intro Text').fill('Original intro text for this area.')
+      await locationsPanel.getByLabel('Area / Location Name').fill(areaName)
+      await locationsPanel.getByLabel('SEO Title').fill(areaName)
+      await locationsPanel.getByLabel('Intro Text').fill('Original intro text for this area.')
 
-      await page.getByRole('button', { name: 'Save', exact: true }).click()
-      await expect(page.getByText('Saved.')).toBeVisible({ timeout: 10000 })
+      await locationsPanel.getByRole('button', { name: 'Save', exact: true }).click()
+      await expect(locationsPanel.getByText('Saved.')).toBeVisible({ timeout: 10000 })
 
-      const liveLink = page.getByRole('link', { name: /View live/ })
+      const liveLink = locationsPanel.getByRole('link', { name: /View live/ })
       const publicUrl = await liveLink.getAttribute('href')
       expect(publicUrl).toMatch(/^\/digital-marketing-courses-/)
 
@@ -123,9 +129,9 @@ test.describe('Admin UI simulation - Cities and Locations/Footer', () => {
       await draftDetail.close()
 
       // Publish via the real checkbox + Save, exactly as an admin would.
-      await page.getByLabel(/^Published/).check()
-      await page.getByRole('button', { name: 'Save', exact: true }).click()
-      await expect(page.getByText('Saved.')).toBeVisible({ timeout: 10000 })
+      await locationsPanel.getByLabel(/^Published/).check()
+      await locationsPanel.getByRole('button', { name: 'Save', exact: true }).click()
+      await expect(locationsPanel.getByText('Saved.')).toBeVisible({ timeout: 10000 })
 
       await homepage.reload({ waitUntil: 'domcontentloaded' })
       const footerLink = homepage.getByRole('link', { name: areaName })
@@ -139,17 +145,17 @@ test.describe('Admin UI simulation - Cities and Locations/Footer', () => {
       await expect(homepage.getByText('Original intro text for this area.')).toBeVisible()
 
       // Edit and confirm the live page updates immediately.
-      await page.getByLabel('Intro Text').fill(updatedIntro)
-      await page.getByRole('button', { name: 'Save', exact: true }).click()
-      await expect(page.getByText('Saved.')).toBeVisible({ timeout: 10000 })
+      await locationsPanel.getByLabel('Intro Text').fill(updatedIntro)
+      await locationsPanel.getByRole('button', { name: 'Save', exact: true }).click()
+      await expect(locationsPanel.getByText('Saved.')).toBeVisible({ timeout: 10000 })
 
       await homepage.goto(publicUrl, { waitUntil: 'domcontentloaded' })
       await expect(homepage.getByText(updatedIntro)).toBeVisible()
 
       // Unpublish -> removed from footer and from the detail page's custom content.
-      await page.getByLabel(/^Published/).uncheck()
-      await page.getByRole('button', { name: 'Save', exact: true }).click()
-      await expect(page.getByText('Saved.')).toBeVisible({ timeout: 10000 })
+      await locationsPanel.getByLabel(/^Published/).uncheck()
+      await locationsPanel.getByRole('button', { name: 'Save', exact: true }).click()
+      await expect(locationsPanel.getByText('Saved.')).toBeVisible({ timeout: 10000 })
 
       await homepage.goto('/', { waitUntil: 'domcontentloaded' })
       await expect(homepage.getByRole('link', { name: areaName })).toHaveCount(0)
@@ -157,17 +163,17 @@ test.describe('Admin UI simulation - Cities and Locations/Footer', () => {
       await expect(homepage.getByText(updatedIntro)).toHaveCount(0)
 
       // Republish -> restored in both places.
-      await page.getByLabel(/^Published/).check()
-      await page.getByRole('button', { name: 'Save', exact: true }).click()
-      await expect(page.getByText('Saved.')).toBeVisible({ timeout: 10000 })
+      await locationsPanel.getByLabel(/^Published/).check()
+      await locationsPanel.getByRole('button', { name: 'Save', exact: true }).click()
+      await expect(locationsPanel.getByText('Saved.')).toBeVisible({ timeout: 10000 })
 
       await homepage.goto('/', { waitUntil: 'domcontentloaded' })
       await expect(homepage.getByRole('link', { name: areaName })).toBeVisible()
       await homepage.close()
 
       page.once('dialog', (dialog) => dialog.accept())
-      await page.getByRole('button', { name: 'Delete' }).click()
-      await expect(page.getByText('Deleted.')).toBeVisible({ timeout: 10000 })
+      await locationsPanel.getByRole('button', { name: 'Delete' }).click()
+      await expect(locationsPanel.getByText('Deleted.')).toBeVisible({ timeout: 10000 })
     } finally {
       await supabase.from('locations').delete().eq('name', areaName)
     }

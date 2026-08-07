@@ -40,8 +40,11 @@ test.describe('Admin Auth', () => {
 
     await page.goto('/admin-login', { waitUntil: 'domcontentloaded' })
     await expect(page.locator('main h1').filter({ hasText: 'Admin Login' }).first()).toBeVisible()
-    await page.fill('#admin-email', 'nobody@example.com')
-    await page.fill('#admin-password', 'invalid-password')
+    // page.fill() doesn't reliably fire the input events this React-controlled form's onChange
+    // depends on in WebKit - see loginAdmin() in utils.js and the "rejects invalid credentials"
+    // test below for the same fix.
+    await page.locator('#admin-email').pressSequentially('nobody@example.com', { delay: 10 })
+    await page.locator('#admin-password').pressSequentially('invalid-password', { delay: 10 })
     await page.click('button[type="submit"], button:has-text("Sign in")')
 
     await expect(page.locator('text=Supabase configuration is unavailable')).toBeVisible()
