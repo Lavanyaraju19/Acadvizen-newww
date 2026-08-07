@@ -402,28 +402,39 @@ begin
   on conflict (slug) do nothing;
 
   if to_regclass('public.home_sections') is not null then
+    -- `distinct on` collapses multiple legacy source rows that share the same order_index (dirty
+    -- data already present in home_sections) down to one before insert - the `where not exists`
+    -- guard below only stops this whole block from re-running on a later migration replay, it
+    -- does not dedupe multiple source rows seen within the same statement.
     insert into public.sections (page_id, type, order_index, content_json, visibility)
     select
       p.id,
       'custom_rich_text',
-      coalesce(h.order_index, 0),
-      jsonb_strip_nulls(
-        jsonb_build_object(
-          'heading', h.title,
-          'subheading', h.subtitle,
-          'text', h.body,
-          'list', h.items_json,
-          'cta', h.cta_json
-        )
-      ),
-      coalesce(h.is_active, true)
-    from public.home_sections h
+      h.order_index,
+      h.content_json,
+      h.is_active
+    from (
+      select distinct on (coalesce(order_index, 0))
+        coalesce(order_index, 0) as order_index,
+        jsonb_strip_nulls(
+          jsonb_build_object(
+            'heading', title,
+            'subheading', subtitle,
+            'text', body,
+            'list', items_json,
+            'cta', cta_json
+          )
+        ) as content_json,
+        coalesce(is_active, true) as is_active
+      from public.home_sections
+      order by coalesce(order_index, 0), created_at
+    ) h
     join public.pages p on p.slug = 'home'
     where not exists (
       select 1
       from public.sections s
       where s.page_id = p.id
-        and s.order_index = coalesce(h.order_index, 0)
+        and s.order_index = h.order_index
         and s.type = 'custom_rich_text'
     );
   end if;
@@ -439,28 +450,38 @@ begin
     where ps.page_slug is not null
     on conflict (slug) do nothing;
 
+    -- Same dedupe reasoning as the home_sections block above.
     insert into public.sections (page_id, type, order_index, content_json, visibility)
     select
       p.id,
       'custom_rich_text',
-      coalesce(ps.order_index, 0),
-      jsonb_strip_nulls(
-        jsonb_build_object(
-          'heading', ps.title,
-          'subheading', ps.subtitle,
-          'text', ps.body,
-          'list', ps.items_json,
-          'cta', ps.cta_json
-        )
-      ),
-      coalesce(ps.is_active, true)
-    from public.page_sections ps
+      ps.order_index,
+      ps.content_json,
+      ps.is_active
+    from (
+      select distinct on (page_slug, coalesce(order_index, 0))
+        page_slug,
+        coalesce(order_index, 0) as order_index,
+        jsonb_strip_nulls(
+          jsonb_build_object(
+            'heading', title,
+            'subheading', subtitle,
+            'text', body,
+            'list', items_json,
+            'cta', cta_json
+          )
+        ) as content_json,
+        coalesce(is_active, true) as is_active
+      from public.page_sections
+      where page_slug is not null
+      order by page_slug, coalesce(order_index, 0), created_at
+    ) ps
     join public.pages p on p.slug = ps.page_slug
     where not exists (
       select 1
       from public.sections s
       where s.page_id = p.id
-        and s.order_index = coalesce(ps.order_index, 0)
+        and s.order_index = ps.order_index
         and s.type = 'custom_rich_text'
     );
   end if;

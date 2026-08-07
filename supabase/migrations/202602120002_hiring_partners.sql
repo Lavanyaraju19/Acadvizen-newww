@@ -24,8 +24,12 @@ create policy "hiring_partners_admin_write"
   using (public.is_admin())
   with check (public.is_admin());
 
+-- `on conflict do nothing` alone is not a real duplicate guard here (id is a random UUID with no
+-- unique constraint on name), so re-running this migration on an environment that already has
+-- these rows inserts a full duplicate copy every time. This is seed/demo data for a fresh
+-- install, not something meant to be re-appended - only insert if the table is currently empty.
 insert into public.hiring_partners (name, logo_url, row_group, order_index, is_active)
-values
+select * from (values
   ('TCS','https://logo.clearbit.com/tcs.com','row_a',1,true),
   ('Atlassian','https://logo.clearbit.com/atlassian.com','row_a',2,true),
   ('Adobe','https://logo.clearbit.com/adobe.com','row_a',3,true),
@@ -67,4 +71,5 @@ values
   ('Nykaa','https://logo.clearbit.com/nykaa.com','row_b',18,true),
   ('Meta','https://logo.clearbit.com/meta.com','row_b',19,true),
   ('LinkedIn','https://logo.clearbit.com/linkedin.com','row_b',20,true)
-on conflict do nothing;
+) as seed(name, logo_url, row_group, order_index, is_active)
+where not exists (select 1 from public.hiring_partners);
