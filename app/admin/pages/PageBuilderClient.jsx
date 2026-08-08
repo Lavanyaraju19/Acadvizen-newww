@@ -636,6 +636,11 @@ export default function PageBuilderClient() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
   const pageDetailsFormRef = useRef(null)
+  // include_sections=1 fetches every page's full section list in one call, so it gets slower as
+  // CMS content grows. When a user adds sections in quick succession, an earlier, slower request
+  // can resolve after a later, faster one and clobber the fresher state with stale data - this
+  // guard drops any response that isn't from the most recently issued call.
+  const loadPagesRequestRef = useRef(0)
 
   const selectedPage = useMemo(() => pages.find((page) => page.id === selectedPageId) || null, [pages, selectedPageId])
   const sections = useMemo(
@@ -667,10 +672,12 @@ export default function PageBuilderClient() {
   }, [sectionForm, selectedPage, selectedSection?.order_index, sections])
 
   async function loadPages(nextSelectedId) {
+    const requestId = ++loadPagesRequestRef.current
     setLoading(true)
     try {
       const payload = await adminApiFetch('/api/cms/pages?include_drafts=1&include_sections=1', { cache: 'no-store' })
       const nextPages = Array.isArray(payload.data) ? payload.data : []
+      if (requestId !== loadPagesRequestRef.current) return nextPages
       setPages(nextPages)
       const selectedId = nextSelectedId || selectedPageId || nextPages[0]?.id || ''
       setSelectedPageId(selectedId)
@@ -695,10 +702,12 @@ export default function PageBuilderClient() {
       }
       return nextPages
     } catch (error) {
-      setStatus(error?.message || 'Unable to load pages.')
+      if (requestId === loadPagesRequestRef.current) {
+        setStatus(error?.message || 'Unable to load pages.')
+      }
       return []
     } finally {
-      setLoading(false)
+      if (requestId === loadPagesRequestRef.current) setLoading(false)
     }
   }
 
