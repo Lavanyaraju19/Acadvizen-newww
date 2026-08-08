@@ -28,8 +28,24 @@ function decodeJwtPayload(token: string) {
   }
 }
 
+// Supabase's newer API keys (sb_publishable_..., sb_secret_...) are opaque tokens, not JWTs -
+// there's no local ref/role claim to decode and check. The key's own prefix already encodes its
+// role (publishable = anon-equivalent, secret = service_role-equivalent) and the key is
+// inherently scoped to whichever project issued it, so format-matching is the correct - and only
+// available - local validation for this key style.
+function matchesNewStyleKey(key: string, expectedRole?: string) {
+  if (expectedRole === 'service_role') return key.startsWith('sb_secret_')
+  if (expectedRole === 'anon') return key.startsWith('sb_publishable_')
+  return key.startsWith('sb_secret_') || key.startsWith('sb_publishable_')
+}
+
 function keyMatchesProject(url: string, key: string, expectedRole?: string) {
   if (!url || !key) return false
+
+  if (key.startsWith('sb_secret_') || key.startsWith('sb_publishable_')) {
+    return matchesNewStyleKey(key, expectedRole)
+  }
+
   const payload = decodeJwtPayload(key)
   if (!payload) return false
 
