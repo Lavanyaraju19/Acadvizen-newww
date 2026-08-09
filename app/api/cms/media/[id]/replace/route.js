@@ -57,7 +57,7 @@ export async function POST(request, { params }) {
   const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
-  const id = params?.id
+  const { id } = await params
   if (!id) return jsonError('Media id is required.', 400)
 
   const { data: existing, error: existingError } = await supabase.from('media').select('*').eq('id', id).maybeSingle()

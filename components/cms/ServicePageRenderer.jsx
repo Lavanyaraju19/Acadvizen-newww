@@ -3,17 +3,41 @@ import PageSection, { InfoCard } from './templates/PageSection'
 import PageCTA from './templates/PageCTA'
 import JsonLd from './templates/JsonLd'
 import { buildBreadcrumbSchema, buildFaqSchema } from '../../lib/structuredData'
+import { getServerSupabaseClient } from '../../lib/supabaseServer'
+import { renderDynamicSections } from '../sections/DynamicSectionRenderer'
 
 function asList(value) {
   if (Array.isArray(value)) return value
   return []
 }
 
+// Admin-added designed blocks (Admin > Service Pages > Designed Sections) - same
+// OwnerSectionsEditor/service_page_sections pattern as City and Location pages, with a
+// `position` insertion-zone anchor so blocks can render between this page's fixed sections.
+async function loadExtraSections(servicePageId) {
+  const supabase = getServerSupabaseClient()
+  if (!supabase || !servicePageId) return []
+  const { data } = await supabase
+    .from('service_page_sections')
+    .select('*')
+    .eq('service_page_id', servicePageId)
+    .eq('visibility', true)
+    .order('order_index', { ascending: true })
+    .limit(200)
+  return data || []
+}
+
+function sectionsForZone(extraSections, zone) {
+  return extraSections.filter((section) => (section.position || 'end') === zone)
+}
+
 // Renderer for `service_pages` records (Admin > Service Pages) - "service + city" landing
 // pages such as "Google Ads Course in Bangalore". Uses the same shared template primitives as
 // every other CMS content type so a newly published service page matches the rest of the site.
-export default function ServicePageRenderer({ servicePage }) {
+export default async function ServicePageRenderer({ servicePage }) {
   if (!servicePage) return null
+
+  const extraSections = await loadExtraSections(servicePage.id)
 
   const breadcrumbItems = [
     { label: 'Home', href: '/' },
@@ -38,11 +62,15 @@ export default function ServicePageRenderer({ servicePage }) {
         secondaryCta={{ label: 'Talk to Admissions', href: '/contact' }}
       />
 
+      {sectionsForZone(extraSections, 'top').length ? renderDynamicSections(sectionsForZone(extraSections, 'top')) : null}
+
       {servicePage.overview ? (
         <PageSection title="Overview" muted>
           <p className="whitespace-pre-line text-sm leading-relaxed text-slate-300 sm:text-base">{servicePage.overview}</p>
         </PageSection>
       ) : null}
+
+      {sectionsForZone(extraSections, 'after_intro').length ? renderDynamicSections(sectionsForZone(extraSections, 'after_intro')) : null}
 
       {benefits.length ? (
         <PageSection title="Why Choose This Program">
@@ -71,6 +99,8 @@ export default function ServicePageRenderer({ servicePage }) {
         </PageSection>
       ) : null}
 
+      {sectionsForZone(extraSections, 'before_faq').length ? renderDynamicSections(sectionsForZone(extraSections, 'before_faq')) : null}
+
       {faqs.length ? (
         <PageSection title="Frequently Asked Questions">
           <div className="space-y-4">
@@ -83,6 +113,8 @@ export default function ServicePageRenderer({ servicePage }) {
           </div>
         </PageSection>
       ) : null}
+
+      {sectionsForZone(extraSections, 'end').length ? renderDynamicSections(sectionsForZone(extraSections, 'end')) : null}
 
       <PageCTA title={servicePage.title} subtitle="Get a personalised course roadmap from our admissions team." />
     </div>

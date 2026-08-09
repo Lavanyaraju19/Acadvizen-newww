@@ -647,9 +647,20 @@ export default function HomePage({ cmsData = {} }) {
     { name: 'Tag Manager', slug: 'google-tag-manager', logoSrc: '/tools/tagmanager.png' },
     { name: 'Synthesia', slug: 'synthesia', logoSrc: '/tools/synthesia.png' },
   ]
-  const scrollingTools = cmsData.tools && Array.isArray(cmsData.tools) && cmsData.tools.length > 0
+  const scrollingToolsRaw = cmsData.tools && Array.isArray(cmsData.tools) && cmsData.tools.length > 0
     ? cmsData.tools
     : defaultScrollingTools
+  // Precomputed once per source-list change, not per render - a fresh fallbackSrcs array on
+  // every render (as resolveToolLogoCandidates(tool).slice(...) called inline in JSX would be)
+  // defeats AdaptiveImage's useMemo/useEffect-based retry state, see ToolsPage.jsx.
+  const scrollingTools = useMemo(
+    () =>
+      scrollingToolsRaw.map((tool) => {
+        const candidates = resolveToolLogoCandidates(tool)
+        return { ...tool, _logoSrc: tool.logoSrc || candidates[0], _logoFallbacks: candidates.slice(tool.logoSrc ? 0 : 1) }
+      }),
+    [scrollingToolsRaw]
+  )
   const toolLookup = new Map(
     scrollingTools.map((tool) => [tool.slug || toToolSlug(tool.name || ''), tool])
   )
@@ -1118,8 +1129,8 @@ export default function HomePage({ cmsData = {} }) {
                       >
                         <div className="h-11 w-11 shrink-0">
                           <AdaptiveImage
-                            src={tool.logoSrc || resolveToolLogoCandidates(tool)[0]}
-                            fallbackSrcs={resolveToolLogoCandidates(tool).slice(tool.logoSrc ? 0 : 1)}
+                            src={tool._logoSrc}
+                            fallbackSrcs={tool._logoFallbacks}
                             alt={tool.name || slug}
                             variant="logo"
                             aspectRatio="1 / 1"
@@ -1157,8 +1168,8 @@ export default function HomePage({ cmsData = {} }) {
                 >
                   <div className="h-[68px] w-[156px] shrink-0">
                     <AdaptiveImage
-                      src={tool.logoSrc || resolveToolLogoCandidates(tool)[0]}
-                      fallbackSrcs={resolveToolLogoCandidates(tool).slice(tool.logoSrc ? 0 : 1)}
+                      src={tool._logoSrc}
+                      fallbackSrcs={tool._logoFallbacks}
                       alt={tool.name || tool.slug}
                       variant="logo"
                       aspectRatio="4 / 3"
@@ -1182,8 +1193,8 @@ export default function HomePage({ cmsData = {} }) {
                 >
                   <div className="h-[68px] w-[156px] shrink-0">
                     <AdaptiveImage
-                      src={tool.logoSrc || resolveToolLogoCandidates(tool)[0]}
-                      fallbackSrcs={resolveToolLogoCandidates(tool).slice(tool.logoSrc ? 0 : 1)}
+                      src={tool._logoSrc}
+                      fallbackSrcs={tool._logoFallbacks}
                       alt={tool.name || tool.slug}
                       variant="logo"
                       aspectRatio="4 / 3"
@@ -1334,8 +1345,8 @@ export default function HomePage({ cmsData = {} }) {
                       >
                         <div className="h-6 w-6 shrink-0">
                           <AdaptiveImage
-                            src={tool.logoSrc || resolveToolLogoCandidates(tool)[0]}
-                            fallbackSrcs={resolveToolLogoCandidates(tool).slice(tool.logoSrc ? 0 : 1)}
+                            src={tool._logoSrc}
+                            fallbackSrcs={tool._logoFallbacks}
                             alt={tool.name || slug}
                             variant="logo"
                             aspectRatio="1 / 1"

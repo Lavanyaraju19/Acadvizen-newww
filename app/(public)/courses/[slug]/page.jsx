@@ -4,14 +4,28 @@ export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { permanentRedirect, redirect } from 'next/navigation'
 import DynamicPageRenderer from '../../../../components/cms/DynamicPageRenderer'
+import ImmersiveCourseRenderer from '../../../../components/cms/ImmersiveCourseRenderer'
 import { buildMetadata } from '../../../lib/seo'
 import { fetchCourseBySlug } from '../../../lib/contentMeta'
 import { fetchCmsPageByAnySlug, fetchLocationPageBySlug, fetchRedirectByPath } from '../../../../lib/cmsServer'
+import { getServerSupabaseClient } from '../../../../lib/supabaseServer'
 import { isPublicCmsEnabled } from '../../../lib/publicCms'
 import CourseDetailLegacyClient from '../../../legacy-fallback/CourseDetailLegacyClient'
 import Breadcrumbs from '../../../../components/cms/templates/Breadcrumbs'
 import JsonLd from '../../../../components/cms/templates/JsonLd'
 import { buildBreadcrumbSchema, buildCourseSchema } from '../../../../lib/structuredData'
+
+async function fetchFullCourseBySlug(slug) {
+  const supabase = getServerSupabaseClient()
+  if (!supabase || !slug) return null
+  try {
+    const { data, error } = await supabase.from('courses').select('*').eq('slug', slug).eq('is_active', true).limit(1)
+    if (error || !data?.length) return null
+    return data[0]
+  } catch {
+    return null
+  }
+}
 
 export const dynamicParams = true
 
@@ -71,6 +85,14 @@ export default async function Page({ params }) {
           breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Courses', href: '/courses' }, { label: locationLike.title || 'Course' }]}
         />
       )
+    }
+
+    // Acadvizen Immersive Experience - any course with a real, active DB row gets the premium
+    // template by default. Only slugs with no matching row at all (pre-CMS legacy content) fall
+    // through to the react-router CourseDetailPage below.
+    const fullCourse = await fetchFullCourseBySlug(slug)
+    if (fullCourse) {
+      return <ImmersiveCourseRenderer course={fullCourse} />
     }
   }
 

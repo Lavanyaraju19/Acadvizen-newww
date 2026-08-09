@@ -149,6 +149,12 @@ test.describe('Admin CMS E2E Tests', () => {
 
   test.describe('Navigation', () => {
     test('should navigate between all admin modules without session expiry', async () => {
+      // ADMIN_MODULES now has 35 entries - sequentially visiting all of them (each with its own
+      // goto + load-state wait + session check) reliably exceeds the suite's global 120s per-test
+      // timeout even when every individual navigation succeeds, as seen when this same list's
+      // per-module tests each took several seconds. This is a budget ceiling, not a functional
+      // failure - every assertion in the loop below is unchanged.
+      test.setTimeout(300000)
       for (const mod of ADMIN_MODULES) {
         await adminPage.goto(mod.path)
         await adminPage.waitForLoadState('domcontentloaded')

@@ -30,7 +30,7 @@ export async function PATCH(request, { params }) {
   const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
-  const id = params?.id
+  const { id } = await params
   if (!id) return jsonError('Folder id is required.', 400)
 
   const body = await readJsonBody(request)
@@ -76,7 +76,7 @@ export async function DELETE(request, { params }) {
   const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
-  const id = params?.id
+  const { id } = await params
   if (!id) return jsonError('Folder id is required.', 400)
 
   const { searchParams } = new URL(request.url)

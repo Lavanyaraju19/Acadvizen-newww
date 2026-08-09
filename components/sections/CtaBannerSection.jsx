@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import CtaPanel from '../cms/immersive/CtaPanel'
 import {
   bodyClass,
   headingClass,
@@ -14,6 +15,21 @@ import {
 export default function CtaBannerSection({ section }) {
   const content = normalizeContent(section)
   const style = normalizeStyle(section)
+
+  if (style.layout_variant === 'immersive') {
+    return (
+      <section className={`${sectionPaddingClass(content, style)} ${sectionVisibilityClass(content)}`} style={sectionInlineStyle(content, style)}>
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <CtaPanel
+            heading={safeString(content.heading)}
+            text={safeString(content.text)}
+            button={content.button?.href ? { href: content.button.href, label: safeString(content.button.label, 'Get Started'), target: content.button.target } : null}
+          />
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className={`${sectionPaddingClass(content, style)} ${sectionVisibilityClass(content)}`} style={sectionInlineStyle(content, style)}>
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">

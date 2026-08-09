@@ -4,10 +4,7 @@ export const dynamic = 'force-dynamic'
 import { notFound } from 'next/navigation'
 import { permanentRedirect, redirect } from 'next/navigation'
 import DynamicPageRenderer from '../../../components/cms/DynamicPageRenderer'
-import CityPageRenderer from '../../../components/cms/CityPageRenderer'
-import CityCoursePageRenderer from '../../../components/cms/CityCoursePageRenderer'
-import LocationPageRenderer from '../../../components/cms/LocationPageRenderer'
-import ServicePageRenderer from '../../../components/cms/ServicePageRenderer'
+import CmsPageResolver from '../../../components/cms/CmsPageResolver'
 import { fetchCmsPageBySlug, fetchRedirectByPath, fetchSeoBySlug } from '../../../lib/cmsServer'
 import { buildMetadata } from '../../lib/seo'
 import { isPublicCmsEnabled } from '../../lib/publicCms'
@@ -87,20 +84,9 @@ export default async function Page({ params }) {
 
   if (!page) notFound()
 
-  if (page.source === 'city_page') {
-    return <CityPageRenderer cityPage={page.raw} />
-  }
-
-  if (page.source === 'location') {
-    return <LocationPageRenderer locationRecord={page.raw.id ? page.raw : null} locationSlug={page.raw.locationSlug} />
-  }
-
-  if (page.source === 'city_course') {
-    return <CityCoursePageRenderer cityRecord={page.raw.id ? page.raw : null} citySlug={page.raw.citySlug} />
-  }
-
-  if (page.source === 'service_page') {
-    return <ServicePageRenderer servicePage={page.raw} />
+  const isSpecialSource = ['city_page', 'location', 'city_course', 'service_page'].includes(page.source)
+  if (isSpecialSource) {
+    return <CmsPageResolver cmsPage={page} />
   }
 
   const resolved = ensureRenderableSections(page)

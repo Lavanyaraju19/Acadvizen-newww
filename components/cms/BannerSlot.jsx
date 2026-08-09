@@ -6,6 +6,34 @@ import { getDeviceType, isBannerEligible } from '../../lib/publicWidgets'
 
 const DISMISS_KEY_PREFIX = 'acadvizen_banner_dismissed_'
 
+// PublicLayout mounts up to 5 BannerSlot instances (sidebar/floating/popup/hero/footer) on
+// every public page, each independently fetching /api/cms/banners?type=X - 5 network round
+// trips per page load for data that's really one banners table filtered client-side. This
+// module-level cache lets sibling instances mounting in the same page load share a single
+// unfiltered fetch instead. Keyed by pathname (not just a singleton) so a client-side
+// navigation to a new page still fetches fresh eligibility data, matching the no-store
+// freshness this API already guarantees per pathname.
+let inFlightPathname = null
+let inFlightPromise = null
+
+function fetchAllBanners(pathname) {
+  if (inFlightPathname === pathname && inFlightPromise) return inFlightPromise
+
+  inFlightPathname = pathname
+  inFlightPromise = fetch('/api/cms/banners', { cache: 'no-store' })
+    .then((res) => res.json())
+    .then((json) => (Array.isArray(json?.data) ? json.data : []))
+    .catch(() => [])
+    .finally(() => {
+      if (inFlightPathname === pathname) {
+        inFlightPathname = null
+        inFlightPromise = null
+      }
+    })
+
+  return inFlightPromise
+}
+
 function pickImage(banner, deviceType) {
   if (deviceType === 'mobile' && banner.mobile_image) return banner.mobile_image
   if (deviceType === 'tablet' && banner.tablet_image) return banner.tablet_image
@@ -22,9 +50,8 @@ export default function BannerSlot({ type, className = '' }) {
 
     async function load() {
       try {
-        const res = await fetch(`/api/cms/banners?type=${encodeURIComponent(type)}`, { cache: 'no-store' })
-        const json = await res.json()
-        const rows = Array.isArray(json?.data) ? json.data : []
+        const allRows = await fetchAllBanners(pathname)
+        const rows = allRows.filter((row) => row.type === type)
         const deviceType = getDeviceType()
         const eligible = rows.find((row) => isBannerEligible(row, { pathname, deviceType }))
         if (!cancelled) setBanner(eligible || null)

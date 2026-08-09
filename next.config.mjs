@@ -26,6 +26,13 @@ const nextConfig = {
   compress: true,
   skipMiddlewareUrlNormalize: true,
   outputFileTracingRoot: __dirname,
+  // sharp ships a native .node binary resolved via platform-specific optionalDependencies
+  // (e.g. @img/sharp-win32-x64). Without this, Next's bundler tries to webpack-bundle sharp
+  // into the server output, which breaks that native binary resolution at runtime
+  // (ERR_DLOPEN_FAILED) - crashing every route that imports sharp (media upload, image
+  // replace-in-place) as soon as the module is first loaded. serverExternalPackages tells
+  // Next to require() it normally at runtime instead of bundling it.
+  serverExternalPackages: ['sharp'],
   env: {
     NEXT_PUBLIC_SUPABASE_URL:
       process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '',

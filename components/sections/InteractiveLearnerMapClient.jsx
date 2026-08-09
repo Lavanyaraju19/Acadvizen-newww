@@ -4,14 +4,60 @@
 // InteractiveLearnerMapLoader's next/dynamic(..., { ssr: false }) boundary, so it's safe to touch
 // `window`/`document`/Leaflet's DOM APIs here.
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { MapContainer, TileLayer, useMap } from 'react-leaflet'
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { TileLayer, useMap } from 'react-leaflet'
+import { LeafletProvider, createLeafletContext } from '@react-leaflet/core'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import 'leaflet.markercluster'
 import { Search } from 'lucide-react'
+
+// react-leaflet@4's own <MapContainer> creates its Leaflet map instance from a callback ref
+// guarded only by a `context === null` React-state check, not by the DOM node itself. Under
+// React 18 StrictMode's dev-only double-invoke of effects, that guard doesn't reliably prevent
+// a second `new L.Map(container)` call from reaching a container the first pass already
+// stamped, and Leaflet throws "Map container is already initialized" (the stamp is its own
+// `container._leaflet_id`, set in `_initContainer` and normally cleared by `map.remove()`).
+// This replaces <MapContainer> with an equivalent built directly on top of the same
+// @react-leaflet/core context Leaflet's <TileLayer>/useMap() already consume, so the map
+// creation effect can defensively clear that stamp immediately before constructing the map -
+// making creation idempotent no matter how many times the effect fires.
+const StableMapContainer = forwardRef(function StableMapContainer(
+  { center, zoom, scrollWheelZoom, style, children },
+  forwardedRef
+) {
+  const containerRef = useRef(null)
+  const [context, setContext] = useState(null)
+
+  useImperativeHandle(forwardedRef, () => context?.map ?? null, [context])
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return undefined
+
+    if (container._leaflet_id) {
+      delete container._leaflet_id
+    }
+
+    const map = new L.Map(container, { scrollWheelZoom })
+    map.setView(center, zoom)
+    setContext(createLeafletContext(map))
+
+    return () => {
+      map.remove()
+      setContext(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  return (
+    <div ref={containerRef} style={style}>
+      {context ? <LeafletProvider value={context}>{children}</LeafletProvider> : null}
+    </div>
+  )
+})
 
 const TILE_SOURCES = {
   blue: { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', dark: false },
@@ -147,7 +193,7 @@ export default function InteractiveLearnerMapClient({ points = [], height = 520,
         </div>
       ) : null}
 
-      <MapContainer
+      <StableMapContainer
         center={center}
         zoom={initialZoom}
         scrollWheelZoom
@@ -156,7 +202,7 @@ export default function InteractiveLearnerMapClient({ points = [], height = 520,
       >
         <TileLayer url={tile.url} attribution={ATTRIBUTION} />
         <ClusterLayer points={points} dark={tile.dark} showGrowth={showGrowth} />
-      </MapContainer>
+      </StableMapContainer>
     </div>
   )
 }

@@ -16,7 +16,7 @@ export async function PATCH(request, { params }) {
   if (response) return response
 
   const body = await request.json()
-  const { id } = params
+  const { id } = await params
 
   // Check for redirect loops
   const fromPath = body.from_path || body.old_url
@@ -50,7 +50,7 @@ export async function DELETE(request, { params }) {
   const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
-  const { id } = params
+  const { id } = await params
 
   try {
     return jsonOk(await deleteRedirectRecord(supabase, id))

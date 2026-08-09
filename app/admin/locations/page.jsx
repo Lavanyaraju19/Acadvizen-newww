@@ -2,6 +2,7 @@ export const revalidate = 1
 
 import EntityCrudManager from '../_components/EntityCrudManager'
 import { Surface } from '../../../src/components/ui/Surface'
+import LocationSectionsManager from './LocationSectionsManager'
 
 export default function Page() {
   return (
@@ -49,6 +50,7 @@ export default function Page() {
           publicUrlPattern="/digital-marketing-courses-{slug}"
           fields={[
             { key: 'name', label: 'Area / Location Name' },
+            { key: 'slug', label: 'URL Slug (leave blank to auto-generate) - page will be at /digital-marketing-courses-{slug}' },
             { key: 'city_id', label: 'City', type: 'select', optionsFrom: 'cities', emptyLabel: 'No city (e.g. country/city-level entry)' },
             { key: 'footer_label', label: 'Footer Link Label (optional, defaults to name)' },
             { key: 'order_index', label: 'Footer Display Order', type: 'number', default: 0 },
@@ -60,6 +62,18 @@ export default function Page() {
             { key: 'is_active', label: 'Published (visible on the page and in the footer)', type: 'checkbox' },
           ]}
         />
+      </Surface>
+
+      <Surface className="space-y-5 p-6 md:p-8">
+        <div>
+          <h2 className="text-2xl font-semibold text-slate-50">Designed Sections</h2>
+          <p className="mt-1 text-sm text-slate-300">
+            Add Hero, Feature Cards, Statistics, Testimonials, FAQ, CTA, and every other Page Builder block to a
+            specific location&apos;s page - insert them above, between, or below its existing fixed content, reorder by
+            drag-and-drop, and publish instantly.
+          </p>
+        </div>
+        <LocationSectionsManager />
       </Surface>
     </div>
   )

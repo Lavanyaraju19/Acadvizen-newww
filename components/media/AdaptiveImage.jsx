@@ -53,17 +53,43 @@ export default function AdaptiveImage({
 }) {
   const sources = useMemo(() => buildSourceChain(src, fallbackSrcs), [src, fallbackSrcs])
   const [sourceIndex, setSourceIndex] = useState(0)
+  const [exhausted, setExhausted] = useState(false)
 
   useEffect(() => {
     setSourceIndex(0)
+    setExhausted(false)
   }, [sources])
+
+  function advanceOrGiveUp() {
+    setSourceIndex((current) => {
+      if (current < sources.length - 1) return current + 1
+      // Every candidate - including the final built-in placeholder - failed to load (e.g. no
+      // network route to an external host). Rendering the broken <img> forever is worse than a
+      // plain colored box: this stops retrying and swaps to a CSS-only placeholder that can
+      // never itself fail to load.
+      setExhausted(true)
+      return current
+    })
+  }
 
   const activeSrc = sources[sourceIndex] || '/logo-mark.png'
   const variantStyle = VARIANT_STYLES[variant] || VARIANT_STYLES.content
   const computedAspectRatio =
     aspectRatio || style.aspectRatio || variantStyle.aspectRatio || (height && width ? `${width} / ${height}` : '4 / 3')
 
-  const imageNode = fill ? (
+  const placeholderInitial = (alt || '?').trim().charAt(0).toUpperCase() || '?'
+  const placeholderNode = (
+    <div
+      className={`relative flex w-full items-center justify-center overflow-hidden ${roundedClassName} ${borderClassName} bg-white/[0.04] ${wrapperClassName}`.trim()}
+      style={fill ? { aspectRatio: computedAspectRatio } : { width, height }}
+      role="img"
+      aria-label={alt}
+    >
+      <span className="text-sm font-semibold text-slate-400">{placeholderInitial}</span>
+    </div>
+  )
+
+  const imageNode = exhausted ? placeholderNode : fill ? (
     <div
       className={`relative w-full overflow-hidden ${roundedClassName} ${borderClassName} ${variantStyle.wrapperClassName} ${wrapperClassName}`.trim()}
       style={{ aspectRatio: computedAspectRatio }}
@@ -77,11 +103,7 @@ export default function AdaptiveImage({
         sizes={sizes}
         className={`${variantStyle.imageClassName} ${imageClassName}`.trim()}
         style={style}
-        onError={() => {
-          if (sourceIndex < sources.length - 1) {
-            setSourceIndex((current) => current + 1)
-          }
-        }}
+        onError={advanceOrGiveUp}
       />
     </div>
   ) : (
@@ -94,11 +116,7 @@ export default function AdaptiveImage({
       loading={loading}
       sizes={sizes}
       className={`${roundedClassName} ${borderClassName} ${variantStyle.imageClassName} ${imageClassName}`.trim()}
-      onError={() => {
-        if (sourceIndex < sources.length - 1) {
-          setSourceIndex((current) => current + 1)
-        }
-      }}
+      onError={advanceOrGiveUp}
       style={style}
     />
   )

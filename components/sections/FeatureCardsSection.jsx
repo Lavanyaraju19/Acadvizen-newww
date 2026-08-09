@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { bodyClass, headingClass, imageStyle, normalizeContent, normalizeStyle, safeList, safeString, sectionInlineStyle, sectionPaddingClass, sectionVisibilityClass } from './sectionUtils'
 import AdaptiveImage from '../media/AdaptiveImage'
+import FeatureGrid from '../cms/immersive/FeatureGrid'
 
 export default function FeatureCardsSection({ section }) {
   const content = normalizeContent(section)
@@ -8,6 +9,18 @@ export default function FeatureCardsSection({ section }) {
   const cards = safeList(content.cards)
   if (!cards.length) return null
   const cardImageStyle = imageStyle(style)
+
+  if (style.layout_variant === 'immersive') {
+    return (
+      <section className={`${sectionPaddingClass(content, style)} ${sectionVisibilityClass(content)}`} style={sectionInlineStyle(content, style)}>
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          {content.heading ? <h2 className={`mb-6 text-center font-semibold text-slate-50 ${headingClass(style)}`}>{safeString(content.heading)}</h2> : null}
+          {content.subheading ? <p className={`mx-auto mb-8 max-w-3xl text-center whitespace-pre-line text-slate-300 ${bodyClass(style)}`}>{safeString(content.subheading)}</p> : null}
+          <FeatureGrid cards={cards.map((card) => ({ title: safeString(card?.title), text: safeString(card?.text), list: safeList(card?.list).map((item) => safeString(item)) }))} />
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className={`${sectionPaddingClass(content, style)} ${sectionVisibilityClass(content)}`} style={sectionInlineStyle(content, style)}>

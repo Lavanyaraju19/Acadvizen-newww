@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import ImmersiveHero from '../cms/immersive/ImmersiveHero'
 import {
   bodyClass,
   headingClass,
@@ -27,6 +28,21 @@ export default function HeroSection({ section }) {
       : []
   const bgImage = safeString(content.background_image)
   const inline = sectionInlineStyle(content, style)
+
+  // Acadvizen Immersive Experience variant - opt-in per section via Layout Variant in the page
+  // builder. Reuses the same premium split-hero component as the City/Location/Course pages.
+  if (style.layout_variant === 'immersive') {
+    return (
+      <ImmersiveHero
+        eyebrow={safeString(content.eyebrow)}
+        title={safeString(content.heading, section?.title || '')}
+        description={safeString(content.subheading || content.text, section?.description || '')}
+        badges={badges.map((badge) => safeString(badge?.label || badge)).filter(Boolean)}
+        primaryCta={buttons[0] ? { label: buttons[0].label || 'Learn More', href: buttons[0].href || '#' } : null}
+        secondaryCta={buttons[1] ? { label: buttons[1].label || 'Learn More', href: buttons[1].href || '#' } : null}
+      />
+    )
+  }
 
   return (
     <section

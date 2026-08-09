@@ -16,7 +16,7 @@ export async function GET(request, { params }) {
   const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
-  const { id } = params
+  const { id } = await params
 
   const { data, error } = await supabase
     .from('page_versions')
@@ -37,7 +37,7 @@ export async function POST(request, { params }) {
   if (response) return response
 
   const body = await readJsonBody(request)
-  const { id } = params
+  const { id } = await params
 
   // First get current page data
   const { data: page } = await supabase

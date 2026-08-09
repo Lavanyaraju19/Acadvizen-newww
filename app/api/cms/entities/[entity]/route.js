@@ -143,7 +143,7 @@ export async function POST(request, { params }) {
 
       const { data, error } = await supabase.from(config.table).insert(duplicate).select('*').single()
       if (error) return jsonError(`Failed to duplicate record: ${error.message}`, 500)
-      const contentType = config.contentType || params?.entity
+      const contentType = config.contentType || entity
       const revalidation = revalidateCmsMutation(contentType, { slug: data?.[config.slugField] })
       return jsonOk(data, { publication: buildCmsMutationMeta(contentType, data, revalidation) })
     }

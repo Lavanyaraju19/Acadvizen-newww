@@ -364,8 +364,13 @@ export default function FormBuilderClient() {
     return (
       <div className="border border-white/10 rounded-xl bg-white/[0.02] overflow-hidden">
         <div className="flex items-center gap-2 p-3 bg-white/[0.03]">
+          {/* Mouse-only reordering (HTML5 drag events never fire from keyboard activation) -
+              hidden from keyboard/AT users since the Move Up/Down buttons below already give
+              them a fully equivalent, keyboard-operable way to reorder fields. */}
           <button
             type="button"
+            aria-hidden="true"
+            tabIndex={-1}
             className="cursor-grab text-slate-400 hover:text-slate-200"
             draggable
             onDragStart={() => setDraggedFieldId(field.id)}
@@ -401,6 +406,8 @@ export default function FormBuilderClient() {
             type="button"
             onClick={() => toggleFieldExpanded(field.id)}
             className="p-1 text-slate-400 hover:text-slate-200"
+            aria-label={isExpanded ? 'Collapse field details' : 'Expand field details'}
+            aria-expanded={isExpanded}
           >
             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
@@ -419,15 +426,17 @@ export default function FormBuilderClient() {
             onClick={() => moveField(field.id, -1)}
             disabled={index === 0}
             className="p-1 text-slate-400 hover:text-slate-200 disabled:opacity-30"
+            aria-label="Move field up"
           >
             <ChevronUp className="w-4 h-4" />
           </button>
-          
+
           <button
             type="button"
             onClick={() => moveField(field.id, 1)}
             disabled={index === formFields.length - 1}
             className="p-1 text-slate-400 hover:text-slate-200 disabled:opacity-30"
+            aria-label="Move field down"
           >
             <ChevronDown className="w-4 h-4" />
           </button>

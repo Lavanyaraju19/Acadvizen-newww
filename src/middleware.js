@@ -181,6 +181,14 @@ export default async function middleware(request) {
   }
 }
 
+// /api and /admin are excluded here too, not just inside the function body above: Next's
+// middleware layer buffers the request body while routing it through middleware (even when
+// the middleware itself reads nothing), which imposes its own ~10MB cap independent of any
+// limit the route handler enforces. That silently truncated large multipart uploads (e.g.
+// admin media/video uploads) into a broken body, producing a confusing 500 instead of the
+// upload route's own clean "file too large" response. Excluding these prefixes at the
+// matcher level (matching what the function already does with its own early-return checks)
+// means POST bodies to /api and /admin routes never pass through middleware's buffering at all.
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!api|admin|_next/static|_next/image|favicon.ico).*)'],
 }

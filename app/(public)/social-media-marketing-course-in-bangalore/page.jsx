@@ -1,7 +1,7 @@
 export const revalidate = 0
 export const dynamic = 'force-dynamic'
 
-import DynamicPageRenderer from '../../../components/cms/DynamicPageRenderer'
+import CmsPageResolver from '../../../components/cms/CmsPageResolver'
 import { fetchCmsPageBySlug } from '../../../lib/cmsServer'
 import HomeLegacyClient from '../../legacy-fallback/HomeLegacyClient'
 import { buildCmsPageMetadata } from '../../lib/cmsPageRoute'
@@ -24,7 +24,5 @@ export default async function Page() {
   }
 
   const cmsPage = await fetchCmsPageBySlug('social-media-marketing-course-in-bangalore')
-  // Only use CMS renderer if the page has actual sections with content.
-  // If sections array is empty, fall back to legacy client to avoid blank page.
-  return cmsPage?.sections?.length ? <DynamicPageRenderer page={cmsPage} /> : <HomeLegacyClient />
+  return <CmsPageResolver cmsPage={cmsPage} fallback={<HomeLegacyClient />} />
 }

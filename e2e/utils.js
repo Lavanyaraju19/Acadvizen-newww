@@ -71,6 +71,27 @@ async function waitForAdminShell(page, { timeout = 20000 } = {}) {
   throw new Error('Admin shell did not become ready before timeout.')
 }
 
+// pressSequentially() has been observed (root-caused via a dedicated debug script logging
+// inputValue() before/after) to intermittently leave a field empty even though it resolves
+// without error and the field is visible/enabled/attached - the keystrokes fire but the
+// controlled React input's value doesn't land, and the field silently stays empty. Filling
+// then re-reading inputValue() and retrying closes that gap without masking a real failure:
+// a field that is genuinely un-fillable (detached, wrong selector) will still fail every
+// retry and throw.
+async function fillAndVerify(locator, value, { retries = 5, delayMs = 200 } = {}) {
+  for (let attempt = 1; attempt <= retries; attempt += 1) {
+    await locator.pressSequentially(value, { delay: 10 })
+    if ((await locator.inputValue()) === value) return
+    await locator.fill('')
+    await locator.page().waitForTimeout(delayMs)
+  }
+
+  const finalValue = await locator.inputValue()
+  if (finalValue !== value) {
+    throw new Error(`Failed to fill field with expected value after ${retries} attempts (got "${finalValue}").`)
+  }
+}
+
 async function loginAdmin(page) {
   assertE2ECredentials()
   await page.context().clearCookies()
@@ -127,9 +148,10 @@ async function loginAdmin(page) {
   // these two fields - the DOM value visibly updates but the component's own email/password
   // state stays empty, so the form submits with "Please enter email and password." even though
   // the fields look filled. pressSequentially types real keystrokes (matching what an actual
-  // person does) and is unaffected in every engine, Chromium/Firefox included.
-  await page.locator('#admin-email').pressSequentially(E2E_ADMIN_EMAIL, { delay: 10 })
-  await page.locator('#admin-password').pressSequentially(E2E_ADMIN_PASSWORD, { delay: 10 })
+  // person does) and is unaffected in every engine, Chromium/Firefox included - but see
+  // fillAndVerify() above for the separate intermittent-empty-field issue it guards against.
+  await fillAndVerify(page.locator('#admin-email'), E2E_ADMIN_EMAIL)
+  await fillAndVerify(page.locator('#admin-password'), E2E_ADMIN_PASSWORD)
   await page.click('button[type="submit"]')
 
   // 4. Assert the login mutation succeeded.
@@ -190,8 +212,9 @@ async function fillForm(page, fields) {
         await element.selectOption(String(value))
       } else {
         // See loginAdmin() above - page.fill() on a React-controlled text input doesn't
-        // reliably fire the events its onChange depends on in WebKit specifically.
-        await element.pressSequentially(String(value), { delay: 10 })
+        // reliably fire the events its onChange depends on in WebKit specifically, and
+        // pressSequentially alone can intermittently leave the field empty.
+        await fillAndVerify(element, String(value))
       }
     }
   }

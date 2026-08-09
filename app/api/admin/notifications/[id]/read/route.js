@@ -13,7 +13,7 @@ export async function POST(request, { params }) {
     )
   }
 
-  const { id } = params
+  const { id } = await params
   if (!id) {
     return NextResponse.json(
       { success: false, data: null, error: 'Notification ID is required' },

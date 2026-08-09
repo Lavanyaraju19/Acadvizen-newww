@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Container, Section } from './ui/Section'
 import { Surface } from './ui/Surface'
@@ -5,11 +6,21 @@ import AdaptiveImage from '../../components/media/AdaptiveImage'
 import { resolveToolLogoCandidates } from '../../lib/toolMedia'
 
 export function ToolsSection({ section, tools, categories, selectedCategory, onCategoryChange }) {
-  const featuredTools = tools.slice(0, 12)
+  // Precomputed once per `tools` change, not per render - see ToolsPage.jsx for why a fresh
+  // fallbackSrcs array on every render defeats AdaptiveImage's retry state.
+  const toolsWithLogos = useMemo(
+    () =>
+      tools.map((t) => {
+        const candidates = resolveToolLogoCandidates(t)
+        return { ...t, _logoSrc: candidates[0], _logoFallbacks: candidates.slice(1) }
+      }),
+    [tools]
+  )
+  const featuredTools = toolsWithLogos.slice(0, 12)
   const sliderTools = [...featuredTools, ...featuredTools]
   const evenTools = sliderTools.filter((_, idx) => idx % 2 === 0)
   const oddTools = sliderTools.filter((_, idx) => idx % 2 === 1)
-  const filteredTools = tools.filter((t) => {
+  const filteredTools = toolsWithLogos.filter((t) => {
     if (selectedCategory === 'all') return true
     if (selectedCategory === 'Gen AI') return t.category === 'Gen AI'
     if (selectedCategory === 'Digital Marketing') return t.category !== 'Gen AI'
@@ -52,8 +63,8 @@ export function ToolsSection({ section, tools, categories, selectedCategory, onC
                 >
                   <div className="h-6 w-6">
                     <AdaptiveImage
-                      src={resolveToolLogoCandidates(tool)[0]}
-                      fallbackSrcs={resolveToolLogoCandidates(tool).slice(1)}
+                      src={tool._logoSrc}
+                      fallbackSrcs={tool._logoFallbacks}
                       alt={tool.name}
                       variant="logo"
                       aspectRatio="1 / 1"
@@ -75,8 +86,8 @@ export function ToolsSection({ section, tools, categories, selectedCategory, onC
                 >
                   <div className="h-6 w-6">
                     <AdaptiveImage
-                      src={resolveToolLogoCandidates(tool)[0]}
-                      fallbackSrcs={resolveToolLogoCandidates(tool).slice(1)}
+                      src={tool._logoSrc}
+                      fallbackSrcs={tool._logoFallbacks}
                       alt={tool.name}
                       variant="logo"
                       aspectRatio="1 / 1"
@@ -104,8 +115,8 @@ export function ToolsSection({ section, tools, categories, selectedCategory, onC
                 <div className="relative flex flex-col items-center text-center">
                   <div className="h-16 w-16 rounded-2xl flex items-center justify-center bg-white/95 text-slate-950">
                     <AdaptiveImage
-                      src={resolveToolLogoCandidates(tool)[0]}
-                      fallbackSrcs={resolveToolLogoCandidates(tool).slice(1)}
+                      src={tool._logoSrc}
+                      fallbackSrcs={tool._logoFallbacks}
                       alt={tool.name}
                       variant="logo"
                       aspectRatio="1 / 1"

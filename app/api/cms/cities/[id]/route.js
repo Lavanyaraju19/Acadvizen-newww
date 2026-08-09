@@ -24,7 +24,7 @@ export async function PATCH(request, { params }) {
   if (response) return response
 
   const body = await readJsonBody(request)
-  const { id } = params
+  const { id } = await params
 
   const { data: existingCity, error: existingCityError } = await supabase
     .from('city_pages')
@@ -139,7 +139,7 @@ export async function DELETE(request, { params }) {
   const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
-  const { id } = params
+  const { id } = await params
 
   const { data: city } = await supabase.from('city_pages').select('slug').eq('id', id).maybeSingle()
   const { error } = await supabase.from('city_pages').delete().eq('id', id)

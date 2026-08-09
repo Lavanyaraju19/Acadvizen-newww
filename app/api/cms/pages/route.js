@@ -76,19 +76,35 @@ async function savePageRecord(supabase, payload) {
   }
 }
 
+// PostgREST encodes .in() as a comma-separated list in the request URL, so a single query
+// covering every page's id has a hard ceiling before it trips "URI too long" - reproduced with
+// as few as ~250 pages, which turns the whole Page Builder list into a 500 as soon as a site
+// accumulates a realistic number of pages. Chunking keeps each request's URL short regardless
+// of how many pages exist.
+const SECTIONS_QUERY_CHUNK_SIZE = 100
+
 async function attachSections(supabase, pages = []) {
   const pageIds = pages.map((page) => page?.id).filter(Boolean)
   if (!pageIds.length) return pages.map((page) => ({ ...page, sections: [] }))
 
-  const { data, error } = await supabase
-    .from('sections')
-    .select('*')
-    .in('page_id', pageIds)
-    .order('order_index', { ascending: true })
+  const chunks = []
+  for (let i = 0; i < pageIds.length; i += SECTIONS_QUERY_CHUNK_SIZE) {
+    chunks.push(pageIds.slice(i, i + SECTIONS_QUERY_CHUNK_SIZE))
+  }
 
-  if (error) throw new Error(`Sections query failed: ${error.message}`)
+  const chunkResults = await Promise.all(
+    chunks.map((chunk) =>
+      supabase.from('sections').select('*').in('page_id', chunk).order('order_index', { ascending: true })
+    )
+  )
 
-  const grouped = (data || []).reduce((acc, section) => {
+  const data = []
+  for (const result of chunkResults) {
+    if (result.error) throw new Error(`Sections query failed: ${result.error.message}`)
+    data.push(...(result.data || []))
+  }
+
+  const grouped = data.reduce((acc, section) => {
     if (!acc[section.page_id]) acc[section.page_id] = []
     acc[section.page_id].push(section)
     return acc

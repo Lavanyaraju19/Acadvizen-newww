@@ -5,6 +5,7 @@ import { Surface } from '../../../src/components/ui/Surface'
 import { adminApiFetch } from '../../../lib/adminApiClient'
 import { uploadFileAsset } from '../../../lib/storageUpload'
 import RichTextEditor from '../../../components/admin/RichTextEditor'
+import OwnerSectionsEditor from '../shared/OwnerSectionsEditor'
 import { 
   Plus, 
   Trash2, 
@@ -500,7 +501,7 @@ export default function CityBuilderClient() {
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
                 <h3 className="text-base font-semibold text-slate-100 mb-4">Page Sections</h3>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {['hero', 'about', 'features', 'stats', 'testimonials', 'gallery', 'faqs', 'contact', 'seo'].map(section => (
+                  {['hero', 'about', 'features', 'stats', 'testimonials', 'gallery', 'faqs', 'contact', 'seo', 'extra'].map(section => (
                     <button
                       key={section}
                       type="button"
@@ -1007,6 +1008,11 @@ export default function CityBuilderClient() {
                       />
                     </label>
                   </div>
+                )}
+
+                {/* Extra Sections */}
+                {activeSection === 'extra' && expandedSections.has('extra') && (
+                  <OwnerSectionsEditor ownerId={cityForm.id} ownerParam="city_page_id" apiBase="/api/cms/city-page-sections" emptyHint="Save the city page first, then add designed sections." />
                 )}
               </div>
 

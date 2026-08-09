@@ -35,7 +35,7 @@ export async function PATCH(request, { params }) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const id = params?.id
+  const { id } = await params
   if (!id) return jsonError('Lead id is required.', 400)
 
   const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
@@ -66,7 +66,7 @@ export async function DELETE(request, { params }) {
   const unauthorized = await ensureAdmin(request)
   if (unauthorized) return unauthorized
 
-  const id = params?.id
+  const { id } = await params
   if (!id) return jsonError('Lead id is required.', 400)
 
   const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })

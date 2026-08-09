@@ -17,7 +17,7 @@ export async function PATCH(request, { params }) {
   if (response) return response
 
   const body = await readJsonBody(request)
-  const { id } = params
+  const { id } = await params
 
   // Allowed fields for update - this list previously referenced columns that don't exist on
   // popups at all (trigger_delay, show_once_per_session, button_text, button_link, background_
@@ -79,7 +79,7 @@ export async function DELETE(request, { params }) {
   const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
-  const { id } = params
+  const { id } = await params
 
   const { error } = await supabase.from('popups').delete().eq('id', id)
   if (error) return jsonError(`Failed to delete popup: ${error.message}`, 500)

@@ -44,13 +44,15 @@ export default function PopupEngine() {
     }
 
     if (candidate.trigger_type === 'delay') {
-      const seconds = Number(candidate.trigger_value) || 5
+      const parsedSeconds = Number(candidate.trigger_value)
+      const seconds = Number.isFinite(parsedSeconds) ? parsedSeconds : 5
       const timer = setTimeout(show, seconds * 1000)
       return () => clearTimeout(timer)
     }
 
     if (candidate.trigger_type === 'scroll') {
-      const thresholdPercent = Number(candidate.trigger_value) || 50
+      const parsedThreshold = Number(candidate.trigger_value)
+      const thresholdPercent = Number.isFinite(parsedThreshold) ? parsedThreshold : 50
       const onScroll = () => {
         const scrollable = document.documentElement.scrollHeight - window.innerHeight
         const scrolledPercent = scrollable > 0 ? (window.scrollY / scrollable) * 100 : 100

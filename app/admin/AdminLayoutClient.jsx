@@ -36,6 +36,7 @@ import {
   Link2,
   Compass,
   Map as MapIcon,
+  Target,
 } from 'lucide-react'
 import { Surface } from '../../src/components/ui/Surface'
 import { CustomCursor } from '../../src/components/ui/CustomCursor'
@@ -64,6 +65,8 @@ const adminNav = [
   { path: '/admin/course-details', label: 'Course Details', icon: FileText },
   { path: '/admin/tools', label: 'Tools', icon: Wrench },
   { path: '/admin/companies', label: 'Companies', icon: Building2 },
+  { path: '/admin/placements', label: 'Placements', icon: Handshake },
+  { path: '/admin/course-finder', label: 'Course Finder', icon: Target },
   { path: '/admin/internships', label: 'Internships', icon: School },
   { path: '/admin/testimonials', label: 'Testimonials', icon: MessageSquare },
   { path: '/admin/forms', label: 'Forms', icon: FileText },
@@ -78,6 +81,7 @@ const adminNav = [
   { path: '/admin/learner-map', label: 'Learner Map', icon: MapIcon },
   { path: '/admin/media', label: 'Media', icon: ImageIcon },
   { path: '/admin/users', label: 'Users', icon: Users },
+  { path: '/admin/students', label: 'Students', icon: GraduationCap },
   { path: '/admin/audit-log', label: 'Audit Log', icon: History },
   { path: '/admin/trust', label: 'Trust & Conversion', icon: Handshake },
   { path: '/admin/landing-seo', label: 'Landing SEO', icon: MapPinned },
@@ -177,13 +181,22 @@ export default function AdminLayoutClient({ children }) {
 
   const clearAdminSession = useCallback(async () => {
     try {
+      // scope: 'local' only clears the client-side session in storage; it makes no
+      // network call, so unlike 'global' it cannot hang on a slow/unreachable auth server.
       await signOut('local')
     } catch {
       // noop
     }
 
     try {
-      await fetch('/api/admin/session', { method: 'DELETE' })
+      // Bounded so a hung request (this local dev stack has documented intermittent
+      // request stalls) can never block logout / the auth-failure guard indefinitely -
+      // the cookie is idempotently cleared whenever the request does land.
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 3000)
+      await fetch('/api/admin/session', { method: 'DELETE', signal: controller.signal }).finally(() => {
+        clearTimeout(timeoutId)
+      })
     } catch {
       // noop
     }
@@ -481,13 +494,16 @@ export default function AdminLayoutClient({ children }) {
                 <button
                   type="button"
                   onClick={async () => {
-                    try {
-                      await signOut('global')
-                    } catch {
-                      // noop
-                    }
+                    // Clear local + server-side (cookie) session first - both are bounded/local
+                    // and must complete before navigating, or a refresh could still see the old
+                    // admin cookie and appear to "restore" the session. The remote Supabase
+                    // revocation below is a slower network round trip to Supabase's auth
+                    // server; it must not block the admin from actually logging out.
                     await clearAdminSession()
                     router.replace('/admin-login')
+                    signOut('global').catch(() => {
+                      // noop - best-effort remote session revocation
+                    })
                   }}
                   className="text-sm font-semibold text-rose-200 hover:text-rose-100 transition-colors"
                 >

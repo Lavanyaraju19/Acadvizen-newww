@@ -57,23 +57,22 @@ export default function ReusableSectionsClient() {
     setSaving(true)
     setStatus('')
     try {
-      // Use API route instead of direct service role key access
-      const url = editingSection 
-        ? `/api/cms/entities/reusable_sections/${editingSection.id}`
-        : '/api/cms/entities/reusable_sections'
-      const method = editingSection ? 'PUT' : 'POST'
-      
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
-      
-      if (!response.ok) throw new Error('Failed to save section')
-      
-      const { error } = await response.json()
-      if (error) throw error
-      
+      // editingSection.id must go through the [id] route (PATCH) - the top-level entities
+      // route only supports POST (create/duplicate). It previously sent PUT to the [id]
+      // route, which that route never implemented (only GET/PATCH/DELETE), so every edit
+      // silently 405'd and nothing was ever saved.
+      if (editingSection) {
+        await adminApiFetch(`/api/cms/entities/reusable_sections/${editingSection.id}`, {
+          method: 'PATCH',
+          body: formData,
+        })
+      } else {
+        await adminApiFetch('/api/cms/entities/reusable_sections', {
+          method: 'POST',
+          body: formData,
+        })
+      }
+
       setShowModal(false)
       setEditingSection(null)
       setFormData({ name: '', description: '', section_type: 'hero', category: 'general', section_data: {} })

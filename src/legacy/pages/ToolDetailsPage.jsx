@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { fetchPublicData } from '../../lib/apiClient'
 import { Container, Section } from '../../components/ui/Section'
@@ -11,6 +11,14 @@ export function ToolDetailsPage() {
   const [tool, setTool] = useState(null)
   const [related, setRelated] = useState([])
   const [loading, setLoading] = useState(true)
+
+  // See ToolsPage.jsx for why fallbackSrcs must be a stable array reference across renders
+  // rather than recomputed inline in JSX (including via .slice()): AdaptiveImage's
+  // useMemo/useEffect keys off this array's identity, not its contents.
+  const [logoSrc, logoFallbacks] = useMemo(() => {
+    const candidates = tool ? resolveToolLogoCandidates(tool) : []
+    return [candidates[0], candidates.slice(1)]
+  }, [tool])
 
   const loadTool = useCallback(async () => {
     setLoading(true)
@@ -58,8 +66,8 @@ export function ToolDetailsPage() {
           <div className="flex flex-col md:flex-row gap-6 items-start">
             <div className="h-20 w-20 rounded-2xl border border-white/10 bg-white/[0.04] p-2">
               <AdaptiveImage
-                src={resolveToolLogoCandidates(tool)[0]}
-                fallbackSrcs={resolveToolLogoCandidates(tool).slice(1)}
+                src={logoSrc}
+                fallbackSrcs={logoFallbacks}
                 alt={tool.name}
                 variant="logo"
                 aspectRatio="1 / 1"

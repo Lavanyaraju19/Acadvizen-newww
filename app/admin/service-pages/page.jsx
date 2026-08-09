@@ -2,6 +2,7 @@ export const revalidate = 1
 
 import EntityCrudManager from '../_components/EntityCrudManager'
 import { Surface } from '../../../src/components/ui/Surface'
+import EntitySectionsPanel from '../shared/EntitySectionsPanel'
 
 export default function Page() {
   return (
@@ -55,6 +56,24 @@ export default function Page() {
           { key: 'is_active', label: 'Published', type: 'checkbox' },
         ]}
       />
+
+      <div className="border-t border-white/10 pt-5">
+        <h3 className="text-lg font-semibold text-slate-50">Designed Sections</h3>
+        <p className="mt-1 text-sm text-slate-300">
+          Add Hero, Feature Cards, Statistics, Testimonials, FAQ, CTA, and every other Page Builder block to a
+          specific service page - insert them above, between, or below its existing overview/benefits/curriculum/FAQ
+          content, reorder by drag-and-drop, and publish instantly.
+        </p>
+        <div className="mt-4">
+          <EntitySectionsPanel
+            entity="service_pages"
+            ownerParam="service_page_id"
+            apiBase="/api/cms/service-page-sections"
+            publicUrlPattern="/{slug}"
+            labelField="title"
+          />
+        </div>
+      </div>
     </Surface>
   )
 }

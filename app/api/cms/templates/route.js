@@ -62,7 +62,15 @@ export async function POST(request) {
     .select('*')
     .single()
 
-  if (error) return jsonError(`Failed to create template: ${error.message}`, 500)
+  if (error) {
+    // page_templates.name has its own unique constraint independent of the slug (which is
+    // already auto-disambiguated above on collision) - without this, two templates sharing a
+    // name leaked a raw Postgres constraint-violation message through as a generic 500.
+    if (String(error.code) === '23505') {
+      return jsonError('A template with that name already exists. Choose a different name.', 409)
+    }
+    return jsonError(`Failed to create template: ${error.message}`, 500)
+  }
 
   await supabase.from('page_template_versions').insert({
     template_id: data.id,

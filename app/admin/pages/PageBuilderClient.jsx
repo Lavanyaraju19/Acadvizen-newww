@@ -601,6 +601,11 @@ const LIVE_DATA_ONLY_SECTION_TYPES = new Set([
   'location_explorer', 'interactive_learner_map',
 ])
 
+// Section types whose renderer (components/sections/*.jsx) checks style_json.layout_variant
+// and, when set to 'immersive', renders via the Acadvizen Immersive Experience component
+// library (components/cms/immersive/*) instead of the classic markup.
+const IMMERSIVE_VARIANT_TYPES = new Set(['hero', 'stats_section', 'testimonial', 'faq', 'cta_banner', 'feature_cards'])
+
 function PreviewSafeSection({ section }) {
   if (LIVE_DATA_ONLY_SECTION_TYPES.has(String(section?.type || '').toLowerCase())) {
     return (
@@ -675,7 +680,9 @@ export default function PageBuilderClient() {
     const requestId = ++loadPagesRequestRef.current
     setLoading(true)
     try {
-      const payload = await adminApiFetch('/api/cms/pages?include_drafts=1&include_sections=1', { cache: 'no-store' })
+      // Explicit limit - the API defaults to 250, which silently hid any pages beyond that
+      // (with no indication in the UI that the list was truncated) once a site accumulated more.
+      const payload = await adminApiFetch('/api/cms/pages?include_drafts=1&include_sections=1&limit=2000', { cache: 'no-store' })
       const nextPages = Array.isArray(payload.data) ? payload.data : []
       if (requestId !== loadPagesRequestRef.current) return nextPages
       setPages(nextPages)
@@ -966,11 +973,28 @@ export default function PageBuilderClient() {
         style_json: styleFromForm(sectionForm),
         visibility: sectionForm.isVisible !== false,
       }
-      await adminApiFetch(sectionForm.id ? `/api/cms/sections/${sectionForm.id}` : '/api/cms/sections', {
+      const result = await adminApiFetch(sectionForm.id ? `/api/cms/sections/${sectionForm.id}` : '/api/cms/sections', {
         method: sectionForm.id ? 'PATCH' : 'POST',
         body: payload,
       })
-      await loadPages(selectedPageId)
+      const savedSection = result?.data
+      // loadPages() re-fetches every page's full section list (a query that gets slower as total
+      // CMS content grows), so waiting on it before showing the save would make "Add Section"
+      // feel sluggish on a large site. The save response already carries the authoritative saved
+      // row, so merge it in immediately and let loadPages() reconcile in the background.
+      if (savedSection?.id) {
+        setPages((prevPages) =>
+          prevPages.map((item) => {
+            if (item.id !== payload.page_id) return item
+            const existingSections = Array.isArray(item.sections) ? item.sections : []
+            const nextSections = sectionForm.id
+              ? existingSections.map((section) => (section.id === savedSection.id ? savedSection : section))
+              : [...existingSections, savedSection]
+            return { ...item, sections: nextSections }
+          })
+        )
+      }
+      loadPages(selectedPageId)
       setStatus(sectionForm.id ? 'Section updated.' : 'Section added.')
     } catch (error) {
       setStatus(error?.message || 'Failed to save section.')
@@ -1545,7 +1569,19 @@ export default function PageBuilderClient() {
                 </label>
                 <label className="text-xs text-slate-400">
                   Layout Variant
-                  <input {...fieldAttrs('section_layout_variant')} value={sectionForm.layoutVariant} onChange={(event) => setSectionForm((prev) => ({ ...prev, layoutVariant: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100" />
+                  <select {...fieldAttrs('section_layout_variant')} value={IMMERSIVE_VARIANT_TYPES.has(sectionForm.type) ? (sectionForm.layoutVariant || 'default') : (sectionForm.layoutVariant || '')} onChange={(event) => setSectionForm((prev) => ({ ...prev, layoutVariant: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100">
+                    {IMMERSIVE_VARIANT_TYPES.has(sectionForm.type) ? (
+                      <>
+                        <option value="default" className="bg-[#07101b]">Default</option>
+                        <option value="immersive" className="bg-[#07101b]">Immersive (Acadvizen Experience)</option>
+                      </>
+                    ) : (
+                      <option value={sectionForm.layoutVariant || ''} className="bg-[#07101b]">{sectionForm.layoutVariant || 'Default'}</option>
+                    )}
+                  </select>
+                  {!IMMERSIVE_VARIANT_TYPES.has(sectionForm.type) ? (
+                    <span className="mt-1 block text-[11px] text-slate-500">Immersive variant is available for Hero, Statistics, and Testimonial sections.</span>
+                  ) : null}
                 </label>
                 <TextAreaField label="Heading" value={sectionForm.heading} onChange={(value) => setSectionForm((prev) => ({ ...prev, heading: value }))} rows={2} />
                 <TextAreaField label="Subheading" value={sectionForm.subheading} onChange={(value) => setSectionForm((prev) => ({ ...prev, subheading: value }))} rows={3} />

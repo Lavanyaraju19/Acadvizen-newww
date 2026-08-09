@@ -23,7 +23,15 @@ module.exports = defineConfig({
   testDir: './e2e',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: 0,
+  // Diagnosed directly against this local Windows/Docker-Desktop/Chromium stack: repeated
+  // full-suite runs showed a consistent, reproducible pattern of arbitrary requests
+  // (most often the admin login POST) exceeding their timeout mid-run, while the exact same
+  // flow succeeded reliably in well under a second when driven by a plain script outside the
+  // Playwright test-runner. Disabling video recording (continuous per-test frame capture)
+  // removed the login-specific hang entirely across multiple re-runs; a single retry absorbs
+  // whatever lower-level intermittent slowness remains without masking a genuine, repeatable
+  // product failure (which would still fail on the retry too).
+  retries: process.env.CI ? 0 : 1,
   workers: 1,
   reporter: 'html',
   timeout: 120000,
@@ -31,7 +39,7 @@ module.exports = defineConfig({
     baseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    video: 'off',
     actionTimeout: 30000,
     navigationTimeout: 60000,
   },

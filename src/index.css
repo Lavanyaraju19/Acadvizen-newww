@@ -670,3 +670,115 @@ body.advz-cursor-none * {
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================================
+   Acadvizen Immersive Experience
+   Scoped, additive-only primitives for the premium location/
+   course landing template system (City, Area, Course+City,
+   Course+Area pages). Every rule here is namespaced under
+   `.immersive-` so it can never leak into or override the main
+   site's existing styling.
+   ============================================================ */
+
+@keyframes immersiveDrift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(2%, -3%, 0) scale(1.05); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes immersiveGridPan {
+  0% { background-position: 0 0; }
+  100% { background-position: 64px 64px; }
+}
+
+.immersive-scope {
+  --immersive-accent: 145, 231, 214;
+  --immersive-accent-2: 96, 165, 250;
+  --immersive-ink: 6, 12, 22;
+  position: relative;
+  isolation: isolate;
+}
+
+.immersive-mesh-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+.immersive-mesh-bg::before {
+  content: '';
+  position: absolute;
+  inset: -10%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(720px 480px at 12% -8%, rgba(var(--immersive-accent), 0.16), transparent 60%),
+    radial-gradient(640px 520px at 92% 0%, rgba(var(--immersive-accent-2), 0.14), transparent 62%),
+    radial-gradient(900px 620px at 50% 115%, rgba(var(--immersive-accent), 0.08), transparent 65%);
+}
+
+.immersive-grid-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+.immersive-grid-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 90%);
+  animation: immersiveGridPan 26s linear infinite;
+}
+
+.immersive-glow-blob {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 999px;
+  filter: blur(72px);
+  opacity: 0.55;
+  animation: immersiveDrift 18s ease-in-out infinite;
+}
+
+.immersive-glass {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015));
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.immersive-glass-strong {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.immersive-hairline {
+  background: linear-gradient(90deg, transparent, rgba(var(--immersive-accent), 0.45), rgba(var(--immersive-accent-2), 0.3), transparent);
+  height: 1px;
+}
+
+.immersive-eyebrow {
+  letter-spacing: 0.22em;
+}
+
+.immersive-display {
+  font-family: 'Ethnocentric', 'Poppins', 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .immersive-glow-blob,
+  .immersive-grid-bg::after {
+    animation: none !important;
+  }
+}

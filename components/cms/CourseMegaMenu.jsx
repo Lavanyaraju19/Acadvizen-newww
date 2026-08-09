@@ -109,12 +109,21 @@ export function CourseMegaMenuPanel({ closeNow }) {
           ))}
         </div>
         <Link
-          to="/courses"
+          to="/explore-programs"
           role="menuitem"
           onClick={closeNow}
           className="mt-3 flex items-center gap-1 rounded-xl px-3 py-2 text-xs font-semibold text-slate-400 hover:bg-white/[0.06] hover:text-white"
         >
-          Explore All Programs
+          Explore Programs
+          <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5" />
+        </Link>
+        <Link
+          to="/courses"
+          role="menuitem"
+          onClick={closeNow}
+          className="flex items-center gap-1 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 hover:bg-white/[0.06] hover:text-white"
+        >
+          Browse All Courses
           <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5" />
         </Link>
       </div>
@@ -253,11 +262,19 @@ export function CourseMobileMenu({ onNavigate }) {
         ))}
       </div>
       <Link
-        to="/courses"
+        to="/explore-programs"
         onClick={onNavigate}
         className="mt-2 flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-slate-300 hover:bg-white/[0.05]"
       >
-        Explore All Programs
+        Explore Programs
+        <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5" />
+      </Link>
+      <Link
+        to="/courses"
+        onClick={onNavigate}
+        className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-slate-400 hover:bg-white/[0.05]"
+      >
+        Browse All Courses
         <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5" />
       </Link>
     </div>

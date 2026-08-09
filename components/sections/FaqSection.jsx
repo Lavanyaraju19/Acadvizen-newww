@@ -1,3 +1,4 @@
+import FaqAccordion from '../cms/immersive/FaqAccordion'
 import {
   bodyClass,
   headingClass,
@@ -15,6 +16,18 @@ export default function FaqSection({ section }) {
   const style = normalizeStyle(section)
   const items = safeList(content.items)
   if (!items.length) return null
+
+  if (style.layout_variant === 'immersive') {
+    return (
+      <section className={`${sectionPaddingClass(content, style)} ${sectionVisibilityClass(content)}`} style={sectionInlineStyle(content, style)}>
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          {content.heading ? <h2 className={`mb-6 text-center font-semibold text-slate-50 ${headingClass(style)}`}>{safeString(content.heading)}</h2> : null}
+          {content.subheading ? <p className={`mx-auto mb-8 max-w-2xl text-center whitespace-pre-line text-slate-300 ${bodyClass(style)}`}>{safeString(content.subheading)}</p> : null}
+          <FaqAccordion items={items.map((faq) => ({ question: safeString(faq?.question), answer: safeString(faq?.answer) }))} />
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className={`${sectionPaddingClass(content, style)} ${sectionVisibilityClass(content)}`} style={sectionInlineStyle(content, style)}>

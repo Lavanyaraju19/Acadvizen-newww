@@ -1,7 +1,7 @@
 export const revalidate = 0
 export const dynamic = 'force-dynamic'
 
-import DynamicPageRenderer from '../../../components/cms/DynamicPageRenderer'
+import CmsPageResolver from '../../../components/cms/CmsPageResolver'
 import { fetchCmsPageBySlug } from '../../../lib/cmsServer'
 import HomeLegacyClient from '../../legacy-fallback/HomeLegacyClient'
 import { buildCmsPageMetadata } from '../../lib/cmsPageRoute'
@@ -24,5 +24,5 @@ export default async function Page() {
   }
 
   const cmsPage = await fetchCmsPageBySlug('digital-marketing-internship-in-bangalore')
-  return cmsPage ? <DynamicPageRenderer page={cmsPage} /> : <HomeLegacyClient />
+  return <CmsPageResolver cmsPage={cmsPage} fallback={<HomeLegacyClient />} />
 }

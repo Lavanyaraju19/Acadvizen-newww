@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { fetchPublicData } from '../../lib/apiClient'
@@ -78,10 +78,24 @@ export function ToolsPage() {
     void loadPageSections()
   }, [loadPageSections, loadTools])
 
+  // Precomputed once per `tools` change, not per render - AdaptiveImage's fallbackSrcs is a
+  // useMemo/useEffect dependency, and a fresh array reference on every render (as
+  // resolveToolLogoCandidates(tool).slice(1) would be if called inline in JSX) constantly resets
+  // its retry state back to the first, most-likely-to-fail candidate before a later one ever
+  // gets a chance to load.
+  const toolsWithLogos = useMemo(
+    () =>
+      tools.map((t) => {
+        const candidates = resolveToolLogoCandidates(t)
+        return { ...t, _logoSrc: candidates[0], _logoFallbacks: candidates.slice(1) }
+      }),
+    [tools]
+  )
+
   const categorySet = new Set(tools.map((t) => t.category).filter(Boolean))
   categorySet.delete('Gen AI')
   const categories = ['all', 'Gen AI', 'Digital Marketing', ...categorySet]
-  const filtered = tools.filter((t) => {
+  const filtered = toolsWithLogos.filter((t) => {
     const matchSearch =
       t.name.toLowerCase().includes(search.toLowerCase()) ||
       t.description?.toLowerCase().includes(search.toLowerCase())
@@ -177,8 +191,8 @@ export function ToolsPage() {
                           <div className="relative flex items-start gap-4">
                             <div className="h-12 w-12 shrink-0 rounded-2xl border border-white/10 bg-white/[0.04] overflow-hidden flex items-center justify-center shadow-[0_18px_60px_rgba(0,0,0,0.45)]">
                               <AdaptiveImage
-                                src={resolveToolLogoCandidates(tool)[0]}
-                                fallbackSrcs={resolveToolLogoCandidates(tool).slice(1)}
+                                src={tool._logoSrc}
+                                fallbackSrcs={tool._logoFallbacks}
                                 alt={tool.name}
                                 variant="logo"
                                 aspectRatio="1 / 1"

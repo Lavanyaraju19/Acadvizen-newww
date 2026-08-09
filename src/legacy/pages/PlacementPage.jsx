@@ -1,16 +1,54 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import WorldCareerMap from '../../../components/WorldCareerMap'
 import AlumniShowcaseSection from '../../components/placement/AlumniShowcaseSection'
 import TabbedFaqAccordion from '../../components/faq/TabbedFaqAccordion'
 import { Container, Section } from '../../components/ui/Section'
+import { fetchPublicData } from '../../lib/apiClient'
 import {
-  alumniShowcase,
+  alumniShowcase as staticAlumniShowcase,
   placementFaqExact,
   placementOutcomeRows,
   placementStats,
   placementStories,
 } from '../../lib/sitePageContent'
 import { neonBlueprintPanelStyle, solidPublicPanelClass, techGridPanelStyle, wavePanelStyle } from '../../lib/publicVisualStyles'
+
+// The admin "Placements" module (app/admin/placements) is the canonical editing
+// interface for this showcase - it edits the `placements` DB table. This page reads
+// published DB rows first and only falls back to the static sitePageContent.js array
+// (the original hardcoded content) if the table has no published rows yet, e.g. before
+// the additive migration/seed in supabase/migrations/202608080001_placements_showcase_fields.sql
+// has been applied in an environment.
+function useAlumniShowcase() {
+  const [rows, setRows] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      const { data } = await fetchPublicData('placements', { limit: 50 })
+      if (cancelled) return
+      const list = Array.isArray(data) ? data : []
+      setRows(list)
+    }
+    void load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  if (rows === null) return staticAlumniShowcase
+  if (!rows.length) return staticAlumniShowcase
+
+  return rows.map((row) => ({
+    name: row.title || row.student_name || '',
+    image: row.featured_image || row.student_image || '',
+    company: row.company_name || '',
+    companyLogo: row.company_logo || '',
+    accent: row.accent_color || '#7ad4ff',
+    imageScale: 1.03,
+  }))
+}
 
 const faqTabs = []
 
@@ -65,6 +103,7 @@ function CtaBanner() {
 }
 
 export function PlacementPage() {
+  const alumniShowcase = useAlumniShowcase()
   const featuredStories = placementStories.slice(0, 4)
   const extendedStories = placementStories.slice(4)
 
