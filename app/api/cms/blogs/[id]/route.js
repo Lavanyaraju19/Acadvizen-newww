@@ -1,4 +1,5 @@
 import { getEntityConfig, sanitizeEntityPayload } from '../../../../../lib/cmsEntities'
+import { mergeBlogContentJson } from '../../../../../lib/blogContent'
 import {
   ensureAdmin,
   requireAdminContext,
@@ -65,6 +66,12 @@ export async function PATCH(request, { params }) {
 
     const payload = sanitizeEntityPayload(body, config)
     if (!Object.keys(payload).length) return jsonError('No writable fields provided.', 400)
+
+    const mergedContentJson = mergeBlogContentJson(
+      body,
+      payload.content_json !== undefined ? payload.content_json : existingRecord.content_json
+    )
+    if (mergedContentJson !== undefined) payload.content_json = mergedContentJson
 
     if (normalizeCmsStatus(payload.status) === 'published' && !canEditAnyBlog) {
       return jsonError('This account does not have permission to publish blogs.', 403)

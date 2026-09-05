@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getEntityConfig, sanitizeEntityPayload } from '../../../../lib/cmsEntities'
 import { validateEntity } from '../../../../lib/validation'
+import { mergeBlogContentJson } from '../../../../lib/blogContent'
 import {
   requireAdminContext,
   getSupabaseClientOrResponse,
@@ -68,6 +69,9 @@ export async function POST(request) {
 
     const payload = sanitizeEntityPayload(body, config)
     if (!Object.keys(payload).length) return jsonError('No writable fields provided.', 400)
+
+    const mergedContentJson = mergeBlogContentJson(body, payload.content_json)
+    if (mergedContentJson !== undefined) payload.content_json = mergedContentJson
 
     if (!body.id && adminContext?.user?.id) {
       payload.created_by = adminContext.user.id

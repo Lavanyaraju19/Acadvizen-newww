@@ -60,7 +60,10 @@ export default function BlogLayout({
 
       <section className="pb-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid gap-8 lg:grid-cols-[280px_1fr]">
-          <aside className="lg:sticky lg:top-24 h-fit rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+          {/* top-28 (112px) matches PublicLayout's header spacer (sm:h-[112px]) so this can never
+              tuck under the fixed header, including when the CMS announcement bar is enabled and
+              the header grows taller than its no-announcement height. */}
+          <aside className="lg:sticky lg:top-28 h-fit rounded-2xl border border-white/10 bg-white/[0.04] p-5">
             <h2 className="text-base font-semibold text-slate-100">{tocTitle}</h2>
             <ul className="mt-3 space-y-2 text-sm">
               {toc.map((item) => (
