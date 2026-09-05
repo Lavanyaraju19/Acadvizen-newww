@@ -14,7 +14,7 @@ export async function generateMetadata() {
       description: 'Join Acadvizen\'s Digital Marketing Course in Bangalore with AI Training. Learn SEO, Google Ads, Meta Ads, AI Automation, Website Development, Content Marketing, Analytics, and more through live projects, internships, and placement assistance.',
       path: '/',
     }),
-    keywords: 'digital marketing course in bangalore, digital marketing training with AI, AI marketing course bangalore, SEO course bangalore, Google Ads training, Meta Ads course, digital marketing with placement',
+    keywords: 'digital marketing course in bangalore, digital marketing training with AI, AI marketing course bangalore, SEO course bangalore, Google Ads training, Meta Ads course, digital marketing with placement, Acadvizen, AI Digital Marketing, Digital Marketing, Learn AI Digital Marketing, AI integrated Digital Marketing',
   }
 }
 

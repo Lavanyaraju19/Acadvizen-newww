@@ -22,7 +22,7 @@ export async function GET(request) {
     // If no data exists, return default values
     if (error.code === 'PGRST116') {
       return jsonOk({
-        heading: 'Master AI-Powered Digital Marketing Course',
+        heading: 'Learn AI Digital Marketing with Acadvizen',
         subheading: 'Build Your Own Learning Path with Guidance from Global Industry Experts',
         video_url: null,
         video_title: null,

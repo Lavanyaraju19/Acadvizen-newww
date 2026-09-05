@@ -37,7 +37,7 @@ export default function HomePage({ cmsData = {} }) {
   const metaDescription =
     'Join Acadvizen\'s Digital Marketing Course in Bangalore with AI Training. Learn SEO, Google Ads, Meta Ads, AI Automation, Website Development, Content Marketing, Analytics, and more through live projects, internships, and placement assistance.'
   const metaKeywords =
-    'digital marketing course in bangalore, digital marketing training with AI, AI marketing course bangalore, SEO course bangalore, Google Ads training, Meta Ads course, digital marketing with placement'
+    'digital marketing course in bangalore, digital marketing training with AI, AI marketing course bangalore, SEO course bangalore, Google Ads training, Meta Ads course, digital marketing with placement, Acadvizen, AI Digital Marketing, Digital Marketing, Learn AI Digital Marketing, AI integrated Digital Marketing'
   const coursePrograms = []
   const learningValuePalette = [
     { solid: 'bg-[#1f6378]', border: 'border-[#3fa6c0]', text: 'text-sky-100' },
@@ -834,7 +834,7 @@ export default function HomePage({ cmsData = {} }) {
                   {cmsData.hero?.badge_text || '100% Job Guaranteed*'}
                 </span>
               </motion.div>
-              <h1 className="text-4xl md:text-6xl font-bold wave-text">{cmsData.hero?.heading || 'Master AI-Powered Digital Marketing Course'}</h1>
+              <h1 className="text-4xl md:text-6xl font-bold wave-text">{cmsData.hero?.heading || 'Learn AI Digital Marketing with Acadvizen'}</h1>
               <p className="mt-4 text-lg md:text-2xl text-slate-100 font-semibold">
                 {cmsData.hero?.subheading || 'Build Your Own Learning Path with Guidance from Global Industry Experts'}
               </p>
