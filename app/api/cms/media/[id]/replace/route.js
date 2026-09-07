@@ -1,5 +1,4 @@
 import path from 'node:path'
-import sharp from 'sharp'
 import {
   ensureAdmin,
   getSupabaseClientOrResponse,
@@ -15,6 +14,23 @@ export const dynamic = 'force-dynamic'
 const IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/tiff', 'image/gif'])
 const MAX_REPLACE_BYTES = 25 * 1024 * 1024
 
+// See app/api/cms/upload/route.js's loadSharp() for why this is a lazy, error-caught import
+// rather than a static top-level one: a platform/ABI failure to load sharp's native binary
+// throws at module-evaluation time, outside any request's try/catch, which crashes the entire
+// server process rather than just this one request.
+let sharpLoadFailed = false
+async function loadSharp() {
+  if (sharpLoadFailed) return null
+  try {
+    const mod = await import('sharp')
+    return mod.default || mod
+  } catch (error) {
+    sharpLoadFailed = true
+    console.error('[cms-media-replace] sharp failed to load - replacement will store the original file un-optimized.', error?.message)
+    return null
+  }
+}
+
 async function optimizeUpload(file) {
   if (file.size > MAX_REPLACE_BYTES) {
     throw new Error(`File is too large. Maximum size is ${Math.round(MAX_REPLACE_BYTES / (1024 * 1024))}MB.`)
@@ -24,6 +40,17 @@ async function optimizeUpload(file) {
 
   if (!IMAGE_MIME_TYPES.has(originalType)) {
     throw new Error(`Unsupported file type "${originalType}". Replace only accepts images.`)
+  }
+
+  const sharp = await loadSharp()
+  if (!sharp) {
+    return {
+      buffer: sourceBuffer,
+      contentType: originalType,
+      width: null,
+      height: null,
+      size: sourceBuffer.byteLength,
+    }
   }
 
   const transformer = sharp(sourceBuffer, { failOn: 'none' }).rotate().resize({

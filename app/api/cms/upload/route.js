@@ -1,5 +1,4 @@
 import path from 'node:path'
-import sharp from 'sharp'
 import {
   ensureAdmin,
   getSupabaseClientOrResponse,
@@ -8,6 +7,29 @@ import {
   readJsonBody,
 } from '../_utils'
 import { isAllowedCmsBucket } from '../../../../lib/mediaBuckets'
+
+// sharp ships a native .node binary and can fail to load for platform/ABI reasons that have
+// nothing to do with any individual upload (seen locally as ERR_DLOPEN_FAILED on Windows even
+// with serverExternalPackages: ['sharp'] set). A `import sharp from 'sharp'` at module top-level
+// throws that failure during module evaluation, outside any request's try/catch - Next.js has no
+// request to fail, so it crashes the entire server process, taking down every other route and
+// user until it's manually restarted, from what should have been one non-fatal upload. Loading it
+// lazily, inside this request's own try/catch, turns a fatal process crash into a normal caught
+// error - optimizeUpload() falls back to storing the original file un-optimized rather than
+// failing the upload entirely, since a slightly larger/non-WebP image is a far better outcome
+// than either a broken upload or a dead server.
+let sharpLoadFailed = false
+async function loadSharp() {
+  if (sharpLoadFailed) return null
+  try {
+    const mod = await import('sharp')
+    return mod.default || mod
+  } catch (error) {
+    sharpLoadFailed = true
+    console.error('[cms-upload] sharp failed to load - uploads will be stored without optimization.', error?.message)
+    return null
+  }
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -61,8 +83,10 @@ async function optimizeUpload(file) {
     }
   }
 
+  const sharp = await loadSharp()
+
   if (!IMAGE_MIME_TYPES.has(originalType)) {
-    const metadata = await sharp(sourceBuffer).metadata().catch(() => ({}))
+    const metadata = sharp ? await sharp(sourceBuffer).metadata().catch(() => ({})) : {}
     const fallbackExtension = path.extname(originalName).replace('.', '') || 'img'
     return {
       buffer: sourceBuffer,
@@ -70,6 +94,18 @@ async function optimizeUpload(file) {
       extension: fallbackExtension,
       width: metadata?.width ?? null,
       height: metadata?.height ?? null,
+      size: sourceBuffer.byteLength,
+    }
+  }
+
+  if (!sharp) {
+    const fallbackExtension = path.extname(originalName).replace('.', '') || 'jpg'
+    return {
+      buffer: sourceBuffer,
+      contentType: originalType,
+      extension: fallbackExtension,
+      width: null,
+      height: null,
       size: sourceBuffer.byteLength,
     }
   }
