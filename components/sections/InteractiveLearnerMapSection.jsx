@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getServerSupabaseClient } from '../../lib/supabaseServer'
+import { hasValidCoordinate } from '../../lib/geo'
 import { normalizeContent, sectionPaddingClass, sectionVisibilityClass, sectionInlineStyle, normalizeStyle } from './sectionUtils'
 import InteractiveLearnerMapLoader from './InteractiveLearnerMapLoader'
 
@@ -18,7 +19,7 @@ async function loadPoints() {
     .limit(500)
 
   return (data || [])
-    .filter((row) => Number.isFinite(Number(row.latitude)) && Number.isFinite(Number(row.longitude)))
+    .filter((row) => hasValidCoordinate(row.latitude) && hasValidCoordinate(row.longitude))
     .map((row) => ({
       id: row.id,
       label: row.label,

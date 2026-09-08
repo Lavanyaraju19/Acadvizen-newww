@@ -10,6 +10,9 @@ import TestimonialGrid from './immersive/TestimonialGrid'
 import ResourceGrid from './immersive/ResourceGrid'
 import HighlightList from './immersive/HighlightList'
 import FinalCta from './immersive/FinalCta'
+import LogoWall from './immersive/LogoWall'
+import LeadCaptureCard from './immersive/LeadCaptureCard'
+import { getCanonicalPath } from '../../lib/cmsPublishing'
 
 function formatCity(slug) {
   return String(slug || '')
@@ -56,6 +59,11 @@ export default async function CityCoursePageRenderer({ cityRecord, citySlug }) {
     supabase.from('tools_extended').select('name, slug').eq('is_active', true).order('created_at', { ascending: false }).limit(5),
     []
   )
+  const recruiters = await safeQuery(
+    supabase.from('recruiters').select('name, logo_url, website_url').eq('is_active', true).order('order_index', { ascending: true }).limit(10),
+    []
+  )
+  const recruiterLogos = recruiters.map((r) => ({ name: r.name, logo: r.logo_url }))
 
   const internalLinks = buildInternalLinks(
     { title: `Digital Marketing Course in ${cityName}` },
@@ -78,6 +86,7 @@ export default async function CityCoursePageRenderer({ cityRecord, citySlug }) {
     { label: 'Recommended Courses', items: internalLinks.courses.map((c) => ({ title: c.title, href: `/courses/${c.slug}` })) },
     { label: 'Helpful Tools', items: internalLinks.tools.map((t) => ({ title: t.title, href: `/tools/${t.slug}` })) },
   ]
+  const hasResources = resourceGroups.some((group) => group.items.length)
 
   return (
     <div className="immersive-scope min-h-screen bg-[#050a13]">
@@ -103,26 +112,44 @@ export default async function CityCoursePageRenderer({ cityRecord, citySlug }) {
         ]}
       />
 
+      {recruiterLogos.length ? (
+        <SectionFrame bg="plain" eyebrow="Trusted by" title="Where our learners get hired">
+          <LogoWall companies={recruiterLogos} />
+        </SectionFrame>
+      ) : null}
+
       {cityRecord?.highlights?.length ? (
         <SectionFrame bg="plain" eyebrow="Why this city" title={`Why learn digital marketing in ${cityName}`}>
           <HighlightList items={cityRecord.highlights} />
         </SectionFrame>
       ) : null}
 
-      <SectionFrame bg="grid" eyebrow="Programs" title="Featured Courses" description="Pick a track and see the exact curriculum, projects, and mentor structure.">
-        <CourseShowcase courses={courses} />
-      </SectionFrame>
+      {courses.length ? (
+        <SectionFrame id="programs" bg="grid" eyebrow="Programs" title="Featured Courses" description="Pick a track and see the exact curriculum, projects, and mentor structure.">
+          <CourseShowcase courses={courses} />
+        </SectionFrame>
+      ) : null}
 
-      <SectionFrame bg="mesh" blobColor="rgba(96,165,250,0.35)" blobPosition="bottom-left" eyebrow="Outcomes" title="Placement Highlights" description="A snapshot of hiring partners our learners have joined.">
-        <PlacementShowcase placements={placements} />
-      </SectionFrame>
+      {placements.length ? (
+        <SectionFrame id="placements" bg="mesh" blobColor="rgba(96,165,250,0.35)" blobPosition="bottom-left" eyebrow="Outcomes" title="Placement Highlights" description="A snapshot of hiring partners our learners have joined.">
+          <PlacementShowcase placements={placements} />
+        </SectionFrame>
+      ) : null}
 
-      <SectionFrame bg="plain" eyebrow="Voices" title="Student Testimonials" align="center">
-        <TestimonialGrid testimonials={testimonials} />
-      </SectionFrame>
+      {testimonials.length ? (
+        <SectionFrame id="testimonials" bg="plain" eyebrow="Voices" title="Student Testimonials" align="center">
+          <TestimonialGrid testimonials={testimonials} />
+        </SectionFrame>
+      ) : null}
 
-      <SectionFrame bg="mesh" blobColor="rgba(94,234,212,0.3)" eyebrow="Explore more" title="Explore More Resources">
-        <ResourceGrid groups={resourceGroups} />
+      {hasResources ? (
+        <SectionFrame bg="mesh" blobColor="rgba(94,234,212,0.3)" eyebrow="Explore more" title="Explore More Resources">
+          <ResourceGrid groups={resourceGroups} />
+        </SectionFrame>
+      ) : null}
+
+      <SectionFrame bg="plain" eyebrow="Get started" title="Request a callback" align="center">
+        <LeadCaptureCard pageSlug={getCanonicalPath('city_course', citySlug)} formType="city_course_enquiry" />
       </SectionFrame>
 
       <FinalCta

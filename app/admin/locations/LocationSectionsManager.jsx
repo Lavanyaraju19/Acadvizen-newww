@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ExternalLink } from 'lucide-react'
 import { adminApiFetch } from '../../../lib/adminApiClient'
+import { getCanonicalPath } from '../../../lib/cmsPublishing'
 import OwnerSectionsEditor from '../shared/OwnerSectionsEditor'
 
 // Same designed-block capability City pages already have (Admin > Cities > Designed Sections),
@@ -52,7 +53,7 @@ export default function LocationSectionsManager() {
         </label>
         {selected?.slug ? (
           <Link
-            href={`/digital-marketing-courses-${selected.slug}`}
+            href={getCanonicalPath('location', selected.slug)}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/10 text-xs text-slate-300 hover:bg-white/[0.05]"

@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { fetchPublicData } from '../../lib/apiClient'
 import { buildInternalLinks } from '../../../lib/internalLinker'
+import { getCanonicalPath } from '../../../lib/cmsPublishing'
 import { subscribeToTable } from '../../../lib/realtime'
 import { supabase } from '../../lib/supabaseClient'
 import { Container, Section } from '../../components/ui/Section'
@@ -418,7 +419,7 @@ export function BlogPostPage() {
                     internalLinks.locations.map((item) => (
                       <Link
                         key={item.slug}
-                        to={`/digital-marketing-courses-${item.slug}`}
+                        to={getCanonicalPath('location', item.slug)}
                         className="text-teal-300 hover:text-teal-200"
                       >
                         {item.title}

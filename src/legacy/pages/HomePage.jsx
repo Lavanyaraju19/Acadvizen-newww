@@ -18,6 +18,8 @@ import { Container, Section } from '../../components/ui/Section'
 import { Surface } from '../../components/ui/Surface'
 import { BlogSection } from '../../components/BlogSection'
 import TabbedFaqAccordion from '../../components/faq/TabbedFaqAccordion'
+import JsonLd from '../../../components/cms/templates/JsonLd'
+import { buildFaqSchema } from '../../../lib/structuredData'
 import AdaptiveImage from '../../../components/media/AdaptiveImage'
 import { resolveToolLogoCandidates } from '../../../lib/toolMedia'
 import { trackLead } from '../../../lib/metaPixel'
@@ -32,7 +34,7 @@ import { courseCaseStudies as defaultCourseCaseStudies, homepageFaqExact, homepa
 import ShowcaseWideCard from '../../components/marketing/ShowcaseWideCard'
 import { neonBlueprintPanelStyle, solidPublicPanelClass, techGridPanelStyle, wavePanelStyle } from '../../lib/publicVisualStyles'
 
-export default function HomePage({ cmsData = {} }) {
+export default function HomePage({ cmsData = {}, initialBlogPosts = [] }) {
   const metaTitle = 'Acadvizen: Digital Marketing Course in Bangalore with AI Training'
   const metaDescription =
     'Join Acadvizen\'s Digital Marketing Course in Bangalore with AI Training. Learn SEO, Google Ads, Meta Ads, AI Automation, Website Development, Content Marketing, Analytics, and more through live projects, internships, and placement assistance.'
@@ -267,7 +269,7 @@ export default function HomePage({ cmsData = {} }) {
   const [saving, setSaving] = useState(false)
   const [scrollY, setScrollY] = useState(0)
   const [homeSections, setHomeSections] = useState({})
-  const [blogPosts, setBlogPosts] = useState([])
+  const [blogPosts, setBlogPosts] = useState(Array.isArray(initialBlogPosts) ? initialBlogPosts : [])
   const [activeProgramPanel, setActiveProgramPanel] = useState('overview')
   const [expandedWhoCard, setExpandedWhoCard] = useState(null)
   const [heroVideoAvailable, setHeroVideoAvailable] = useState(true)
@@ -811,6 +813,7 @@ export default function HomePage({ cmsData = {} }) {
         <meta name="description" content={metaDescription} />
         <meta name="keywords" content={metaKeywords} />
       </Helmet>
+      <JsonLd id="home-faq" data={buildFaqSchema(validFaqItems.length ? validFaqItems : homepageFaqExact)} />
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10"

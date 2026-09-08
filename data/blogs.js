@@ -767,7 +767,7 @@
 <p><strong>The "Vibe" Shift: From Visibility to Value</strong></p>
 <p>In the old days of SEO, we optimized for visibility. We wanted to be the first link because 90% of people never clicked the second one. Success was measured in "clicks" and "impressions."</p>
 <p>In 2026, the "Zero-Click Search" is the standard. Users get their answers directly from an AI summary (like Gemini, Search Generative Experience, or Perplexity). They might never visit your website. At first glance, this sounds like a nightmare for creators. If they don't click, how do we win?</p>
-<p>The answer lies in Authority and Attribution. GEO isn't about getting the click; it’s about being the source of truth that the AI cites. When an AI tells a user, "According to [Your Brand], the best way to stabilize a sourdough starter is...", you have achieved something more powerful than a click. You have achieved trust.</p>
+<p>The answer lies in Authority and Attribution. GEO isn't about getting the click; it’s about being the source of truth that the AI cites. When an AI tells a user, "According to a trusted baking blog, the best way to stabilize a sourdough starter is...", you have achieved something more powerful than a click. You have achieved trust.</p>
 <p><strong>The Philosophical Pivot</strong></p>
 <p>● SEO asked: "Is this page relevant to the keyword?"</p>
 <p>● GEO asks: "Is this content the most reliable representation of the truth?"</p>

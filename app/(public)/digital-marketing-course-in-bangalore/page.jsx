@@ -1,24 +1,9 @@
-export const revalidate = 0
-export const dynamic = 'force-dynamic'
+import { permanentRedirect } from 'next/navigation'
 
-import CmsPageResolver from '../../../components/cms/CmsPageResolver'
-import { fetchCmsPageBySlug } from '../../../lib/cmsServer'
-import HomeLegacyClient from '../../legacy-fallback/HomeLegacyClient'
-import { buildCmsPageMetadata } from '../../lib/cmsPageRoute'
-import { isPublicCmsEnabled } from '../../lib/publicCms'
-
-export async function generateMetadata() {
-  return buildCmsPageMetadata('digital-marketing-course-in-bangalore', '/digital-marketing-course-in-bangalore', {
-    title: 'Digital Marketing Course in Bangalore',
-    description: 'Hands-on digital marketing training in Bangalore with projects and placement support.',
-  })
-}
-
-export default async function Page() {
-  if (!isPublicCmsEnabled()) {
-    return <HomeLegacyClient />
-  }
-
-  const cmsPage = await fetchCmsPageBySlug('digital-marketing-course-in-bangalore')
-  return <CmsPageResolver cmsPage={cmsPage} fallback={<HomeLegacyClient />} />
+// This legacy static route pre-dates the locations-table-driven system and had no matching CMS
+// page record, so it silently rendered the generic homepage fallback instead of Bangalore-specific
+// content. /digital-marketing-courses-bangalore (plural) is the real, admin-managed city page - this
+// route now permanently redirects there so an old bookmark/backlink lands on real content.
+export default function Page() {
+  permanentRedirect('/digital-marketing-courses-bangalore')
 }

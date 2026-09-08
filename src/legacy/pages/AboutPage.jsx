@@ -7,6 +7,8 @@ import { Surface } from '../../components/ui/Surface'
 import AdaptiveImage from '../../../components/media/AdaptiveImage'
 import ConsistentPortraitMedia from '../../components/shared/ConsistentPortraitMedia'
 import TabbedFaqAccordion from '../../components/faq/TabbedFaqAccordion'
+import JsonLd from '../../../components/cms/templates/JsonLd'
+import { buildFaqSchema } from '../../../lib/structuredData'
 import { aboutFaqExact, aboutTrainers, aboutWhyChoose } from '../../lib/sitePageContent'
 import { neonBlueprintPanelStyle, solidPublicPanelClass, techGridPanelStyle } from '../../lib/publicVisualStyles'
 
@@ -26,6 +28,7 @@ export function AboutPage() {
 
   return (
     <div className="min-h-screen">
+      <JsonLd id="about-faq" data={buildFaqSchema(aboutFaqExact)} />
       <Section className="pt-12 md:pt-16 pb-8 md:pb-12">
         <Container className="max-w-5xl">
           <motion.div

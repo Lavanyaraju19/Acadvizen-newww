@@ -1,5 +1,7 @@
 import { getServerSupabaseClient } from '../../lib/supabaseServer'
 import { buildInternalLinks } from '../../lib/internalLinker'
+import { getCanonicalPath } from '../../lib/cmsPublishing'
+import { hasValidCoordinatePair } from '../../lib/geo'
 import JsonLd from './templates/JsonLd'
 import { buildBreadcrumbSchema, buildFaqSchema } from '../../lib/structuredData'
 import { renderDynamicSections } from '../sections/DynamicSectionRenderer'
@@ -14,6 +16,9 @@ import NearbyPlaces from './immersive/NearbyPlaces'
 import ResourceGrid from './immersive/ResourceGrid'
 import HighlightList from './immersive/HighlightList'
 import FinalCta from './immersive/FinalCta'
+import LogoWall from './immersive/LogoWall'
+import LocationMapCard from './immersive/LocationMapCard'
+import LeadCaptureCard from './immersive/LeadCaptureCard'
 
 function formatLocation(slug) {
   return String(slug || '')
@@ -90,6 +95,11 @@ export default async function LocationPageRenderer({ locationRecord, locationSlu
     supabase.from('tools_extended').select('name, slug').eq('is_active', true).order('created_at', { ascending: false }).limit(6),
     []
   )
+  const recruiters = await safeQuery(
+    supabase.from('recruiters').select('name, logo_url, website_url').eq('is_active', true).order('order_index', { ascending: true }).limit(10),
+    []
+  )
+  const recruiterLogos = recruiters.map((r) => ({ name: r.name, logo: r.logo_url }))
   let siblingQuery = supabase
     .from('locations')
     .select('name, slug, city_id')
@@ -133,7 +143,11 @@ export default async function LocationPageRenderer({ locationRecord, locationSlu
     { label: 'Helpful Tools', items: internalLinks.tools.map((t) => ({ title: t.title, href: `/tools/${t.slug}` })) },
   ]
 
-  const nearbyPlaces = siblingLocations.map((loc) => ({ name: loc.name, href: `/digital-marketing-courses-${loc.slug}` }))
+  const nearbyPlaces = siblingLocations.map((loc) => ({ name: loc.name, href: getCanonicalPath('location', loc.slug) }))
+  const hasResources = resourceGroups.some((group) => group.items.length)
+  const { latitude, longitude } = locationRecord || {}
+  const hasCoords = hasValidCoordinatePair(latitude, longitude)
+  const hasMapContent = Boolean(locationRecord?.address) || hasCoords
 
   return (
     <div className="immersive-scope min-h-screen bg-[#050a13]">
@@ -158,6 +172,12 @@ export default async function LocationPageRenderer({ locationRecord, locationSlu
       />
 
       {sectionsForZone(extraSections, 'top').length ? renderDynamicSections(sectionsForZone(extraSections, 'top')) : null}
+
+      {recruiterLogos.length ? (
+        <SectionFrame bg="grid" eyebrow="Trusted by" title="Where our learners get hired">
+          <LogoWall companies={recruiterLogos} />
+        </SectionFrame>
+      ) : null}
 
       <SectionFrame
         bg="plain"
@@ -184,17 +204,23 @@ export default async function LocationPageRenderer({ locationRecord, locationSlu
 
       {sectionsForZone(extraSections, 'after_intro').length ? renderDynamicSections(sectionsForZone(extraSections, 'after_intro')) : null}
 
-      <SectionFrame bg="grid" eyebrow="Programs" title="Featured Courses" description="Pick a track and see the exact curriculum, projects, and mentor structure.">
-        <CourseShowcase courses={courses} />
-      </SectionFrame>
+      {courses.length ? (
+        <SectionFrame id="programs" bg="grid" eyebrow="Programs" title="Featured Courses" description="Pick a track and see the exact curriculum, projects, and mentor structure.">
+          <CourseShowcase courses={courses} />
+        </SectionFrame>
+      ) : null}
 
-      <SectionFrame bg="mesh" blobColor="rgba(96,165,250,0.35)" blobPosition="bottom-left" eyebrow="Outcomes" title="Placement Opportunities" description="A snapshot of hiring partners our learners have joined.">
-        <PlacementShowcase placements={placements} />
-      </SectionFrame>
+      {placements.length ? (
+        <SectionFrame id="placements" bg="mesh" blobColor="rgba(96,165,250,0.35)" blobPosition="bottom-left" eyebrow="Outcomes" title="Placement Opportunities" description="A snapshot of hiring partners our learners have joined.">
+          <PlacementShowcase placements={placements} />
+        </SectionFrame>
+      ) : null}
 
-      <SectionFrame bg="plain" eyebrow="Voices" title="What learners say" align="center">
-        <TestimonialGrid testimonials={testimonials} />
-      </SectionFrame>
+      {testimonials.length ? (
+        <SectionFrame id="testimonials" bg="plain" eyebrow="Voices" title="What learners say" align="center">
+          <TestimonialGrid testimonials={testimonials} />
+        </SectionFrame>
+      ) : null}
 
       {nearbyPlaces.length > 0 ? (
         <SectionFrame bg="grid" eyebrow="Explore" title={`Nearby areas in ${locationRecord?.city_id ? 'the city' : 'Bangalore'}`} description="Every neighbourhood has its own cohort schedule and local hiring partners.">
@@ -202,14 +228,26 @@ export default async function LocationPageRenderer({ locationRecord, locationSlu
         </SectionFrame>
       ) : null}
 
+      {hasMapContent ? (
+        <SectionFrame id="map" bg="plain" eyebrow="Visit us" title={`Find us in ${locationName}`}>
+          <LocationMapCard latitude={locationRecord?.latitude} longitude={locationRecord?.longitude} address={locationRecord?.address} />
+        </SectionFrame>
+      ) : null}
+
       {sectionsForZone(extraSections, 'before_faq').length ? renderDynamicSections(sectionsForZone(extraSections, 'before_faq')) : null}
 
-      <SectionFrame bg="plain" eyebrow="Answers" title="Frequently asked questions" align="center">
+      <SectionFrame id="faq" bg="grid" eyebrow="Answers" title="Frequently asked questions" align="center">
         <FaqAccordion items={faqs} />
       </SectionFrame>
 
-      <SectionFrame bg="mesh" blobColor="rgba(94,234,212,0.3)" eyebrow="Explore more" title="Related resources">
-        <ResourceGrid groups={resourceGroups} />
+      {hasResources ? (
+        <SectionFrame bg="mesh" blobColor="rgba(94,234,212,0.3)" eyebrow="Explore more" title="Related resources">
+          <ResourceGrid groups={resourceGroups} />
+        </SectionFrame>
+      ) : null}
+
+      <SectionFrame bg="plain" eyebrow="Get started" title="Request a callback" align="center">
+        <LeadCaptureCard pageSlug={getCanonicalPath('location', locationSlug)} formType="location_enquiry" />
       </SectionFrame>
 
       {sectionsForZone(extraSections, 'end').length ? renderDynamicSections(sectionsForZone(extraSections, 'end')) : null}

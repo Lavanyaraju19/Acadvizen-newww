@@ -1,11 +1,13 @@
 import Link from 'next/link'
 import { ArrowRight, MapPin } from 'lucide-react'
 import Reveal, { RevealGroup, RevealItem } from './Reveal'
+import SafeImage from './SafeImage'
 
 // Large split hero: editorial headline + breadcrumb/eyebrow/CTAs on the left, a floating
-// glass "availability" panel with live stat chips on the right. No hero image dependency -
-// every location/course record has text data, not all have imagery, so the right panel is
-// built from data that's always present (stats + badges) rather than a photo.
+// glass "availability" panel with live stat chips on the right. `heroImage` is optional - not
+// every location/course record has real imagery, so the stat card alone remains a complete
+// right-column composition when it's absent; when present, the image renders above the stat
+// card rather than replacing it.
 export default function ImmersiveHero({
   eyebrow,
   title,
@@ -16,6 +18,7 @@ export default function ImmersiveHero({
   badges = [],
   stats = [],
   locationLabel,
+  heroImage,
 }) {
   return (
     <section className="immersive-mesh-bg relative overflow-hidden border-b border-white/5">
@@ -97,22 +100,33 @@ export default function ImmersiveHero({
             ) : null}
           </div>
 
-          {stats.length > 0 ? (
-            <Reveal as="scale" delay={0.2} className="relative">
-              <div className="immersive-glass-strong relative rounded-3xl p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)] sm:p-8">
-                <div className="immersive-hairline absolute inset-x-6 top-0" />
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">At a glance</p>
-                <div className="mt-5 grid grid-cols-2 gap-5">
-                  {stats.map((stat) => (
-                    <div key={stat.label} className="relative">
-                      <div className="immersive-display text-2xl font-bold text-white sm:text-3xl">{stat.value}</div>
-                      <div className="mt-1 text-xs leading-tight text-slate-400">{stat.label}</div>
+          {(heroImage || stats.length > 0) ? (
+            <div className="space-y-5">
+              {heroImage ? (
+                <Reveal as="scale">
+                  <div className="overflow-hidden rounded-3xl border border-white/10 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)]">
+                    <SafeImage src={heroImage} alt={title || ''} className="aspect-[16/10] w-full object-cover" loading="eager" />
+                  </div>
+                </Reveal>
+              ) : null}
+              {stats.length > 0 ? (
+                <Reveal as="scale" delay={0.2} className="relative">
+                  <div className="immersive-glass-strong relative rounded-3xl p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)] sm:p-8">
+                    <div className="immersive-hairline absolute inset-x-6 top-0" />
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">At a glance</p>
+                    <div className="mt-5 grid grid-cols-2 gap-5">
+                      {stats.map((stat) => (
+                        <div key={stat.label} className="relative">
+                          <div className="immersive-display text-2xl font-bold text-white sm:text-3xl">{stat.value}</div>
+                          <div className="mt-1 text-xs leading-tight text-slate-400">{stat.label}</div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
-              <div className="absolute -bottom-4 -left-4 -z-10 h-full w-full rounded-3xl border border-white/5" />
-            </Reveal>
+                  </div>
+                  {!heroImage ? <div className="absolute -bottom-4 -left-4 -z-10 h-full w-full rounded-3xl border border-white/5" /> : null}
+                </Reveal>
+              ) : null}
+            </div>
           ) : null}
         </div>
       </div>

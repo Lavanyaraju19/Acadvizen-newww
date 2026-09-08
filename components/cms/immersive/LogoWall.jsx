@@ -1,6 +1,9 @@
 import { RevealGroup, RevealItem } from './Reveal'
+import SafeImage from './SafeImage'
 
 // Grid of hiring-partner logos. Renders nothing (not a placeholder grid) if no real logos exist.
+// SafeImage drops a tile silently if its specific logo URL fails to load, rather than a broken
+// image icon sitting in an otherwise premium trust strip.
 export default function LogoWall({ companies = [] }) {
   const withLogos = companies.filter((c) => c.logo)
   if (!withLogos.length) return null
@@ -9,8 +12,7 @@ export default function LogoWall({ companies = [] }) {
       {withLogos.map((company) => (
         <RevealItem key={company.slug || company.name} as="scale">
           <div className="immersive-glass flex h-20 items-center justify-center rounded-2xl p-4 transition hover:border-teal-300/25">
-            {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary CMS-supplied logo URL */}
-            <img src={company.logo} alt={company.name} loading="lazy" className="max-h-10 w-auto max-w-full object-contain" />
+            <SafeImage src={company.logo} alt={company.name} className="max-h-10 w-auto max-w-full object-contain" />
           </div>
         </RevealItem>
       ))}

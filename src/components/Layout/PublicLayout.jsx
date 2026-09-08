@@ -8,6 +8,7 @@ import { Navbar } from '../Navbar'
 import { Facebook, Instagram, Linkedin, Youtube } from 'lucide-react'
 import { useSiteCms } from '../../hooks/useSiteCms'
 import { buildMenuTree, pruneMenuTree } from '../../../lib/menuTree'
+import { getCanonicalPath } from '../../../lib/cmsPublishing'
 
 const CustomCursor = dynamic(() => import('../ui/CustomCursor').then((mod) => mod.CustomCursor), {
   ssr: false,
@@ -213,7 +214,7 @@ export function PublicLayout({ children, initialSiteCmsData = null }) {
           if (!slug || !labelSource) return null
           return {
             label: String(item.footer_label || `Digital Marketing Courses in ${labelSource}`).trim(),
-            href: String(item.path || item.url || item.public_url || `/digital-marketing-courses-${slug}`).trim(),
+            href: String(item.path || item.url || item.public_url || getCanonicalPath('location', slug)).trim(),
           }
         })
         .filter(Boolean)
@@ -230,12 +231,12 @@ export function PublicLayout({ children, initialSiteCmsData = null }) {
     'Marathahalli',
   ].map((name) => ({
     label: `Digital Marketing Courses in ${name}`,
-    href: `/digital-marketing-courses-${slugifyLocationValue(name)}`,
+    href: getCanonicalPath('location', slugifyLocationValue(name)),
   }))
   const locationLinks = configuredLocationLinks.length
     ? configuredLocationLinks.map((item) => ({
         label: item.label,
-        href: item.href || `/digital-marketing-courses-${slugifyLocationValue(item.label.replace(/^digital marketing courses in\s+/i, ''))}`,
+        href: item.href || getCanonicalPath('location', slugifyLocationValue(item.label.replace(/^digital marketing courses in\s+/i, ''))),
       }))
     : (dynamicLocationLinks.length ? dynamicLocationLinks : fallbackLocationLinks)
   const uiFooterFallback = normalizeMenuItems(uiCopy.footer_fallback_links)

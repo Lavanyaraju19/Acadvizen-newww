@@ -630,6 +630,12 @@ export default function PageBuilderClient() {
   const [pageForm, setPageForm] = useState(EMPTY_PAGE_FORM)
   const [sectionForm, setSectionForm] = useState(createEmptySectionForm())
   const [previewMode, setPreviewMode] = useState(false)
+  const [pageTemplates, setPageTemplates] = useState([])
+  const [templatesLoading, setTemplatesLoading] = useState(true)
+  const [templatesError, setTemplatesError] = useState('')
+  const [templatesReloadNonce, setTemplatesReloadNonce] = useState(0)
+  const [selectedTemplateId, setSelectedTemplateId] = useState('')
+  const [applyingTemplate, setApplyingTemplate] = useState(false)
   const [reorderHistory, setReorderHistory] = useState([])
   const [reorderPointer, setReorderPointer] = useState(-1)
   const [sectionClipboard, setSectionClipboard] = useState(null)
@@ -768,6 +774,34 @@ export default function PageBuilderClient() {
     } catch { /* private-browsing storage denial is non-fatal */ }
   }, [])
 
+  // Powers the "Start from a Template" picker below - lets a non-coder pick a designed layout
+  // (Premium Landing Page, Course-style, Location-style, Campaign, General Content, Blank) right
+  // from New Page instead of needing to separately visit Admin > Page Templates > Apply first.
+  // Surfaces loading/error state explicitly rather than silently showing an empty "no templates"
+  // picker if the fetch is slow or fails - a non-coder admin has no other way to tell the
+  // difference between "there are genuinely no templates" and "this hasn't loaded yet."
+  useEffect(() => {
+    let cancelled = false
+    async function loadPageTemplates() {
+      setTemplatesLoading(true)
+      setTemplatesError('')
+      try {
+        const json = await adminApiFetch('/api/cms/templates', { cache: 'no-store' })
+        if (cancelled) return
+        setPageTemplates(Array.isArray(json.data) ? json.data.filter((t) => t.is_active !== false) : [])
+      } catch (error) {
+        if (cancelled) return
+        setTemplatesError(error?.message || 'Could not load page templates.')
+      } finally {
+        if (!cancelled) setTemplatesLoading(false)
+      }
+    }
+    loadPageTemplates()
+    return () => {
+      cancelled = true
+    }
+  }, [templatesReloadNonce])
+
   // Reorder history is scoped to whichever page is open - a stack of section ids from one
   // page is meaningless once a different page (different ids) is selected.
   useEffect(() => {
@@ -819,6 +853,38 @@ export default function PageBuilderClient() {
     setPageForm(EMPTY_PAGE_FORM)
     setSectionForm(createEmptySectionForm())
     setLiveUrl('')
+    setSelectedTemplateId('')
+  }
+
+  // Applies the picked starter template via the existing /templates/:id/apply endpoint (creates
+  // the draft page pre-filled with the template's sections) using the Title/Slug the admin has
+  // already typed into the New Page form above, then loads the result straight into the builder -
+  // no separate visit to the Page Templates screen required.
+  async function createPageFromTemplate() {
+    const currentForm = getCurrentPageForm()
+    if (!currentForm.title.trim()) {
+      setStatus('Enter a Page Title first, then pick a template.')
+      return
+    }
+    const template = pageTemplates.find((item) => item.id === selectedTemplateId)
+    if (!template) return
+    setApplyingTemplate(true)
+    setStatus('')
+    try {
+      const json = await adminApiFetch(`/api/cms/templates/${template.id}/apply`, {
+        method: 'POST',
+        body: { title: currentForm.title.trim(), slug: currentForm.slug?.trim() || undefined },
+      })
+      if (json?.data?.id) {
+        await loadPages(json.data.id)
+        setSelectedTemplateId('')
+        setStatus(`Page created from "${template.name}". ${json.data.sections_applied || 0} section(s) added - review and publish below.`)
+      }
+    } catch (error) {
+      setStatus(error?.message || 'Failed to create page from template.')
+    } finally {
+      setApplyingTemplate(false)
+    }
   }
 
   function beginEditSection(section) {
@@ -1418,6 +1484,62 @@ export default function PageBuilderClient() {
               </label>
               <TextAreaField label="SEO Description" value={pageForm.seo_description} onChange={(value) => setPageForm((prev) => ({ ...prev, seo_description: value }))} rows={3} />
             </div>
+
+            {!pageForm.id ? (
+              <div className="mt-4 rounded-xl border border-teal-300/20 bg-teal-300/[0.04] p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-200">Start from a Template (optional)</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  Pick a designed layout and it fills the page with real sections automatically - no manual section building. Leave this on
+                  &quot;Blank&quot; and use Save Page below to start with an empty page instead.
+                </p>
+                {templatesError ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-rose-200">
+                    <span>Could not load templates ({templatesError}).</span>
+                    <button
+                      type="button"
+                      onClick={() => setTemplatesReloadNonce((value) => value + 1)}
+                      className="rounded-lg border border-rose-300/30 px-2 py-1 font-semibold hover:bg-rose-500/10"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : null}
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <select
+                    aria-label="Page template"
+                    value={selectedTemplateId}
+                    disabled={templatesLoading}
+                    onChange={(event) => setSelectedTemplateId(event.target.value)}
+                    className="min-w-[240px] flex-1 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 disabled:opacity-60"
+                  >
+                    <option value="" className="bg-[#07101b]">Blank (no template)</option>
+                    {templatesLoading ? (
+                      <option value="" disabled className="bg-[#07101b]">Loading templates...</option>
+                    ) : (
+                      pageTemplates.map((template) => (
+                        <option key={template.id} value={template.id} className="bg-[#07101b]">
+                          {template.name}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                  <button
+                    type="button"
+                    disabled={!selectedTemplateId || applyingTemplate || templatesLoading}
+                    onClick={createPageFromTemplate}
+                    className="rounded-xl bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-200 disabled:opacity-50"
+                  >
+                    {applyingTemplate ? 'Creating...' : 'Create Page from Template'}
+                  </button>
+                </div>
+                {selectedTemplateId ? (
+                  <p className="mt-2 text-[11px] text-slate-500">
+                    {pageTemplates.find((t) => t.id === selectedTemplateId)?.description || ''}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
             <div className="mt-4 flex flex-wrap gap-2">
               <button type="submit" disabled={saving} className="rounded-xl bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-200 disabled:opacity-70">
                 {saving ? 'Saving...' : 'Save Page'}

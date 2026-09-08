@@ -179,8 +179,8 @@ export function ContactPage() {
         <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-2">
           <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 mb-3 text-sm text-slate-300">
             <p className="font-semibold text-slate-100">Bangalore</p>
-            <p>Head Office JP Nagar, Acadvizen Institute</p>
-            <p>Marenahalli, 5th Block, Jayanagar</p>
+            <p>Acadvizen Institute</p>
+            <p>No 647-35/29, 11th Main Road, 5th Block, Jayanagar</p>
             <p>Bengaluru, Karnataka 560078</p>
           </div>
           {officeImages.length > 0 && (
@@ -201,14 +201,14 @@ export function ContactPage() {
           )}
           <iframe
             title="ACADVIZEN Bengaluru Location"
-            src="https://www.google.com/maps?q=Bengaluru&output=embed"
+            src="https://www.google.com/maps?q=No+647-35%2F29%2C+11th+Main+Road%2C+5th+Block%2C+Jayanagar%2C+Bengaluru%2C+Karnataka+560078&output=embed"
             className="h-72 w-full rounded-xl border-0"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
           />
           <div className="mt-3 text-sm font-semibold text-slate-200">Directions</div>
           <a
-            href="https://www.google.com/maps?q=Acadvizen+Institute+Jayanagar+Bengaluru"
+            href="https://www.google.com/maps/dir/?api=1&destination=No+647-35%2F29%2C+11th+Main+Road%2C+5th+Block%2C+Jayanagar%2C+Bengaluru%2C+Karnataka+560078"
             target="_blank"
             rel="noreferrer"
             onClick={() =>

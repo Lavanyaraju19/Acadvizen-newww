@@ -6,12 +6,13 @@ import {
   revalidateCmsPaths,
   readJsonBody,
 } from '../../_utils'
+import { getCanonicalPath } from '../../../../../lib/cmsPublishing'
 
 export const dynamic = 'force-dynamic'
 
 function locationPagePath(slug = '') {
   const trimmed = String(slug || '').trim()
-  return trimmed ? `/digital-marketing-courses-${trimmed}` : null
+  return trimmed ? getCanonicalPath('location', trimmed) : null
 }
 
 export async function PATCH(request, { params }) {

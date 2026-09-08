@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { adminApiFetch } from '../../../lib/adminApiClient'
 import { uploadFileAsset } from '../../../lib/storageUpload'
 
@@ -80,6 +80,15 @@ export default function EntityCrudManager({
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [dynamicOptions, setDynamicOptions] = useState({})
+  // The mount-time load() below auto-selects the first row so the form isn't blank on open -
+  // but that fetch can still be in flight when an admin clicks "New" (or picks a different row)
+  // before it resolves. Without this guard, the stale response's fallback to rows[0]?.id lands
+  // AFTER beginCreate()'s setSelectedId(''), silently re-selecting the first record; the next
+  // Save then carries that record's id and UPDATEs it in place instead of creating a new one -
+  // a real data-loss bug (confirmed live: it merged a brand-new "Yelahanka" area's content into
+  // the existing "Bangalore" row, renaming/overwriting it). Any explicit selection change sets
+  // this ref so a late-arriving initial-load response can no longer overrule it.
+  const explicitSelectionRef = useRef(false)
 
   const selected = useMemo(() => items.find((item) => item.id === selectedId) || null, [items, selectedId])
   const liveUrl = publicUrlPattern && selected?.[slugKey] ? publicUrlPattern.replace('{slug}', selected[slugKey]) : ''
@@ -103,7 +112,13 @@ export default function EntityCrudManager({
       const json = await adminApiFetch(`/api/cms/entities/${entity}?limit=500${filterQuery ? `&${filterQuery}` : ''}`, { cache: 'no-store' })
       const rows = Array.isArray(json.data) ? json.data : []
       setItems(rows)
-      const id = nextId || selectedId || rows[0]?.id || ''
+      if (nextId === undefined && explicitSelectionRef.current) {
+        // This is the mount-time auto-select call, but the admin already clicked "New" or
+        // picked a row while it was in flight - selection is no longer this call's to decide.
+        return
+      }
+      const id = nextId !== undefined ? nextId : (selectedId || rows[0]?.id || '')
+      explicitSelectionRef.current = true
       setSelectedId(id)
       if (id) {
         const row = rows.find((entry) => entry.id === id)
@@ -160,6 +175,7 @@ export default function EntityCrudManager({
   }, [entity])
 
   function beginCreate() {
+    explicitSelectionRef.current = true
     setSelectedId('')
     setForm(buildDefaultForm(fields))
   }
@@ -294,6 +310,7 @@ export default function EntityCrudManager({
                 key={item.id}
                 type="button"
                 onClick={() => {
+                  explicitSelectionRef.current = true
                   setSelectedId(item.id)
                   const next = {}
                   for (const field of fields) {
@@ -392,9 +409,14 @@ export default function EntityCrudManager({
                   type={field.type === 'datetime' ? 'datetime-local' : field.type === 'number' ? 'number' : 'text'}
                   value={form[field.key] ?? ''}
                   onChange={(event) => setForm((prev) => ({ ...prev, [field.key]: event.target.value }))}
+                  min={field.min}
+                  max={field.max}
+                  step={field.step}
+                  placeholder={field.placeholder}
                   className="mt-1 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2 py-2 text-xs text-slate-100"
                 />
               )}
+              {field.hint ? <p className="mt-1 text-[11px] text-slate-500">{field.hint}</p> : null}
             </label>
           ))}
 

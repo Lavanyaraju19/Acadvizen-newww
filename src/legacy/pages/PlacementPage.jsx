@@ -5,6 +5,8 @@ import AlumniShowcaseSection from '../../components/placement/AlumniShowcaseSect
 import TabbedFaqAccordion from '../../components/faq/TabbedFaqAccordion'
 import { Container, Section } from '../../components/ui/Section'
 import { fetchPublicData } from '../../lib/apiClient'
+import JsonLd from '../../../components/cms/templates/JsonLd'
+import { buildFaqSchema } from '../../../lib/structuredData'
 import {
   alumniShowcase as staticAlumniShowcase,
   placementFaqExact,
@@ -109,6 +111,7 @@ export function PlacementPage() {
 
   return (
     <div className="min-h-screen">
+      <JsonLd id="placement-faq" data={buildFaqSchema(placementFaqExact)} />
       <Section className="pt-12 md:pt-16 pb-8 md:pb-10" id="success-stories">
         <Container className="max-w-6xl">
           <div className="text-center">

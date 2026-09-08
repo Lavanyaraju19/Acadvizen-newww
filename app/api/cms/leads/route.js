@@ -92,7 +92,13 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const { supabase, response } = await getSupabaseClientOrResponse()
+  // Public/anonymous submission path - mirrors app/api/cms/forms/[id]/submit/route.js's use of
+  // the service role. `leads` intentionally has no anon SELECT policy (visitors must never read
+  // other people's submissions), but Postgres RLS also gates the row an `INSERT ... RETURNING`
+  // hands back on that same SELECT policy, so an anon-key insert.select().single() call always
+  // fails RLS even though the INSERT itself would have succeeded. Server-validated writes to this
+  // specific endpoint are the sanctioned exception to "never fall back to service role" below.
+  const { supabase, response } = await getSupabaseClientOrResponse(request, { preferServiceRole: true })
   if (response) return response
 
   const body = await readJsonBody(request)

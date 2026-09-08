@@ -11,6 +11,20 @@ import TestimonialGrid from './immersive/TestimonialGrid'
 import FaqAccordion from './immersive/FaqAccordion'
 import Reveal from './immersive/Reveal'
 import FinalCta from './immersive/FinalCta'
+import LogoWall from './immersive/LogoWall'
+import LocationMapCard from './immersive/LocationMapCard'
+import LeadCaptureCard from './immersive/LeadCaptureCard'
+import SafeImage from './immersive/SafeImage'
+
+async function safeQuery(query, fallback = []) {
+  try {
+    const { data, error } = await query
+    if (error) return fallback
+    return data || fallback
+  } catch {
+    return fallback
+  }
+}
 
 // Admin-added extra blocks (Admin > Cities > Extra Sections) - a city page keeps its fixed,
 // design-guaranteed sections above, and these render after them via the exact same
@@ -46,6 +60,12 @@ export default async function CityPageRenderer({ cityPage }) {
   if (!cityPage) return null
 
   const extraSections = await loadExtraSections(cityPage.id)
+  const supabase = getServerSupabaseClient()
+  const recruiters = await safeQuery(
+    supabase.from('recruiters').select('name, logo_url, website_url').eq('is_active', true).order('order_index', { ascending: true }).limit(10),
+    []
+  )
+  const recruiterLogos = recruiters.map((r) => ({ name: r.name, logo: r.logo_url }))
 
   const breadcrumbItems = [
     { label: 'Home', href: '/' },
@@ -67,21 +87,26 @@ export default async function CityPageRenderer({ cityPage }) {
         primaryCta={{ label: 'Explore Courses', href: '/courses' }}
         secondaryCta={{ label: 'Talk to Admissions', href: '/contact' }}
         stats={(cityPage.stats || []).slice(0, 4)}
+        heroImage={cityPage.hero_image_url || cityPage.about_image_url || null}
       />
 
       {sectionsForZone(extraSections, 'top').length ? renderDynamicSections(sectionsForZone(extraSections, 'top')) : null}
 
+      {recruiterLogos.length ? (
+        <SectionFrame bg="grid" eyebrow="Trusted by" title="Where our learners get hired">
+          <LogoWall companies={recruiterLogos} />
+        </SectionFrame>
+      ) : null}
+
       {cityPage.about_title ? (
-        <SectionFrame bg="plain" eyebrow="About" title={cityPage.about_title}>
+        <SectionFrame id="about" bg="plain" eyebrow="About" title={cityPage.about_title}>
           <div className={`grid gap-10 ${cityPage.about_image_url ? 'lg:grid-cols-[1.1fr_0.9fr] lg:items-center' : ''}`}>
             <p className="whitespace-pre-line text-sm leading-relaxed text-slate-400 sm:text-base">{cityPage.about_description}</p>
             {cityPage.about_image_url ? (
               <Reveal as="scale">
-                {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary CMS-supplied image URL */}
-                <img
+                <SafeImage
                   src={cityPage.about_image_url}
                   alt={cityPage.about_title}
-                  loading="lazy"
                   className="w-full rounded-3xl border border-white/10 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)]"
                 />
               </Reveal>
@@ -105,7 +130,7 @@ export default async function CityPageRenderer({ cityPage }) {
       ) : null}
 
       {cityPage.testimonials?.length > 0 ? (
-        <SectionFrame bg="plain" eyebrow="Voices" title="Student Testimonials" align="center">
+        <SectionFrame id="testimonials" bg="plain" eyebrow="Voices" title="Student Testimonials" align="center">
           <TestimonialGrid testimonials={cityPage.testimonials} />
         </SectionFrame>
       ) : null}
@@ -113,7 +138,7 @@ export default async function CityPageRenderer({ cityPage }) {
       {sectionsForZone(extraSections, 'before_faq').length ? renderDynamicSections(sectionsForZone(extraSections, 'before_faq')) : null}
 
       {cityPage.faqs?.length > 0 ? (
-        <SectionFrame bg="grid" eyebrow="Answers" title="Frequently Asked Questions" align="center">
+        <SectionFrame id="faq" bg="grid" eyebrow="Answers" title="Frequently Asked Questions" align="center">
           <FaqAccordion items={cityPage.faqs} />
         </SectionFrame>
       ) : null}
@@ -142,6 +167,16 @@ export default async function CityPageRenderer({ cityPage }) {
           </div>
         </SectionFrame>
       ) : null}
+
+      {cityPage.contact_address ? (
+        <SectionFrame id="map" bg="plain" eyebrow="Visit us" title={`Find us in ${cityPage.city_name || 'the city'}`}>
+          <LocationMapCard address={cityPage.contact_address} />
+        </SectionFrame>
+      ) : null}
+
+      <SectionFrame bg="grid" eyebrow="Get started" title="Request a callback" align="center">
+        <LeadCaptureCard pageSlug={cityPage.slug || cityPage.city_name || 'city-page'} formType="city_enquiry" />
+      </SectionFrame>
 
       {sectionsForZone(extraSections, 'end').length ? renderDynamicSections(sectionsForZone(extraSections, 'end')) : null}
 

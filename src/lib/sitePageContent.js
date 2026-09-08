@@ -512,13 +512,13 @@ export const placementFaqs = [
     category: 'FAQ',
     question: 'Which is the best digital marketing course in Bangalore with placement?',
     answer:
-      '[Your Institute Name] is widely recognized as a top choice for digital marketing in Bangalore. Our success stories from companies like Accenture and Sagility prove our commitment to 100% placement assistance and practical, tool-based learning that meets 2026 industry standards.',
+      'Acadvizen is widely recognized as a top choice for digital marketing in Bangalore. Our success stories from companies like Accenture and Sagility prove our commitment to 100% placement assistance and practical, tool-based learning that meets 2026 industry standards.',
   },
   {
     category: 'FAQ',
     question: 'Where can I learn digital marketing in Bangalore for a career switch?',
     answer:
-      'You can learn digital marketing at our centers in [Your Area, e.g., HSR Layout/Koramangala]. We specialize in helping professionals from non-tech backgrounds—like our alumni at HSBC and Brigade Group—transition into high-paying digital roles through 10+ live projects.',
+      'You can learn digital marketing at our Jayanagar campus, with easy access from HSR Layout and Koramangala. We specialize in helping professionals from non-tech backgrounds—like our alumni at HSBC and Brigade Group—transition into high-paying digital roles through 10+ live projects.',
   },
   {
     category: 'FAQ',
@@ -576,7 +576,7 @@ export const placementFaqs = [
   },
   {
     category: 'FAQ',
-    question: 'Does [Institution Name] provide international placement assistance?',
+    question: 'Does Acadvizen provide international placement assistance?',
     answer:
       'Yes, we offer dedicated support for Global Internships and guide students through the visa processes for the UK Graduate Route, Australian Skilled Migration, and German Job Seeker Visas.',
   },
@@ -728,7 +728,7 @@ export const aboutTrainers = [
   {
     name: 'Mounika',
     designation: 'Performance Marketing Associate',
-    image: '/trainers/kanika-bharadwaj-cutout.png',
+    image: '/trainers/mounika-cutout.png',
     imageScale: 1.06,
   },
   {
@@ -740,7 +740,7 @@ export const aboutTrainers = [
   {
     name: 'Varshitha',
     designation: 'Social Media Trainer',
-    image: '/trainers/harika-gummireddy-cutout.png',
+    image: '/trainers/varshitha-cutout.png',
     imageScale: 1.08,
   },
   {
@@ -752,7 +752,7 @@ export const aboutTrainers = [
   {
     name: 'Harika Gummireddy',
     designation: 'Digital Marketing Manager',
-    image: '/trainers/mounika-cutout.png',
+    image: '/trainers/harika-gummireddy-cutout.png',
     imageScale: 1.06,
   },
   {
@@ -927,13 +927,13 @@ export const placementFaqExact = [
     category: 'FAQ',
     question: 'Which is the best digital marketing course in Bangalore with placement?',
     answer:
-      '[Your Institute Name] is widely recognized as a top choice for digital marketing in Bangalore. Our success stories from companies like Accenture and Sagility prove our commitment to 100% placement assistance and practical, tool-based learning that meets 2026 industry standards.',
+      'Acadvizen is widely recognized as a top choice for digital marketing in Bangalore. Our success stories from companies like Accenture and Sagility prove our commitment to 100% placement assistance and practical, tool-based learning that meets 2026 industry standards.',
   },
   {
     category: 'FAQ',
     question: 'Where can I learn digital marketing in Bangalore for a career switch?',
     answer:
-      'You can learn digital marketing at our centers in [Your Area, e.g., HSR Layout/Koramangala]. We specialize in helping professionals from non-tech backgrounds—like our alumni at HSBC and Brigade Group—transition into high-paying digital roles through 10+ live projects.',
+      'You can learn digital marketing at our Jayanagar campus, with easy access from HSR Layout and Koramangala. We specialize in helping professionals from non-tech backgrounds—like our alumni at HSBC and Brigade Group—transition into high-paying digital roles through 10+ live projects.',
   },
   {
     category: 'FAQ',
@@ -991,7 +991,7 @@ export const placementFaqExact = [
   },
   {
     category: 'FAQ',
-    question: 'Does [Institution Name] provide international placement assistance?',
+    question: 'Does Acadvizen provide international placement assistance?',
     answer:
       'Yes, we offer dedicated support for Global Internships and guide students through the visa processes for the UK Graduate Route, Australian Skilled Migration, and German Job Seeker Visas.',
   },

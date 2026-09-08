@@ -1,4 +1,5 @@
 import { getServerSupabaseClient } from '../../lib/supabaseServer'
+import { getCanonicalPath } from '../../lib/cmsPublishing'
 import JsonLd from './templates/JsonLd'
 import { buildBreadcrumbSchema, buildFaqSchema } from '../../lib/structuredData'
 import ImmersiveHero from './immersive/ImmersiveHero'
@@ -59,7 +60,7 @@ export default async function ExploreProgramsRenderer() {
     name: c.name,
     href: migratedCitySlugs.has(c.slug) ? `/digital-marketing-course-in-${c.slug}` : `/digital-marketing-course-${c.slug}`,
   }))
-  const areaPlaces = locations.map((l) => ({ name: l.name, href: `/digital-marketing-courses-${l.slug}` }))
+  const areaPlaces = locations.map((l) => ({ name: l.name, href: getCanonicalPath('location', l.slug) }))
 
   const faqs = [
     { question: 'What is Explore Programs?', answer: 'A single place to discover every Acadvizen program - by category, by city, and by career outcome - before diving into the full course catalogue.' },

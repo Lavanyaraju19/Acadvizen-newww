@@ -131,9 +131,9 @@ const courseHighlights = [
   },
 ]
 
-export function CoursesPage() {
-  const [courses, setCourses] = useState([])
-  const [loading, setLoading] = useState(true)
+export function CoursesPage({ initialCourses = [] }) {
+  const [courses, setCourses] = useState(Array.isArray(initialCourses) ? initialCourses : [])
+  const [loading, setLoading] = useState(initialCourses.length === 0)
   const [pageSections, setPageSections] = useState({})
   const [internalLinks, setInternalLinks] = useState({
     blogs: [],
