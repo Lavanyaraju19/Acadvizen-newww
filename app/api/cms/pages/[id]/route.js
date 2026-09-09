@@ -71,6 +71,13 @@ export async function PATCH(request, { params }) {
       return jsonError('This account does not have permission to publish pages.', 403)
     }
 
+    // Defense-in-depth mirror of the same guard in POST /api/cms/pages/route.js - a shadow draft
+    // must go live through POST /api/cms/pages/[id]/publish (broken-link gate + atomic merge),
+    // never by PATCHing status='published' directly.
+    if (existingRecord.draft_of_id && normalizeCmsStatus(payload.status) === 'published') {
+      return jsonError('This is a draft of an already-published page. Use Publish (not Save) to publish it.', 400)
+    }
+
     if (payload.slug) {
       const nextSlug = normalizeCmsSlug(payload.slug)
       try {

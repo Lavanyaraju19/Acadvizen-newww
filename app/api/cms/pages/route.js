@@ -126,11 +126,17 @@ export async function GET(request) {
     const slug = searchParams.get('slug')
     const status = searchParams.get('status')
     const includeSections = searchParams.get('include_sections') === '1'
+    // Shadow drafts (staged edits of an already-published page - see
+    // 202608130001_staged_editing_shadow_drafts.sql) share their live page's slug and must never
+    // appear in a general listing, only when the Page Builder explicitly asks for them so it can
+    // show an "Editing (unpublished changes)" badge on the live row.
+    const includeDrafts = searchParams.get('include_drafts') === '1' && isAdmin
 
     let query = supabase.from('pages').select('*').limit(limit || 250).order('updated_at', { ascending: false })
     if (slug) query = query.eq('slug', normalizeCmsSlug(slug))
     if (status && isAdmin) query = query.eq('status', normalizeCmsStatus(status))
     if (!isAdmin) query = query.eq('status', 'published')
+    if (!includeDrafts) query = query.is('draft_of_id', null)
 
     const { data, error } = await query
     if (error) return jsonError(`Database query failed: ${error.message}`, 500, [])
@@ -179,6 +185,15 @@ export async function POST(request) {
         .maybeSingle()
       if (existingError) return jsonError(`Failed to load existing page: ${existingError.message}`, 500)
       existingRecord = existing || null
+    }
+
+    // A shadow draft must be published through POST /api/cms/pages/[id]/publish (which runs the
+    // pre-publish broken-link gate and the atomic publish_page_draft() merge), never by setting
+    // status='published' directly through the ordinary save path - that would skip the link
+    // check and make this row independently, ambiguously publicly reachable at the slug it
+    // shares with the live page it's a draft of.
+    if (existingRecord?.draft_of_id && normalizeCmsStatus(payload.status) === 'published') {
+      return jsonError('This is a draft of an already-published page. Use Publish (not Save) to publish it.', 400)
     }
 
     if (payload.slug || (!body.id && body.title)) {

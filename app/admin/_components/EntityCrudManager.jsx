@@ -70,6 +70,11 @@ export default function EntityCrudManager({
   pageSize = 10,
   publicUrlPattern = '',
   slugKey = 'slug',
+  // Optional: override the picker row's label. Defaults to the existing fallback chain below
+  // when not passed, so every existing caller is unaffected - added only so a staged-editing
+  // "shadow draft" row (see 202608130001_staged_editing_shadow_drafts.sql) can be distinguished
+  // from the live row it shares a name/slug with (app/admin/locations/page.jsx).
+  rowLabel = null,
 }) {
   const [items, setItems] = useState([])
   const [selectedId, setSelectedId] = useState('')
@@ -324,7 +329,7 @@ export default function EntityCrudManager({
                     : 'border border-white/10 bg-white/[0.02] text-slate-200 hover:bg-white/[0.05]'
                 }`}
               >
-                {item.title || item.name || item.company_name || item.label || item.slug || item.key || 'Untitled'}
+                {rowLabel ? rowLabel(item) : (item.title || item.name || item.company_name || item.label || item.slug || item.key || 'Untitled')}
               </button>
             ))
           ) : (

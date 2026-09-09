@@ -25,7 +25,14 @@ import {
 
 export const dynamic = 'force-dynamic'
 
-function applyFilters(query, request, config, isAdmin) {
+// Entities that support staged-editing "shadow row" drafts (202608130001_staged_editing_shadow_
+// drafts.sql adds draft_of_id only to pages and locations; pages has its own dedicated route
+// files under app/api/cms/pages/*, so this generic entities route only needs to know about
+// locations). Scoping every added check to this set keeps it a no-op for the ~30 other entities
+// that will never have a draft_of_id column.
+const DRAFT_SHADOW_ENTITIES = new Set(['locations'])
+
+function applyFilters(query, request, config, isAdmin, entity) {
   const { searchParams } = new URL(request.url)
   const slug = searchParams.get('slug')
   const id = searchParams.get('id')
@@ -64,6 +71,14 @@ function applyFilters(query, request, config, isAdmin) {
     }
   }
 
+  // Shadow drafts share their live row's slug and must stay out of general listings/dropdown
+  // pickers, only appearing when an admin explicitly asks for them (mirrors the same
+  // include_drafts=1 pattern used by GET /api/cms/pages).
+  if (DRAFT_SHADOW_ENTITIES.has(entity)) {
+    const includeDrafts = searchParams.get('include_drafts') === '1' && isAdmin
+    if (!includeDrafts) next = next.is('draft_of_id', null)
+  }
+
   return next
 }
 
@@ -89,7 +104,7 @@ export async function GET(request, { params }) {
 
     let query = supabase.from(config.table).select('*').limit(limit || 250)
     query = applyEntityOrdering(query, config)
-    query = applyFilters(query, request, config, isAdmin)
+    query = applyFilters(query, request, config, isAdmin, entity)
 
     const { data, error } = await query
     if (error) {
@@ -184,6 +199,23 @@ export async function POST(request, { params }) {
       }))
       for (const field of config.compatibilityVisibilityFields || []) {
         payload[field] = Boolean(payload[config.visibilityField])
+      }
+    }
+
+    // A shadow draft must be published through POST /api/cms/entities/locations/[id]/publish
+    // (which runs the pre-publish broken-link gate and the atomic publish_location_draft()
+    // merge), never by setting is_active=true directly through the ordinary save path - that
+    // would skip the link check and make this row independently, ambiguously publicly reachable
+    // at the slug it shares with the live row it's a draft of.
+    if (
+      DRAFT_SHADOW_ENTITIES.has(entity) &&
+      body.id &&
+      config.visibilityField &&
+      payload[config.visibilityField] === true
+    ) {
+      const { data: draftCheck } = await supabase.from(config.table).select('draft_of_id').eq('id', body.id).maybeSingle()
+      if (draftCheck?.draft_of_id) {
+        return jsonError(`This is a draft of an already-published ${config.contentType || entity}. Use Publish (not Save) to publish it.`, 400)
       }
     }
 

@@ -24,7 +24,7 @@ export default function LocationSectionsManager() {
   async function load() {
     setLoading(true)
     try {
-      const json = await adminApiFetch('/api/cms/entities/locations?limit=500', { cache: 'no-store' })
+      const json = await adminApiFetch('/api/cms/entities/locations?include_drafts=1&limit=500', { cache: 'no-store' })
       const rows = Array.isArray(json.data) ? json.data : []
       rows.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
       setLocations(rows)
@@ -47,7 +47,9 @@ export default function LocationSectionsManager() {
             className="mt-1 block w-72 px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/[0.03] text-slate-100"
           >
             {locations.map((loc) => (
-              <option key={loc.id} value={loc.id}>{loc.name}{loc.is_active === false ? ' (unpublished)' : ''}</option>
+              <option key={loc.id} value={loc.id}>
+                {loc.name}{loc.draft_of_id ? ' (Draft copy - unpublished changes)' : loc.is_active === false ? ' (unpublished)' : ''}
+              </option>
             ))}
           </select>
         </label>

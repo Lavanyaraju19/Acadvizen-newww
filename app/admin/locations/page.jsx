@@ -3,6 +3,7 @@ export const revalidate = 1
 import EntityCrudManager from '../_components/EntityCrudManager'
 import { Surface } from '../../../src/components/ui/Surface'
 import LocationSectionsManager from './LocationSectionsManager'
+import LocationDraftManager from './LocationDraftManager'
 
 export default function Page() {
   return (
@@ -48,6 +49,8 @@ export default function Page() {
           title="Areas / Locations"
           subtitle="Create, update, and remove location records shown in the footer and at their own public URL."
           publicUrlPattern="/digital-marketing-courses-{slug}"
+          filterQuery="include_drafts=1"
+          rowLabel={(item) => `${item.name}${item.draft_of_id ? ' (Draft - unpublished changes)' : ''}`}
           fields={[
             { key: 'name', label: 'Area / Location Name' },
             { key: 'slug', label: 'URL Slug (leave blank to auto-generate) - page will be at /digital-marketing-courses-{slug}' },
@@ -91,6 +94,17 @@ export default function Page() {
             { key: 'is_active', label: 'Published (visible on the page and in the footer)', type: 'checkbox' },
           ]}
         />
+      </Surface>
+
+      <Surface className="space-y-5 p-6 md:p-8">
+        <div>
+          <h2 className="text-2xl font-semibold text-slate-50">Draft &amp; Publish</h2>
+          <p className="mt-1 text-sm text-slate-300">
+            Editing an already-published location above changes it live immediately. To edit safely instead -
+            preview your changes before anyone else sees them - start a draft here first.
+          </p>
+        </div>
+        <LocationDraftManager />
       </Surface>
 
       <Surface className="space-y-5 p-6 md:p-8">

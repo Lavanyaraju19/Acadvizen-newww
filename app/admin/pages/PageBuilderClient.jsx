@@ -62,6 +62,7 @@ const EMPTY_PAGE_FORM = {
   status: 'draft',
   scheduled_publish_at: '',
   scheduled_unpublish_at: '',
+  draft_of_id: null,
 }
 
 // <input type="datetime-local"> works in "YYYY-MM-DDTHH:mm" local-time strings, not ISO -
@@ -639,6 +640,7 @@ export default function PageBuilderClient() {
   const [reorderHistory, setReorderHistory] = useState([])
   const [reorderPointer, setReorderPointer] = useState(-1)
   const [sectionClipboard, setSectionClipboard] = useState(null)
+  const [blockedLinks, setBlockedLinks] = useState(null)
   // KeyboardSensor makes section reordering operable without a mouse (Space to pick up, Arrow
   // keys to move, Space to drop, Escape to cancel) - a pointer-only DndContext fails WCAG 2.1.1
   // for any drag-and-drop interaction with no keyboard equivalent.
@@ -663,6 +665,19 @@ export default function PageBuilderClient() {
     () => LIVE_SYNC_TARGETS.find((template) => template.slug === (pageForm.slug || selectedPage?.slug)),
     [pageForm.slug, selectedPage?.slug]
   )
+  // Staged-editing "shadow row" drafts (202608130001_staged_editing_shadow_drafts.sql) share
+  // their live page's slug and must never show as their own top-level list entry - only as a
+  // badge/Edit Draft action on the live row they're a pending edit of. `pages` already includes
+  // shadows (loadPages fetches with include_drafts=1), so this is a pure client-side grouping of
+  // that same list, not an extra fetch.
+  const draftByLiveId = useMemo(() => {
+    const map = new Map()
+    for (const page of pages) {
+      if (page.draft_of_id) map.set(page.draft_of_id, page)
+    }
+    return map
+  }, [pages])
+  const topLevelPages = useMemo(() => pages.filter((page) => !page.draft_of_id), [pages])
 
   // Autosave page data
   useAutosave('page', selectedPageId, { pageForm, sectionForm }, [pageForm, sectionForm, selectedPageId])
@@ -708,6 +723,7 @@ export default function PageBuilderClient() {
             status: page.status || 'draft',
             scheduled_publish_at: isoToDatetimeLocal(page.scheduled_publish_at),
             scheduled_unpublish_at: isoToDatetimeLocal(page.scheduled_unpublish_at),
+            draft_of_id: page.draft_of_id || null,
           })
         }
       } else {
@@ -845,6 +861,7 @@ export default function PageBuilderClient() {
       status: page.status || 'draft',
       scheduled_publish_at: isoToDatetimeLocal(page.scheduled_publish_at),
       scheduled_unpublish_at: isoToDatetimeLocal(page.scheduled_unpublish_at),
+      draft_of_id: page.draft_of_id || null,
     })
   }
 
@@ -969,6 +986,75 @@ export default function PageBuilderClient() {
       await persistPage(nextForm, nextStatus === 'published' ? 'Page published.' : 'Draft saved.')
     } catch (error) {
       setStatus(error?.message || 'Failed to save page.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Staged-editing lifecycle actions (202608130001_staged_editing_shadow_drafts.sql). Start Draft
+  // creates a "shadow row" copy of an already-published page - a normal pages row, same slug,
+  // linked back via draft_of_id, with its own cloned sections - so every existing edit/section
+  // control below keeps working completely unchanged once selected, it's just pointed at the
+  // shadow's id instead of the live page's id until Publish or Discard Draft.
+  async function handleStartDraft() {
+    if (!pageForm.id) return
+    setSaving(true)
+    setStatus('')
+    try {
+      const json = await adminApiFetch(`/api/cms/pages/${pageForm.id}/start-draft`, { method: 'POST' })
+      const draft = json.data
+      await loadPages(draft.id)
+      setStatus('Draft started. Edit freely below - the live page is untouched until you click Publish.')
+    } catch (error) {
+      setStatus(error?.message || 'Failed to start draft.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDiscardDraft() {
+    if (!pageForm.id || !pageForm.draft_of_id) return
+    if (!window.confirm('Discard this draft? Your unpublished edits will be lost - the live page is unaffected either way.')) return
+    setSaving(true)
+    setStatus('')
+    try {
+      const liveId = pageForm.draft_of_id
+      await adminApiFetch(`/api/cms/pages/${pageForm.id}`, { method: 'DELETE' })
+      await loadPages(liveId)
+      setStatus('Draft discarded.')
+    } catch (error) {
+      setStatus(error?.message || 'Failed to discard draft.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Unified publish path for both a brand-new page's first publish and a shadow draft's merge
+  // onto its live page - same button, same endpoint, same broken-link gate either way (see
+  // lib/publishGuard.js / publish_page_draft() in the migration). Current edits are saved first
+  // (always as 'draft', never directly as 'published' - see the server-side guard in
+  // app/api/cms/pages/route.js) so nothing is lost if the publish itself is blocked.
+  async function handlePublish() {
+    const currentPageForm = getCurrentPageForm('draft')
+    if (!currentPageForm.title.trim()) {
+      setStatus('Page title is required.')
+      return
+    }
+    setSaving(true)
+    setStatus('')
+    setBlockedLinks(null)
+    try {
+      const saved = await persistPage(currentPageForm, 'Draft saved. Publishing...')
+      const json = await adminApiFetch(`/api/cms/pages/${saved.id}/publish`, { method: 'POST' })
+      await loadPages(json.data?.id)
+      setStatus('Published.')
+    } catch (error) {
+      if (error?.status === 409 && Array.isArray(error?.data?.broken)) {
+        setBlockedLinks(error.data.broken)
+        setStatus('')
+      } else {
+        setStatus(error?.message || 'Failed to publish.')
+      }
     } finally {
       setSaving(false)
     }
@@ -1345,25 +1431,45 @@ export default function PageBuilderClient() {
                 <div className="text-xs text-slate-400">Syncing current website content...</div>
               ) : loading ? (
                 <div className="text-xs text-slate-400">Loading pages...</div>
-              ) : pages.length === 0 ? (
+              ) : topLevelPages.length === 0 ? (
                 <div className="text-xs text-slate-400">No pages yet.</div>
               ) : (
-                pages.map((page) => (
-                  <button
-                    key={page.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedPageId(page.id)
-                      syncPageForm(page)
-                      resetSectionForm()
-                    }}
-                    className={`w-full rounded-xl px-3 py-3 text-left text-sm ${selectedPageId === page.id ? 'bg-teal-300 text-slate-950' : 'border border-white/10 bg-white/[0.02] text-slate-200 hover:bg-white/[0.05]'}`}
-                  >
-                    <div className="font-semibold">{page.title}</div>
-                    <div className="mt-1 text-xs opacity-80">/{page.slug === 'home' ? '' : page.slug}</div>
-                    <div className="mt-1 text-[11px] uppercase tracking-[0.14em] opacity-70">{page.status || 'draft'}</div>
-                  </button>
-                ))
+                topLevelPages.map((page) => {
+                  const draft = draftByLiveId.get(page.id)
+                  return (
+                    <div
+                      key={page.id}
+                      className={`w-full rounded-xl text-sm ${selectedPageId === page.id ? 'bg-teal-300 text-slate-950' : 'border border-white/10 bg-white/[0.02] text-slate-200 hover:bg-white/[0.05]'}`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedPageId(page.id)
+                          syncPageForm(page)
+                          resetSectionForm()
+                        }}
+                        className="w-full px-3 py-3 text-left"
+                      >
+                        <div className="font-semibold">{page.title}</div>
+                        <div className="mt-1 text-xs opacity-80">/{page.slug === 'home' ? '' : page.slug}</div>
+                        <div className="mt-1 text-[11px] uppercase tracking-[0.14em] opacity-70">{page.status || 'draft'}</div>
+                      </button>
+                      {draft ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedPageId(draft.id)
+                            syncPageForm(draft)
+                            resetSectionForm()
+                          }}
+                          className="mx-3 mb-3 block rounded-lg border border-amber-300/40 bg-amber-300/10 px-2 py-1 text-left text-[11px] font-semibold text-amber-200 hover:bg-amber-300/20"
+                        >
+                          Editing (unpublished changes) - Edit Draft
+                        </button>
+                      ) : null}
+                    </div>
+                  )
+                })
               )}
             </div>
           </div>
@@ -1439,13 +1545,18 @@ export default function PageBuilderClient() {
               <TextAreaField label="Page Description" value={pageForm.description} onChange={(value) => setPageForm((prev) => ({ ...prev, description: value }))} rows={3} />
               <label className="text-xs text-slate-400">
                 Publish Status
-                <select {...fieldAttrs('page_status')} value={pageForm.status} onChange={(event) => setPageForm((prev) => ({ ...prev, status: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100">
-                  {['draft', 'published'].map((value) => (
+                <select {...fieldAttrs('page_status')} value={pageForm.status} disabled={Boolean(pageForm.draft_of_id)} onChange={(event) => setPageForm((prev) => ({ ...prev, status: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 disabled:opacity-60">
+                  {(pageForm.draft_of_id ? ['draft'] : ['draft', 'published']).map((value) => (
                     <option key={value} value={value} className="bg-[#07101b]">
                       {value}
                     </option>
                   ))}
                 </select>
+                {pageForm.draft_of_id ? (
+                  <span className="mt-1 block text-[11px] text-amber-300">
+                    This is a draft of an already-published page - use the Publish button below to publish it (this stays a draft until then).
+                  </span>
+                ) : null}
               </label>
               <div />
               <label className="text-xs text-slate-400">
@@ -1544,12 +1655,27 @@ export default function PageBuilderClient() {
               <button type="submit" disabled={saving} className="rounded-xl bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-200 disabled:opacity-70">
                 {saving ? 'Saving...' : 'Save Page'}
               </button>
-              <button type="button" data-testid="publish-page-button" disabled={saving} onClick={() => savePageWithStatus('published')} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05] disabled:opacity-70">
+              <button type="button" data-testid="publish-page-button" disabled={saving} onClick={handlePublish} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05] disabled:opacity-70">
                 Publish Page
               </button>
               <button type="button" data-testid="save-page-draft-button" disabled={saving} onClick={() => savePageWithStatus('draft')} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05] disabled:opacity-70">
                 Save Draft
               </button>
+              {pageForm.id ? (
+                <button type="button" disabled={saving} onClick={() => window.open(`/preview/pages/${pageForm.id}`, '_blank', 'noopener,noreferrer')} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05] disabled:opacity-70">
+                  Preview
+                </button>
+              ) : null}
+              {pageForm.id && !pageForm.draft_of_id && pageForm.status === 'published' && !draftByLiveId.has(pageForm.id) ? (
+                <button type="button" disabled={saving} onClick={handleStartDraft} className="rounded-xl border border-amber-300/30 px-4 py-2 text-sm text-amber-200 hover:bg-amber-500/10 disabled:opacity-70">
+                  Start Draft (edit without going live)
+                </button>
+              ) : null}
+              {pageForm.draft_of_id ? (
+                <button type="button" disabled={saving} onClick={handleDiscardDraft} className="rounded-xl border border-rose-400/30 px-4 py-2 text-sm text-rose-200 hover:bg-rose-500/10 disabled:opacity-70">
+                  Discard Draft
+                </button>
+              ) : null}
               {liveUrl && pageForm.status === 'published' ? (
                 <button type="button" disabled={saving} onClick={() => window.open(liveUrl, '_blank', 'noopener,noreferrer')} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.05] disabled:opacity-70">
                   View Live Page
@@ -1575,6 +1701,29 @@ export default function PageBuilderClient() {
                 </button>
               ) : null}
             </div>
+
+            {blockedLinks?.length ? (
+              <div className="mt-4 rounded-xl border border-rose-400/30 bg-rose-500/10 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-rose-200">
+                    Cannot publish - {blockedLinks.length} broken link{blockedLinks.length === 1 ? '' : 's'} found
+                  </p>
+                  <button type="button" onClick={() => setBlockedLinks(null)} className="text-xs font-semibold text-rose-300 hover:text-rose-200">
+                    Dismiss
+                  </button>
+                </div>
+                <ul className="mt-3 space-y-2 text-xs text-rose-100">
+                  {blockedLinks.map((item, index) => (
+                    <li key={`${item.targetUrl}-${index}`} className="rounded-lg border border-rose-400/20 bg-rose-500/5 p-2">
+                      <span className="font-semibold">{item.location}:</span>{' '}
+                      links to <code className="text-rose-200">{item.targetUrl}</code>{' '}
+                      ({item.reason === 'unpublished' ? 'exists but is not published' : "doesn't exist"})
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-[11px] text-rose-200/80">Fix these links above, save, then try Publish again.</p>
+              </div>
+            ) : null}
           </form>
 
           <div className="grid gap-6 2xl:grid-cols-[360px_1fr]">
