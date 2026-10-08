@@ -10,7 +10,8 @@ import { convertPlainTextToBlocks, parseBlogContent } from '../../../../lib/blog
 import { getServerSupabaseClient } from '../../../../lib/supabaseServer'
 import { fetchCmsSiteData, fetchRedirectByPath } from '../../../../lib/cmsServer'
 import { canonicalizeKnownBlogSlug } from '../../../../lib/blogSlugResolver'
-import { fetchPublishedPublicBlogBySlug, fetchRelatedPublishedBlogs } from '../../../../lib/publicBlogData'
+import { fetchPublishedPublicBlogBySlug, fetchPublishedPublicBlogs, fetchRelatedPublishedBlogs } from '../../../../lib/publicBlogData'
+import { fetchWordPressBlogBySlugForMain } from '../../../../lib/wordpress/blogs'
 import Breadcrumbs from '../../../../components/cms/templates/Breadcrumbs'
 
 function pickFirst(...values) {
@@ -41,11 +42,21 @@ async function fetchRemoteBlog(slug) {
   }
 }
 
+// Blogs written in the WordPress admin (Acadvizen CMS plugin). Only consulted when no Main
+// (Supabase) blog exists for the slug, so existing Main blogs always keep their address.
+async function fetchWordPressBlog(slug) {
+  const blog = await fetchWordPressBlogBySlugForMain(slug)
+  if (!blog) return null
+  const related = await fetchPublishedPublicBlogs({ limit: 3 }).catch(() => [])
+  return { blog, blocks: [], related }
+}
+
 async function getBlogData(slug) {
   const canonicalSlug = canonicalizeKnownBlogSlug(slug)
   const remote =
     (await fetchRemoteBlog(slug)) ||
-    (canonicalSlug && canonicalSlug !== slug ? await fetchRemoteBlog(canonicalSlug) : null)
+    (canonicalSlug && canonicalSlug !== slug ? await fetchRemoteBlog(canonicalSlug) : null) ||
+    (await fetchWordPressBlog(slug))
 
   if (!remote?.blog) {
     return { blog: null, related: [], blocks: [], toc: [], sections: [], readingMinutes: 1 }

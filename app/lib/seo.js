@@ -18,7 +18,9 @@ export function buildMetadata({
   const fullTitle = title ? (title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`) : SITE_NAME
 
   const metadata = {
-    title: fullTitle,
+    // Already ends with the site name: "absolute" stops the root layout's "%s | Acadvizen"
+    // template from adding it a second time ("About | Acadvizen | Acadvizen").
+    title: { absolute: fullTitle },
     description,
     alternates: {
       canonical: url,

@@ -19,6 +19,38 @@ try {
   configuredSupabaseOrigin = ''
 }
 
+// Images in blogs written in the WordPress admin (lib/wordpress) are served from that WordPress
+// host. Trust exactly that one origin, and only when the integration is configured.
+let wordpressImageOrigin = null
+try {
+  wordpressImageOrigin = process.env.WORDPRESS_CMS_API_URL ? new URL(process.env.WORDPRESS_CMS_API_URL) : null
+} catch {
+  wordpressImageOrigin = null
+}
+
+// Acadvizen Render Bridge (pages designed in Elementor, rendered by WordPress, served here).
+// Their assets and form endpoints are same-origin paths proxied to WordPress, so fonts, scripts
+// and forms work without cross-origin rules. Only enabled when the integration is configured.
+const wordpressBridgeEnabled = process.env.WORDPRESS_CONTENT_ENABLED === 'true' && Boolean(wordpressImageOrigin)
+// Must match lib/wordpress/staticAssets.js (videos and documents are loaded directly from WordPress).
+const WORDPRESS_STATIC_FILE = '(.*\\.(?:css|js|mjs|map|json|woff2?|ttf|otf|eot|svg|png|jpe?g|gif|webp|avif|ico))'
+// WordPress-rendered pages may keep a few absolute WordPress asset URLs (e.g. a plugin stylesheet
+// under /wp-admin/css). They come from our own WordPress, so its origin is allowed for those.
+const wordpressAssetOrigin = wordpressBridgeEnabled ? wordpressImageOrigin.origin : ''
+const bridgeEmbeds = wordpressBridgeEnabled
+  ? {
+      style: wordpressAssetOrigin,
+      script: `${wordpressAssetOrigin} https://www.youtube.com https://player.vimeo.com`,
+      frame: 'https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://maps.google.com',
+      img: 'https://i.ytimg.com https://i.vimeocdn.com',
+      // Elementor/Swiper ship icon fonts as data: URIs and some widgets use blob: workers.
+      font: `data: ${wordpressAssetOrigin}`,
+      worker: "worker-src 'self' blob:",
+      // Videos/audio in Elementor pages are loaded directly from WordPress.
+      media: `media-src 'self' ${wordpressAssetOrigin}`,
+    }
+  : { style: '', script: '', frame: '', img: '', font: '', worker: '', media: '' }
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -51,7 +83,27 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
       { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
+      ...(wordpressImageOrigin
+        ? [{ protocol: wordpressImageOrigin.protocol.replace(':', ''), hostname: wordpressImageOrigin.hostname, pathname: '/wp-content/uploads/**' }]
+        : []),
     ],
+  },
+  async rewrites() {
+    if (!wordpressBridgeEnabled) return { beforeFiles: [] }
+    const origin = wordpressImageOrigin.origin
+    // Render Bridge pages reference WordPress files and form endpoints under /_acv/… (the plugin
+    // rewrites them; see render-bridge.php). Vercel's platform protection denies any path that
+    // contains wp-content / wp-includes / wp-json / admin-ajax, so those names never appear here.
+    return {
+      beforeFiles: [
+        // Static files go through a CDN-cached route handler (an external rewrite is not cached
+        // by Vercel, so every visitor's request would reach WordPress and be rate-limited there).
+        { source: `/_acv/c/:path${WORDPRESS_STATIC_FILE}`, destination: '/api/wordpress/proxy/static/c/:path' },
+        { source: `/_acv/i/:path${WORDPRESS_STATIC_FILE}`, destination: '/api/wordpress/proxy/static/i/:path' },
+        { source: '/_acv/rest/:route*', destination: '/api/wordpress/proxy/rest/:route*' },
+        { source: '/_acv/ajax', destination: '/api/wordpress/proxy/ajax' },
+      ],
+    }
   },
   async headers() {
     return [
@@ -66,21 +118,30 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co https://*.vercel-insights.com https://www.googletagmanager.com https://connect.facebook.net https://www.google.com https://www.gstatic.com",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data: blob: https://*.supabase.co https://logo.clearbit.com https://images.unsplash.com https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://www.googletagmanager.com https://www.google-analytics.com https://www.facebook.com https://www.gstatic.com https://*.basemaps.cartocdn.com",
-              "font-src 'self' https://fonts.gstatic.com",
+              [
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co https://*.vercel-insights.com https://www.googletagmanager.com https://connect.facebook.net https://www.google.com https://www.gstatic.com",
+                bridgeEmbeds.script,
+              ].filter(Boolean).join(' '),
+              ["style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", bridgeEmbeds.style].filter(Boolean).join(' '),
+              [
+                "img-src 'self' data: blob: https://*.supabase.co https://logo.clearbit.com https://images.unsplash.com https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://www.googletagmanager.com https://www.google-analytics.com https://www.facebook.com https://www.gstatic.com https://*.basemaps.cartocdn.com",
+                wordpressImageOrigin?.origin,
+                bridgeEmbeds.img,
+              ].filter(Boolean).join(' '),
+              ["font-src 'self' https://fonts.gstatic.com", bridgeEmbeds.font].filter(Boolean).join(' '),
+              bridgeEmbeds.worker,
+              bridgeEmbeds.media,
               [
                 "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
                 configuredSupabaseOrigin,
                 "https://*.vercel-insights.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://connect.facebook.net https://www.facebook.com https://www.google.com",
               ].filter(Boolean).join(' '),
               // https://www.google.com/recaptcha/ - only reached when NEXT_PUBLIC_RECAPTCHA_SITE_KEY is configured (see components/cms/FormEmbedRenderer.jsx)
-              "frame-src 'self' https://*.supabase.co https://www.googletagmanager.com https://www.google.com",
+              ["frame-src 'self' https://*.supabase.co https://www.googletagmanager.com https://www.google.com", bridgeEmbeds.frame].filter(Boolean).join(' '),
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
-            ].join('; '),
+            ].filter(Boolean).join('; '),
           },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()' },
           { key: 'X-XSS-Protection', value: '1; mode=block' },

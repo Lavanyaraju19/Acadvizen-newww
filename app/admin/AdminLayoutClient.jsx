@@ -127,7 +127,7 @@ function isSessionAuthFailure(error) {
   )
 }
 
-export default function AdminLayoutClient({ children }) {
+export default function AdminLayoutClient({ children, wordpress = null }) {
   const pathname = usePathname()
   const router = useRouter()
   const { signOut } = useAuth()
@@ -543,6 +543,21 @@ export default function AdminLayoutClient({ children }) {
           automated interaction) clear of the sticky header above - without it, an element right
           at the scroll boundary can end up rendered directly under the sticky header's hit area. */}
       <div data-admin-root className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 scroll-mt-28 [&_*]:scroll-mt-28">
+        {wordpress ? (
+          <div role="note" data-wordpress-owned className="mb-6 rounded-2xl border border-amber-300/30 bg-amber-300/10 px-5 py-4 text-sm text-amber-100">
+            <strong className="font-semibold">Website pages, design and content are edited in WordPress.</strong>{' '}
+            Pages, courses, locations, tools, blogs, header, footer, menus and SEO are managed in the Acadvizen Master Admin; changes saved here are refused.
+            Leads, students, users, LMS and media stay here.
+            {wordpress.adminUrl ? (
+              <>
+                {' '}
+                <a href={wordpress.adminUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-amber-50 underline">
+                  Open WordPress
+                </a>
+              </>
+            ) : null}
+          </div>
+        ) : null}
         {children}
       </div>
     </div>

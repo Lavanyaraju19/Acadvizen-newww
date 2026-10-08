@@ -13,6 +13,8 @@ export function ContactPage() {
     message: '',
   })
   const [submitted, setSubmitted] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
   const [pageSections, setPageSections] = useState({})
 
   useEffect(() => {
@@ -47,8 +49,42 @@ export function ContactPage() {
   const formCta = parseJson(formSection.cta_json, {})
   const officeImages = parseJson(officeSection.items_json, [])
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
+    if (saving) return
+    // Saved to Admin → Leads like every other lead form (the enquiry used to be discarded).
+    setSaving(true)
+    setError('')
+    // A request that hangs is reported instead of leaving the button on "Sending..." for ever.
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 20000)
+    try {
+      const res = await fetch('/api/cms/leads', {
+        signal: controller.signal,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: formData.fullName.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          page_slug: '/contact',
+          source: 'website',
+          form_type: 'contact',
+          payload: { message: formData.message.trim(), experience_level: formData.experienceLevel },
+        }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!json?.success) throw new Error(json?.error || 'Unable to submit right now. Please try again.')
+    } catch (err) {
+      setError(err?.name === 'AbortError'
+        ? 'The request took too long. Please check your connection and try again.'
+        : err?.message || 'Unable to submit right now. Please try again.')
+      setSaving(false)
+      return
+    } finally {
+      clearTimeout(timer)
+    }
+    setSaving(false)
     trackLead(
       {
         content_name: 'Contact Page Form',
@@ -90,7 +126,7 @@ export function ContactPage() {
           {formSection.title && <h2 className="text-xl font-semibold text-slate-100 mb-6">{formSection.title}</h2>}
           {submitted ? (
             <div className="p-4 rounded-lg border border-emerald-400/20 bg-emerald-400/10 text-emerald-200">
-              {formSection.body}
+              {formSection.body || 'Thank you for your message! We will get back to you soon.'}
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -167,11 +203,17 @@ export function ContactPage() {
                   className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition focus:border-teal-300/40 focus:ring-2 focus:ring-teal-300/15"
                 />
               </div>
+              {error ? (
+                <p role="alert" className="text-sm text-rose-300">
+                  {error}
+                </p>
+              ) : null}
               <button
                 type="submit"
-                className="w-full rounded-xl bg-teal-300 px-6 py-3 text-sm font-semibold text-slate-950 transition-transform hover:-translate-y-0.5 hover:bg-teal-200"
+                disabled={saving}
+                className="w-full rounded-xl bg-teal-300 px-6 py-3 text-sm font-semibold text-slate-950 transition-transform hover:-translate-y-0.5 hover:bg-teal-200 disabled:opacity-60"
               >
-                {formCta.submit_label || 'Send Message'}
+                {saving ? 'Sending...' : formCta.submit_label || 'Send Message'}
               </button>
             </form>
           )}

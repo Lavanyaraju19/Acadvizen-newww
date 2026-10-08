@@ -1,0 +1,30 @@
+/* Acadvizen CMS — loaded only on the plugin's own admin screens. */
+
+.acv-cms-targets { margin: 0; padding: 0; border: 0; }
+.acv-cms-target { display: block; padding: 8px 0; border-bottom: 1px solid #f0f0f1; }
+.acv-cms-target:last-child { border-bottom: 0; }
+.acv-cms-target .description { display: block; margin: 4px 0 0 24px; }
+.acv-cms-note { margin-top: 10px; padding: 8px; background: #f0f6fc; border-left: 3px solid #2271b1; }
+.acv-cms-status-box { margin-top: 10px; }
+
+.acv-cms-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; line-height: 1.6; }
+.acv-cms-badge--ok { background: #edfaef; color: #0a6b1d; }
+.acv-cms-badge--error { background: #fcf0f1; color: #b32d2e; font-weight: 600; }
+.acv-cms-badge--pending { background: #fcf9e8; color: #8a6d00; }
+.acv-cms-badge--muted { background: #f6f7f7; color: #50575e; }
+
+.acv-cms-notice--conflict { border-left-width: 6px; }
+.acv-cms-notice--conflict p:first-child { font-size: 15px; }
+
+.acv-cms-dashboard .acv-cms-lead { font-size: 14px; max-width: 760px; }
+.acv-cms-cards { display: flex; flex-wrap: wrap; gap: 16px; margin: 16px 0 24px; }
+.acv-cms-card { flex: 1 1 320px; max-width: 520px; padding: 4px 16px 12px; background: #fff; border: 1px solid #dcdcde; }
+.acv-cms-address code { font-size: 13px; }
+
+/* Master Admin (site documents) */
+.acv-cms-wide { max-width: 1060px; margin-top: 8px; }
+.acv-cms-advanced { margin-top: 10px; padding-top: 8px; border-top: 1px solid #f0f0f1; }
+.acv-cms-advanced summary { cursor: pointer; font-weight: 600; }
+.acv-cms-advanced label { display: block; margin: 6px 0; }
+.acv-cms-status-box .acv-cms-badge { margin-bottom: 4px; }
+.column-acv_site_status .acv-cms-badge { white-space: normal; }

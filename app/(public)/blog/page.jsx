@@ -5,6 +5,8 @@ import { fetchCmsSiteData } from '../../../lib/cmsServer'
 import { buildCmsPageMetadata } from '../../lib/cmsPageRoute'
 import { fetchPublishedPublicBlogs } from '../../../lib/publicBlogData'
 import EditorialBlogIndex from '../../../components/blog/EditorialBlogIndex'
+import { fetchWordPressBlogsForMain } from '../../../lib/wordpress/blogs'
+import { mergeBlogLists } from '../../../lib/wordpress/blogPrecedence'
 
 export async function generateMetadata() {
   return buildCmsPageMetadata('blog', '/blog', {
@@ -14,10 +16,14 @@ export async function generateMetadata() {
 }
 
 async function fetchBlogs() {
-  return fetchPublishedPublicBlogs({
-    select: 'id,slug,title,description,featured_image,published_at,created_at,status,tags,categories,author',
-    limit: 100,
-  })
+  const [mainBlogs, wordpressBlogs] = await Promise.all([
+    fetchPublishedPublicBlogs({
+      select: 'id,slug,title,description,featured_image,published_at,created_at,status,tags,categories,author',
+      limit: 100,
+    }),
+    fetchWordPressBlogsForMain(),
+  ])
+  return mergeBlogLists(mainBlogs, wordpressBlogs)
 }
 
 function formatDisplayDate(value) {

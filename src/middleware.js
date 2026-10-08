@@ -1,4 +1,67 @@
 import { NextResponse } from 'next/server'
+import { getWordPressConfig } from '../lib/wordpress/config.js'
+import { decideBridgeRoute, normalizeBridgePath } from '../lib/wordpress/bridgeRouting.js'
+import { INTERNAL_HEADER, PATH_HEADER, deriveInternalToken } from '../lib/wordpress/internalToken.js'
+import { OWNED_CONTENT_MESSAGE, isWordPressOwnedWrite, isWordPressOwnershipEnabled } from '../lib/wordpress/contentOwnership.js'
+
+// Acadvizen Render Bridge: pages designed in Elementor and published to the Main Website from
+// WordPress are served by app/wp-render (an internal rewrite, so the address stays the same).
+// The list of such pages is memoised per middleware instance for 30 seconds; page contents are
+// refreshed immediately by the signed publish webhook.
+const BRIDGE_MANIFEST_TTL_MS = 30_000
+let bridgeManifestMemo = { at: 0, value: null, pending: null }
+
+async function getBridgeManifest(request) {
+  const config = getWordPressConfig()
+  if (!config.enabled || !config.secret) return null
+  if (bridgeManifestMemo.at && Date.now() - bridgeManifestMemo.at < BRIDGE_MANIFEST_TTL_MS) {
+    return bridgeManifestMemo.value
+  }
+  if (!bridgeManifestMemo.pending) {
+    const load = async () => {
+      try {
+        const token = await deriveInternalToken(config.secret)
+        // A protected Vercel preview (the staging Main Website) also challenges its own
+        // server-side requests; Vercel provides this secret when automation bypass is enabled.
+        const bypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+        const response = await fetch(new URL('/api/wordpress/bridge-manifest', request.url), {
+          headers: { [INTERNAL_HEADER]: token, ...(bypass ? { 'x-vercel-protection-bypass': bypass } : {}) },
+          cache: 'no-store',
+        })
+        const json = response.ok ? await response.json() : null
+        return json?.manifest || null
+      } catch {
+        return null
+      }
+    }
+    // A new instance's first lookup can fail while the manifest route itself is starting up; one
+    // retry avoids serving that visitor the pre-WordPress page. A failed lookup is not memoised,
+    // so the next request tries again instead of skipping WordPress for the whole TTL.
+    bridgeManifestMemo.pending = load()
+      .then((value) => value || load())
+      .then((value) => {
+        bridgeManifestMemo = value
+          ? { at: Date.now(), value, pending: null }
+          : { at: 0, value: bridgeManifestMemo.value, pending: null }
+        return value || bridgeManifestMemo.value
+      })
+  }
+  return bridgeManifestMemo.pending
+}
+
+async function bridgeResponse(request, pathname, decision) {
+  if (decision.action === 'redirect') {
+    return NextResponse.redirect(new URL(decision.to, request.url), 301)
+  }
+  if (decision.action !== 'bridge') return null
+  const config = getWordPressConfig()
+  const url = new URL('/wp-render', request.url)
+  url.search = ''
+  const headers = new Headers(request.headers)
+  headers.set(INTERNAL_HEADER, await deriveInternalToken(config.secret))
+  headers.set(PATH_HEADER, normalizeBridgePath(pathname))
+  return NextResponse.rewrite(url, { request: { headers } })
+}
 
 // These two checks must reflect admin changes (a newly created redirect, a just-published/
 // unpublished page) immediately - the CMS test suite enforces zero-tolerance immediate
@@ -135,6 +198,14 @@ export default async function middleware(request) {
   const { pathname, search } = request.nextUrl
   const method = request.method.toUpperCase()
 
+  // Public content managed in WordPress: the Main Website's own /admin may not change it.
+  if (pathname.startsWith('/api/cms/')) {
+    if (isWordPressOwnedWrite({ method, pathname, enabled: isWordPressOwnershipEnabled() })) {
+      return NextResponse.json({ error: OWNED_CONTENT_MESSAGE, managed_in: 'wordpress' }, { status: 423 })
+    }
+    return NextResponse.next()
+  }
+
   if (!['GET', 'HEAD'].includes(method)) {
     return NextResponse.next()
   }
@@ -143,6 +214,8 @@ export default async function middleware(request) {
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/admin') ||
+    /^\/wp-(content|includes|json|admin)(\/|$)/.test(pathname) ||
+    pathname.startsWith('/_acv/') ||
     pathname === '/favicon.ico' ||
     pathname === '/robots.txt' ||
     pathname === '/sitemap.xml'
@@ -152,17 +225,28 @@ export default async function middleware(request) {
 
   try {
     // Independent lookups - resolve them concurrently instead of one after another.
-    const [cmsPrivacy, redirectRule] = await Promise.all([
+    const [cmsPrivacy, redirectRule, bridgeManifest] = await Promise.all([
       fetchCmsPagePrivacy(pathname),
       fetchPublicRedirect(pathname),
+      getBridgeManifest(request),
     ])
+
+    const bridgeDecision = decideBridgeRoute({
+      pathname,
+      manifest: bridgeManifest,
+      mainPageExists: Boolean(cmsPrivacy?.exists),
+    })
+    // An administrator explicitly chose to replace the existing Main page at this address.
+    if (bridgeDecision.action === 'bridge' && bridgeDecision.entry.replace) {
+      return bridgeResponse(request, pathname, bridgeDecision)
+    }
 
     if (cmsPrivacy?.exists && !cmsPrivacy.published) {
       return cmsNotFoundResponse()
     }
 
     if (!redirectRule?.toPath || redirectRule.toPath === pathname) {
-      return NextResponse.next()
+      return (await bridgeResponse(request, pathname, bridgeDecision)) || NextResponse.next()
     }
 
     const forwardedProto = request.headers.get('x-forwarded-proto')
@@ -190,5 +274,11 @@ export default async function middleware(request) {
 // matcher level (matching what the function already does with its own early-return checks)
 // means POST bodies to /api and /admin routes never pass through middleware's buffering at all.
 export const config = {
-  matcher: ['/((?!api|admin|_next/static|_next/image|favicon.ico).*)'],
+  // _acv: WordPress files and form endpoints proxied by next.config.mjs rewrites for Render Bridge
+  // pages (wp-* paths are denied by Vercel's platform protection); they never need these lookups.
+  matcher: [
+    '/((?!api|admin|_next/static|_next/image|favicon.ico|_acv/|wp-content|wp-includes|wp-json|wp-admin).*)',
+    // Content-authoring CMS APIs only (single source of truth); never uploads, media or leads.
+    '/api/cms/((?!upload|media|import-export|leads|users|audit-log|health|revalidate|forms).*)',
+  ],
 }

@@ -14,9 +14,10 @@ function isTrackedPublicPath(pathname = '') {
   return !EXCLUDED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
 }
 
-export default function MetaPixel() {
+// allowed: false on preview deployments (decided on the server, lib/analyticsConfig.js).
+export default function MetaPixel({ allowed = true }) {
   const pathname = usePathname() || ''
-  const enabled = isTrackedPublicPath(pathname)
+  const enabled = allowed && isTrackedPublicPath(pathname)
 
   // Deliberately not next/navigation's useSearchParams(): that hook requires the
   // component to sit inside a <Suspense> boundary, and Suspense anywhere in the

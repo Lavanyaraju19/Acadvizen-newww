@@ -6,6 +6,7 @@ import Providers from './providers'
 import MetaPixel from '../components/MetaPixel'
 import { siteConfig } from './lib/seo'
 import { validateSupabaseConfig } from '../lib/env'
+import { GA_ID, GTM_ID, isAnalyticsEnabled, isMetaPixelEnabled } from '../lib/analyticsConfig'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -72,11 +73,7 @@ export const viewport = {
 }
 
 export default function RootLayout({ children }) {
-  const GA_ID = 'G-XHHL082QEE'
-  const GTM_ID = 'GTM-T6Q5DK5C'
-  const analyticsEnabled =
-    process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true' ||
-    siteConfig.siteUrl === 'https://acadvizen.com'
+  const analyticsEnabled = isAnalyticsEnabled(siteConfig.siteUrl)
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -200,7 +197,7 @@ gtag('config', '${GA_ID}');`}
           </>
         ) : null}
         <Suspense fallback={null}>
-          <MetaPixel />
+          <MetaPixel allowed={isMetaPixelEnabled()} />
         </Suspense>
         <script
           id="schema-organization"
