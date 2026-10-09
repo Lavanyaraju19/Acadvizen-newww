@@ -156,7 +156,11 @@ No import runs until the production size and a backup are confirmed.
 3. **CMS address:** remove `cms.acadvizen.com` from the Enrollment website in hPanel and the two `ACADVIZEN_CMS_*_URL` constants from `wp-config.php`.
 4. **Database:** restore the hPanel backup.
 
-A rollback has **not** been exercised on production. Promoting a previous deployment is Vercel's standard one-step operation; it was not run because the live site works.
+**Rollback readiness** (PRODUCTION, 9 October):
+- `dpl_Axdg9QLftFyTUBY5HuKiXtLui3RD` (`a8cc4d5`) is READY, built for production.
+- Its own deployment address serves `/`, `/about` and `/contact` with 200.
+
+Production has **not** been switched to it as a test. Doing so would bring back the defect where the contact form discarded enquiries, for the length of the test.
 
 ## 10. Test cleanup
 
