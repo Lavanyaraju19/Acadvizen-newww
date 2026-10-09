@@ -78,7 +78,10 @@ export function ContactPage() {
     } catch (err) {
       setError(err?.name === 'AbortError'
         ? 'The request took too long. Please check your connection and try again.'
-        : err?.message || 'Unable to submit right now. Please try again.')
+        // A network failure (fetch's TypeError, e.g. "Failed to fetch") gets a readable message.
+        : err instanceof TypeError
+          ? 'We could not reach the server. Please check your connection and try again.'
+          : err?.message || 'Unable to submit right now. Please try again.')
       setSaving(false)
       return
     } finally {
