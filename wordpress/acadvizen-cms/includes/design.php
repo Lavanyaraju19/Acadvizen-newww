@@ -656,12 +656,17 @@ function print_read_more_script(): void {
  */
 const SITEMAP_EXCLUDED_TYPES = array( 'elementor-hf', 'elementor_library', 'popupkit-campaigns', 'metform-form', 'wpr_mega_menu', 'e-floating-buttons' );
 
+/** Types left out of this website's sitemaps: always the Main-only types; the internals only with SITEMAP_CLEANUP. */
+function sitemap_excluded_types(): array {
+	return feature_enabled( 'SITEMAP_CLEANUP' ) ? array_merge( MAIN_ONLY_TYPES, SITEMAP_EXCLUDED_TYPES ) : MAIN_ONLY_TYPES;
+}
+
 function exclude_main_only_types_from_rank_math( $exclude, $type ) {
-	return in_array( $type, MAIN_ONLY_TYPES, true ) || in_array( $type, SITEMAP_EXCLUDED_TYPES, true ) ? true : $exclude;
+	return in_array( $type, sitemap_excluded_types(), true ) ? true : $exclude;
 }
 
 function exclude_main_only_types_from_core_sitemap( array $post_types ): array {
-	foreach ( array_merge( MAIN_ONLY_TYPES, SITEMAP_EXCLUDED_TYPES ) as $type ) {
+	foreach ( sitemap_excluded_types() as $type ) {
 		unset( $post_types[ $type ] );
 	}
 	return $post_types;

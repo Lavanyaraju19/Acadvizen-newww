@@ -47,6 +47,20 @@ docs/ACADVIZEN_MASTER_ADMIN.md in the Main Website repository.
     // optional: ACADVIZEN_CMS_MAIN_INTERNAL_URL, ACADVIZEN_CMS_LOOPBACK_URL,
     //           ACADVIZEN_CMS_MAIN_BYPASS_TOKEN (staging: protected Vercel preview)
 
+Optional features change what the Enrollment website already does, so they are off until set to
+true (Master Admin > Settings shows their state):
+
+    define( 'ACADVIZEN_CMS_SITE_TEMPLATES', true );  // headers/footers/Theme Builder templates follow "Publish To"
+    define( 'ACADVIZEN_CMS_SITEMAP_CLEANUP', true ); // drop builder internals from sitemaps; restore lost Rank Math rules
+    define( 'ACADVIZEN_CMS_LOGIN_BRANDING', true );  // login logo reads "Acadvizen", links to the Main Website
+
+Without SITE_TEMPLATES every website uses the header and footer that Header Footer Elementor /
+Elementor Pro choose today: turn it on before a Main-only or Enrollment-only template is used.
+Main-only content (tools, Main blogs) is always kept out of this website's sitemaps.
+
+Activation and deactivation rebuild the rewrite rules saved in the database only (soft flush);
+the plugin never writes .htaccess.
+
 Production isolation: only enroll.acadvizen.com may use acadvizen.com / www.acadvizen.com as
 the Main Website. A copy (e.g. staging cms.acadvizen.com) configured with a production Main
 address is treated as not connected and sends nothing there.

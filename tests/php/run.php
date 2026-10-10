@@ -78,6 +78,10 @@ namespace {
 		if ( ! function_exists( 'flush_rewrite_rules' ) ) {
 			function flush_rewrite_rules( $hard = true ) { $GLOBALS['acv_flushes'][] = $hard; }
 		}
+		if ( ! function_exists( 'add_filter' ) ) {
+			function add_filter( $hook, $callback, $priority = 10, $args = 1 ) { $GLOBALS['acv_hooks'][] = $hook; return true; }
+			function add_action( $hook, $callback, $priority = 10, $args = 1 ) { $GLOBALS['acv_hooks'][] = $hook; return true; }
+		}
 		function add_option( $name, $value = '', $deprecated = '', $autoload = null ) { if ( isset( $GLOBALS['acv_options'][ $name ] ) ) { return false; } $GLOBALS['acv_options'][ $name ] = $value; return true; }
 		function delete_post_meta( $id, $key ) { return true; }
 		function __( $text, $domain = '' ) { return $text; }
@@ -335,7 +339,27 @@ namespace Acadvizen\CMS {
 	check( 'import lock: a lock left by a step that died is taken over', true, acquire_import_lock() );
 	unset( $GLOBALS['acv_options'][ IMPORT_LOCK_OPTION ] );
 
-	// Sitemaps leave out page-builder internals (live Enrollment listed /elementor-hf/header/ etc.).
+	// Optional features are off until wp-config.php turns them on: a first install leaves
+	// Enrollment's header/footer choice, sitemaps and login screen as they were.
+	$GLOBALS['acv_hooks'] = array();
+	register_optional_features();
+	check( 'optional features: none registered by default', array(), $GLOBALS['acv_hooks'] );
+	check( 'optional features: unknown name is off', false, feature_enabled( 'WEBHOOK_SECRET' ) );
+	check( 'sitemap (default): builder internals stay in Rank Math', false, exclude_main_only_types_from_rank_math( false, 'elementor-hf' ) );
+	check( 'sitemap (default): Main-only tools still left out', true, exclude_main_only_types_from_rank_math( false, 'acv_tool' ) );
+	check( 'sitemap (default): core sitemap keeps internals, drops Main-only types', array( 'page', 'elementor-hf' ), array_keys( exclude_main_only_types_from_core_sitemap( array( 'page' => 1, 'elementor-hf' => 1, 'acv_blog' => 1 ) ) ) );
+	define( 'ACADVIZEN_CMS_SITE_TEMPLATES', true );
+	define( 'ACADVIZEN_CMS_SITEMAP_CLEANUP', true );
+	define( 'ACADVIZEN_CMS_LOGIN_BRANDING', true );
+	register_optional_features();
+	check(
+		'optional features: turned on, each registers its hooks',
+		array( 'hfe_get_settings_type_header', 'hfe_get_settings_type_footer', 'hfe_get_settings_type_before_footer', 'elementor/theme/get_location_templates/template_id', 'wp_loaded', 'login_headerurl', 'login_headertext' ),
+		$GLOBALS['acv_hooks']
+	);
+	unset( $GLOBALS['acv_hooks'] );
+
+	// With SITEMAP_CLEANUP: sitemaps leave out page-builder internals (live Enrollment listed /elementor-hf/header/ etc.).
 	foreach ( array( 'elementor-hf', 'popupkit-campaigns', 'metform-form', 'wpr_mega_menu' ) as $internal ) {
 		check( "sitemap: {$internal} left out of Rank Math", true, exclude_main_only_types_from_rank_math( false, $internal ) );
 	}

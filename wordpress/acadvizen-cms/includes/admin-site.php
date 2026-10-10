@@ -524,6 +524,7 @@ function render_settings_page(): void {
 		__( 'Shared secret', 'acadvizen-cms' )           => strlen( webhook_secret() ) >= MIN_SECRET_LENGTH ? __( 'Set', 'acadvizen-cms' ) : __( 'Missing or too short (ACADVIZEN_CMS_WEBHOOK_SECRET, at least 32 characters)', 'acadvizen-cms' ),
 		__( 'Rendering address', 'acadvizen-cms' )       => loopback_base(),
 		__( 'Background jobs (WP-Cron)', 'acadvizen-cms' ) => ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) ? __( 'Run by a server cron job', 'acadvizen-cms' ) : __( 'Run by WordPress on page visits', 'acadvizen-cms' ),
+		__( 'Optional features', 'acadvizen-cms' )       => implode( ', ', array_map( static fn( $feature ) => $feature . ( feature_enabled( $feature ) ? ' on' : ' off' ), OPTIONAL_FEATURES ) ),
 		__( 'Plugin version', 'acadvizen-cms' )          => VERSION,
 	);
 	?>

@@ -61,11 +61,9 @@ add_action( 'pre_get_posts', __NAMESPACE__ . '\\exclude_main_only_from_queries' 
 add_filter( 'redirect_canonical', __NAMESPACE__ . '\\block_canonical_redirect_to_main_only' );
 add_filter( 'wp_sitemaps_posts_query_args', __NAMESPACE__ . '\\exclude_main_only_from_core_sitemap' );
 add_filter( 'rank_math/sitemap/entry', __NAMESPACE__ . '\\exclude_main_only_from_rank_math_sitemap', 10, 3 );
-foreach ( array( 'type_header', 'type_footer', 'type_before_footer' ) as $hfe_type ) {
-	add_filter( "hfe_get_settings_{$hfe_type}", static fn( $template ) => pick_hfe_template_for_site( $template, $hfe_type ) );
-}
-// Elementor Pro Theme Builder templates (header, footer, single, archive, popup, …) per website.
-add_filter( 'elementor/theme/get_location_templates/template_id', __NAMESPACE__ . '\\pick_theme_builder_template_for_site', 10, 2 );
+// Header/footer choice per website, sitemap clean-up and login branding: off unless wp-config.php
+// turns them on (config.php, OPTIONAL_FEATURES).
+register_optional_features();
 
 /* Designs for Main Website content (design.php) --------------------------------------------- */
 add_filter( 'the_content', __NAMESPACE__ . '\render_design_template_content', 99 );
@@ -77,9 +75,6 @@ add_action( 'wp_head', __NAMESPACE__ . '\print_imported_json_ld', 101 );
 add_filter( 'rank_math/json_ld', __NAMESPACE__ . '\main_json_ld_replaces_rank_math', 999 );
 add_filter( 'rank_math/sitemap/exclude_post_type', __NAMESPACE__ . '\exclude_main_only_types_from_rank_math', 10, 2 );
 add_filter( 'wp_sitemaps_post_types', __NAMESPACE__ . '\exclude_main_only_types_from_core_sitemap' );
-add_action( 'wp_loaded', __NAMESPACE__ . '\restore_missing_sitemap_rules' );
-add_filter( 'login_headerurl', __NAMESPACE__ . '\login_logo_url' );
-add_filter( 'login_headertext', __NAMESPACE__ . '\login_logo_text' );
 
 /* Elementor ---------------------------------------------------------------------------------- */
 add_action( 'elementor/documents/register_controls', __NAMESPACE__ . '\\register_elementor_controls' );
@@ -162,13 +157,15 @@ if ( is_admin() ) {
 }
 
 /* Lifecycle ---------------------------------------------------------------------------------- */
+// Rewrite rules are rebuilt softly (the saved rules in the database only): .htaccess is never
+// written by this plugin.
 register_activation_hook(
 	__FILE__,
 	static function () {
 		install_versions_table();
 		register_post_type_and_meta();
 		register_content_types();
-		flush_rewrite_rules();
+		flush_rewrite_rules( false );
 		// Twice-daily refresh (keeps dynamic widgets fresh and WordPress form nonces in published
 		// pages valid: a nonce is valid for 12–24 hours) and the hourly stalled-publish check.
 		ensure_recurring_jobs();
@@ -179,6 +176,6 @@ register_deactivation_hook(
 	static function () {
 		wp_clear_scheduled_hook( DAILY_REFRESH_HOOK );
 		wp_clear_scheduled_hook( STALL_CHECK_HOOK );
-		flush_rewrite_rules();
+		flush_rewrite_rules( false );
 	}
 );

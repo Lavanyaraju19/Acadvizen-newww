@@ -15,6 +15,42 @@ if ( ! defined( 'ABSPATH' ) ) {
 const MIN_SECRET_LENGTH = 32;
 
 /**
+ * Behaviour that changes what the Enrollment website already does. Off until wp-config.php turns
+ * it on with define( 'ACADVIZEN_CMS_<NAME>', true ), so installing the plugin leaves those parts
+ * of Enrollment exactly as they were:
+ *   SITEMAP_CLEANUP - page-builder internals (header/footer templates, popups, forms, mega menus)
+ *                     are left out of the sitemaps, and Rank Math's sitemap rules are restored
+ *                     when they go missing from the saved rewrite rules;
+ *   LOGIN_BRANDING  - the login screen's logo reads "Acadvizen" and links to the Main Website;
+ *   SITE_TEMPLATES  - headers, footers and Theme Builder templates follow their "Publish To"
+ *                     (a Main-only header is skipped on Enrollment, an Enrollment-only one on Main).
+ */
+const OPTIONAL_FEATURES = array( 'SITEMAP_CLEANUP', 'LOGIN_BRANDING', 'SITE_TEMPLATES' );
+
+function feature_enabled( string $feature ): bool {
+	$feature = strtoupper( $feature );
+	return in_array( $feature, OPTIONAL_FEATURES, true ) && defined( 'ACADVIZEN_CMS_' . $feature ) && true === constant( 'ACADVIZEN_CMS_' . $feature );
+}
+
+/** Hooks of the optional features that wp-config.php turned on (called once while the plugin loads). */
+function register_optional_features(): void {
+	if ( feature_enabled( 'SITE_TEMPLATES' ) ) {
+		foreach ( array( 'type_header', 'type_footer', 'type_before_footer' ) as $hfe_type ) {
+			add_filter( "hfe_get_settings_{$hfe_type}", static fn( $template ) => pick_hfe_template_for_site( $template, $hfe_type ) );
+		}
+		// Elementor Pro Theme Builder templates (header, footer, single, archive, popup, …) per website.
+		add_filter( 'elementor/theme/get_location_templates/template_id', __NAMESPACE__ . '\\pick_theme_builder_template_for_site', 10, 2 );
+	}
+	if ( feature_enabled( 'SITEMAP_CLEANUP' ) ) {
+		add_action( 'wp_loaded', __NAMESPACE__ . '\\restore_missing_sitemap_rules' );
+	}
+	if ( feature_enabled( 'LOGIN_BRANDING' ) ) {
+		add_filter( 'login_headerurl', __NAMESPACE__ . '\\login_logo_url' );
+		add_filter( 'login_headertext', __NAMESPACE__ . '\\login_logo_text' );
+	}
+}
+
+/**
  * Production isolation: only the production Enrollment website may talk to the production Main
  * Website. A copy of it (staging, e.g. cms.acadvizen.com) that still carries a production Main
  * address is treated as "not connected", so it can never notify, revalidate or link production.
