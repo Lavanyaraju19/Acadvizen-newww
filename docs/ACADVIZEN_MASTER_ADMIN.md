@@ -1,8 +1,12 @@
 # Acadvizen Master Admin and Elementor Render Bridge
 
-One WordPress and one `/wp-admin/` manage both websites. The Enrollment website is that WordPress's public address (enroll.acadvizen.com); the Master CMS is its admin address (`https://cms.acadvizen.com/wp-admin/`, section 1). The administrator designs with Elementor, chooses **Publish To** (Enrollment, Main or Both) and publishes. Pages for www.acadvizen.com are rendered by WordPress and Elementor. Next.js serves the result at the page's own address; it never re-creates Elementor widgets.
+One WordPress and one `/wp-admin/` manage both websites: the Enrollment WordPress at `https://enroll.acadvizen.com/wp-admin/`. Optionally it can also be reached at a second admin address, `https://cms.acadvizen.com/wp-admin/` (section 1); the first production install does not need it. The administrator designs with Elementor, chooses **Publish To** (Enrollment, Main or Both) and publishes. Pages for www.acadvizen.com are rendered by WordPress and Elementor. Next.js serves the result at the page's own address; it never re-creates Elementor widgets.
 
-> **Status (2026-10-03).** Verified end to end on staging: `cms.acadvizen.com` (a copy of enroll) publishing to a Vercel preview of this branch. The stack is WordPress 7.0.6, Astra 4.13.6, Elementor 4.3.3, Elementor Pro, Header Footer Elementor, Max Mega Menu, Contact Form 7 and Rank Math. **Not yet deployed to production**; see section 11. Section 14 has the verification record.
+> **Status (2026-10-10).** Verified end to end on staging: `cms.acadvizen.com` (a copy of enroll) publishing to a Vercel preview of this branch. The stack is WordPress 7.0.6, Astra 4.13.6, Elementor 4.3.3, Elementor Pro, Header Footer Elementor, Max Mega Menu, Contact Form 7 and Rank Math.
+>
+> **Production:** the plugin is **not installed** on enroll.acadvizen.com, and the integration is off on Main. The first-install package is `dist/acadvizen-cms-0.3.0-f0d54ff/acadvizen-cms.zip` (built and verified by `node tools/build-cms-plugin.mjs`). In it, the optional features that change existing Enrollment behaviour are off (section 6), and activation never writes `.htaccess`.
+>
+> Current state and owner actions: `docs/ACADVIZEN_CLIENT_HANDOVER.md`. Section 14 here has the staging verification record.
 
 ## 1. Architecture
 
@@ -149,6 +153,8 @@ A page an administrator rolled back keeps its version until it is edited again.
 
 Both can be given a Publish To target. A template set to "Main" is skipped on enroll and used on Main; "Enrollment" works the other way round; "Both" (the default for every existing template) applies everywhere. This was verified on staging with a Theme Builder footer in both directions. Loop items are not location-based and simply render where they are used.
 
+**This needs `define( 'ACADVIZEN_CMS_SITE_TEMPLATES', true );`** (section 6). Without it, every website uses the template that Header Footer Elementor or Elementor Pro choose today. The Publish To box still shows on templates but has no effect. Turn it on before creating a Main-only or Enrollment-only header or footer.
+
 ### Structured content
 
 - **Courses and Locations** are Elementor-designed pages with a Publish To target and detail fields (`[acv_course_details]`, `[acv_location_details]`).
@@ -245,13 +251,22 @@ define( 'ACADVIZEN_CMS_WEBHOOK_SECRET', '<random, at least 32 characters>' );
 // define( 'ACADVIZEN_CMS_MAIN_INTERNAL_URL', 'https://…' ); // server-to-server address of Main, if different
 // define( 'ACADVIZEN_CMS_LOOPBACK_URL', 'http://127.0.0.1' ); // if the site cannot request its own public URL
 // define( 'ACADVIZEN_CMS_MAIN_BYPASS_TOKEN', '…' ); // staging only: Vercel "Protection Bypass for Automation" secret of a protected preview
-// The Master CMS address and the public Enrollment address of this one WordPress
-// (with wordpress/mu-plugins/acadvizen-cms-hosts.php in wp-content/mu-plugins/):
-define( 'ACADVIZEN_CMS_ADMIN_URL', 'https://cms.acadvizen.com' );
-define( 'ACADVIZEN_CMS_PUBLIC_URL', 'https://enroll.acadvizen.com' );
+// Optional, only for a second admin address (with wordpress/mu-plugins/acadvizen-cms-hosts.php
+// in wp-content/mu-plugins/):
+// define( 'ACADVIZEN_CMS_ADMIN_URL', 'https://cms.acadvizen.com' );
+// define( 'ACADVIZEN_CMS_PUBLIC_URL', 'https://enroll.acadvizen.com' );
+
+// Optional features: they change what Enrollment already does, so they are off until set to true.
+// define( 'ACADVIZEN_CMS_SITE_TEMPLATES', true );  // headers/footers/Theme Builder templates follow Publish To
+// define( 'ACADVIZEN_CMS_SITEMAP_CLEANUP', true ); // builder internals out of the sitemaps; restore lost Rank Math rules hourly
+// define( 'ACADVIZEN_CMS_LOGIN_BRANDING', true );  // login logo reads "Acadvizen" and links to Main
 ```
 
 The WordPress Address and Site Address settings stay `enroll.acadvizen.com`.
+
+- Master Admin → Settings shows the state of each optional feature.
+- Main-only content (tools, Main blogs) is always kept out of Enrollment's sitemaps, whatever the flags.
+- Activation and deactivation rebuild only the rewrite rules saved in the database (soft flush). The plugin never writes `.htaccess`.
 
 **Production isolation (built in).** Only the website whose address is `enroll.acadvizen.com` may use `acadvizen.com` / `www.acadvizen.com` as its Main Website. On any other copy, such as the staging site `cms.acadvizen.com`, a production Main address is refused. The plugin then behaves as "not connected", sends no webhooks and links nothing to production, and Settings says why ("Blocked: …", Test connection `blocked_production_target`). This was verified live on staging on 2026-10-03, with zero requests to production hosts. Staging must point at a staging Main Website and use a different secret from production.
 
@@ -337,7 +352,7 @@ Enrollment, in `https://enroll.acadvizen.com/wp-admin/`:
    - Check: `https://enroll.acadvizen.com/sitemap_index.xml`, `/page-sitemap.xml` and `/post-sitemap.xml` return XML (200).
 2. **Sitemap lists page-builder internals** (`/elementor-hf/header/`, `/metform-form/blank-form/`, popups, mega-menu items).
    - Rank Math → Sitemap Settings → Post Types: turn off **Include in Sitemap** for Header Footer templates, PopupKit campaigns, MetForm forms and WPR mega menu.
-   - Once the Acadvizen Master Admin plugin is active, it leaves these out itself.
+   - Alternatively, with the plugin active and `ACADVIZEN_CMS_SITEMAP_CLEANUP` defined, the plugin leaves these out itself.
 3. **Redirects for renamed pages.** Rank Math → Redirections → Add New, type **301 Permanent**:
    - `/contact-us/` → `/digital-marketing-course-enquiry/` (the same page, #973, renamed). The site-wide footer still links to the old address on 60 pages.
    - `/advanced-digital-marketing-course-in-mangalore/` → `/ai-integrated-digital-marketing-course-in-mangalore/` (the current Mangalore page; the old page #6814 is now the RR Nagar page).
@@ -354,11 +369,10 @@ Enrollment, in `https://enroll.acadvizen.com/wp-admin/`:
 
 Main, in `https://www.acadvizen.com/admin`:
 
-8. **Test records published on the live site:**
-   - Courses → "Local E2E Course" (`courses`, slug `local-e2e-course-1779297401`) → unpublish;
-   - Tools → "Local E2E Tool" (`tools_extended`, slug `local-e2e-tool-1779297401`) → unpublish.
-   - Check: both addresses answer 404, and `/courses`, the city pages, `/tools` and `/sitemap.xml` no longer mention "Local E2E".
-   - The migration leaves them out regardless (records, menu links, cards and tiles).
+8. **Test records published on the live site. Done on 10 October 2026:**
+   - "Local E2E Course" (`courses`, slug `local-e2e-course-1779297401`) and "Local E2E Tool" (`tools_extended`, slug `local-e2e-tool-1779297401`) were unpublished in `/admin`.
+   - Neither is in `/sitemap.xml`, and no sitemap page mentions them.
+   - Their addresses answer 200 with a generic page, as every unknown slug does. The tool's page drops its name and becomes `noindex` once `930e29c` is deployed.
 9. **robots.txt:** Admin → Robots.txt → the Sitemap line → `https://www.acadvizen.com/sitemap.xml`. Today it names `https://acadvizen.com/api/cms/sitemap/generate`, which works after a redirect.
 
 **Phase A — Prepare (no visible change)**
@@ -373,7 +387,7 @@ Main, in `https://www.acadvizen.com/admin`:
    - After the backup, remove old revisions with a reviewed tool (for example WP-Optimize → "Clean all post revisions").
    - Add `define( 'WP_POST_REVISIONS', 10 );` to `wp-config.php`.
    - Continue only below 2.0 GB.
-4. **Free the address `cms.acadvizen.com` for production.** Today it is the staging copy.
+4. **(Optional: only for the second admin address.) Free the address `cms.acadvizen.com` for production.** Today it is the staging copy. Steps 4–5 can be skipped; the admin is then `https://enroll.acadvizen.com/wp-admin/`.
    - Move staging to its own address, for example `staging-cms.acadvizen.com`: hPanel → Websites → the staging site → change domain, or Copy Website to the new subdomain.
    - Then update `STAGING_HOST` in `wordpress/staging/acadvizen-staging-isolation.php`, the staging site's WordPress Address, and the staging Vercel preview's `WORDPRESS_CMS_API_URL`.
 5. **Give the production WordPress its CMS address.**
@@ -383,20 +397,23 @@ Main, in `https://www.acadvizen.com/admin`:
 
 **Phase B — WordPress (enroll)**
 
-6. **Upload** `wordpress/acadvizen-cms/` to `wp-content/plugins/` and `wordpress/mu-plugins/acadvizen-cms-hosts.php` to `wp-content/mu-plugins/`. Do **not** upload `wordpress/staging/`.
-7. **`wp-config.php`:** add the following, then activate "Acadvizen Master Admin":
+6. **Install the verified package.**
+   - Build it with `node tools/build-cms-plugin.mjs`, which prints the path and SHA-256. Compare the checksum before uploading.
+   - Plugins → Add New → Upload Plugin → `acadvizen-cms.zip` → **Activate**. Do **not** upload `wordpress/staging/`.
+   - The mu-plugin `wordpress/mu-plugins/acadvizen-cms-hosts.php` is needed only for the optional second admin address (step 7).
+
+   *Check, before any `wp-config.php` change:*
+   - `node tools/cms-api-smoke.mjs`: the namespace and 4 routes, the enquiry route, `/blogs`, and 4 refusals answering 401;
+   - enroll's pages, forms and `POST /wp-json/acadvizen/v1/enquiry` are unchanged: same status and title on every sitemap URL, and `node tools/verify-production.mjs` shows the same Enrollment results as before the install;
+   - Master Admin → Settings shows all three optional features off.
+7. **`wp-config.php`:** add
    - `ACADVIZEN_CMS_MAIN_URL` = `https://www.acadvizen.com`;
-   - a **new** `ACADVIZEN_CMS_WEBHOOK_SECRET` (32+ random characters, never the staging one);
-   - `ACADVIZEN_CMS_ADMIN_URL` = `https://cms.acadvizen.com`;
-   - `ACADVIZEN_CMS_PUBLIC_URL` = `https://enroll.acadvizen.com`.
+   - a **new** `ACADVIZEN_CMS_WEBHOOK_SECRET` (32+ random characters, generated locally, never the staging one, never sent in chat).
 
    Every existing page defaults to Enrollment.
-
-   *Check:*
-   - `https://cms.acadvizen.com/wp-admin/` logs in and stays on `cms`;
-   - `https://cms.acadvizen.com/` sends visitors to `enroll` and answers `X-Robots-Tag: noindex`;
-   - `https://enroll.acadvizen.com/wp-admin/` moves to `cms`;
-   - enroll's pages, forms and `POST /wp-json/acadvizen/v1/enquiry` are unchanged (the enroll inventory script: 61 sitemap URLs, same status and title).
+   - *Optional second admin address:* also the mu-plugin, plus `ACADVIZEN_CMS_ADMIN_URL` = `https://cms.acadvizen.com` and `ACADVIZEN_CMS_PUBLIC_URL` = `https://enroll.acadvizen.com`. This needs step 4 first.
+     - *Check:* `https://cms.acadvizen.com/wp-admin/` logs in and stays on `cms`; `https://cms.acadvizen.com/` sends visitors to `enroll` with `X-Robots-Tag: noindex`.
+   - *Check:* Master Admin → Settings: "Shared secret: Set".
 8. **Server cron.** hPanel → Advanced → Cron Jobs → every minute: `wget -q -O /dev/null https://enroll.acadvizen.com/wp-cron.php`. Keep WordPress's own cron enabled too, so a publish starts at once. *Check:* the cron log in hPanel shows a run every minute.
 9. **Enrollment logo → Main Website:** Templates → Header Footer Elementor → "Header" (#960) → Site Logo → Link: Custom URL `https://www.acadvizen.com/` → Publish. (Verified on staging.)
 
@@ -407,14 +424,13 @@ Main, in `https://www.acadvizen.com/admin`:
     - `WORDPRESS_CMS_WEBHOOK_SECRET`: the same new secret.
     - Leave `WORDPRESS_CONTENT_ENABLED` unset.
 
-    Deploy. This ships the title fix and the Meta pixel rule.
-    - The contact form starts saving enquiries to Admin → Leads (form type `contact`); until now it saved nothing.
-    - The sitemap no longer lists the two addresses that redirect.
-    - Everything else is unchanged.
+    *Check:* `WORDPRESS_CMS_WEBHOOK_SECRET=… node tools/cms-api-smoke.mjs` on the engineer's machine (the secret comes from the environment and is never printed). The signed `/manifest` is accepted; signed requests that are expired or for the wrong path are refused.
 
-    **How to deploy** (production has been deployed from `headless-wordpress`, although the Vercel production branch is `main`): push the branch, then Vercel → project `acadvizen-newww-ua9d` → Deployments → the new `headless-wordpress` preview → ⋯ → **Promote to Production**.
+    Deploy the release commit. The title fix, contact-form storage and sitemap fix are already live since 9–10 October (`d48492b`).
 
-    **Way back:** promote the deployment of commit `a8cc4d5` (built 9 Sep, `acadvizen-newww-ua9d-bwm78ffcd…`) the same way. This branch changes no Supabase schema, so rolling back is safe for the data.
+    **How to deploy** (production has been deployed from `headless-wordpress`, although the Vercel production branch is `main`): push the branch, then Vercel → project `acadvizen-newww-ua9d` → Deployments → the new `headless-wordpress` deployment → ⋯ → **Promote to Production**.
+
+    **Way back:** promote the previous production deployment the same way (today `dpl_ApR7YEAzC1r1bJfA3EiEdvAnqo56`, `d48492b`). The two Supabase migrations of 10 October only add columns, and the code works with and without them, so rolling back is safe for the data.
 
     *Check:*
     - `/`, `/about`, `/blog`, `/courses`, `/contact`, `/login`, `/admin`, `/sitemap.xml`, `/robots.txt`;
@@ -467,6 +483,10 @@ No Vercel firewall change, DNS change or CRM/email change is required.
 - **Tests:**
   - `tests/unit/wordpress-*.test.js` (`npm run test:unit`);
   - `tests/php/run.php` (`docker run --rm -v "$PWD:/app" -w /app php:8.3-cli php tests/php/run.php`).
+- **Release tools:**
+  - `tools/build-cms-plugin.mjs`: reproducible, self-verifying plugin ZIP;
+  - `tools/cms-api-smoke.mjs`: live check of the plugin API (refusals; signed checks when the secret is in the environment);
+  - `tools/verify-production.mjs`: read-only check of the live websites.
 
 ## 14. Verification record (staging, 2026-10-02 / 03)
 

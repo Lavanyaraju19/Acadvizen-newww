@@ -1,55 +1,32 @@
-# Acadvizen — access audit (10 October 2026)
+# Acadvizen — access audit (updated 10 October 2026, 13:00 UTC)
 
-Every row was tested on 10 October 2026, read-only. No secret value was printed or recorded.
+No secret value was printed or recorded while testing these rows. Credentials shared in chat during the project must be rotated (handover, section 5, step 10).
 
-**Credentials available to this environment:**
-- `C:\Users\HP\.acadvizen-staging.env`: staging WordPress and FTP;
-- `C:\Users\HP\.acadvizen-vercel.env`: a Vercel token for one project;
-- the Git credential helper, for GitHub.
+| Service | Needed for | Access now | Evidence (10 Oct) | Next action to unblock |
+|---|---|---|---|---|
+| GitHub `Lavanyaraju19/Acadvizen-newww` | Pushing `headless-wordpress` | **Working** | `origin/headless-wordpress` = `d48492b`. Local commits `f0d54ff`, `930e29c`, `745387d` and the documentation are **not pushed**: pushing waits for the owner's release approval | Owner approves the release (handover, section 9) |
+| Vercel project `acadvizen-newww-ua9d` (Main) | Deploys; reading deployments and variable names | **Working** | Live production `dpl_ApR7YEAzC1r1bJfA3EiEdvAnqo56` (`d48492b`); 7 production variables, none `WORDPRESS_*` (names only read) | None |
+| Vercel environment variables (write) | `WORDPRESS_CMS_API_URL`, `WORDPRESS_CMS_WEBHOOK_SECRET` | **Not used** (production change) | — | Owner adds both after the plugin is installed (handover, section 5, step 5), or approves the engineer doing it |
+| Vercel DNS | Nothing; no DNS change is needed | No access | `cms` and `enroll` both resolve to 147.93.17.189 | None |
+| Main `/admin` (`operation@acadvizen.com`) | Leads, Tools, test-record cleanup | **Working** (account given by the owner in chat) | Leads API 200; Tools API 200 (68 tools). Deleted the test lead `7d1a4247-…` and unpublished "Local E2E Course" and "Local E2E Tool" | Rotate this password (it was shared in chat) |
+| Production Enrollment WordPress (`enroll.acadvizen.com/wp-admin`) | Plugin install; Enrollment fixes | **Blocked** | Two sets of credentials (the checklist's and the one given in chat) were rejected. Attempts stopped to avoid locking the account | **Owner:** install the plugin, or create a working administrator for the engineer and store it in a local file (never in chat) |
+| Hostinger hPanel | Backups, database size, File Manager (`wp-config.php`), cron | **Blocked** | The login page answers with a Cloudflare challenge (403). Not bypassed | **Owner:** perform the hPanel steps, or grant access through hPanel → Access Manager |
+| Supabase dashboard | Backups; applying the two migrations | **Blocked** | The login requires a CAPTCHA. Not bypassed | **Supabase owner:** confirm backups and run the two migrations (handover, section 11) |
+| Staging WordPress and FTP (`cms.acadvizen.com`) | Staging tests | Credentials exist locally; **not used this session** | The staging plugin runs an earlier build | Optional: update staging to the release package and re-run the lifecycle |
+| Production test enquiry | Proving lead storage | Used once (approved) | Lead stored 10 Oct 09:42 UTC, verified, then deleted by id | No further live enquiries without a new approval |
 
-The repository's `.env.local` is **not** authorised for this work and was not used.
+## Owner's access checklist (`ACADVIZEN_ACCESS_CHECKLIST.md`)
 
-| Service | Needed for | Permission needed | Access now | Evidence (10 Oct) | Next action to unblock |
-|---|---|---|---|---|---|
-| GitHub `Lavanyaraju19/Acadvizen-newww` | Pushing `headless-wordpress` | Write on the repository | **Working** | `git ls-remote` reads `505c53e`; pushes of `f42d9cc`, `cc1b51f`, `af233d1`, `19e5e5f` and `505c53e` succeeded | None |
-| Vercel project `acadvizen-newww-ua9d` (Main) | Production deploys; reading deployments and variable names | Project-scoped token (deploy + read) | **Working** for deploys and reads | Lists the project; created production deployments `dpl_4NXt…`, `dpl_9rMT…` and `dpl_F9Qm…` (all READY). Team and user endpoints answer `team_unauthorized` (narrow token) | None for deploys |
-| Vercel environment variables | Adding `WORDPRESS_CMS_API_URL` and `WORDPRESS_CMS_WEBHOOK_SECRET` | Write on project variables | **Not tested** (writing is a production change) | The token reads variable names. A write would only be attempted after the CMS prerequisites pass | Owner adds both in Vercel → `acadvizen-newww-ua9d` → Settings → Environment Variables (Production). Or confirm I may write them with this token once the secret exists |
-| Vercel DNS (`acadvizen.com`, nameservers `ns1/ns2.vercel-dns.com`) | Nothing: `cms` and `enroll` already point at 147.93.17.189 | — | **No access** (token answers `forbidden`) | DNS-over-HTTPS: `cms` and `enroll` are both A 147.93.17.189 | None. **No DNS change is required** for the cutover |
-| Staging WordPress (`cms.acadvizen.com/wp-admin`) | Tests, rehearsal | Administrator | **Working** | Logged in as administrator after a fresh login (`wp-login.mjs`) | None |
-| Staging FTP (Hostinger) | Uploading plugin files to staging | FTP account for the staging site | **Working** | Directory listing shows `wp-config.php` and `wp-content` | None |
-| Production Enrollment WordPress (`enroll.acadvizen.com/wp-admin`) | §13 fixes; plugin install and activation; Rank Math; Elementor templates | Administrator | **No credentials** | Login page reachable (200); no production account available here | **Owner:** do §13 and plugin activation yourself, or create a dedicated administrator for this work (Users → Add New, role Administrator) and store it in a new local file such as `C:\Users\HP\.acadvizen-production.env` (never in chat) |
-| Hostinger hPanel (Enrollment hosting) | Backups, database size, domains (moving staging off `cms`, attaching `cms` to Enrollment), File Manager, cron | Account owner, or hPanel access granted to a collaborator | **No access** | Server identified as Hostinger (`platform: hostinger`, LiteSpeed) | **Owner:** perform the hPanel steps, or grant access through hPanel → Account → Access Manager, and keep the login in a local file (never in chat) |
-| Production `wp-config.php` | The four `ACADVIZEN_CMS_*` constants | hPanel File Manager or SFTP for the production site | **No access** | — | Comes with hPanel access (above) |
-| Supabase (Main data) | Backup and point-in-time-recovery status; restore path | Project Owner/Admin on the dashboard | **No access** | — | **Owner:** Supabase → Project → Database → Backups: confirm today's backup and PITR; report the result |
-| Main `/admin` | Unpublishing the two "Local E2E" records; seeing the test lead | An admin account | **No authorised account** | — (`.env.local` holds one, but it is not authorised) | **Owner:** unpublish both records, or authorise a dedicated admin account in a new local credential file |
-| Production test enquiry | Proving lead storage | Explicit approval | **Not approved** | — | **Owner:** reply "approve test lead" |
-| Credential rotation | Security | Each account's owner | **Owner only** | — | Rotate the staging WordPress password, staging FTP password, staging webhook secret and Vercel token (and any credential pasted in chat), then update the two local credential files |
+- The checklist is kept out of Git through `.git/info/exclude`. It must never be committed.
+- Its `WORDPRESS_CMS_API_URL` is **wrong**: a wp-admin screen. The correct value is `https://enroll.acadvizen.com/wp-json/acadvizen-cms/v1`.
+- **Use a new secret for production,** generated when the plugin is installed. Do not reuse a secret that was written into a file or shared, and never the staging one.
 
-## Owner's access checklist (`ACADVIZEN_ACCESS_CHECKLIST.md`, read 10 October)
+## Safety gates (all must pass before any production write to WordPress or data)
 
-- **Read without printing secrets.** The file is kept out of Git through this clone's `.git/info/exclude`, because it holds the production webhook secret. It must never be committed.
-- **It lists usernames, not credentials.** Main Admin, production WordPress, staging WordPress, Hostinger, Vercel and Supabase are all marked "YES", but no password, session or token for those accounts is available to this environment. The access rows above therefore stay unchanged. A username alone cannot be used to sign in, and passwords must not be shared in chat or placed in `.env.local`.
-- **`WORDPRESS_CMS_API_URL` is wrong.** The checklist gives `https://cms.acadvizen.com/wp-admin/admin.php?page=hostinger`, a WordPress admin screen. The value the code and guide require is **`https://enroll.acadvizen.com/wp-json/acadvizen-cms/v1`**. It is the public address: media is served from it, and Main's security policy allows that origin.
-- **`WORDPRESS_CMS_WEBHOOK_SECRET`** (44 characters) is present in the checklist and in `.env.local` (git-ignored). It must be added, with the same value, to production `wp-config.php` as `ACADVIZEN_CMS_WEBHOOK_SECRET` and to Vercel Production. Neither is done yet.
-- **Backups and rollback are marked "verified" by the owner.** The database size field is blank, and this environment could not confirm either.
-- **"Production test enquiry approved: YES".** Used once on 10 October (see the handover, section 4).
-
-## What the current access allows
-
-**Done:**
-- push and production-deploy Main with the WordPress integration off;
-- verify all live websites read-only (`node tools/verify-production.mjs`);
-- run every staging test.
-
-**After the owner's hPanel and WordPress steps:**
-- switch on the integration (`WORDPRESS_CONTENT_ENABLED=true`) and redeploy, if the two variables have been added;
-- run the production publishing tests;
-- run the bundle import, only after the backup and the database size are confirmed.
-
-## Safety gates (all must pass before any production change to WordPress or data)
-
-1. **Enrollment backup:** downloaded and listed, with a timestamp.
-2. **Database capacity:** the production database size is known and below 2.0 GB before the import (limit 3 GB).
-3. **Supabase:** a backup exists for today, or PITR is active.
-4. **Main rollback:** ready. `dpl_Axdg9QLftFyTUBY5HuKiXtLui3RD` (`a8cc4d5`) is READY and serves `/`, `/about` and `/contact` (verified 9 October).
-5. **The CMS address points at production:** `cms.acadvizen.com` serves the Enrollment installation, not staging. Today it still serves staging (its home is `https://cms.acadvizen.com`, and its login logo links to the staging Main).
+| # | Gate | Status |
+|---|---|---|
+| 1 | Enrollment backup: listed, with date and scope, for **enroll.acadvizen.com** | **Not confirmed** |
+| 2 | Enrollment database below 2.0 GB before any import (limit 3 GB) | **Unknown** |
+| 3 | Supabase: today's backup or point-in-time recovery | **Not confirmed** |
+| 4 | Main rollback: a previous READY production deployment | **Ready**: `dpl_F9QmBR5vWeHyEwWvxF9kyvqFb8N2` and `dpl_Axdg9QLftFyTUBY5HuKiXtLui3RD` |
+| 5 | The verified plugin package (SHA-256 `188dce51…b725`) is the one uploaded | Ready locally |
