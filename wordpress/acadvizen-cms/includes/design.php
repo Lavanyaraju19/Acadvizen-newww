@@ -667,6 +667,26 @@ function exclude_main_only_types_from_core_sitemap( array $post_types ): array {
 	return $post_types;
 }
 
+const SITEMAP_RULES_CHECK = 'acv_cms_sitemap_rules_checked';
+
+/**
+ * Rank Math's sitemap addresses (/sitemap_index.xml, /page-sitemap.xml, …) depend on WordPress's
+ * saved rewrite rules. On the live Enrollment site they went missing more than once (8 and 10 Oct
+ * 2026) while the sitemap itself still answered at /?sitemap=1: something saved the rules without
+ * Rank Math's. When Rank Math's sitemap is active but its rule is not saved, the rules are rebuilt
+ * once (soft: .htaccess is not touched). Checked at most once an hour.
+ */
+function restore_missing_sitemap_rules(): void {
+	if ( ! class_exists( '\RankMath\Sitemap\Router' ) || get_transient( SITEMAP_RULES_CHECK ) ) {
+		return;
+	}
+	set_transient( SITEMAP_RULES_CHECK, 1, HOUR_IN_SECONDS );
+	$rules = get_option( 'rewrite_rules' );
+	if ( is_array( $rules ) && $rules && ! in_array( 'index.php?sitemap=1', $rules, true ) ) {
+		flush_rewrite_rules( false );
+	}
+}
+
 /** The logo on the WordPress login screen leads to the Main Website (not wordpress.org). */
 function login_logo_url(): string {
 	$main = main_site_url();

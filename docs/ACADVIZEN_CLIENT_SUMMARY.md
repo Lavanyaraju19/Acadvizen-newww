@@ -1,6 +1,6 @@
 # Acadvizen websites — project summary
 
-**Status: in progress. The final connection step is pending.** (9 October 2026)
+**Status: in progress. The final connection step is pending.** (10 October 2026)
 
 ## What this project delivers
 
@@ -23,7 +23,7 @@ Each page keeps its recent versions, so an earlier version can be restored in on
 ## Before handover is final
 
 1. Remove two test entries ("Local E2E" course and tool) still visible on the Main website.
-2. Tidy the Enrollment website:
+2. Tidy the Enrollment website (its sitemap addresses also need restoring; this recurs, and the central editor will restore them automatically once connected):
    - sitemap contents;
    - three redirects for renamed pages;
    - the footer "Apply Now" button;

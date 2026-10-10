@@ -1,6 +1,6 @@
 # Acadvizen websites — handover report
 
-Status on 9 October 2026: **NOT COMPLETE.**
+Status on 10 October 2026: **NOT COMPLETE.** Access per service: `docs/ACADVIZEN_ACCESS_AUDIT.md`.
 
 - **Done:** the Main website fixes are live and verified.
 - **Pending:**
@@ -73,7 +73,7 @@ The full technical guide is `docs/ACADVIZEN_MASTER_ADMIN.md`.
 
 ## 4. Live verification (PRODUCTION, 9 October 2026)
 
-Command: `node tools/verify-production.mjs` (read-only; nothing is submitted). Result: **26 passed, 10 failed, 4 informational**. The informational checks are CMS checks that apply after the cutover.
+Command: `node tools/verify-production.mjs` (read-only; nothing is submitted). Result on 10 October: **24 passed, 12 failed, 4 informational**. The Enrollment sitemaps regressed to 404; on 9 October it was 26 passed and 10 failed. The informational checks are CMS checks that apply after the cutover.
 
 | Check | Result |
 |---|---|
@@ -88,7 +88,7 @@ Command: `node tools/verify-production.mjs` (read-only; nothing is submitted). R
 | Contact form behaviour (sends blocked, nothing stored) | PASS: posts to `/api/cms/leads` with form type `contact`; one request even with a double click; readable message on network failure or a request that takes over 20 seconds; the typed details stay |
 | Contact form **stores** the enquiry in Admin → Leads | **NOT VERIFIED**: needs one approved test enquiry |
 | "Local E2E" test course and tool no longer public | **FAIL**: both pages answer 200 and appear on 19 pages |
-| Enrollment standard sitemaps (`/sitemap_index.xml`, page, post) | PASS (200 XML; was 404 on 8 October) |
+| Enrollment standard sitemaps (`/sitemap_index.xml`, page, post) | **FAIL**: 404 again on 10 October (200 on 9 October, 404 on 8 October). The sitemap itself works at `/?sitemap=1`. Something on the site keeps saving WordPress's rewrite rules without Rank Math's. The CMS plugin now restores them automatically (hourly check, `.htaccess` untouched); this arrives with the plugin at cutover. Until then: Settings → Permalinks → Save. |
 | Enrollment sitemap excludes page-builder internals and test content | **FAIL**: lists header/footer templates, popups, forms, mega-menu items, `/test/`, `/3570-2/` |
 | Enrollment redirects for 3 renamed pages | **FAIL**: all 3 answer 404; `/about-us/` passes (301) |
 | Enrollment footer "Apply Now" button | **FAIL**: links to `/contact-us/` (404) |
@@ -97,7 +97,7 @@ Command: `node tools/verify-production.mjs` (read-only; nothing is submitted). R
 
 ## 5. Publishing test matrix
 
-| Test | PRODUCTION | STAGING (9 Oct, test page created and deleted) |
+| Test | PRODUCTION | STAGING (9 and 10 Oct, test page created and deleted; 18/18 both days) |
 |---|---|---|
 | Publish to Main: shown on Main, not on Enrollment | NOT RUN (CMS not connected) | PASS (28–34 s) |
 | Publish to Enrollment: shown on Enrollment, removed from Main | NOT RUN | PASS (2 s; Main removed in 6 s) |

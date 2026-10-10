@@ -71,6 +71,13 @@ namespace {
 		if ( ! function_exists( 'wp_strip_all_tags' ) ) {
 			function wp_strip_all_tags( $text ) { return trim( strip_tags( (string) $text ) ); }
 		}
+		if ( ! function_exists( 'get_transient' ) ) {
+			function get_transient( $name ) { return $GLOBALS['acv_transients'][ $name ] ?? false; }
+			function set_transient( $name, $value, $ttl = 0 ) { $GLOBALS['acv_transients'][ $name ] = $value; return true; }
+		}
+		if ( ! function_exists( 'flush_rewrite_rules' ) ) {
+			function flush_rewrite_rules( $hard = true ) { $GLOBALS['acv_flushes'][] = $hard; }
+		}
 		function add_option( $name, $value = '', $deprecated = '', $autoload = null ) { if ( isset( $GLOBALS['acv_options'][ $name ] ) ) { return false; } $GLOBALS['acv_options'][ $name ] = $value; return true; }
 		function delete_post_meta( $id, $key ) { return true; }
 		function __( $text, $domain = '' ) { return $text; }
@@ -335,6 +342,24 @@ namespace Acadvizen\CMS {
 	check( 'sitemap: pages stay in Rank Math', false, exclude_main_only_types_from_rank_math( false, 'page' ) );
 	check( 'sitemap: core sitemap keeps pages, drops internals', array( 'page', 'post' ), array_keys( exclude_main_only_types_from_core_sitemap( array( 'page' => 1, 'post' => 1, 'elementor-hf' => 1, 'metform-form' => 1 ) ) ) );
 	check( 'login logo: says Acadvizen', 'Acadvizen', login_logo_text() );
+
+	// Rank Math's sitemap rules restored when missing from the saved rewrite rules (soft rebuild).
+	if ( ! class_exists( '\RankMath\Sitemap\Router' ) ) {
+		eval( 'namespace RankMath\Sitemap; class Router {}' ); // phpcs:ignore Squiz.PHP.Eval.Discouraged -- test double.
+	}
+	$GLOBALS['acv_flushes'] = array();
+	$GLOBALS['acv_options']['rewrite_rules'] = array( '^about/?$' => 'index.php?pagename=about' );
+	unset( $GLOBALS['acv_transients'][ SITEMAP_RULES_CHECK ] );
+	restore_missing_sitemap_rules();
+	check( 'sitemap rules: missing Rank Math rule rebuilds once, softly', array( false ), $GLOBALS['acv_flushes'] );
+	restore_missing_sitemap_rules();
+	check( 'sitemap rules: not checked again within the hour', 1, count( $GLOBALS['acv_flushes'] ) );
+	$GLOBALS['acv_flushes'] = array();
+	unset( $GLOBALS['acv_transients'][ SITEMAP_RULES_CHECK ] );
+	$GLOBALS['acv_options']['rewrite_rules'] = array( 'sitemap_index\.xml$' => 'index.php?sitemap=1' );
+	restore_missing_sitemap_rules();
+	check( 'sitemap rules: present rule leaves the rules alone', array(), $GLOBALS['acv_flushes'] );
+	unset( $GLOBALS['acv_options']['rewrite_rules'], $GLOBALS['acv_transients'][ SITEMAP_RULES_CHECK ] );
 
 	// Media named after a whole sentence gets a name WordPress can store (post_name: 200 characters).
 	$long = str_repeat( 'want-more-local-customers-', 10 ) . '1784624402716-4cmrbx.webp';

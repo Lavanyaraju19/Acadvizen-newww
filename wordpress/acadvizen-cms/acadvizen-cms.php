@@ -77,6 +77,7 @@ add_action( 'wp_head', __NAMESPACE__ . '\print_imported_json_ld', 101 );
 add_filter( 'rank_math/json_ld', __NAMESPACE__ . '\main_json_ld_replaces_rank_math', 999 );
 add_filter( 'rank_math/sitemap/exclude_post_type', __NAMESPACE__ . '\exclude_main_only_types_from_rank_math', 10, 2 );
 add_filter( 'wp_sitemaps_post_types', __NAMESPACE__ . '\exclude_main_only_types_from_core_sitemap' );
+add_action( 'wp_loaded', __NAMESPACE__ . '\restore_missing_sitemap_rules' );
 add_filter( 'login_headerurl', __NAMESPACE__ . '\login_logo_url' );
 add_filter( 'login_headertext', __NAMESPACE__ . '\login_logo_text' );
 
