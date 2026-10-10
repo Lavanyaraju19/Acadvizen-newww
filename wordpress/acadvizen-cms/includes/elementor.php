@@ -56,6 +56,9 @@ function site_target_help( \WP_Post $post ): string {
 		$html .= '<p>' . esc_html__( 'Main Website address:', 'acadvizen-cms' ) . ' <code>' . esc_html( main_url_for_path( $path ) ) . '</code></p>';
 	}
 	$html .= '<p>' . esc_html__( 'After you click Publish or Update, the Main Website updates automatically within about a minute. Check the status under Acadvizen Master Admin → Publishing.', 'acadvizen-cms' ) . '</p>';
+	if ( can_preview_for_main( $post ) && current_user_can( 'edit_post', $post->ID ) ) {
+		$html .= '<p><a target="_blank" rel="noopener" href="' . esc_url( site_action_url( 'acv_cms_preview_main', $post->ID ) ) . '">' . esc_html__( 'Preview on the Main Website', 'acadvizen-cms' ) . '</a> ' . esc_html__( '(the last saved version; publishes nothing)', 'acadvizen-cms' ) . '</p>';
+	}
 	return $html;
 }
 

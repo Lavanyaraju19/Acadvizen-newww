@@ -31,28 +31,75 @@ const RENDER_HEADER_SIG  = 'HTTP_X_ACADVIZEN_RENDER_SIGNATURE';
 const RENDER_HEADER_POST = 'HTTP_X_ACADVIZEN_RENDER_POST';
 const RENDER_MARKER      = '<!-- acadvizen-render-bridge -->';
 
+const RENDER_MODE_PUBLISH = 'publish';
+const RENDER_MODE_PREVIEW = 'preview';
+
+/** States in which an administrator may preview a page as the Main Website would show it. */
+const PREVIEW_STATUSES = array( 'publish', 'draft', 'pending', 'future', 'private' );
+
+/**
+ * Verifies a render request's headers.
+ * - "loopback.<post>.<path>" renders a published page for publishing.
+ * - "preview.<post>.<path>" renders a page in any state of PREVIEW_STATUSES for an administrator's
+ *   preview; nothing is stored or published.
+ * Each purpose has its own signature, so a preview signature can never publish and vice versa.
+ *
+ * @return array{0: int, 1: string} The post ID (0 when this is not a valid render request) and the mode.
+ */
+function verify_render_request( array $server ): array {
+	$claimed = isset( $server[ RENDER_HEADER_POST ] ) ? absint( $server[ RENDER_HEADER_POST ] ) : 0;
+	if ( ! $claimed || ! isset( $server[ RENDER_HEADER_TS ], $server[ RENDER_HEADER_SIG ] ) ) {
+		return array( 0, '' );
+	}
+	$path      = (string) wp_parse_url( isset( $server['REQUEST_URI'] ) ? wp_unslash( $server['REQUEST_URI'] ) : '', PHP_URL_PATH );
+	$timestamp = wp_unslash( $server[ RENDER_HEADER_TS ] );
+	$signature = wp_unslash( $server[ RENDER_HEADER_SIG ] );
+	foreach ( array( 'loopback.' => RENDER_MODE_PUBLISH, 'preview.' => RENDER_MODE_PREVIEW ) as $purpose => $mode ) {
+		if ( verify_signature( $purpose . $claimed . '.' . $path, $timestamp, $signature ) ) {
+			return array( $claimed, $mode );
+		}
+	}
+	return array( 0, '' );
+}
+
+/** This request's render verification, worked out once. */
+function bridge_render_request(): array {
+	static $request = null;
+	if ( null === $request ) {
+		$request = verify_render_request( $_SERVER ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- verified by signature.
+	}
+	return $request;
+}
+
 /**
  * The post being rendered for the Main Website in this request, or 0.
  */
 function bridge_render_post_id(): int {
-	static $post_id = null;
-	if ( null !== $post_id ) {
-		return $post_id;
-	}
-	$post_id = 0;
-	$claimed = isset( $_SERVER[ RENDER_HEADER_POST ] ) ? absint( $_SERVER[ RENDER_HEADER_POST ] ) : 0;
-	if ( $claimed && isset( $_SERVER[ RENDER_HEADER_TS ], $_SERVER[ RENDER_HEADER_SIG ] ) ) {
-		$path    = (string) wp_parse_url( isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '', PHP_URL_PATH ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$message = 'loopback.' . $claimed . '.' . $path;
-		if ( verify_signature( $message, wp_unslash( $_SERVER[ RENDER_HEADER_TS ] ), wp_unslash( $_SERVER[ RENDER_HEADER_SIG ] ) ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-			$post_id = $claimed;
-		}
-	}
-	return $post_id;
+	return bridge_render_request()[0];
 }
 
 function is_bridge_render(): bool {
 	return bridge_render_post_id() > 0;
+}
+
+/** True for an administrator's signed preview render (not a publish). */
+function is_bridge_preview(): bool {
+	return RENDER_MODE_PREVIEW === bridge_render_request()[1];
+}
+
+/** A page that can be previewed as on the Main Website: a site document, saved and not in the Trash. */
+function can_preview_for_main( \WP_Post $post ): bool {
+	return is_site_post_type( $post->post_type ) && in_array( $post->post_status, PREVIEW_STATUSES, true );
+}
+
+/**
+ * pre_get_posts: a signed preview render may show its page before it is published (draft,
+ * pending review, scheduled, private). Only the main query of that one signed request changes.
+ */
+function include_unpublished_in_preview( \WP_Query $query ): void {
+	if ( is_bridge_preview() && $query->is_main_query() ) {
+		$query->set( 'post_status', PREVIEW_STATUSES );
+	}
 }
 
 /**
@@ -120,10 +167,16 @@ function handle_template_redirect(): void {
 	$object = get_queried_object();
 
 	if ( is_bridge_render() ) {
-		if ( ! $object instanceof \WP_Post || (int) $object->ID !== bridge_render_post_id() || ! is_site_doc_for_main( $object ) ) {
+		$allowed = $object instanceof \WP_Post && (int) $object->ID === bridge_render_post_id()
+			&& ( is_bridge_preview() ? can_preview_for_main( $object ) : is_site_doc_for_main( $object ) );
+		if ( ! $allowed ) {
 			status_header( 409 );
 			nocache_headers();
 			exit;
+		}
+		if ( is_bridge_preview() ) {
+			// An unpublished page has no pretty address yet; never redirect the preview away.
+			remove_action( 'template_redirect', 'redirect_canonical' );
 		}
 		nocache_headers();
 		ob_start( __NAMESPACE__ . '\\transform_document_for_main' );

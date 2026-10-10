@@ -1,0 +1,56 @@
+# Throwaway local WordPress for testing the Acadvizen Master Admin plugin end to end (tests/wordpress/README.md).
+# Not connected to any real website. ACV_SECRET is a local test value you choose (32+ characters);
+# never use a production or staging secret here.
+services:
+  db:
+    image: mariadb:11
+    environment:
+      MARIADB_DATABASE: wp
+      MARIADB_USER: wp
+      MARIADB_PASSWORD: wp-local-only
+      MARIADB_ROOT_PASSWORD: root-local-only
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      retries: 20
+    volumes:
+      - db:/var/lib/mysql
+  wordpress:
+    image: wordpress:php8.3-apache
+    depends_on:
+      db:
+        condition: service_healthy
+    ports: ["8088:80"]
+    environment: &wp-env
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wp
+      WORDPRESS_DB_PASSWORD: wp-local-only
+      WORDPRESS_DB_NAME: wp
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME','http://localhost:8088');
+        define('WP_SITEURL','http://localhost:8088');
+        define('ACADVIZEN_CMS_MAIN_URL', 'http://localhost:3100');
+        define('ACADVIZEN_CMS_MAIN_INTERNAL_URL', 'http://host.docker.internal:3100');
+        define('ACADVIZEN_CMS_WEBHOOK_SECRET', getenv('ACV_SECRET') ?: '');
+        define('ACADVIZEN_CMS_LOOPBACK_URL', 'http://wordpress');
+        define('WP_DEBUG_LOG', true); define('WP_DEBUG_DISPLAY', false);
+      ACV_SECRET: ${ACV_SECRET:?Set ACV_SECRET to a local test value of 32+ characters}
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    volumes:
+      - wp:/var/www/html
+      - ./mu-plugins:/var/www/html/wp-content/mu-plugins:ro
+      - ../../wordpress/acadvizen-cms:/var/www/html/wp-content/plugins/acadvizen-cms:ro
+  cli:
+    image: wordpress:cli-php8.3
+    user: "33:33"
+    depends_on: [wordpress]
+    environment: *wp-env
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    volumes:
+      - wp:/var/www/html
+      - ./mu-plugins:/var/www/html/wp-content/mu-plugins:ro
+      - ../../wordpress/acadvizen-cms:/var/www/html/wp-content/plugins/acadvizen-cms:ro
+      - ./e2e-actions.php:/tmp/e2e-actions.php:ro
+volumes:
+  db:
+  wp:

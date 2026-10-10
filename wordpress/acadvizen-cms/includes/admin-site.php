@@ -64,6 +64,14 @@ function render_site_publish_box( \WP_Post $post ): void {
 	echo '<div class="acv-cms-status-box">';
 	render_site_status( $post );
 	echo '</div>';
+	if ( targets_main( $current ) && can_preview_for_main( $post ) && current_user_can( 'edit_post', $post->ID ) ) {
+		printf(
+			'<p><a class="button" target="_blank" rel="noopener" href="%1$s">%2$s</a><br /><span class="description">%3$s</span></p>',
+			esc_url( site_action_url( 'acv_cms_preview_main', $post->ID ) ),
+			esc_html__( 'Preview on the Main Website', 'acadvizen-cms' ),
+			esc_html__( 'Shows the last saved version with the Main Website\'s design. Publishes nothing.', 'acadvizen-cms' )
+		);
+	}
 
 	if ( current_user_can( 'manage_options' ) ) :
 		?>
@@ -240,19 +248,57 @@ function handle_preview_version(): void {
 	if ( '' === $html ) {
 		wp_die( esc_html__( 'Version not found.', 'acadvizen-cms' ), 404 );
 	}
+	/* translators: %d: version number */
+	print_sandboxed_preview( sprintf( __( 'Version %d preview', 'acadvizen-cms' ), $version_id ), (string) $html );
+}
+
+/**
+ * "Preview on the Main Website": the page exactly as the Main Website would show it (its header,
+ * footer and styles), including a draft, a page pending review or a scheduled page. Nothing is
+ * published or stored: the render is shown to this administrator only.
+ */
+function handle_preview_main(): void {
+	$post = verify_site_action( 'acv_cms_preview_main' );
+	if ( strlen( webhook_secret() ) < MIN_SECRET_LENGTH ) {
+		wp_die( esc_html__( 'The preview needs the shared secret (ACADVIZEN_CMS_WEBHOOK_SECRET in wp-config.php). Ask your developer.', 'acadvizen-cms' ), 503 );
+	}
+	if ( ! can_preview_for_main( $post ) ) {
+		wp_die( esc_html__( 'Save the page first. Pages in the Trash cannot be previewed.', 'acadvizen-cms' ), 400 );
+	}
+	$render = render_for_main( $post, 'preview' );
+	if ( ! $render['ok'] ) {
+		/* translators: %s: technical reason */
+		wp_die( esc_html( sprintf( __( 'The preview could not be made (%s). Save the page and try again.', 'acadvizen-cms' ), $render['error'] ) ), 502 );
+	}
+	$status = get_post_status_object( $post->post_status );
+	print_sandboxed_preview(
+		/* translators: %s: page title */
+		sprintf( __( 'Main Website preview: %s', 'acadvizen-cms' ), get_the_title( $post ) ),
+		$render['html'],
+		/* translators: %s: post status, e.g. Draft */
+		sprintf( __( 'Preview of how this page will look on the Main Website (status: %s). Nothing has been published. It shows the last saved version: save in Elementor, then reload this preview.', 'acadvizen-cms' ), $status ? $status->label : $post->post_status )
+	);
+}
+
+/**
+ * Shows a Main Website document to an administrator. The document runs in a sandboxed iframe
+ * without allow-same-origin: the browser gives it an opaque origin, so its scripts can never act
+ * with the administrator's session. (A CSP sandbox header is not enough on its own: the host
+ * replaces Content-Security-Policy on every response.)
+ */
+function print_sandboxed_preview( string $title, string $html, string $notice = '' ): void {
 	while ( ob_get_level() > 0 ) {
 		ob_end_clean();
 	}
 	nocache_headers();
 	header( 'Content-Type: text/html; charset=utf-8' );
 	header( 'X-Robots-Tag: noindex' );
-	// The stored page runs in a sandboxed iframe without allow-same-origin: the browser gives it an
-	// opaque origin, so its scripts can never act with the administrator's session. (A CSP sandbox
-	// header is not enough on its own: the host replaces Content-Security-Policy on every response.)
+	$bar = '' === $notice ? '' : '<div class="acv-preview-bar" role="status">' . esc_html( $notice ) . '</div>';
 	printf(
-		'<!doctype html><html><head><meta charset="utf-8"><title>%1$s</title><style>html,body{margin:0;height:100%%}iframe{border:0;width:100%%;height:100%%;display:block}</style></head><body><iframe sandbox="allow-scripts allow-popups" referrerpolicy="no-referrer" srcdoc="%2$s"></iframe></body></html>',
-		esc_html( sprintf( /* translators: %d: version number */ __( 'Version %d preview', 'acadvizen-cms' ), $version_id ) ),
-		esc_attr( preview_document_for_wordpress( (string) $html ) )
+		'<!doctype html><html><head><meta charset="utf-8"><title>%1$s</title><style>html,body{margin:0;height:100%%}body{display:flex;flex-direction:column}.acv-preview-bar{background:#1d2327;color:#fff;font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:8px 16px}iframe{border:0;width:100%%;flex:1;display:block}</style></head><body>%3$s<iframe title="%1$s" sandbox="allow-scripts allow-popups" referrerpolicy="no-referrer" srcdoc="%2$s"></iframe></body></html>',
+		esc_html( $title ),
+		esc_attr( preview_document_for_wordpress( $html ) ),
+		$bar // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above.
 	);
 	exit;
 }

@@ -574,6 +574,36 @@ namespace Acadvizen\CMS {
 	check( 'signed routes: malformed signature refused', false, is_signed_main_request( new \WP_REST_Request( array( 'x_acadvizen_timestamp' => (string) $now, 'x_acadvizen_signature' => 'v1=zz' ) ), 'manifest.' ) );
 	check( 'signed routes: render accepted for its own path', true, is_signed_main_request( $signed( 'render./about', $now ), 'render./about' ) );
 	check( 'signed routes: render signature for another path refused', false, is_signed_main_request( $signed( 'render./about', $now ), 'render./admin' ) );
+	// Render requests: a publish ("loopback.") and a preview ("preview.") signature each give their
+	// own mode; neither can be used for the other, another page, another address or after expiry.
+	$render_headers = static fn( string $purpose, int $post_id, string $uri, int $ts, string $sign_path = '' ) => array(
+		RENDER_HEADER_POST => (string) $post_id,
+		RENDER_HEADER_TS   => (string) $ts,
+		RENDER_HEADER_SIG  => sign_payload( $purpose . '.' . $post_id . '.' . ( '' !== $sign_path ? $sign_path : (string) parse_url( $uri, PHP_URL_PATH ) ), $ts, ACADVIZEN_CMS_WEBHOOK_SECRET ),
+		'REQUEST_URI'      => $uri,
+	);
+	check( 'render request: publish signature -> publish mode', array( 42, RENDER_MODE_PUBLISH ), verify_render_request( $render_headers( 'loopback', 42, '/about/', $now ) ) );
+	check( 'render request: preview signature -> preview mode', array( 42, RENDER_MODE_PREVIEW ), verify_render_request( $render_headers( 'preview', 42, '/?page_id=42', $now ) ) );
+	$other_post                       = $render_headers( 'preview', 42, '/?page_id=42', $now );
+	$other_post[ RENDER_HEADER_POST ] = '43';
+	check( 'render request: signature for another page refused', array( 0, '' ), verify_render_request( $other_post ) );
+	check( 'render request: signature for another address refused', array( 0, '' ), verify_render_request( $render_headers( 'preview', 42, '/secret-draft/', $now, '/about/' ) ) );
+	check( 'render request: expired preview refused', array( 0, '' ), verify_render_request( $render_headers( 'preview', 42, '/?page_id=42', $now - 301 ) ) );
+	check( 'render request: other purpose (client-ip) refused', array( 0, '' ), verify_render_request( $render_headers( 'client-ip', 42, '/about/', $now ) ) );
+	check( 'render request: no headers -> not a render', array( 0, '' ), verify_render_request( array( 'REQUEST_URI' => '/about/' ) ) );
+	$draft              = new \WP_Post( 501, 'page' );
+	$draft->post_status = 'draft';
+	check( 'preview: a draft page can be previewed as on Main', true, can_preview_for_main( $draft ) );
+	foreach ( array( 'pending', 'future', 'private', 'publish' ) as $previewable ) {
+		$draft->post_status = $previewable;
+		check( "preview: {$previewable} page can be previewed", true, can_preview_for_main( $draft ) );
+	}
+	$draft->post_status = 'trash';
+	check( 'preview: a trashed page cannot', false, can_preview_for_main( $draft ) );
+	$template              = new \WP_Post( 502, 'elementor_library' );
+	$template->post_status = 'draft';
+	check( 'preview: a template is not a page to preview', false, can_preview_for_main( $template ) );
+
 	check( 'signed routes: no secret configured -> refused', 'refused', trim( (string) shell_exec( sprintf( '%s %s --no-secret', escapeshellarg( PHP_BINARY ), escapeshellarg( __FILE__ ) ) ) ) );
 
 	foreach ( $guard as $case ) {

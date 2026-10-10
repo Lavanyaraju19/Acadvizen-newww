@@ -487,10 +487,13 @@ function is_render_superseded( int $post_id, string $event_id ): bool {
 
 /**
  * Requests the page from this WordPress with a signed "Main render" header.
+ * $purpose 'loopback' renders a published page for publishing; 'preview' renders a page in any
+ * PREVIEW_STATUSES state for an administrator's preview (the caller stores nothing).
  *
  * @return array{ok: bool, html: string, error: string}
  */
-function render_for_main( \WP_Post $post ): array {
+function render_for_main( \WP_Post $post, string $purpose = 'loopback' ): array {
+	$purpose   = 'preview' === $purpose ? 'preview' : 'loopback';
 	$permalink = (string) get_permalink( $post );
 	$wp_path   = (string) wp_parse_url( $permalink, PHP_URL_PATH );
 	$query     = (string) wp_parse_url( $permalink, PHP_URL_QUERY );
@@ -498,7 +501,7 @@ function render_for_main( \WP_Post $post ): array {
 	$headers   = array(
 		'X-Acadvizen-Render-Timestamp' => (string) $timestamp,
 		'X-Acadvizen-Render-Post'      => (string) $post->ID,
-		'X-Acadvizen-Render-Signature' => sign_payload( 'loopback.' . $post->ID . '.' . $wp_path, $timestamp, webhook_secret() ),
+		'X-Acadvizen-Render-Signature' => sign_payload( $purpose . '.' . $post->ID . '.' . $wp_path, $timestamp, webhook_secret() ),
 		'Cache-Control'                => 'no-cache',
 	);
 	if ( defined( 'ACADVIZEN_CMS_LOOPBACK_URL' ) ) {

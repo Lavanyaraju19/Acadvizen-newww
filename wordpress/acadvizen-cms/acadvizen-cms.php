@@ -58,6 +58,7 @@ add_action( 'rest_api_init', __NAMESPACE__ . '\\register_rest_routes' );
 /* Render Bridge (front end of this WordPress) ------------------------------------------------- */
 add_action( 'template_redirect', __NAMESPACE__ . '\\handle_template_redirect', 0 );
 add_action( 'pre_get_posts', __NAMESPACE__ . '\\exclude_main_only_from_queries' );
+add_action( 'pre_get_posts', __NAMESPACE__ . '\\include_unpublished_in_preview' );
 add_filter( 'redirect_canonical', __NAMESPACE__ . '\\block_canonical_redirect_to_main_only' );
 add_filter( 'wp_sitemaps_posts_query_args', __NAMESPACE__ . '\\exclude_main_only_from_core_sitemap' );
 add_filter( 'rank_math/sitemap/entry', __NAMESPACE__ . '\\exclude_main_only_from_rank_math_sitemap', 10, 3 );
@@ -151,7 +152,7 @@ if ( is_admin() ) {
 	add_filter( 'page_row_actions', __NAMESPACE__ . '\\site_row_actions', 10, 2 );
 	add_filter( 'post_row_actions', __NAMESPACE__ . '\\site_row_actions', 10, 2 );
 	add_action( 'wp_ajax_acv_cms_import_step', __NAMESPACE__ . '\handle_import_step' );
-	foreach ( array( 'import_upload' => 'handle_import_upload', 'import_undo' => 'handle_import_undo', 'save_design' => 'handle_save_design', 'retry_sync' => 'handle_retry_request', 'retry_render' => 'handle_retry_render', 'rollback' => 'handle_rollback', 'republish_all' => 'handle_republish_all', 'preview_version' => 'handle_preview_version', 'duplicate' => 'handle_duplicate' ) as $action => $handler ) {
+	foreach ( array( 'import_upload' => 'handle_import_upload', 'import_undo' => 'handle_import_undo', 'save_design' => 'handle_save_design', 'retry_sync' => 'handle_retry_request', 'retry_render' => 'handle_retry_render', 'rollback' => 'handle_rollback', 'republish_all' => 'handle_republish_all', 'preview_version' => 'handle_preview_version', 'preview_main' => 'handle_preview_main','duplicate' => 'handle_duplicate' ) as $action => $handler ) {
 		add_action( 'admin_post_acv_cms_' . $action, __NAMESPACE__ . '\\' . $handler );
 	}
 }
