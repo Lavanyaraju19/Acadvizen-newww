@@ -64,7 +64,7 @@ check('Main: no "Local E2E" test content on any page', testData.length === 0, `$
 // unpublished record counts as gone when its page shows none of it and the sitemap omits it.
 for (const p of ['/courses/local-e2e-course-1779297401', '/tools/local-e2e-tool-1779297401']) {
   const r = await get(MAIN + p)
-  const shown = /local-e2e|Local E2E/i.test(r.text)
+  const shown = /Local E2E (Course|Tool)/i.test(r.text) // the record's name; the address itself is in the page's canonical
   const listed = urls.includes(MAIN + p)
   const robots = tag(r.text, /<meta[^>]+name="robots"[^>]+content="([^"]+)"/)
   check(`Main: test record ${p} not presented`, (r.status === 404 || r.status === 410) || (!shown && !listed), `${r.status}${r.status === 200 ? ' (soft 404)' : ''}; test content on page: ${shown ? 'yes' : 'no'}; in sitemap: ${listed ? 'yes' : 'no'}; robots: ${robots || 'none'}`)
