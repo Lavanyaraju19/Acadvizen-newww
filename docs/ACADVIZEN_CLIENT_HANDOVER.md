@@ -73,7 +73,7 @@ The full technical guide is `docs/ACADVIZEN_MASTER_ADMIN.md`.
 
 ## 4. Live verification (PRODUCTION, 9 October 2026)
 
-Command: `node tools/verify-production.mjs` (read-only; nothing is submitted). Result on 10 October: **24 passed, 12 failed, 4 informational**. The Enrollment sitemaps regressed to 404; on 9 October it was 26 passed and 10 failed. The informational checks are CMS checks that apply after the cutover.
+Command: `node tools/verify-production.mjs` (read-only; nothing is submitted). Latest result (10 October, 09:45 UTC): **26 passed, 10 failed, 4 informational**. Earlier that morning it was 24 passed and 12 failed, while the Enrollment sitemaps answered 404. The informational checks are CMS checks that apply after the cutover.
 
 | Check | Result |
 |---|---|
@@ -86,9 +86,13 @@ Command: `node tools/verify-production.mjs` (read-only; nothing is submitted). R
 | Main logo links to the homepage | PASS |
 | Meta pixel loads on the live site | PASS (browser check with tracking blocked) |
 | Contact form behaviour (sends blocked, nothing stored) | PASS: posts to `/api/cms/leads` with form type `contact`; one request even with a double click; readable message on network failure or a request that takes over 20 seconds; the typed details stay |
-| Contact form **stores** the enquiry in Admin → Leads | **NOT VERIFIED**: needs one approved test enquiry |
+| Contact form **stores** the enquiry | **PASS (database).** The approved test enquiry, submitted 10 October 09:42 UTC through the live form with fictional data ("ACV TEST — delete me …", `acv-test-delete-me@example.invalid`), returned HTTP 200 `success: true` and stored lead id `7d1a4247-f1f3-4ba0-a555-9d3cd375010d`. One request for a double click. Meta and Google requests were blocked, so no conversion was recorded. **Not yet checked:** how the record looks in Admin → Leads, and its deletion. Both need an admin sign-in, which is the owner's (section 12) |
 | "Local E2E" test course and tool no longer public | **FAIL**: both pages answer 200 and appear on 19 pages |
-| Enrollment standard sitemaps (`/sitemap_index.xml`, page, post) | **FAIL**: 404 again on 10 October (200 on 9 October, 404 on 8 October). The sitemap itself works at `/?sitemap=1`. Something on the site keeps saving WordPress's rewrite rules without Rank Math's. The CMS plugin now restores them automatically (hourly check, `.htaccess` untouched); this arrives with the plugin at cutover. Until then: Settings → Permalinks → Save. |
+| Enrollment standard sitemaps (`/sitemap_index.xml`, page, post) | **INTERMITTENT**:
+- 404 on 8 October;
+- 200 on 9 October;
+- 404 on the morning of 10 October;
+- 200 again at 09:45 UTC on 10 October. The sitemap itself works at `/?sitemap=1`. Something on the site keeps saving WordPress's rewrite rules without Rank Math's. The CMS plugin now restores them automatically (hourly check, `.htaccess` untouched); this arrives with the plugin at cutover. Until then: Settings → Permalinks → Save. |
 | Enrollment sitemap excludes page-builder internals and test content | **FAIL**: lists header/footer templates, popups, forms, mega-menu items, `/test/`, `/3570-2/` |
 | Enrollment redirects for 3 renamed pages | **FAIL**: all 3 answer 404; `/about-us/` passes (301) |
 | Enrollment footer "Apply Now" button | **FAIL**: links to `/contact-us/` (404) |
@@ -180,13 +184,13 @@ Production has **not** been switched to it as a test. Doing so would bring back 
 
 | # | Action | Where | Unlocks |
 |---|---|---|---|
-| 1 | Approve **one** labelled test enquiry (`ACV TEST — delete me`, fictional data), or submit it yourself | Reply in chat, or `https://www.acadvizen.com/contact` | Proof that enquiries are stored in Admin → Leads; the test record is then deleted |
+| 1 | Open Admin → Leads, confirm the test lead (id `7d1a4247-f1f3-4ba0-a555-9d3cd375010d`, name "ACV TEST — delete me …", form type `contact`) shows its fields correctly, then delete it | `https://www.acadvizen.com/admin` → Leads | Completes the lead-storage proof and cleans up the test |
 | 2 | Unpublish "Local E2E Course" and "Local E2E Tool" | `https://www.acadvizen.com/admin` → Courses / Tools | Removes test data from 19 public pages and the sitemap |
 | 3 | Enrollment fixes (section 13) | `https://enroll.acadvizen.com/wp-admin/` | Clean sitemap, working redirects, footer button and logo |
 | 4 | Back up Enrollment's files and database; read the database size; confirm the Supabase backup | hPanel → Websites → enroll → Backups / Databases; Supabase → Database → Backups | Safe import and cutover |
 | 5 | Move staging off `cms.acadvizen.com` and attach that address to the Enrollment website | hPanel → Websites → Domains | The CMS address points at production |
 | 6 | Upload the plugin and must-use plugin, add the four `wp-config.php` constants, activate; add the every-minute cron | hPanel → File Manager and Advanced → Cron Jobs (guide §11, Phase B) | The production CMS |
-| 7 | Add `WORDPRESS_CMS_API_URL` and `WORDPRESS_CMS_WEBHOOK_SECRET` in Vercel production | Vercel → Settings → Environment Variables | Then the integration can be switched on, redeployed and tested |
+| 7 | Add `WORDPRESS_CMS_API_URL` = `https://enroll.acadvizen.com/wp-json/acadvizen-cms/v1` (**not** the wp-admin address in the access checklist) and `WORDPRESS_CMS_WEBHOOK_SECRET` (the same value as in `wp-config.php`) in Vercel production | Vercel → Settings → Environment Variables | Then the integration can be switched on, redeployed and tested |
 | 8 | Rotate the credentials listed in section 8 | Each account | Security |
 
 After steps 4–7, the remaining work can be completed with the access already granted:

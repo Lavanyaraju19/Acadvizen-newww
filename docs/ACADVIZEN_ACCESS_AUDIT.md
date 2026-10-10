@@ -25,6 +25,15 @@ The repository's `.env.local` is **not** authorised for this work and was not us
 | Production test enquiry | Proving lead storage | Explicit approval | **Not approved** | — | **Owner:** reply "approve test lead" |
 | Credential rotation | Security | Each account's owner | **Owner only** | — | Rotate the staging WordPress password, staging FTP password, staging webhook secret and Vercel token (and any credential pasted in chat), then update the two local credential files |
 
+## Owner's access checklist (`ACADVIZEN_ACCESS_CHECKLIST.md`, read 10 October)
+
+- **Read without printing secrets.** The file is kept out of Git through this clone's `.git/info/exclude`, because it holds the production webhook secret. It must never be committed.
+- **It lists usernames, not credentials.** Main Admin, production WordPress, staging WordPress, Hostinger, Vercel and Supabase are all marked "YES", but no password, session or token for those accounts is available to this environment. The access rows above therefore stay unchanged. A username alone cannot be used to sign in, and passwords must not be shared in chat or placed in `.env.local`.
+- **`WORDPRESS_CMS_API_URL` is wrong.** The checklist gives `https://cms.acadvizen.com/wp-admin/admin.php?page=hostinger`, a WordPress admin screen. The value the code and guide require is **`https://enroll.acadvizen.com/wp-json/acadvizen-cms/v1`**. It is the public address: media is served from it, and Main's security policy allows that origin.
+- **`WORDPRESS_CMS_WEBHOOK_SECRET`** (44 characters) is present in the checklist and in `.env.local` (git-ignored). It must be added, with the same value, to production `wp-config.php` as `ACADVIZEN_CMS_WEBHOOK_SECRET` and to Vercel Production. Neither is done yet.
+- **Backups and rollback are marked "verified" by the owner.** The database size field is blank, and this environment could not confirm either.
+- **"Production test enquiry approved: YES".** Used once on 10 October (see the handover, section 4).
+
 ## What the current access allows
 
 **Done:**

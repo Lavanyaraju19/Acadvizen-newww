@@ -31,7 +31,7 @@ Each page keeps its recent versions, so an earlier version can be restored in on
    - two test items to draft.
 3. Confirm backups and database space on the hosting account.
 4. Connect the central editor to the live websites, then run the live publishing checks (Main, Enrollment, Both, and restoring a previous version).
-5. Confirm with one labelled test enquiry that the contact form stores enquiries in Admin → Leads.
+5. Check the labelled test enquiry (sent 10 October and stored) in Admin → Leads, then delete it.
 
 Every part of the central editor has already been built and tested on a full copy of the websites. Steps 1–3 and the hosting part of step 4 need the website owner's account access. The remaining technical steps follow immediately.
 
