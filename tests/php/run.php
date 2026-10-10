@@ -36,6 +36,15 @@ namespace {
 		exit;
 	}
 
+	// Missing-secret case: with no ACADVIZEN_CMS_WEBHOOK_SECRET a well-formed, current signature is refused.
+	if ( ( $argv[1] ?? '' ) === '--no-secret' ) {
+		define( 'ABSPATH', '/' );
+		require PLUGIN . 'config.php';
+		$ts = time();
+		echo \Acadvizen\CMS\verify_signature( 'manifest.', (string) $ts, \Acadvizen\CMS\sign_payload( 'manifest.', $ts, str_repeat( 'k', 48 ) ) ) ? 'accepted' : 'refused';
+		exit;
+	}
+
 	if ( true ) { // conditional, so these are not hoisted into the --guard child process
 		define( 'ABSPATH', '/' );
 		define( 'HOUR_IN_SECONDS', 3600 );
@@ -114,6 +123,8 @@ namespace {
 		require PLUGIN . 'admin.php';
 		require PLUGIN . 'design.php';
 		require PLUGIN . 'migration.php';
+		class WP_REST_Request { private $headers; public function __construct( array $headers = array() ) { $this->headers = $headers; } public function get_header( $key ) { return $this->headers[ $key ] ?? null; } public function get_param( $key ) { return null; } }
+		require PLUGIN . 'rest.php';
 	}
 }
 
@@ -551,6 +562,19 @@ namespace Acadvizen\CMS {
 	check( 'lead form: script checks consent and sends learning_mode', true, false !== strpos( LEAD_FORM_SCRIPT, 'Please accept the Privacy Policy consent.' ) && false !== strpos( LEAD_FORM_SCRIPT, 'p.learning_mode=' ) );
 	// The theme colours h2-h5 directly; Main accordion titles must take the Elementor title colour.
 	check( 'main css: accordion title inherits its Elementor colour', true, false !== strpos( MAIN_BASE_CSS, '.elementor .e-n-accordion-item-title-text{color:inherit}' ) );
+
+	// Render Bridge routes (/manifest, /render): only a current signature with the shared secret,
+	// over that exact message (render.<path>), is accepted.
+	$now    = time();
+	$signed = static fn( string $message, int $ts, string $secret = ACADVIZEN_CMS_WEBHOOK_SECRET ) => new \WP_REST_Request( array( 'x_acadvizen_timestamp' => (string) $ts, 'x_acadvizen_signature' => sign_payload( $message, $ts, $secret ) ) );
+	check( 'signed routes: unsigned manifest refused', false, is_signed_main_request( new \WP_REST_Request(), 'manifest.' ) );
+	check( 'signed routes: signed manifest accepted', true, is_signed_main_request( $signed( 'manifest.', $now ), 'manifest.' ) );
+	check( 'signed routes: other secret refused', false, is_signed_main_request( $signed( 'manifest.', $now, str_repeat( 'z', 48 ) ), 'manifest.' ) );
+	check( 'signed routes: expired timestamp refused', false, is_signed_main_request( $signed( 'manifest.', $now - 301 ), 'manifest.' ) );
+	check( 'signed routes: malformed signature refused', false, is_signed_main_request( new \WP_REST_Request( array( 'x_acadvizen_timestamp' => (string) $now, 'x_acadvizen_signature' => 'v1=zz' ) ), 'manifest.' ) );
+	check( 'signed routes: render accepted for its own path', true, is_signed_main_request( $signed( 'render./about', $now ), 'render./about' ) );
+	check( 'signed routes: render signature for another path refused', false, is_signed_main_request( $signed( 'render./about', $now ), 'render./admin' ) );
+	check( 'signed routes: no secret configured -> refused', 'refused', trim( (string) shell_exec( sprintf( '%s %s --no-secret', escapeshellarg( PHP_BINARY ), escapeshellarg( __FILE__ ) ) ) ) );
 
 	foreach ( $guard as $case ) {
 		list( $home, $main, $internal, $expected ) = $case;

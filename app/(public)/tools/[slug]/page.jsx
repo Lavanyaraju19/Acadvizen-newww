@@ -34,6 +34,8 @@ export async function generateMetadata({ params }) {
     description:
       tool?.description || 'Tool-specific insights, use cases, and learning resources for digital marketing workflows.',
     path: `/tools/${slug}`,
+    // No published tool at this address (unknown or unpublished): keep the page out of search.
+    noindex: !tool,
   })
 }
 

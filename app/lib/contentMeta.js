@@ -1,4 +1,5 @@
 import { getServerSupabaseClient } from '../../lib/supabaseServer'
+import { publicToolBySlugQuery } from '../../lib/publicToolQuery.js'
 
 async function fetchFromTable(table, queryBuilder) {
   try {
@@ -22,9 +23,7 @@ export async function fetchCourseBySlug(slug) {
 }
 
 export async function fetchToolBySlug(slug) {
-  return fetchFromTable('tools_extended', (query) =>
-    query.select('name,description,slug').eq('slug', slug).limit(1)
-  )
+  return fetchFromTable('tools_extended', (query) => publicToolBySlugQuery(query, slug))
 }
 
 export async function fetchPlacementById(id) {

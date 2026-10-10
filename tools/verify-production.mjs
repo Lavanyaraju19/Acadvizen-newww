@@ -60,9 +60,14 @@ const staging = rows.filter((r) => /acadvizen-cms-staging|staging-cms\.acadvizen
 check('Main: no staging addresses in any page', staging.length === 0, staging.slice(0, 5).map((r) => r.u.replace(MAIN, '')).join(', '))
 const testData = rows.filter((r) => /local-e2e|Local E2E/i.test(r.text))
 check('Main: no "Local E2E" test content on any page', testData.length === 0, `${testData.length} pages${testData.length ? `: ${testData.slice(0, 4).map((r) => r.u.replace(MAIN, '')).join(', ')}` : ''}`)
+// Unknown course/tool addresses answer 200 with a generic "Details" page (soft 404), so an
+// unpublished record counts as gone when its page shows none of it and the sitemap omits it.
 for (const p of ['/courses/local-e2e-course-1779297401', '/tools/local-e2e-tool-1779297401']) {
   const r = await get(MAIN + p)
-  check(`Main: test record ${p} gone`, r.status === 404 || r.status === 410, String(r.status))
+  const shown = /local-e2e|Local E2E/i.test(r.text)
+  const listed = urls.includes(MAIN + p)
+  const robots = tag(r.text, /<meta[^>]+name="robots"[^>]+content="([^"]+)"/)
+  check(`Main: test record ${p} not presented`, (r.status === 404 || r.status === 410) || (!shown && !listed), `${r.status}${r.status === 200 ? ' (soft 404)' : ''}; test content on page: ${shown ? 'yes' : 'no'}; in sitemap: ${listed ? 'yes' : 'no'}; robots: ${robots || 'none'}`)
 }
 for (const p of ['/', '/about', '/contact', '/blog', '/tools', '/courses', '/login', '/admin', '/robots.txt']) {
   const r = await get(MAIN + p)
