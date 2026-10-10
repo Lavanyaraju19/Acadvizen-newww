@@ -1,0 +1,46 @@
+# Test plan
+
+Three levels. A result only counts at the level where it was observed.
+
+| Level | Where | Purpose |
+|---|---|---|
+| **Automated** | Repository | PHP and Node unit tests, lint, types, build, package verification |
+| **LOCAL end-to-end** | `tests/wordpress`: Docker WordPress 7.1 with Elementor 4.3.3, HFE, Rank Math, CF7, MetForm and Astra, plus a local production build of Main with the integration on | Full publishing behaviour with disposable content, without touching live sites |
+| **PRODUCTION** | `enroll.acadvizen.com` and `www.acadvizen.com` | The acceptance tests below. Only with: a confirmed backup, a working WordPress admin login, the shared secret configured, and the owner's approval |
+
+## Rules for production test content
+
+- Title `CMS PRODUCTION TEST YYYYMMDD-HHMM`; address `cms-production-test-yyyymmdd-hhmm`.
+- Rank Math "No Index" on, and kept out of every menu.
+- Never the homepage, an important landing page, a real lead or a real customer record.
+- Deleted after the test; the deletion is verified on both websites.
+- No live enquiry without separate approval (it would reach the business inbox and Leads).
+
+## Commands
+
+```sh
+php tests/php/run.php                      # PHP plugin tests
+npm run test:unit                          # Node tests
+npx tsc --noEmit && npx next lint && npx next build
+node tools/build-cms-plugin.mjs            # reproducible package + verification
+node tests/wordpress/scenarios.mjs         # LOCAL end-to-end (README in tests/wordpress)
+node tools/cms-api-smoke.mjs               # PRODUCTION plugin API, read-only
+node tools/verify-production.mjs           # PRODUCTION websites, read-only
+```
+
+## Acceptance tests (production; LOCAL equivalents in brackets)
+
+| ID | Test | Preconditions | Pass criteria |
+|---|---|---|---|
+| A | Inventory: existing records visible in the central admin | Import run (authorised, after backup) | Admin counts equal the inventory: 86 blogs, 67 tools, 134 pages. Spot checks match the public pages (title, image, address, SEO); no duplicates |
+| B | Create a Main page with heading, paragraph, image, button and a two-column section; typography, colour and spacing; save the draft, reopen it, preview on desktop, tablet and mobile | WordPress admin login, secret set | Layout persists; **Preview on the Main Website** shows it; the draft is not public anywhere (L/A) |
+| C | Publish it to Main | + integration on | Status "Main: Published"; the public URL answers 200 with the content, styles, image, links and canonical; Enrollment 404; screenshot (A) |
+| D | Edit an existing page (approved, non-critical) | + owner approval of the page | Text and visual change visible on the public URL; unrelated routes unchanged. Otherwise BLOCKED and done on a test page |
+| E | Blog CRUD: create, publish, edit, draft, trash, restore and delete a test blog; existing blogs unchanged | As C | Appears on and disappears from `/blog/<slug>` and `/blog`; the other 86 blogs unchanged |
+| F | Other types: courses, locations, cities and areas, FAQs, testimonials, media, menus, templates | As C | Create, publish and remove, as for E (E) |
+| G | Destination isolation: Main only, Enrollment only, Both; a retry does not duplicate | As C | Each website checked separately (A, B, C, H) |
+| H | Revisions: v1 → v2 → restore v1 (text **and** design) → the next edit replaces it | As C | Public page matches each step (F) |
+| I | Shared styles and templates: affected-pages list, then a change applied | As C, and an agreed time window (the change is visible to every visitor) | The list matches the pages that changed; unrelated settings kept (D) |
+| J | Scheduling: a test page scheduled 10 minutes ahead | As C, plus the server cron | Not public before; public within about 2 minutes after; timezone recorded |
+| K | Forms and enquiries | Separate approval for one test enquiry | Stored and notified as before; the enquiry API still answers |
+| L | Regression | — | `verify-production.mjs` no worse than baseline; `cms-api-smoke.mjs` all pass |

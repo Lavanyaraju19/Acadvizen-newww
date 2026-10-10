@@ -1,6 +1,12 @@
 # Publishing with the Acadvizen Master Admin — guide for editors
 
-> **Status (10 October 2026):** this describes the system as built and tested on the staging copy and on a local test system (details: `docs/ACADVIZEN_VISUAL_BUILDER.md`). On the live Enrollment website the plugin is **not installed yet**, so these screens do not exist there today. Until then, keep editing Main content in `https://www.acadvizen.com/admin` and Enrollment pages in WordPress as before. `docs/ACADVIZEN_CLIENT_HANDOVER.md`, section 5, lists what has to happen first.
+> **Status (10 October 2026, 15:05 UTC).** On the live Enrollment website the plugin (Acadvizen Master Admin 0.4.0) **is installed and active**, so the screens below exist there.
+>
+> **Publishing to the Main website is not switched on yet.** A page set to "Main Website" or "Both Websites" will not appear on www.acadvizen.com until your developer finishes the connection (`CLIENT-HANDOVER.md`, "What you need to do"). Until then:
+> - use "Enrollment Website" for real pages;
+> - keep editing the existing Main pages and blogs in `https://www.acadvizen.com/admin`.
+>
+> Everything here was tested on a local copy and on the staging copy (`docs/ACADVIZEN_VISUAL_BUILDER.md`).
 
 ## Where to work
 
@@ -8,6 +14,17 @@
 |---|---|
 | Pages, courses, locations, Main blogs, tools, FAQs, testimonials, headers, footers, menus, colours and fonts | WordPress: `https://enroll.acadvizen.com/wp-admin/` → **Acadvizen Master Admin** menu, Pages, Templates |
 | Leads, enquiries, students, users, LMS and other application data | Main admin: `https://www.acadvizen.com/admin` (unchanged) |
+
+## Finding existing pages and blogs
+
+| Looking for | Where today |
+|---|---|
+| Enrollment pages (53) and posts (7) | WordPress → **Pages** / **Posts** (search box at the top right) |
+| Images used on Enrollment | WordPress → **Media** (786 files) |
+| Main website blogs (86 published), pages (134), tools (67), locations | `https://www.acadvizen.com/admin` → Blogs / Pages / Tools / Locations, **until the one-time import is run** |
+| After the import | WordPress → Acadvizen Master Admin → **Main Blogs**, **Tools**, **Locations**, and **Pages**. Each record keeps its www.acadvizen.com address |
+
+An empty "Main Blogs" list today does **not** mean the blogs are gone. They are still in the Main website's database and online, and they appear in WordPress once the import has run.
 
 ## The one choice that matters: Publish To
 
@@ -36,6 +53,7 @@ Blogs and tools are Main Website content by default.
   - It works for drafts, pages pending review and scheduled pages, and publishes nothing.
   - It shows the last **saved** version: click Save Draft first, then reload the preview.
   - Icons can be missing in this preview only.
+  - It works once the developer has added the connection secret. Until then, it explains that the secret is missing.
 
 Drafts are never sent to the Main website.
 
@@ -139,6 +157,23 @@ Headers, footers, menus, global colours and fonts, and the shared designs under 
   - replace an existing Main website page or set the Main homepage;
   - change Settings;
   - import content.
+
+## Checking that a change is live
+
+1. Wait for the Publish To box (or Acadvizen Master Admin → **Publishing**) to say "Main: Published (version N, …)".
+2. Open the page's address shown in the box, in a **private window** so your browser's own copy is not used.
+3. Check the text, the images and that the links work.
+4. On the other website, check that the page is or is not there, as you chose in Publish To.
+
+## When a publish fails
+
+| You see | Do this |
+|---|---|
+| "Main: Publishing…" for more than 5 minutes | Open the Pages list once (this restarts an interrupted publish), wait a minute, then check again |
+| "Main: Update failed — previous version still live" | Open Acadvizen Master Admin → **Publishing**, read the reason next to the page, and click **Retry**. The old version stays online meanwhile |
+| "Main: Address already used by an existing Main Website page — not shown" | The Main website already has its own page there. Choose another address, or ask an administrator about "Replace" |
+| Settings says "Not connected" | The connection to the Main website is not configured or is broken. Contact your developer and send them the message shown |
+| The page is right in WordPress but old on the website | Wait a minute and reload in a private window. If it is still old, check its status (above) |
 
 ## If something looks wrong
 

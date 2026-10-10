@@ -1,6 +1,6 @@
 # Acadvizen websites — project summary
 
-**Status (10 October 2026): conditionally ready — not yet approved for handover.** The central editor is built and tested, but it is not yet installed on the live Enrollment website. That step needs the owner's hosting and WordPress access.
+**Status (10 October 2026): conditionally ready — not yet approved for handover.** The central editor is built, tested and now installed on the live Enrollment website (10 Oct). It is not yet connected to the Main website. That step needs the owner's hosting and WordPress access.
 
 ## What this project delivers
 
@@ -50,7 +50,7 @@ Both websites keep their current design.
    - two test items set to draft.
 7. **All account owners:** change the passwords that were shared in chat.
 
-Exact steps: `docs/ACADVIZEN_CLIENT_HANDOVER.md`, section 5. Editors' guide: `docs/ACADVIZEN_ADMIN_GUIDE.md`.
+Exact steps: `docs/ACADVIZEN_CLIENT_HANDOVER.md`, section 5. Editors' guide: `docs/cms-implementation/ADMIN-USER-GUIDE.md`.
 
 ## Noted, not part of this project
 

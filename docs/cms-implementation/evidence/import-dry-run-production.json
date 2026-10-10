@@ -1,0 +1,54 @@
+{
+ "generated_at": "2026-10-10T15:01:03.916Z",
+ "mode": "DRY RUN: computed from read-only inventories, nothing written anywhere",
+ "source": "production Main: Supabase rows via the admin API (read-only)",
+ "destination": "production Enrollment WordPress (public REST, read-only)",
+ "importer_rule_for_test_data": "only slugs starting local-e2e- are left out (tools/main-to-elementor/build-bundle.mjs:280)",
+ "expected_new_wordpress_records": {
+  "main_blogs_acv_blog": 86,
+  "tools_acv_tool": 67,
+  "main_cms_pages_published": 134
+ },
+ "note_pages": "published Supabase pages become Locations (shared layout) or WordPress pages; the exact split is decided by the bundle builder from the rendered pages",
+ "not_imported": {
+  "blog_drafts": [
+   "what-is-digital-marketing-essential-skill-2026",
+   "e2e-acadvizen-staging-blog-1785569102593-fg8il6"
+  ],
+  "inactive_tools": [
+   "local-e2e-tool-1779297401"
+  ],
+  "course_records": [
+   "ai-integrated-digital-marketing-program (active)",
+   "local-e2e-course-1779297401 (inactive)"
+  ]
+ },
+ "owner_decision": {
+  "published_blog_looks_like_test": [
+   "dummy-dm-course (published; would be imported unless unpublished first)"
+  ],
+  "draft_test_blog_in_supabase": [
+   "e2e-acadvizen-staging-blog-1785569102593-fg8il6 (draft, 404 publicly)"
+  ]
+ },
+ "already_in_wordpress": {
+  "main_blogs_published": 0
+ },
+ "slug_collisions_with_existing_enrollment_pages": [
+  {
+   "slug": "courses",
+   "effect": "WordPress gives the imported page a suffixed slug; the existing Enrollment page is not touched; the Main address is kept through the explicit Main path"
+  },
+  {
+   "slug": "ai-integrated-digital-marketing-course-in-jp-nagar",
+   "effect": "WordPress gives the imported page a suffixed slug; the existing Enrollment page is not touched; the Main address is kept through the explicit Main path"
+  }
+ ],
+ "duplicate_slugs_in_source": "none (pages, blogs, tools, locations)",
+ "sitemap_reconciliation": {
+  "main_sitemap_urls": 314,
+  "blog_post_urls": 87,
+  "published_blog_rows": 86,
+  "extra_blog_url": "/blog/author/john-doe (author page, not a post)"
+ }
+}

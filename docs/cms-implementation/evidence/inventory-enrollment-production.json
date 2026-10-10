@@ -1,0 +1,671 @@
+{
+ "read_at": "2026-10-10T14:59:45.156Z",
+ "source": "enroll.acadvizen.com public REST (published content only)",
+ "types": {
+  "post": {
+   "rest_base": "posts",
+   "public_total": 7,
+   "rows": [
+    {
+     "id": 395,
+     "slug": "digital-marketing-fundamentals-45-day-career-program",
+     "link": "https://enroll.acadvizen.com/digital-marketing-fundamentals-45-day-career-program/",
+     "title": "Digital Marketing Fundamentals – 45-Day Career Program",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-25T07:59:35"
+    },
+    {
+     "id": 365,
+     "slug": "affiliate-marketing-case-study-how-seo-content-marketing-generated-320-affiliate-sales",
+     "link": "https://enroll.acadvizen.com/affiliate-marketing-case-study-how-seo-content-marketing-generated-320-affiliate-sales/",
+     "title": "Affiliate Marketing Case Study: How SEO &amp; Content Marketing Generated 320+ Affiliate Sales",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-25T05:26:01"
+    },
+    {
+     "id": 358,
+     "slug": "data-driven-facebook-instagram-advertising-campaign-for-lead-acquisition",
+     "link": "https://enroll.acadvizen.com/data-driven-facebook-instagram-advertising-campaign-for-lead-acquisition/",
+     "title": "Data-Driven Facebook &amp; Instagram Advertising Campaign for Lead Acquisition",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-25T05:26:22"
+    },
+    {
+     "id": 355,
+     "slug": "generating-%e2%82%b950-lakhs-in-pipeline-for-a-saas-startup-via-thought-leadership",
+     "link": "https://enroll.acadvizen.com/generating-%e2%82%b950-lakhs-in-pipeline-for-a-saas-startup-via-thought-leadership/",
+     "title": "Generating ₹50 Lakhs in Pipeline for a SaaS Startup via Thought Leadership",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-08-13T12:59:14"
+    },
+    {
+     "id": 344,
+     "slug": "achieving-6-5x-roas-for-a-beauty-brand-using-meta-ads",
+     "link": "https://enroll.acadvizen.com/achieving-6-5x-roas-for-a-beauty-brand-using-meta-ads/",
+     "title": "Achieving 6.5x ROAS for a Beauty Brand Using Meta Ads",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-08-13T11:51:01"
+    },
+    {
+     "id": 311,
+     "slug": "how-acadvizen-students-got-a-d2c-brand-cited-by-perplexity-gemini",
+     "link": "https://enroll.acadvizen.com/how-acadvizen-students-got-a-d2c-brand-cited-by-perplexity-gemini/",
+     "title": "How Acadvizen Students Got a D2C Brand Cited by Perplexity &amp; Gemini",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-08-13T07:57:57"
+    },
+    {
+     "id": 283,
+     "slug": "google-ads-lead-generation-project",
+     "link": "https://enroll.acadvizen.com/google-ads-lead-generation-project/",
+     "title": "Google Ads Lead Generation Project",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-08-13T09:38:12"
+    }
+   ]
+  },
+  "page": {
+   "rest_base": "pages",
+   "public_total": 53,
+   "rows": [
+    {
+     "id": 7676,
+     "slug": "ai-powered-digital-marketing-training-in-kengeri",
+     "link": "https://enroll.acadvizen.com/ai-powered-digital-marketing-training-in-kengeri/",
+     "title": "AI-Powered Digital Marketing Training in Kengeri",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-08T05:57:17"
+    },
+    {
+     "id": 7631,
+     "slug": "best-ai-digital-marketing-institute-in-sarjapur-road",
+     "link": "https://enroll.acadvizen.com/best-ai-digital-marketing-institute-in-sarjapur-road/",
+     "title": "Best AI Digital Marketing Institute In Sarjapur Road",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-07T10:17:10"
+    },
+    {
+     "id": 7617,
+     "slug": "ai-powered-digital-marketing-training-in-yeshwanthpur",
+     "link": "https://enroll.acadvizen.com/ai-powered-digital-marketing-training-in-yeshwanthpur/",
+     "title": "AI-powered digital marketing training in Yeshwanthpur",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-07T09:54:17"
+    },
+    {
+     "id": 7063,
+     "slug": "digital-marketing-course-with-internship-in-bellandur",
+     "link": "https://enroll.acadvizen.com/digital-marketing-course-with-internship-in-bellandur/",
+     "title": "Digital Marketing Course with Internship in Bellandur",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-30T05:07:14"
+    },
+    {
+     "id": 7055,
+     "slug": "digital-marketing-course-for-career-growth-in-yelahanka",
+     "link": "https://enroll.acadvizen.com/digital-marketing-course-for-career-growth-in-yelahanka/",
+     "title": "Digital Marketing Course for Career Growth in Yelahanka",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-30T04:56:08"
+    },
+    {
+     "id": 7050,
+     "slug": "digital-marketing-certification-course-in-hebbal",
+     "link": "https://enroll.acadvizen.com/digital-marketing-certification-course-in-hebbal/",
+     "title": "Digital Marketing Certification Course in Hebbal",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-30T13:32:22"
+    },
+    {
+     "id": 7045,
+     "slug": "digital-marketing-ai-certification-course-in-malleshwaram",
+     "link": "https://enroll.acadvizen.com/digital-marketing-ai-certification-course-in-malleshwaram/",
+     "title": "Digital Marketing &#038; AI Certification Course in Malleshwaram",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-30T12:49:59"
+    },
+    {
+     "id": 7013,
+     "slug": "digital-marketing-course-with-placement-in-banashankari",
+     "link": "https://enroll.acadvizen.com/digital-marketing-course-with-placement-in-banashankari/",
+     "title": "Digital Marketing Course with Placement in Banashankari",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-30T04:39:09"
+    },
+    {
+     "id": 7005,
+     "slug": "digital-marketing-certification-program-in-rajajinagar",
+     "link": "https://enroll.acadvizen.com/digital-marketing-certification-program-in-rajajinagar/",
+     "title": "Digital Marketing Certification Program in Rajajinagar",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-06T11:01:26"
+    },
+    {
+     "id": 7001,
+     "slug": "ai-driven-digital-marketing-course-in-hsr-layout",
+     "link": "https://enroll.acadvizen.com/ai-driven-digital-marketing-course-in-hsr-layout/",
+     "title": "AI-Driven Digital Marketing Course in HSR Layout",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-30T11:36:05"
+    },
+    {
+     "id": 6996,
+     "slug": "digital-marketing-course-with-placement-in-marathahalli",
+     "link": "https://enroll.acadvizen.com/digital-marketing-course-with-placement-in-marathahalli/",
+     "title": "Digital Marketing Course with Placement in Marathahalli",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-06T11:23:47"
+    },
+    {
+     "id": 6991,
+     "slug": "digital-marketing-institute-in-koramangala",
+     "link": "https://enroll.acadvizen.com/digital-marketing-institute-in-koramangala/",
+     "title": "Digital Marketing Institute in Koramangala",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-29T13:34:22"
+    },
+    {
+     "id": 6982,
+     "slug": "digital-marketing-course-with-placement-in-indiranagar",
+     "link": "https://enroll.acadvizen.com/digital-marketing-course-with-placement-in-indiranagar/",
+     "title": "Digital Marketing Course with Placement in Indiranagar",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-29T13:30:29"
+    },
+    {
+     "id": 6977,
+     "slug": "digital-marketing-certification-course-in-electronic-city",
+     "link": "https://enroll.acadvizen.com/digital-marketing-certification-course-in-electronic-city/",
+     "title": "Digital Marketing Certification Course in Electronic City",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-30T13:15:57"
+    },
+    {
+     "id": 6971,
+     "slug": "ai-powered-digital-marketing-course-in-whitefield",
+     "link": "https://enroll.acadvizen.com/ai-powered-digital-marketing-course-in-whitefield/",
+     "title": "AI-Powered Digital Marketing Course in Whitefield",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-30T12:06:38"
+    },
+    {
+     "id": 6939,
+     "slug": "digital-marketing-certification-course-in-btm-layout",
+     "link": "https://enroll.acadvizen.com/digital-marketing-certification-course-in-btm-layout/",
+     "title": "Digital Marketing Certification Course in BTM Layout",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-30T13:24:47"
+    },
+    {
+     "id": 6946,
+     "slug": "ai-integrated-digital-marketing-course-in-jp-nagar",
+     "link": "https://enroll.acadvizen.com/ai-integrated-digital-marketing-course-in-jp-nagar/",
+     "title": "AI-Integrated Digital Marketing Course in JP Nagar",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-30T11:42:57"
+    },
+    {
+     "id": 6932,
+     "slug": "digital-marketing-certification-course-in-jayanagar",
+     "link": "https://enroll.acadvizen.com/digital-marketing-certification-course-in-jayanagar/",
+     "title": "Digital Marketing Certification Course in Jayanagar",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-29T12:49:46"
+    },
+    {
+     "id": 6917,
+     "slug": "digital-marketing-ai-training-in-karnataka",
+     "link": "https://enroll.acadvizen.com/digital-marketing-ai-training-in-karnataka/",
+     "title": "Digital Marketing &#038; AI Training in Karnataka",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-30T13:11:05"
+    },
+    {
+     "id": 6912,
+     "slug": "digital-marketing-ai-certification-course-in-trivandrum",
+     "link": "https://enroll.acadvizen.com/digital-marketing-ai-certification-course-in-trivandrum/",
+     "title": "Digital Marketing &#038; AI Certification Course in Trivandrum",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-30T13:02:24"
+    },
+    {
+     "id": 6904,
+     "slug": "ai-integrated-digital-marketing-training-in-kochi",
+     "link": "https://enroll.acadvizen.com/ai-integrated-digital-marketing-training-in-kochi/",
+     "title": "AI-Integrated Digital Marketing Training in Kochi",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-30T12:15:20"
+    },
+    {
+     "id": 6864,
+     "slug": "ai-driven-digital-marketing-course-in-coimbatore",
+     "link": "https://enroll.acadvizen.com/ai-driven-digital-marketing-course-in-coimbatore/",
+     "title": "AI-Driven Digital Marketing Course in Coimbatore",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-30T11:27:33"
+    },
+    {
+     "id": 6857,
+     "slug": "best-ai-digital-marketing-course-in-visakhapatnam",
+     "link": "https://enroll.acadvizen.com/best-ai-digital-marketing-course-in-visakhapatnam/",
+     "title": "Best AI Digital Marketing Course in Visakhapatnam",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-30T12:31:08"
+    },
+    {
+     "id": 6849,
+     "slug": "digital-marketing-institute-in-tirupati",
+     "link": "https://enroll.acadvizen.com/digital-marketing-institute-in-tirupati/",
+     "title": "Digital Marketing Institute in Tirupati",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-29T11:12:47"
+    },
+    {
+     "id": 6836,
+     "slug": "digital-marketing-certification-course-in-chennai",
+     "link": "https://enroll.acadvizen.com/digital-marketing-certification-course-in-chennai/",
+     "title": "Digital Marketing Certification Course in Chennai",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-30T13:21:35"
+    },
+    {
+     "id": 6828,
+     "slug": "career-focused-digital-marketing-course-in-mysore",
+     "link": "https://enroll.acadvizen.com/career-focused-digital-marketing-course-in-mysore/",
+     "title": "Career-Focused Digital Marketing Course in Mysore",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-30T12:28:13"
+    },
+    {
+     "id": 6820,
+     "slug": "ai-powered-digital-marketing-course-in-hyderabad",
+     "link": "https://enroll.acadvizen.com/ai-powered-digital-marketing-course-in-hyderabad/",
+     "title": "AI-Powered Digital Marketing Course in Hyderabad",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-30T12:54:28"
+    },
+    {
+     "id": 6814,
+     "slug": "best-digital-marketing-institute-in-rr-nagar",
+     "link": "https://enroll.acadvizen.com/best-digital-marketing-institute-in-rr-nagar/",
+     "title": "Best Digital Marketing Institute in RR Nagar",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-08T05:50:35"
+    },
+    {
+     "id": 6792,
+     "slug": "ai-integrated-digital-marketing-course-in-mangalore",
+     "link": "https://enroll.acadvizen.com/ai-integrated-digital-marketing-course-in-mangalore/",
+     "title": "Learn AI-Integrated Digital Marketing in Mangalore",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-01T01:38:18"
+    },
+    {
+     "id": 6412,
+     "slug": "projects-2",
+     "link": "https://enroll.acadvizen.com/projects-2/",
+     "title": "Projects",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-28T10:37:21"
+    },
+    {
+     "id": 6177,
+     "slug": "home1",
+     "link": "https://enroll.acadvizen.com/",
+     "title": "Home1",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-10T14:17:39"
+    },
+    {
+     "id": 5436,
+     "slug": "blogs",
+     "link": "https://enroll.acadvizen.com/blogs/",
+     "title": "Blogs",
+     "parent": 0,
+     "template": "elementor_header_footer",
+     "modified": "2026-09-25T17:07:56"
+    },
+    {
+     "id": 3888,
+     "slug": "pg-diploma-ai-digital-marketing-ecommerce",
+     "link": "https://enroll.acadvizen.com/pg-diploma-ai-digital-marketing-ecommerce/",
+     "title": "Mastery in PG Diploma in AI Digital Marketing with E-Commerce",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-01T06:46:20"
+    },
+    {
+     "id": 3886,
+     "slug": "mastery-in-ai-digital-leadership-program",
+     "link": "https://enroll.acadvizen.com/mastery-in-ai-digital-leadership-program/",
+     "title": "Mastery in AI Digital Leadership Program",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-01T06:58:44"
+    },
+    {
+     "id": 3884,
+     "slug": "mastery-in-digital-marketing-and-analytics",
+     "link": "https://enroll.acadvizen.com/mastery-in-digital-marketing-and-analytics/",
+     "title": "Mastery in Digital Marketing and Analytics",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-01T05:37:11"
+    },
+    {
+     "id": 3882,
+     "slug": "advanced-diploma-ai-marketing-business-analytics",
+     "link": "https://enroll.acadvizen.com/advanced-diploma-ai-marketing-business-analytics/",
+     "title": "Advanced Diploma in AI Marketing with Business Analytics",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-01T05:12:12"
+    },
+    {
+     "id": 3880,
+     "slug": "diploma-in-ai-digital-marketing-strategies",
+     "link": "https://enroll.acadvizen.com/diploma-in-ai-digital-marketing-strategies/",
+     "title": "Diploma in AI Digital Marketing &#038; Strategies",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-01T07:05:10"
+    },
+    {
+     "id": 3877,
+     "slug": "diploma-in-ai-marketing-advertising-pr-branding",
+     "link": "https://enroll.acadvizen.com/diploma-in-ai-marketing-advertising-pr-branding/",
+     "title": "Diploma in AI Marketing, Advertising, Public Relations &#038; Branding",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-01T05:25:23"
+    },
+    {
+     "id": 3876,
+     "slug": "performance-marketing-course",
+     "link": "https://enroll.acadvizen.com/performance-marketing-course/",
+     "title": "Performance Marketing Course",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-07T12:49:10"
+    },
+    {
+     "id": 3874,
+     "slug": "learn-digital-marketing",
+     "link": "https://enroll.acadvizen.com/learn-digital-marketing/",
+     "title": "Social Media &#038; Influencer Marketing",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-06T12:48:34"
+    },
+    {
+     "id": 3871,
+     "slug": "digital-marketing-course",
+     "link": "https://enroll.acadvizen.com/digital-marketing-course/",
+     "title": "Digital marketing Course",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-10T14:14:03"
+    },
+    {
+     "id": 3647,
+     "slug": "placement-2",
+     "link": "https://enroll.acadvizen.com/placement-2/",
+     "title": "Placement Support",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-21T06:10:42"
+    },
+    {
+     "id": 3570,
+     "slug": "3570-2",
+     "link": "https://enroll.acadvizen.com/3570-2/",
+     "title": "",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-06T05:00:34"
+    },
+    {
+     "id": 2876,
+     "slug": "test",
+     "link": "https://enroll.acadvizen.com/test/",
+     "title": "Test",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-21T06:14:35"
+    },
+    {
+     "id": 1506,
+     "slug": "branches",
+     "link": "https://enroll.acadvizen.com/branches/",
+     "title": "Branches",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-10T12:36:28"
+    },
+    {
+     "id": 1300,
+     "slug": "courses",
+     "link": "https://enroll.acadvizen.com/courses/",
+     "title": "Courses",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-10T13:16:06"
+    },
+    {
+     "id": 973,
+     "slug": "digital-marketing-course-enquiry",
+     "link": "https://enroll.acadvizen.com/digital-marketing-course-enquiry/",
+     "title": "Contact Us",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-10T14:42:55"
+    },
+    {
+     "id": 971,
+     "slug": "digital-marketing-jobs",
+     "link": "https://enroll.acadvizen.com/digital-marketing-jobs/",
+     "title": "Career",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-10T11:23:46"
+    },
+    {
+     "id": 969,
+     "slug": "about-us-digital-marketing-institute-jayanagar",
+     "link": "https://enroll.acadvizen.com/about-us-digital-marketing-institute-jayanagar/",
+     "title": "About Us",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-08T09:35:13"
+    },
+    {
+     "id": 964,
+     "slug": "partnership",
+     "link": "https://enroll.acadvizen.com/partnership/",
+     "title": "Paternship",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-10T14:06:41"
+    },
+    {
+     "id": 745,
+     "slug": "placement",
+     "link": "https://enroll.acadvizen.com/placement/",
+     "title": "Placement",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-10T14:39:38"
+    },
+    {
+     "id": 733,
+     "slug": "timeline",
+     "link": "https://enroll.acadvizen.com/timeline/",
+     "title": "Timeline",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-09-24T12:53:15"
+    },
+    {
+     "id": 723,
+     "slug": "mentors",
+     "link": "https://enroll.acadvizen.com/mentors/",
+     "title": "Mentors",
+     "parent": 0,
+     "template": "",
+     "modified": "2026-10-10T14:46:23"
+    }
+   ]
+  },
+  "e-floating-buttons": {
+   "rest_base": "e-floating-buttons",
+   "public_total": 0,
+   "rows": []
+  },
+  "elementor_library": {
+   "rest_base": "elementor_library",
+   "public_total": null,
+   "rows": []
+  },
+  "elementor_snippet": {
+   "rest_base": "elementor_snippet",
+   "public_total": 0,
+   "rows": []
+  },
+  "product": {
+   "rest_base": "product",
+   "public_total": 0,
+   "rows": []
+  },
+  "class-manager": {
+   "rest_base": "class-manager",
+   "public_total": 0,
+   "rows": []
+  },
+  "popupkit-campaigns": {
+   "rest_base": "popupkit-campaigns",
+   "public_total": null,
+   "rows": []
+  },
+  "shopengine-template": {
+   "rest_base": "shopengine-template",
+   "public_total": 0,
+   "rows": []
+  },
+  "rm_content_editor": {
+   "rest_base": "rm_content_editor",
+   "public_total": 0,
+   "rows": []
+  }
+ },
+ "media_total": 786,
+ "categories": [
+  {
+   "id": 10,
+   "count": 1,
+   "name": "Affiliate Marketing",
+   "slug": "affiliate-marketing"
+  },
+  {
+   "id": 36,
+   "count": 1,
+   "name": "Blog",
+   "slug": "blog"
+  },
+  {
+   "id": 12,
+   "count": 3,
+   "name": "Digital Marketing Fundamentals",
+   "slug": "digital-marketing-fundamentals"
+  },
+  {
+   "id": 5,
+   "count": 5,
+   "name": "Digital Marketing Projects",
+   "slug": "digital-marketing-projects"
+  },
+  {
+   "id": 11,
+   "count": 1,
+   "name": "Dropshipping",
+   "slug": "dropshipping"
+  },
+  {
+   "id": 7,
+   "count": 2,
+   "name": "Google Ads Projects",
+   "slug": "google-ads-projects"
+  },
+  {
+   "id": 9,
+   "count": 1,
+   "name": "LinkedIn Marketing",
+   "slug": "linkedin-marketing"
+  },
+  {
+   "id": 8,
+   "count": 2,
+   "name": "Meta Ads",
+   "slug": "meta-ads"
+  },
+  {
+   "id": 6,
+   "count": 1,
+   "name": "SEO Projects",
+   "slug": "seo-projects"
+  },
+  {
+   "id": 1,
+   "count": 1,
+   "name": "Uncategorized",
+   "slug": "uncategorized"
+  }
+ ],
+ "tags": [],
+ "product_cat": [
+  {
+   "id": 34,
+   "count": 0,
+   "name": "Uncategorized",
+   "slug": "uncategorized"
+  }
+ ],
+ "master_admin_main_blogs": 0
+}

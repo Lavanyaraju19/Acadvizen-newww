@@ -2,7 +2,7 @@
 
 **Decision on 10 October 2026: CONDITIONALLY READY — NOT YET APPROVED FOR CLIENT HANDOVER.**
 
-The central WordPress editor is built, tested and packaged. It is **not installed on the live Enrollment website**, so nobody can publish from WordPress to the Main website yet. Installing it needs the production WordPress admin and the hosting account, which only the owner holds. The live Main website is healthy. Two of its admin functions wait on a database update that only the Supabase owner can run (section 11).
+**Update 15:05 UTC:** the plugin is now **installed and active on the live Enrollment website** (0.4.0, verified; API refusals 13/13 on production). It is **not yet connected to Main**: no secret, no Vercel variables, integration off. Nobody can publish from WordPress to the Main website yet. Current status and acceptance matrix: `docs/cms-implementation/CLIENT-HANDOVER.md`. Installing it needs the production WordPress admin and the hosting account, which only the owner holds. The live Main website is healthy. Two of its admin functions wait on a database update that only the Supabase owner can run (section 11).
 
 Every result is labelled by where it was observed:
 - **PRODUCTION**: the live websites and services;
@@ -13,7 +13,7 @@ Staging and local results support the work. They are not proof that production w
 
 Related documents:
 - `docs/ACADVIZEN_CLIENT_SUMMARY.md`: one-page summary;
-- `docs/ACADVIZEN_ADMIN_GUIDE.md`: how to publish and redesign (for editors);
+- `docs/cms-implementation/ADMIN-USER-GUIDE.md`: how to publish and redesign (for editors);
 - `docs/ACADVIZEN_VISUAL_BUILDER.md`: what the visual builder does, with evidence and limits;
 - `docs/ACADVIZEN_MASTER_ADMIN.md`: technical guide and deployment procedure;
 - `docs/ACADVIZEN_ACCESS_AUDIT.md`: who can access what.
@@ -62,7 +62,7 @@ Blogs ("Main Blogs") feed Main's existing `/blog` pages through `GET /wp-json/ac
 |---|---|
 | Main production deployment | `dpl_ApR7YEAzC1r1bJfA3EiEdvAnqo56`, commit `d48492b` (branch `headless-wordpress`), READY, serving `www.acadvizen.com` and `acadvizen.com` |
 | WordPress integration on Main | **Off.** Vercel production has 7 variables and no `WORDPRESS_*` variable |
-| Plugin on Enrollment | **Not installed.** `/wp-json/` lists only `acadvizen/v1`. The plugin's files answer 404, while an installed plugin's file (Elementor) answers 200 |
+| Plugin on Enrollment | **Installed and active, 0.4.0** (found active at 14:52 UTC; not installed by the engineer). `acadvizen-cms/v1` with 4 routes registered. Publicly served files are byte-identical to the 0.4.0 package |
 | Enquiry API `POST /wp-json/acadvizen/v1/enquiry` | Registered (POST) |
 | `cms.acadvizen.com` | The **staging** copy (plugin installed, connected to a staging Main) |
 
@@ -251,7 +251,7 @@ The deployed code works before and after the migrations.
 | Supabase migrations | Throwaway Postgres 16 shaped like production (old tables and trigger), each migration run twice | Before: the production error reproduced. After: status update works, rows kept, name copied, full insert stored, `order_index` added | LOCAL |
 | Plugin load, default | Main file loaded with stubs | No optional-feature hooks; REST routes registered | LOCAL |
 | Tool page fix | Local production server on production data | Test tool and unknown slugs `noindex`, no test name; 67/67 sitemap tools `index` | LOCAL |
-| CMS API smoke | `node tools/cms-api-smoke.mjs` | STAGING 13/13 (12:22 UTC). PRODUCTION 3 pass / 10 fail: plugin not installed | STAGING / PRODUCTION |
+| CMS API smoke | `node tools/cms-api-smoke.mjs` | STAGING 13/13 (12:22 UTC). PRODUCTION: before the install 3 pass / 10 fail; **after the install (14:52 and 15:05 UTC) 13/13** | STAGING / PRODUCTION |
 | Live websites | `node tools/verify-production.mjs` (12:54 UTC) | 27 pass, 9 fail, 4 informational. Main: 1 fail, the test tool page (fix not deployed). Enrollment: 8 pre-existing fails (section 10) | PRODUCTION |
 | Admin and Leads | Main admin session, read-only API | `/admin` loads; Leads 200 (2 leads); Tools 200 (68) | PRODUCTION |
 | Test tool unpublished | Admin → Tools, untick Active, Save (only the exact slug) | `is_active: false`; sitemap mentions 1 → 0 | PRODUCTION |

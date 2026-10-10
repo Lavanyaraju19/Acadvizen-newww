@@ -4,7 +4,7 @@ One WordPress and one `/wp-admin/` manage both websites: the Enrollment WordPres
 
 > **Status (2026-10-10).** Verified end to end on staging: `cms.acadvizen.com` (a copy of enroll) publishing to a Vercel preview of this branch. The stack is WordPress 7.0.6, Astra 4.13.6, Elementor 4.3.3, Elementor Pro, Header Footer Elementor, Max Mega Menu, Contact Form 7 and Rank Math.
 >
-> **Production:** the plugin is **not installed** on enroll.acadvizen.com, and the integration is off on Main. The first-install package is plugin 0.4.0, `dist/acadvizen-cms-0.4.0-a795fb0/acadvizen-cms.zip` (built and verified by `node tools/build-cms-plugin.mjs`). It was tested end to end on a local WordPress with a local Main build: `tests/wordpress`, 44/44. In it, the optional features that change existing Enrollment behaviour are off (section 6), and activation never writes `.htaccess`.
+> **Production (10 Oct, 15:05 UTC):** the plugin is **installed and active (0.4.0)** on enroll.acadvizen.com. It has no secret yet, so the signed routes refuse every request, and the integration is off on Main. Version 0.4.1 (affected-pages list) is built but not installed. The first-install package is plugin 0.4.0, `dist/acadvizen-cms-0.4.0-a795fb0/acadvizen-cms.zip` (built and verified by `node tools/build-cms-plugin.mjs`). It was tested end to end on a local WordPress with a local Main build: `tests/wordpress`, 44/44. In it, the optional features that change existing Enrollment behaviour are off (section 6), and activation never writes `.htaccess`.
 >
 > Current state and owner actions: `docs/ACADVIZEN_CLIENT_HANDOVER.md`. Section 14 here has the staging verification record.
 
