@@ -10,7 +10,7 @@ import {
   revalidateCmsMutation,
   readJsonBody,
 } from '../../_utils'
-import { applyEntityOrdering, getEntityConfig, sanitizeEntityPayload } from '../../../../../lib/cmsEntities'
+import { applyEntityOrdering, getEntityConfig, isMissingOrderColumn, sanitizeEntityPayload } from '../../../../../lib/cmsEntities'
 import { validateEntity } from '../../../../../lib/validation'
 import { hasProfilePermission } from '../../../../../lib/adminPermissions'
 import {
@@ -106,7 +106,16 @@ export async function GET(request, { params }) {
     query = applyEntityOrdering(query, config)
     query = applyFilters(query, request, config, isAdmin, entity)
 
-    const { data, error } = await query
+    let { data, error } = await query
+    // A table without its configured order column (e.g. production's tools_extended has no
+    // order_index) listed nothing at all: the error looked like a missing table. List it in
+    // creation order instead.
+    if (error && config.orderField && isMissingOrderColumn(error, config.orderField)) {
+      ;({ data, error } = await applyFilters(
+        supabase.from(config.table).select('*').limit(limit || 250).order('created_at', { ascending: false }),
+        request, config, isAdmin, entity,
+      ))
+    }
     if (error) {
       if (isTableNotFoundError(error)) return jsonOk([])
       return jsonError(`Database query failed: ${error.message}`, 500, [])

@@ -86,7 +86,7 @@ export default function LeadsAdminClient() {
             ) : (
               items.map((lead) => (
                 <tr key={lead.id} className="rounded-xl border border-white/10 bg-white/[0.03] text-sm text-slate-200">
-                  <td className="px-3 py-3">{lead.full_name || '-'}</td>
+                  <td className="px-3 py-3">{lead.full_name || lead.name || '-'}</td>
                   <td className="px-3 py-3">{lead.email || '-'}</td>
                   <td className="px-3 py-3">{lead.phone || '-'}</td>
                   <td className="px-3 py-3">{lead.page_slug || '-'}</td>

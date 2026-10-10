@@ -6,6 +6,7 @@ import {
   parsePositiveInt,
   readJsonBody,
 } from '../_utils'
+import { moveMissingColumnIntoPayload } from '../../../../lib/leadSchemaFallback.js'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,25 +23,6 @@ function normalizeLeadPayload(input = {}) {
   }
 }
 
-function moveMissingColumnIntoPayload(record, column) {
-  if (!column || !(column in record)) return record
-
-  const next = { ...record }
-  if (column === 'payload') {
-    delete next.payload
-    return next
-  }
-
-  const payload = next.payload && typeof next.payload === 'object' ? { ...next.payload } : {}
-
-  if (next[column] !== null && next[column] !== undefined && payload[column] === undefined) {
-    payload[column] = next[column]
-  }
-
-  delete next[column]
-  next.payload = payload
-  return next
-}
 
 async function insertLeadWithSchemaFallback(supabase, record) {
   let nextRecord = { ...record }
