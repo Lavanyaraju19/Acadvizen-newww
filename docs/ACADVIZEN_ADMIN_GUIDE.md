@@ -1,6 +1,6 @@
 # Publishing with the Acadvizen Master Admin — guide for editors
 
-> **Status (10 October 2026):** this describes the system as built and tested on the staging copy. On the live Enrollment website the plugin is **not installed yet**, so these screens do not exist there today. Until then, keep editing Main content in `https://www.acadvizen.com/admin` and Enrollment pages in WordPress as before. `docs/ACADVIZEN_CLIENT_HANDOVER.md`, section 5, lists what has to happen first.
+> **Status (10 October 2026):** this describes the system as built and tested on the staging copy and on a local test system (details: `docs/ACADVIZEN_VISUAL_BUILDER.md`). On the live Enrollment website the plugin is **not installed yet**, so these screens do not exist there today. Until then, keep editing Main content in `https://www.acadvizen.com/admin` and Enrollment pages in WordPress as before. `docs/ACADVIZEN_CLIENT_HANDOVER.md`, section 5, lists what has to happen first.
 
 ## Where to work
 
@@ -30,7 +30,12 @@ Blogs and tools are Main Website content by default.
 
 **Review before publishing**
 - **Save Draft** keeps it private on both websites.
-- **Preview** shows it to you only.
+- **Preview** (in Elementor) shows it to you only, with the Enrollment website's design.
+- **Preview on the Main Website** shows exactly how it will look on www.acadvizen.com, with Main's header, footer and styles.
+  - Where: the Publish To box on the edit screen, or Elementor → gear icon (Page Settings) → Publish To.
+  - It works for drafts, pages pending review and scheduled pages, and publishes nothing.
+  - It shows the last **saved** version: click Save Draft first, then reload the preview.
+  - Icons can be missing in this preview only.
 
 Drafts are never sent to the Main website.
 
@@ -58,6 +63,53 @@ Drafts are never sent to the Main website.
 **Undo a change**
 1. Open Acadvizen Master Admin → **Versions & Rollback**, choose the page, and click **Make live** on an earlier version.
 2. That version stays live until the page is next updated.
+
+## Redesigning
+
+**Change the colour scheme or fonts of the whole website**
+1. Open Acadvizen Master Admin → **Global Styles**. Elementor opens its Site Settings.
+2. Change Global Colors or Global Fonts, then click **Save Changes** at the bottom of the panel.
+
+Every page that uses the global colours changes, on both websites. The Main website republishes its pages in the background, which can take several minutes. A page's own colours, set directly on that page, stay as they are.
+
+**Redesign a page from scratch**
+1. Open it with **Edit with Elementor**.
+2. Add, move, duplicate or delete sections, columns and widgets by dragging them.
+3. Change spacing, backgrounds, borders, fonts and animations in the left panel.
+
+To work safely on a live page:
+1. Use **Duplicate** (Pages list). The copy is a draft with a different address.
+2. Redesign the copy and check it with **Preview on the Main Website**.
+3. When it is ready:
+   - set the old page to Draft and change its address (for example add `-old`);
+   - give the copy the original address;
+   - publish the copy.
+
+To undo, do the same the other way round. Alternatively, redesign the live page directly: each Update is kept as a version, and **Versions & Rollback → Make live** brings back the previous design.
+
+**Desktop, tablet and mobile**
+- Use Elementor's device switcher at the bottom of the panel.
+- Settings made in tablet or mobile view apply only to that device.
+
+## Templates and shared designs
+
+- **Save a design for reuse:** in Elementor, the arrow next to Publish → **Save as Template**. To use it, open the folder icon in any page and insert it.
+- **One design for every course, location, tool or blog page:** Acadvizen Master Admin → **Website Design** → choose a type → **Edit design with Elementor**. Saving updates every page of that type that has no design of its own.
+- **Headers and footers:** under Templates. A header or footer used on only one of the websites needs the developer to switch on one setting first (`ACADVIZEN_CMS_SITE_TEMPLATES`). Until then, both websites use the header and footer they use today.
+
+## City and area pages
+
+1. Add the city: Acadvizen Master Admin → **Cities & Areas** → Add, with no parent.
+2. Add the area with the city as its **parent**.
+3. Create the page: Acadvizen Master Admin → **Locations** → Add New. Enter the title and address (slug), tick its area under Cities & Areas, and fill in the details (address, phone, map link, courses).
+4. Choose Publish To, check with **Preview on the Main Website**, then **Publish**. On the Main website it appears at `www.acadvizen.com/<address>`.
+5. If you change the address later, the old address sends visitors to the new one.
+
+## What still needs a developer
+
+- New features or new kinds of data (anything that is not a page, a design or a record of an existing type).
+- Moving the current Main website pages into WordPress. This is a one-time import, and it has not been done on the live site yet. Until then, edit the existing Main pages in `www.acadvizen.com/admin`.
+- The optional website settings (separate headers and footers per website, sitemap clean-up, login logo).
 
 ## What the status messages mean
 

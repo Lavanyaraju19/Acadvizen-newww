@@ -29,4 +29,4 @@ No secret value was printed or recorded while testing these rows. Credentials sh
 | 2 | Enrollment database below 2.0 GB before any import (limit 3 GB) | **Unknown** |
 | 3 | Supabase: today's backup or point-in-time recovery | **Not confirmed** |
 | 4 | Main rollback: a previous READY production deployment | **Ready**: `dpl_F9QmBR5vWeHyEwWvxF9kyvqFb8N2` and `dpl_Axdg9QLftFyTUBY5HuKiXtLui3RD` |
-| 5 | The verified plugin package (SHA-256 `188dce51…b725`) is the one uploaded | Ready locally |
+| 5 | The verified plugin package is the one uploaded: 0.4.0, `dist/acadvizen-cms-0.4.0-a795fb0/acadvizen-cms.zip`, SHA-256 `01d62f3f…e6809` | Ready locally |

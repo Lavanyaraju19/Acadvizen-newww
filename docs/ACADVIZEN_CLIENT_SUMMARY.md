@@ -11,6 +11,10 @@ The Enrollment website's WordPress admin (`https://enroll.acadvizen.com/wp-admin
 - **Both** websites.
 
 Both websites keep their current design.
+- **Visual editing:** pages are designed visually with Elementor: drag-and-drop layouts, colours, fonts, spacing, and separate tablet and mobile settings. Global colours and fonts apply to both websites.
+- **Preview first:** "Preview on the Main Website" shows a draft exactly as www.acadvizen.com will show it, before anything is published.
+
+`docs/ACADVIZEN_VISUAL_BUILDER.md` lists what is covered and what is not.
 - **Recent versions:** each page keeps its recent versions, so an earlier one can be restored in one click.
 - **Main's own admin** (`/admin`) continues to manage leads, students, courses and other application data.
 - **The Enrollment website** keeps its pages, forms and enquiry handling.

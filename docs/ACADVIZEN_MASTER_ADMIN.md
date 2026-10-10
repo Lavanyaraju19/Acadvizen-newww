@@ -4,7 +4,7 @@ One WordPress and one `/wp-admin/` manage both websites: the Enrollment WordPres
 
 > **Status (2026-10-10).** Verified end to end on staging: `cms.acadvizen.com` (a copy of enroll) publishing to a Vercel preview of this branch. The stack is WordPress 7.0.6, Astra 4.13.6, Elementor 4.3.3, Elementor Pro, Header Footer Elementor, Max Mega Menu, Contact Form 7 and Rank Math.
 >
-> **Production:** the plugin is **not installed** on enroll.acadvizen.com, and the integration is off on Main. The first-install package is `dist/acadvizen-cms-0.3.0-f0d54ff/acadvizen-cms.zip` (built and verified by `node tools/build-cms-plugin.mjs`). In it, the optional features that change existing Enrollment behaviour are off (section 6), and activation never writes `.htaccess`.
+> **Production:** the plugin is **not installed** on enroll.acadvizen.com, and the integration is off on Main. The first-install package is plugin 0.4.0, `dist/acadvizen-cms-0.4.0-a795fb0/acadvizen-cms.zip` (built and verified by `node tools/build-cms-plugin.mjs`). It was tested end to end on a local WordPress with a local Main build: `tests/wordpress`, 44/44. In it, the optional features that change existing Enrollment behaviour are off (section 6), and activation never writes `.htaccess`.
 >
 > Current state and owner actions: `docs/ACADVIZEN_CLIENT_HANDOVER.md`. Section 14 here has the staging verification record.
 
@@ -210,7 +210,8 @@ The existing Main Website (built in Next.js from Supabase) is brought into WordP
 
   Both checks run at most once a minute, triggered by the Main Website's regular manifest requests, by the admin screens that show publishing status, and hourly. The Publishing log shows "Publishing was interrupted; started again automatically". Verified on staging: the stuck location published 43 s after the Locations list was opened; a deliberately deleted site-wide re-render job was recovered without any admin action (section 14).
 - **Versions & Rollback → Make live** restores any earlier version. Elementor CSS was inlined when the version was stored, so it looks exactly as it did. The page stays rolled back until it is edited and updated again.
-- **Preview** shows a stored version inside a sandboxed iframe (`sandbox="allow-scripts allow-popups"`, no same-origin access), so page scripts can't act as the logged-in administrator. An iframe is used because Hostinger adds its own `Content-Security-Policy` header, which overrides a CSP sandbox header. Inside the sandbox, cookies and web storage are unavailable; the preview supplies harmless stand-ins and always shows entrance-animated elements, so content is visible. Icon fonts (Font Awesome/eicons) are refused by the browser in the sandbox, so icons can be missing **in the preview only**; the live page is unaffected.
+- **Preview on the Main Website** (0.4.0) renders the page's last saved state with Main's header, footer and styles before it is published: draft, pending review, scheduled, private or published. The render request is signed for its own purpose (`preview.<post>.<path>`), so it can neither publish nor be replaced by a publish signature. Only that one signed request may see the unpublished page; anonymous and forged requests still get 404. Nothing is stored. It is shown in the sandboxed viewer described next, and the admin action needs `edit_post` and a nonce.
+- **Preview** (Versions & Rollback) shows a stored version inside a sandboxed iframe (`sandbox="allow-scripts allow-popups"`, no same-origin access), so page scripts can't act as the logged-in administrator. An iframe is used because Hostinger adds its own `Content-Security-Policy` header, which overrides a CSP sandbox header. Inside the sandbox, cookies and web storage are unavailable; the preview supplies harmless stand-ins and always shows entrance-animated elements, so content is visible. Icon fonts (Font Awesome/eicons) are refused by the browser in the sandbox, so icons can be missing **in the preview only**; the live page is unaffected.
 - WordPress/Elementor revisions remain the editing history; versions are the publishing history.
 
 ## 4. Cache and revalidation
@@ -482,7 +483,8 @@ No Vercel firewall change, DNS change or CRM/email change is required.
   - the blog pages in `app/(public)/blog/`.
 - **Tests:**
   - `tests/unit/wordpress-*.test.js` (`npm run test:unit`);
-  - `tests/php/run.php` (`docker run --rm -v "$PWD:/app" -w /app php:8.3-cli php tests/php/run.php`).
+  - `tests/php/run.php` (`docker run --rm -v "$PWD:/app" -w /app php:8.3-cli php tests/php/run.php`);
+  - `tests/wordpress/`: Docker WordPress and the end-to-end scenarios against a local Main build (README inside).
 - **Release tools:**
   - `tools/build-cms-plugin.mjs`: reproducible, self-verifying plugin ZIP;
   - `tools/cms-api-smoke.mjs`: live check of the plugin API (refusals; signed checks when the secret is in the environment);

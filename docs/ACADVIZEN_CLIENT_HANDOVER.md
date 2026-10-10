@@ -13,7 +13,8 @@ Staging and local results support the work. They are not proof that production w
 
 Related documents:
 - `docs/ACADVIZEN_CLIENT_SUMMARY.md`: one-page summary;
-- `docs/ACADVIZEN_ADMIN_GUIDE.md`: how to publish (for editors);
+- `docs/ACADVIZEN_ADMIN_GUIDE.md`: how to publish and redesign (for editors);
+- `docs/ACADVIZEN_VISUAL_BUILDER.md`: what the visual builder does, with evidence and limits;
 - `docs/ACADVIZEN_MASTER_ADMIN.md`: technical guide and deployment procedure;
 - `docs/ACADVIZEN_ACCESS_AUDIT.md`: who can access what.
 
@@ -78,11 +79,11 @@ Main fixes live since 9–10 October:
 |---|---|---|
 | Repository | `github.com/Lavanyaraju19/Acadvizen-newww`, branch `headless-wordpress` | Git |
 | Live on Main | `d48492b` | Vercel API |
-| Local, **not pushed** | `f0d54ff` (plugin: three optional features off by default; no `.htaccess` writes); `930e29c` (unpublished tools hidden from their pages; release tools; more tests); `745387d` (verifier fix); plus this documentation | `git rev-list`: local is ahead of `origin/headless-wordpress` |
-| Plugin package | `dist/acadvizen-cms-0.3.0-f0d54ff/acadvizen-cms.zip`, 97,055 bytes | `node tools/build-cms-plugin.mjs` |
-| Package SHA-256 | `188dce511531b628cc181c69a5c1946939eb3fd3f3558d6d083c311b85a2b725` | Two builds byte-identical; all 21 files byte-identical to `f0d54ff` |
+| Local, **not pushed** | `f0d54ff` (plugin: three optional features off by default; no `.htaccess` writes); `930e29c` (unpublished tools hidden from their pages; release tools; more tests); `745387d` (verifier fix); `82570e0` (documentation); `d11830b` ("Preview on the Main Website"; local end-to-end tests in `tests/wordpress`); `a795fb0` (plugin 0.4.0); plus this documentation | `git rev-list`: local is ahead of `origin/headless-wordpress` |
+| Plugin package | `dist/acadvizen-cms-0.4.0-a795fb0/acadvizen-cms.zip`, 98,730 bytes, plugin version 0.4.0 | `node tools/build-cms-plugin.mjs` |
+| Package SHA-256 | `01d62f3feae0b5b723ca096b9ae0eca89fb491271d06acf48e8871a6f60e6809` | All 21 files byte-identical to `a795fb0` |
 
-The build is reproducible. It keeps the repository's line endings and stamps every entry with the commit date. An earlier ZIP of the same files (SHA-256 `cf8f2806…`) carried build-time dates; its contents were identical.
+The build is reproducible. It keeps the repository's line endings and stamps every entry with the commit date. The earlier 0.3.0 packages (`cf8f2806…`, `188dce51…`) are superseded and were removed from `dist/`.
 
 **Plugin defaults for the first install.** Three behaviours that would change Enrollment's existing pages are **off** until `wp-config.php` turns them on:
 
@@ -100,7 +101,7 @@ On activation the plugin only rebuilds WordPress's saved address rules in the da
 |---|---|---|---|---|
 | 1 | **Back up Enrollment** (files and database), record the date and the database size. Confirm Supabase backups | Owner | hPanel → Websites → **enroll.acadvizen.com** (not cms) → Backups; hPanel → Databases; Supabase → Database → Backups | Backup listed with date and scope; database size under 2.0 GB (limit 3 GB) |
 | 2 | **Apply the two Supabase migrations** (section 11) | Supabase owner | Supabase → SQL Editor | Section 11 checks |
-| 3 | **Install the plugin.** Plugins → Add New → Upload Plugin → `acadvizen-cms.zip` (SHA-256 above) → Activate. Add nothing else yet | Owner, or a working administrator account given to the engineer | `https://enroll.acadvizen.com/wp-admin/` | `node tools/cms-api-smoke.mjs`: 4 routes, the enquiry route and 4 refusals (401). Then the enrollment checks in section 8 |
+| 3 | **Install the plugin.** Plugins → Add New → Upload Plugin → `acadvizen-cms.zip` (0.4.0, SHA-256 above) → Activate. Add nothing else yet | Owner, or a working administrator account given to the engineer | `https://enroll.acadvizen.com/wp-admin/` | `node tools/cms-api-smoke.mjs`: 4 routes, the enquiry route and 4 refusals (401). Then the enrollment checks in section 8 |
 | 4 | **Secret and Main address in wp-config.php.** Generate a new random secret of at least 32 characters, locally (for example `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`). Never paste it in chat, email or the repository, and never reuse the staging secret. Add `define( 'ACADVIZEN_CMS_MAIN_URL', 'https://www.acadvizen.com' );` and `define( 'ACADVIZEN_CMS_WEBHOOK_SECRET', '…' );` | Owner | hPanel → File Manager → `wp-config.php` | Master Admin → Settings: "Shared secret: Set" |
 | 5 | **Vercel production variables**: `WORDPRESS_CMS_API_URL` = `https://enroll.acadvizen.com/wp-json/acadvizen-cms/v1` (not the wp-admin address in the access checklist) and `WORDPRESS_CMS_WEBHOOK_SECRET` = the same secret. Leave `WORDPRESS_CONTENT_ENABLED` unset | Owner (or engineer with written approval) | Vercel → `acadvizen-newww-ua9d` → Settings → Environment Variables → Production | `WORDPRESS_CMS_WEBHOOK_SECRET=… node tools/cms-api-smoke.mjs` on the engineer's machine: signed checks pass. The secret is read from the environment, never printed |
 | 6 | **Server cron**, every minute: `wget -q -O /dev/null https://enroll.acadvizen.com/wp-cron.php` | Owner | hPanel → Advanced → Cron Jobs | Cron log shows runs |
@@ -120,14 +121,18 @@ Estimated time once access exists:
 |---|---|---|---|---|---|
 | Main keeps its design, routes, SEO and `/admin` | **Met (PRODUCTION)** | `verify-production` 10 Oct 12:54 UTC: all 314 sitemap URLs answer 200; titles, canonicals, logo and key routes pass | Fixes deployed 9–10 Oct; integration off | — | `node tools/verify-production.mjs` Main checks |
 | Enrollment keeps its design, forms, enquiry API | **Met (PRODUCTION, read-only)** | Nothing installed; enquiry route registered | Nothing changed on Enrollment | — | Section 8 after install |
-| WordPress admin is the central editor | **Built, not live** | STAGING lifecycle 18/18 (9 and 10 Oct); LOCAL PHP 191/191 | Package ready | Steps 1, 3 | Section 7 |
-| Publish to Main updates Main | **Not tested in PRODUCTION** | STAGING PASS (28–70 s) | — | Steps 1–8 | Section 7, rows 3–5 |
-| Enrollment-only content never reaches Main | **Not tested in PRODUCTION** | STAGING PASS | — | Steps 1–8 | Section 7, row 9 |
-| Main-only content creates no public Enrollment page | **Not tested in PRODUCTION** | STAGING PASS (404 on enroll; not in sitemap) | Main-only types always kept out of Enrollment's sitemap | Steps 1–8 | Section 7, row 4 |
-| Both | **Not tested in PRODUCTION** | STAGING PASS | — | Steps 1–8 | Section 7, row 10 |
-| Signed API: unsigned, malformed, wrong-secret, expired and wrong-path requests refused | **STAGING (HTTP) + LOCAL** | `cms-api-smoke` on staging 10 Oct 12:22 UTC: 13/13, actual HTTP 401s; PHP: 8 signed-route tests including missing secret | Tests and smoke tool added | Production: steps 3–5 | `cms-api-smoke.mjs` with and without the secret |
+| WordPress admin is the central editor | **Built, not live** | LOCAL `tests/wordpress` 44/44 (10 Oct, release build); STAGING lifecycle 18/18 (earlier build); PHP 205/205 | Package 0.4.0 ready | Steps 1, 3 | Section 7 |
+| Visual builder (layouts, styles, responsive, templates, global styles) | **Elementor, for both websites; built, not live** | `docs/ACADVIZEN_VISUAL_BUILDER.md` (implementation matrix); LOCAL A/D/F and responsive render check | No second builder, by design | Steps 1–8; the Main content import | Section 7, rows 3, 15, 16 |
+| Preview before publishing, as on Main | **Implemented (LOCAL)** | Draft, pending and scheduled pages render with Main's design, nothing stored; browser test 8/8 plus the frame check; anonymous and forged requests 404 | New in 0.4.0 | Steps 1–8 | Section 7, row 2 |
+| Publish to Main updates Main | **Not tested in PRODUCTION** | LOCAL A (16–37 s); STAGING PASS (28–70 s) | — | Steps 1–8 | Section 7, rows 3–5 |
+| Enrollment-only content never reaches Main | **Not tested in PRODUCTION** | LOCAL B; STAGING PASS | — | Steps 1–8 | Section 7, row 9 |
+| Main-only content creates no public Enrollment page | **Not tested in PRODUCTION** | LOCAL A/E; STAGING PASS (404 on enroll; not in sitemap) | Main-only types always kept out of Enrollment's sitemap | Steps 1–8 | Section 7, row 4 |
+| Both | **Not tested in PRODUCTION** | LOCAL C; STAGING PASS | — | Steps 1–8 | Section 7, row 10 |
+| Rollback restores text and design | **Not tested in PRODUCTION** | LOCAL F | — | Steps 1–8 | Section 7, row 8 |
+| Main stays up if WordPress is down | **LOCAL** | WordPress stopped: Main routes and a published WordPress page answered 200 with content | — | — | Section 7, row 17 |
+| Signed API: unsigned, malformed, wrong-secret, expired and wrong-path requests refused | **STAGING (HTTP) + LOCAL** | `cms-api-smoke`: STAGING 13/13; LOCAL 18/18 including correctly signed, expired and wrong-path requests; PHP signature and render-mode tests | Tests and smoke tool added | Production: steps 3–5 | `cms-api-smoke.mjs` with and without the secret |
 | Existing Supabase data, leads and blogs preserved | **Met (PRODUCTION)** | Leads 2 (real) unchanged; only identified test records touched | Test lead deleted (by id); test course and tool unpublished | — | Admin → Leads |
-| Leads: status can be saved | **Fails in PRODUCTION** | Earlier: HTTP 500 `record "new" has no field "updated_at"` | Migration `202610100001` written | Step 2 | Section 11 |
+| Leads: status can be saved | **Fails in PRODUCTION** | Earlier: HTTP 500 `record "new" has no field "updated_at"`. LOCAL: on a throwaway Postgres shaped like production the same error reproduces, and after the migration the update succeeds | Migrations `202610100001` and `202610100002` written and tested (run twice, rows kept) | Step 2 | Section 11 |
 | Admin → Tools lists tools | **Met (PRODUCTION)** | 68 tools listed after `d48492b` | Fallback ordering | Step 2 restores the configured order | Admin → Tools |
 | Test content removed | **Partly** | Course: unpublished, name on no page. Tool: unpublished (`is_active: false`), out of the sitemap and `/tools`; its own page still shows its name with `index, follow` | Fix `930e29c` (verified LOCAL: test tool and unknown slugs noindex; 67/67 real tools indexable) | Deploy (step 7) | `verify-production`: "test record … not presented" |
 | Enrollment sitemap, redirects, footer, logo | **Fail (PRODUCTION, pre-existing)** | 8 Enrollment checks fail | Exact fixes written (section 10) | Owner WordPress access | `verify-production` Enrollment checks |
@@ -136,22 +141,27 @@ Estimated time once access exists:
 
 ## 7. Production publishing test matrix
 
-| # | Test | PRODUCTION | STAGING |
-|---|---|---|---|
-| 1 | Plugin active, no PHP errors, admin reachable | NOT RUN (blocked: step 3) | PASS |
-| 2 | Draft is not public (WordPress or Main) | NOT RUN | PASS |
-| 3 | Publish to Main: shown on Main with title, body, address, image, SEO and canonical | NOT RUN | PASS |
-| 4 | Main-only: 404 on Enrollment, not in its sitemap | NOT RUN | PASS |
-| 5 | Edit title and body → update reaches Main | NOT RUN | PASS (4–61 s) |
-| 6 | Change the address → old address 301 to the new one | NOT RUN | PASS |
-| 7 | Unpublish / trash → gone from Main and the sitemap | NOT RUN | PASS |
-| 8 | Rollback (Make live), and the next edit replaces it | NOT RUN | PASS |
-| 9 | Enrollment-only does not reach Main | NOT RUN | PASS |
-| 10 | Both: shown on both | NOT RUN | PASS |
-| 11 | Signed API refusals (missing, malformed, wrong, expired, wrong path) | NOT RUN (HTTP 404: plugin absent) | PASS, 13/13 HTTP |
-| 12 | Drafts never in `/blogs` or the manifest | NOT RUN | PASS |
-| 13 | Enquiry submission still works | NOT RUN (no approval for another live enquiry) | PASS (contract unchanged) |
-| 14 | Temporary content removed afterwards | — | PASS |
+These are the production acceptance tests still required. Each uses a temporary page titled "ACV TEST — delete me" and is deleted afterwards. The LOCAL column refers to `tests/wordpress` scenarios (release build 0.4.0, 10 Oct 2026). The STAGING column refers to an earlier build.
+
+| # | Test | PRODUCTION | LOCAL | STAGING |
+|---|---|---|---|---|
+| 1 | Plugin active, no PHP errors, admin reachable; `.htaccess` unchanged; optional features off | NOT RUN (blocked: step 3) | PASS (L) | PASS |
+| 2 | Draft not public anywhere; **Preview on the Main Website** shows it with Main's design | NOT RUN | PASS (A, E) | — (new) |
+| 3 | Publish to Main: shown on Main with title, body, layout, colours, address, SEO and canonical | NOT RUN | PASS (A) | PASS |
+| 4 | Main-only: 404 on Enrollment, not in its sitemap | NOT RUN | PASS (A, E) | PASS |
+| 5 | Edit title and body → update reaches Main | NOT RUN | PASS (C, 7–33 s) | PASS (4–61 s) |
+| 6 | Change the address → old address 301 to the new one | NOT RUN | PASS (E) | PASS |
+| 7 | Unpublish / trash → gone from Main and the sitemap | NOT RUN | PASS (C: target change; cleanup: delete) | PASS |
+| 8 | Rollback (Make live) restores text and design; the next edit replaces it | NOT RUN | PASS (F) | PASS |
+| 9 | Enrollment-only does not reach Main | NOT RUN | PASS (B) | PASS |
+| 10 | Both: shown on both, a change reaches both | NOT RUN | PASS (C) | PASS |
+| 11 | Signed API refusals (missing, malformed, wrong, expired, wrong path); signed requests accepted | NOT RUN (HTTP 404: plugin absent) | PASS, 18/18 HTTP | PASS, 13/13 HTTP |
+| 12 | Drafts never in `/blogs` or the manifest | NOT RUN | PASS (smoke: published blogs only) | PASS |
+| 13 | Enquiry submission still works | NOT RUN (no approval for another live enquiry) | — | PASS (contract unchanged) |
+| 14 | Temporary content removed afterwards | — | PASS | PASS |
+| 15 | Global colour change reaches Main and Enrollment; a page's own settings are kept | NOT RUN (affects the live sites: do it only as a deliberate, approved change) | PASS (D) | PASS |
+| 16 | City → area → area page, published to Main | NOT RUN | PASS (E) | PASS (locations) |
+| 17 | A failed render keeps the live version; a retry recovers | NOT RUN (needs a failure simulation, so not on production) | PASS (H) | PASS |
 
 ## 8. Checks right after installing the plugin
 
@@ -226,14 +236,20 @@ The deployed code works before and after the migrations.
 
 | Test | Method | Result | Where |
 |---|---|---|---|
-| PHP lint | `php -l` on every tracked WordPress and test PHP file (PHP 8.1.29) | 22 files, 0 errors | LOCAL |
-| PHP plugin tests | `php tests/php/run.php` | **191 passed, 0 failed.** Includes optional features off by default, the signed-route checks and the missing-secret check | LOCAL |
+| PHP lint | `php -l` on every WordPress, test and harness PHP file (PHP 8.1.29) | 25 files, 0 errors | LOCAL |
+| PHP plugin tests | `php tests/php/run.php` | **205 passed, 0 failed.** Includes optional features off by default, signed routes, the missing secret, render-request modes (publish vs preview, other page, other address, expiry) and the statuses that can be previewed | LOCAL |
 | Node unit tests | `npm run test:unit` | **148 passed, 0 failed, 0 skipped** | LOCAL |
 | TypeScript | `npx tsc --noEmit` | 0 errors | LOCAL |
 | ESLint | `npx next lint` | 0 errors, 10 warnings. All pre-existing and unchanged by this work: `<img>` instead of `next/image` in 9 places, one hook dependency | LOCAL |
-| Production build | `npx next build` | Compiled successfully | LOCAL |
-| Plugin package | `node tools/build-cms-plugin.mjs` | 21 files, byte-identical to `f0d54ff`; nothing else in the archive; reproducible | LOCAL |
-| Plugin load, default | Main file loaded with stubs | 53 hooks; none of the 7 optional-feature hooks; REST routes registered | LOCAL |
+| Production build | `npx next build` (integration off; also built with it on for the local scenarios) | Compiled successfully | LOCAL |
+| Plugin package | `node tools/build-cms-plugin.mjs` | 0.4.0: 21 files, byte-identical to `a795fb0`; nothing else in the archive; reproducible | LOCAL |
+| **End-to-end scenarios** | `node tests/wordpress/scenarios.mjs` (Docker WordPress 7.1 with Elementor 4.3.3, HFE, Rank Math, CF7, MetForm, Astra; local Main production build with the integration on), 13:48–13:57 UTC | **44 passed, 0 failed**: L lifecycle, A Main only, B Enrollment only, C Both, D global colour, E city/area, F rollback, H failure and retry. All test content removed | LOCAL |
+| Preview on the Main Website | Browser as administrator, plus HTTP | Button present; 200; draft shown; sandbox without same-origin; noindex; tampered nonce 403; no overflow at 390 px. Anonymous and forged-signature requests 404. A publish render of a draft is refused (409) | LOCAL |
+| Responsive settings on Main | Render of a draft with a mobile-only heading size and "hide on tablet" | Desktop size, `@media (max-width:767px)` rule and the tablet class are all in the Main document | LOCAL |
+| WordPress unavailable | WordPress container stopped | Main `/`, `/about`, `/courses`, `/blog`, `/tools`, `/contact` 200; a published WordPress page still served with content | LOCAL |
+| API smoke with secret | `cms-api-smoke.mjs` against the local plugin | 18/18, including correctly signed, expired and wrong-path requests | LOCAL |
+| Supabase migrations | Throwaway Postgres 16 shaped like production (old tables and trigger), each migration run twice | Before: the production error reproduced. After: status update works, rows kept, name copied, full insert stored, `order_index` added | LOCAL |
+| Plugin load, default | Main file loaded with stubs | No optional-feature hooks; REST routes registered | LOCAL |
 | Tool page fix | Local production server on production data | Test tool and unknown slugs `noindex`, no test name; 67/67 sitemap tools `index` | LOCAL |
 | CMS API smoke | `node tools/cms-api-smoke.mjs` | STAGING 13/13 (12:22 UTC). PRODUCTION 3 pass / 10 fail: plugin not installed | STAGING / PRODUCTION |
 | Live websites | `node tools/verify-production.mjs` (12:54 UTC) | 27 pass, 9 fail, 4 informational. Main: 1 fail, the test tool page (fix not deployed). Enrollment: 8 pre-existing fails (section 10) | PRODUCTION |
@@ -241,7 +257,7 @@ The deployed code works before and after the migrations.
 | Test tool unpublished | Admin → Tools, untick Active, Save (only the exact slug) | `is_active: false`; sitemap mentions 1 → 0 | PRODUCTION |
 | Publishing lifecycle | Temporary staging page, deleted afterwards | 18/18 (9 and 10 Oct, before the optional-feature flags) | STAGING |
 
-The staging site still runs an earlier build of the plugin, from before `f0d54ff`, in which the three optional features were always on. The production package has not been run on staging.
+The staging site still runs an earlier build of the plugin, from before `f0d54ff`, in which the three optional features were always on. The 0.4.0 package was tested on the local WordPress, not on staging.
 
 ## 13. Known issues not caused by this project
 
