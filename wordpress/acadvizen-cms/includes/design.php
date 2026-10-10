@@ -704,6 +704,18 @@ function login_logo_text(): string {
 
 /* Website Design screen ------------------------------------------------------------------------ */
 
+/** Main Website addresses of the live records of a type that are drawn by the type's shared design. */
+function design_main_paths( string $type ): array {
+	$paths = array();
+	foreach ( list_live_versions() as $row ) {
+		$post = get_post( (int) $row['post_id'] );
+		if ( $post instanceof \WP_Post && $type === $post->post_type && uses_design_template( $post ) ) {
+			$paths[] = (string) $row['main_path'];
+		}
+	}
+	return $paths;
+}
+
 function render_design_page(): void {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
@@ -734,6 +746,7 @@ function render_design_page(): void {
 							</select>
 							<?php if ( design_template_for( $type ) ) : ?>
 								<a class="button button-small" href="<?php echo esc_url( admin_url( 'post.php?post=' . design_template_for( $type ) . '&action=elementor' ) ); ?>"><?php esc_html_e( 'Edit design with Elementor', 'acadvizen-cms' ); ?></a>
+								<p class="description"><?php echo esc_html( affected_pages_summary( design_main_paths( $type ) ) ); ?></p>
 							<?php endif; ?>
 						</td>
 					</tr>

@@ -48,7 +48,8 @@ function render_site_publish_box( \WP_Post $post ): void {
 		<?php endforeach; ?>
 	</fieldset>
 	<?php if ( $is_template ) : ?>
-		<p class="acv-cms-note"><?php esc_html_e( 'Saving a template republishes every Main Website page automatically.', 'acadvizen-cms' ); ?></p>
+		<p class="acv-cms-note"><?php esc_html_e( 'Saving a template republishes every Main Website page automatically. On enroll.acadvizen.com, the pages that use this template change as soon as you save.', 'acadvizen-cms' ); ?></p>
+		<p class="description"><?php echo esc_html( affected_pages_summary( array_column( list_live_versions(), 'main_path' ) ) ); ?></p>
 		<?php
 		return;
 	endif;

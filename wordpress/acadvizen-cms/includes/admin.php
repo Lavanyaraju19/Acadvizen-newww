@@ -308,6 +308,7 @@ function render_dashboard_page(): void {
 				<li><strong><?php esc_html_e( 'Both Websites', 'acadvizen-cms' ); ?></strong> &mdash; <?php esc_html_e( 'shown on both websites. You design it once.', 'acadvizen-cms' ); ?></li>
 			</ul>
 			<p class="description"><?php esc_html_e( 'Global colours, fonts, headers, footers, menus and templates are shared: when you change them, every Main Website page is republished automatically.', 'acadvizen-cms' ); ?></p>
+			<p class="description"><?php echo esc_html( affected_pages_summary( array_column( list_live_versions(), 'main_path' ) ) ); ?></p>
 		</div>
 	</div>
 	<?php

@@ -116,6 +116,25 @@ function list_live_versions(): array {
 }
 
 /**
+ * Plain-language list of the Main Website pages a shared change (template, design, global style)
+ * republishes, shown before saving: "Saving republishes 3 Main Website pages: /, /about, /contact."
+ */
+function affected_pages_summary( array $paths, int $show = 15 ): string {
+	$paths = array_values( array_unique( array_filter( array_map( 'strval', $paths ) ) ) );
+	if ( ! $paths ) {
+		return __( 'No page is published on the Main Website yet, so saving republishes nothing there.', 'acadvizen-cms' );
+	}
+	sort( $paths );
+	$listed = implode( ', ', array_slice( $paths, 0, $show ) );
+	$more   = count( $paths ) - $show;
+	return $more > 0
+		/* translators: 1: number of pages, 2: list of addresses, 3: number not listed */
+		? sprintf( _n( 'Saving republishes %1$d Main Website page: %2$s.', 'Saving republishes %1$d Main Website pages: %2$s and %3$d more.', count( $paths ), 'acadvizen-cms' ), count( $paths ), $listed, $more )
+		/* translators: 1: number of pages, 2: list of addresses */
+		: sprintf( _n( 'Saving republishes %1$d Main Website page: %2$s.', 'Saving republishes %1$d Main Website pages: %2$s.', count( $paths ), 'acadvizen-cms' ), count( $paths ), $listed );
+}
+
+/**
  * Stores a render and makes it live. If it is identical to the current live version for the
  * same address, nothing new is stored. Returns the live version row.
  */

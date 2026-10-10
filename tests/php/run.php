@@ -94,6 +94,7 @@ namespace {
 		function add_option( $name, $value = '', $deprecated = '', $autoload = null ) { if ( isset( $GLOBALS['acv_options'][ $name ] ) ) { return false; } $GLOBALS['acv_options'][ $name ] = $value; return true; }
 		function delete_post_meta( $id, $key ) { return true; }
 		function __( $text, $domain = '' ) { return $text; }
+		function _n( $single, $plural, $number, $domain = '' ) { return 1 === (int) $number ? $single : $plural; }
 		function esc_attr( $s ) { return htmlspecialchars( (string) $s, ENT_QUOTES ); }
 		function esc_html( $s ) { return htmlspecialchars( (string) $s, ENT_QUOTES ); }
 		function absint( $n ) { return abs( (int) $n ); }
@@ -603,6 +604,12 @@ namespace Acadvizen\CMS {
 	$template              = new \WP_Post( 502, 'elementor_library' );
 	$template->post_status = 'draft';
 	check( 'preview: a template is not a page to preview', false, can_preview_for_main( $template ) );
+
+	// Shared changes say which Main Website pages they republish before saving.
+	check( 'affected pages: none live', 'No page is published on the Main Website yet, so saving republishes nothing there.', affected_pages_summary( array() ) );
+	check( 'affected pages: listed, sorted, duplicates once', 'Saving republishes 2 Main Website pages: /, /about.', affected_pages_summary( array( '/about', '/', '/about', '' ) ) );
+	check( 'affected pages: long list shortened with a count', 'Saving republishes 4 Main Website pages: /a, /b and 2 more.', affected_pages_summary( array( '/d', '/c', '/b', '/a' ), 2 ) );
+	check( 'affected pages: one page', 'Saving republishes 1 Main Website page: /tools/canva.', affected_pages_summary( array( '/tools/canva' ) ) );
 
 	check( 'signed routes: no secret configured -> refused', 'refused', trim( (string) shell_exec( sprintf( '%s %s --no-secret', escapeshellarg( PHP_BINARY ), escapeshellarg( __FILE__ ) ) ) ) );
 
