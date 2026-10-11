@@ -21,6 +21,7 @@ function fakeDb(seed = {}) {
     let head = false
     let count = false
     let range = null
+    const orders = []
     const matches = (row) => filters.every((f) => f(row))
     const api = {
       select(_cols, opts = {}) { if (mode === 'select') { head = Boolean(opts.head); count = opts.count === 'exact' } return api },
@@ -29,7 +30,7 @@ function fakeDb(seed = {}) {
       is(c, v) { filters.push((r) => (r[c] ?? null) === v); return api },
       not(c, _op, v) { filters.push((r) => (r[c] ?? null) !== v); return api },
       or() { return api },
-      order() { return api },
+      order(c, o = {}) { orders.push([c, o.ascending !== false]); return api },
       limit() { return api },
       range(a, b) { range = [a, b]; return api },
       insert(row) { mode = 'insert'; values = row; return api },
@@ -40,10 +41,11 @@ function fakeDb(seed = {}) {
       then(resolve, reject) { return api.run().then(resolve, reject) },
       async run() {
         const rows = tables[table]
-        if (mode === 'insert') { const row = { id: randomUUID(), created_at: new Date().toISOString(), ...values }; rows.push(row); return { data: [row], error: null } }
+        if (mode === 'insert') { const made = (Array.isArray(values) ? values : [values]).map((v) => ({ id: randomUUID(), created_at: new Date().toISOString(), ...v })); rows.push(...made); return { data: made, error: null } }
         if (mode === 'update') { const hit = rows.filter(matches); hit.forEach((r) => Object.assign(r, values)); return { data: hit, error: null } }
         if (mode === 'delete') { tables[table] = rows.filter((r) => !matches(r)); return { data: [], error: null } }
         let hit = rows.filter(matches)
+        for (const [c, asc] of [...orders].reverse()) hit = [...hit].sort((a, b) => (a[c] > b[c] ? 1 : a[c] < b[c] ? -1 : 0) * (asc ? 1 : -1))
         const total = hit.length
         if (range) hit = hit.slice(range[0], range[1] + 1)
         return { data: head ? null : hit, error: null, count: count ? total : null }
@@ -319,4 +321,84 @@ test('old request ids are pruned now and then, well outside the 5-minute signatu
   const claim = createRequestClaimer(store, { pruneChance: 1, retentionMs: 86400000, clock: () => Date.parse('2026-10-11T12:00:00Z') })
   assert.equal(await claim(randomUUID(), { op: 'save', entity: 'blogs' }), 'claimed')
   assert.deepEqual(store.pruned, [['received_at', '2026-10-10T12:00:00.000Z']])
+})
+
+/* Site chrome: settings rows and menus ---------------------------------------------------------- */
+test('settings rows (site, header, footer): only drawn fields are editable; never created, deleted or hidden', async () => {
+  const headerId = randomUUID()
+  const db = fakeDb({
+    site_settings: [{ id: 'default', company_name: 'Acadvizen', ui_copy: {}, design_tokens: { primary: '#000' } }],
+    header_settings: [{ id: headerId, announcement_text: 'Old', nav_items: [{ label: 'Home' }] }],
+    footer_settings: [{ id: randomUUID(), copyright_text: '© {year}' }],
+  })
+  // Text id of site_settings.
+  assert.equal((await call({ op: 'get', entity: 'site_settings', id: 'default' }, { db })).body.data.company_name, 'Acadvizen')
+  const saved = await call({ op: 'save', entity: 'site_settings', id: 'default', record: { company_name: 'Acadvizen Academy', ui_copy: [] } }, { db })
+  assert.equal(saved.status, 200)
+  assert.deepEqual(db.tables.site_settings[0].ui_copy, {}, 'PHP [] arrives as an empty object')
+  assert.deepEqual(db.tables.site_settings[0].design_tokens, { primary: '#000' }, 'fields not offered are kept')
+  // Fields the site never draws are refused.
+  assert.equal((await call({ op: 'save', entity: 'site_settings', id: 'default', record: { design_tokens: {} } }, { db })).body.error, 'validation_failed')
+  assert.equal((await call({ op: 'save', entity: 'header_settings', id: headerId, record: { nav_items: [] } }, { db })).body.error, 'validation_failed')
+  // Header fields validated.
+  assert.equal((await call({ op: 'save', entity: 'header_settings', id: headerId, record: { announcement_link: 'javascript:alert(1)' } }, { db })).body.error, 'validation_failed')
+  assert.equal((await call({ op: 'save', entity: 'header_settings', id: headerId, record: { social_items: { a: 1 } } }, { db })).body.error, 'validation_failed')
+  // Colours as Main stores them (the live header border is rgba(255,255,255,0.1)); CSS injection refused.
+  assert.equal((await call({ op: 'save', entity: 'header_settings', id: headerId, record: { header_border_color: 'rgba(255,255,255,0.1)' } }, { db })).status, 200)
+  assert.equal(db.tables.header_settings[0].header_border_color, 'rgba(255,255,255,0.1)')
+  assert.equal((await call({ op: 'save', entity: 'header_settings', id: headerId, record: { header_border_color: 'red;background:url(x)' } }, { db })).body.error, 'validation_failed')
+  const header = await call({ op: 'save', entity: 'header_settings', id: headerId, record: { announcement_enabled: true, announcement_text: 'Admissions open', announcement_link: '/courses', announcement_bg_color: '#10b981', social_items: [{ platform: 'instagram', url: 'https://instagram.com/acadvizen' }] } }, { db })
+  assert.equal(header.status, 200)
+  assert.equal(header.revalidated[0][0], 'navigation')
+  assert.deepEqual(db.tables.header_settings[0].nav_items, [{ label: 'Home' }])
+  // Never created, deleted, hidden or trashed.
+  assert.equal((await call({ op: 'save', entity: 'footer_settings', record: { copyright_text: 'x' } }, { db })).body.error, 'not_supported')
+  for (const op of ['set_status', 'trash', 'delete']) {
+    assert.equal((await call({ op, entity: 'header_settings', id: headerId, active: false, confirm: true }, { db })).body.error, 'not_supported', op)
+  }
+})
+
+test('menus: links validated; showing a row also publishes it (the site needs is_active and status)', async () => {
+  const db = fakeDb({ menus: [] })
+  for (const bad of ['javascript:alert(1)', 'http://insecure.example', '//evil.example']) {
+    assert.equal((await call({ op: 'save', entity: 'menus', record: { menu_location: 'header', title: 'X', url: bad } }, { db })).body.error, 'validation_failed', bad)
+  }
+  assert.equal((await call({ op: 'save', entity: 'menus', record: { menu_location: 'sidebar', title: 'X', url: '/x' } }, { db })).body.error, 'validation_failed')
+  for (const good of ['/courses', 'https://wa.me/919999999999', '#faq', 'mailto:hello@acadvizen.com', 'tel:+91 98450 00000']) {
+    assert.equal((await call({ op: 'save', entity: 'menus', record: { menu_location: 'footer', title: good, url: good } }, { db })).status, 200, good)
+  }
+  const created = db.tables.menus[0]
+  assert.equal(created.is_active, false)
+  assert.equal(created.status, 'draft', 'a new link is hidden until shown')
+  await call({ op: 'set_status', entity: 'menus', id: created.id, active: true }, { db })
+  assert.equal(created.is_active, true)
+  assert.equal(created.status, 'published')
+  const footer = await call({ op: 'list', entity: 'menus', filter: { menu_location: 'footer' } }, { db })
+  assert.equal(footer.body.data.length, 5)
+  assert.equal((await call({ op: 'list', entity: 'menus', filter: { menu_location: 'nowhere' } }, { db })).body.error, 'invalid_filter')
+})
+
+test('importing the links shown today: same titles, addresses and order; existing menus never touched', async () => {
+  const db = fakeDb({ menus: [], site_settings: [{ id: 'default', ui_copy: {} }] })
+  const first = await call({ op: 'import_menu_defaults', entity: 'menus' }, { db })
+  assert.equal(first.status, 200)
+  assert.deepEqual(first.body.data.imported, { header: 5, footer: 5, legal: 2 })
+  const header = db.tables.menus.filter((r) => r.menu_location === 'header').sort((a, b) => a.order_index - b.order_index)
+  assert.deepEqual(header.map((r) => [r.title, r.url, r.target]), [['Courses', '/courses', '_self'], ['Placement', '/placement', '_self'], ['Achievements', '/achievements', '_self'], ['Blog', '/blog', '_self'], ['Contact', '/contact', '_self']])
+  assert.ok(db.tables.menus.every((r) => r.is_active === true && r.status === 'published' && r.desktop_visible && r.mobile_visible))
+  // A second import changes nothing.
+  const again = await call({ op: 'import_menu_defaults', entity: 'menus' }, { db })
+  assert.deepEqual(again.body.data, { imported: {}, skipped: ['header', 'footer', 'legal'] })
+  assert.equal(db.tables.menus.length, 12)
+
+  // ui_copy lists win over the built-in ones, exactly as on the site; a location with rows is skipped.
+  const db2 = fakeDb({
+    menus: [{ id: randomUUID(), menu_location: 'footer', title: 'Mine', url: '/mine', is_active: true, status: 'published' }],
+    site_settings: [{ id: 'default', ui_copy: { header_fallback_links: [{ title: 'Home', url: '/' }, { title: '', url: '/ignored' }] } }],
+  })
+  const second = await call({ op: 'import_menu_defaults', entity: 'menus', locations: ['header', 'footer'] }, { db: db2 })
+  assert.deepEqual(second.body.data, { imported: { header: 1 }, skipped: ['footer'] })
+  assert.deepEqual(db2.tables.menus.filter((r) => r.menu_location === 'footer').map((r) => r.title), ['Mine'])
+  assert.equal((await call({ op: 'import_menu_defaults', entity: 'menus', locations: ['sidebar'] }, { db: db2 })).body.error, 'invalid_location')
+  assert.equal((await call({ op: 'import_menu_defaults', entity: 'blogs' }, { db: db2 })).body.error, 'not_supported')
 })
