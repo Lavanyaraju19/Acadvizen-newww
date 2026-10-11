@@ -3,6 +3,7 @@ import { getWordPressConfig } from '../lib/wordpress/config.js'
 import { decideBridgeRoute, normalizeBridgePath } from '../lib/wordpress/bridgeRouting.js'
 import { INTERNAL_HEADER, PATH_HEADER, deriveInternalToken } from '../lib/wordpress/internalToken.js'
 import { OWNED_CONTENT_MESSAGE, isWordPressOwnedWrite, isWordPressOwnershipEnabled } from '../lib/wordpress/contentOwnership.js'
+import { fetchCmsPagePrivacy as fetchPageStatusAtAddress, shouldHidePage } from '../lib/cmsPagePrivacy.js'
 
 // Acadvizen Render Bridge: pages designed in Elementor and published to the Main Website from
 // WordPress are served by app/wp-render (an internal rewrite, so the address stays the same).
@@ -123,73 +124,9 @@ async function fetchPublicRedirect(pathname) {
   return { fromPath, toPath, statusCode: statusCode === 301 ? 301 : 302 }
 }
 
-const RESERVED_SINGLE_SEGMENT_SLUGS = new Set([
-  'about',
-  'achievements',
-  'admin',
-  'admin-login',
-  'api',
-  'blog',
-  'contact',
-  'courses',
-  'dashboard',
-  'forgot-password',
-  'hire-from-us',
-  'login',
-  'maintenance',
-  'placement',
-  'privacy-policy',
-  'projects',
-  'register',
-  'sales',
-  'soft-skills',
-  'terms-of-service',
-  'testimonials',
-  'tools',
-])
-
-function isSingleCmsSlugPath(pathname = '') {
-  const segments = String(pathname || '').split('/').filter(Boolean)
-  if (segments.length !== 1) return false
-  const slug = segments[0]
-  if (!slug || slug.includes('.')) return false
-  return !RESERVED_SINGLE_SEGMENT_SLUGS.has(slug)
-}
-
 async function fetchCmsPagePrivacy(pathname) {
-  if (!isSingleCmsSlugPath(pathname)) return null
-
   const { supabaseUrl, serviceKey, anonKey } = getSupabaseRestConfig()
-  const key = serviceKey || anonKey
-  if (!supabaseUrl || !key) return null
-
-  const slug = pathname.replace(/^\/+|\/+$/g, '')
-  const lookup = (excludeDraftCopies) => {
-    const url = new URL('/rest/v1/pages', supabaseUrl)
-    url.searchParams.set('select', 'id,slug,status')
-    url.searchParams.set('slug', `eq.${slug}`)
-    // A live page's private draft copy (staged editing) shares its slug; it must not make the
-    // live page look unpublished.
-    if (excludeDraftCopies) url.searchParams.set('draft_of_id', 'is.null')
-    url.searchParams.set('limit', '1')
-    return fetch(url, {
-      headers: { apikey: key, Authorization: `Bearer ${key}` },
-      cache: 'no-store',
-    })
-  }
-
-  let response = await lookup(true)
-  // Databases without the staged-editing migration have no draft_of_id column (and no copies).
-  if (response.status === 400) response = await lookup(false)
-  if (!response.ok) return null
-
-  const rows = await response.json().catch(() => [])
-  const page = Array.isArray(rows) ? rows[0] : null
-  if (!page?.id) return null
-  return {
-    exists: true,
-    published: String(page.status || '').toLowerCase() === 'published',
-  }
+  return fetchPageStatusAtAddress(pathname, { supabaseUrl, key: serviceKey || anonKey })
 }
 
 function cmsNotFoundResponse() {
@@ -249,7 +186,7 @@ export default async function middleware(request) {
       return bridgeResponse(request, pathname, bridgeDecision)
     }
 
-    if (cmsPrivacy?.exists && !cmsPrivacy.published) {
+    if (shouldHidePage(cmsPrivacy)) {
       return cmsNotFoundResponse()
     }
 
