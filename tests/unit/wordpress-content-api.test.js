@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { handleContentRequest, blogPlainText, createRequestClaimer } from '../../lib/wordpress/contentApi.js'
+import { HOME_LISTS } from '../../lib/homepageDefaults.js'
 import { sanitizeRichHtml } from '../../lib/wordpress/richHtml.js'
 import { signPreview, verifyPreview } from '../../lib/wordpress/previewToken.js'
 import { signPayload } from '../../lib/wordpress/signature.js'
@@ -27,6 +28,8 @@ function fakeDb(seed = {}) {
       select(_cols, opts = {}) { if (mode === 'select') { head = Boolean(opts.head); count = opts.count === 'exact' } return api },
       eq(c, v) { filters.push((r) => r[c] === v); return api },
       neq(c, v) { filters.push((r) => r[c] !== v); return api },
+      in(c, vs) { filters.push((r) => vs.includes(r[c])); return api },
+      like(c, pattern) { const parts = pattern.split('%'); filters.push((r) => { const v = String(r[c] ?? ''); let at = 0; return parts.every((p, i) => { const hit = i === 0 ? (v.startsWith(p) ? 0 : -1) : v.indexOf(p, at); if (hit < 0) return false; at = hit + p.length; return i < parts.length - 1 || p === '' || v.endsWith(p) }) }); return api },
       is(c, v) { filters.push((r) => (r[c] ?? null) === v); return api },
       not(c, _op, v) { filters.push((r) => (r[c] ?? null) !== v); return api },
       or() { return api },
@@ -88,14 +91,14 @@ function call(body, { db, secret = SECRET, ts, cfg = config, deduper = createEve
 }
 
 /** Like call(), but the test chooses the replay protection (durable claimRequest and/or deduper). */
-function callWith(body, { db, claimRequest, deduper } = {}) {
+function callWith(body, { db, claimRequest, deduper, log } = {}) {
   const rawBody = JSON.stringify({ purpose: 'content', request_id: randomUUID(), actor: { login: 'tester' }, ...body })
   const timestamp = Math.floor(clock / 1000)
   return handleContentRequest({
     rawBody,
     headers: { 'x-acadvizen-timestamp': String(timestamp), 'x-acadvizen-signature': signPayload(rawBody, timestamp, SECRET) },
     config,
-    deps: { db, claimRequest, deduper, ...fakePageDeps(db), revalidate: async () => ({ ok: true }), audit: async () => {} },
+    deps: { db, claimRequest, deduper, log, ...fakePageDeps(db), revalidate: async () => ({ ok: true }), audit: async () => {} },
     now: clock,
   })
 }
@@ -401,4 +404,247 @@ test('importing the links shown today: same titles, addresses and order; existin
   assert.deepEqual(db2.tables.menus.filter((r) => r.menu_location === 'footer').map((r) => r.title), ['Mine'])
   assert.equal((await call({ op: 'import_menu_defaults', entity: 'menus', locations: ['sidebar'] }, { db: db2 })).body.error, 'invalid_location')
   assert.equal((await call({ op: 'import_menu_defaults', entity: 'blogs' }, { db: db2 })).body.error, 'not_supported')
+})
+/* Homepage --------------------------------------------------------------------------------------- */
+test('homepage lists: importing saves exactly what the homepage shows; existing lists are never touched', async () => {
+  const mine = { id: randomUUID(), section_key: 'home_list_faq', title: 'FAQ', items_json: [{ question: 'Mine?', answer: 'Yes.' }], is_active: true }
+  const db = fakeDb({ home_sections: [{ id: randomUUID(), section_key: 'who_for', title: 'Who Is This For?', items_json: [], is_active: true }, mine] })
+  const first = await call({ op: 'import_homepage_defaults', entity: 'home_lists' }, { db })
+  assert.equal(first.status, 200)
+  assert.deepEqual(first.body.data.skipped, ['faq'])
+  assert.equal(first.body.data.imported.length, Object.keys(HOME_LISTS).length - 1)
+  for (const [key, list] of Object.entries(HOME_LISTS)) {
+    if (key === 'faq') continue
+    const row = db.tables.home_sections.find((r) => r.section_key === 'home_list_' + key)
+    assert.deepEqual(row.items_json, list.defaults, key + ' saved verbatim')
+    assert.equal(row.is_active, true)
+  }
+  assert.deepEqual(db.tables.home_sections.find((r) => r.id === mine.id).items_json, [{ question: 'Mine?', answer: 'Yes.' }])
+  const again = await call({ op: 'import_homepage_defaults', entity: 'home_lists' }, { db })
+  assert.deepEqual(again.body.data.imported, [])
+  // Only lists are listed under home_lists; only the three drawn sections under home_sections.
+  const lists = await call({ op: 'list', entity: 'home_lists', limit: 50 }, { db })
+  assert.equal(lists.body.data.length, Object.keys(HOME_LISTS).length)
+  const sections = await call({ op: 'list', entity: 'home_sections', limit: 50 }, { db })
+  assert.deepEqual(sections.body.data.map((r) => r.section_key), ['who_for'])
+  assert.equal((await call({ op: 'get', entity: 'home_sections', id: mine.id }, { db })).status, 404)
+  assert.equal((await call({ op: 'get', entity: 'home_lists', id: db.tables.home_sections[0].id }, { db })).status, 404)
+})
+
+test('homepage lists: edits keep the shape the homepage draws', async () => {
+  const faq = { id: randomUUID(), section_key: 'home_list_faq', title: 'FAQ', items_json: HOME_LISTS.faq.defaults, is_active: true }
+  const lines = { id: randomUUID(), section_key: 'home_list_program_highlights', title: 'Highlights', items_json: HOME_LISTS.program_highlights.defaults, is_active: true }
+  const modules = { id: randomUUID(), section_key: 'home_list_course_modules', title: 'Modules', items_json: HOME_LISTS.course_modules.defaults, is_active: true }
+  const db = fakeDb({ home_sections: [faq, lines, modules] })
+  const stored = (row) => db.tables.home_sections.find((r) => r.id === row.id)
+  const ok = await call({ op: 'save', entity: 'home_lists', id: faq.id, record: { items_json: [{ question: ' Is it online? ', answer: 'Yes.' }, { question: '', answer: '' }] } }, { db })
+  assert.equal(ok.status, 200)
+  assert.deepEqual(stored(faq).items_json, [{ question: 'Is it online?', answer: 'Yes.' }], 'trimmed; empty items dropped')
+  assert.equal(ok.revalidated[0][0], 'homepage_section')
+  // A field the homepage does not have, a nested object, or the wrong kind of list: refused.
+  for (const bad of [[{ question: 'Q', answer: 'A', onclick: 'x' }], [{ question: { a: 1 } }], ['just a line']]) {
+    assert.equal((await call({ op: 'save', entity: 'home_lists', id: faq.id, record: { items_json: bad } }, { db })).body.error, 'validation_failed')
+  }
+  assert.equal((await call({ op: 'save', entity: 'home_lists', id: lines.id, record: { items_json: [{ question: 'Q' }] } }, { db })).body.error, 'validation_failed')
+  assert.equal((await call({ op: 'save', entity: 'home_lists', id: lines.id, record: { items_json: ['One', ' Two '] } }, { db })).status, 200)
+  assert.deepEqual(stored(lines).items_json, ['One', 'Two'])
+  // Lists of lines inside items (module pillars) are kept as lists.
+  const edited = HOME_LISTS.course_modules.defaults.map((m, i) => (i === 0 ? { ...m, pillars: ['A', 'B'] } : m))
+  assert.equal((await call({ op: 'save', entity: 'home_lists', id: modules.id, record: { items_json: edited } }, { db })).status, 200)
+  assert.deepEqual(stored(modules).items_json[0].pillars, ['A', 'B'])
+  // Hiding a list brings back the built-in one; lists are never created or deleted directly.
+  await call({ op: 'set_status', entity: 'home_lists', id: faq.id, active: false }, { db })
+  assert.equal(stored(faq).is_active, false)
+  assert.equal((await call({ op: 'save', entity: 'home_lists', record: { items_json: [] } }, { db })).body.error, 'not_supported')
+  assert.equal((await call({ op: 'delete', entity: 'home_lists', id: faq.id, confirm: true }, { db })).body.error, 'not_supported')
+})
+
+test('homepage hero and closing call-to-action: only the drawn fields', async () => {
+  const hero = { id: randomUUID(), heading: 'Learn AI Digital Marketing', video_url: '/v.mp4' }
+  const cta = { id: randomUUID(), title: 'Master the skill set', button_link: '/courses' }
+  const db = fakeDb({ homepage_hero: [hero], homepage_cta: [cta] })
+  assert.equal((await call({ op: 'save', entity: 'homepage_hero', id: hero.id, record: { heading: 'New heading', badge_text: '100% Job Guaranteed*' } }, { db })).status, 200)
+  assert.equal(db.tables.homepage_hero[0].video_url, '/v.mp4', 'fields not offered are kept')
+  assert.equal((await call({ op: 'save', entity: 'homepage_hero', id: hero.id, record: { video_url: '/x.mp4' } }, { db })).body.error, 'validation_failed')
+  assert.equal((await call({ op: 'save', entity: 'homepage_cta', id: cta.id, record: { button_link: 'javascript:alert(1)' } }, { db })).body.error, 'validation_failed')
+  assert.equal((await call({ op: 'save', entity: 'homepage_cta', id: cta.id, record: { button_text: 'Enroll', button_link: '/register' } }, { db })).status, 200)
+})
+
+/* Courses --------------------------------------------------------------------------------------- */
+test('courses: drawn fields validated; showing a course keeps every visibility column in step', async () => {
+  const db = fakeDb({ courses: [] })
+  const created = await call({ op: 'save', entity: 'courses', record: { title: 'AI Digital Marketing', slug: 'ai-digital-marketing', skills: ['SEO', ' GEO '], curriculum: [{ title: 'Module 1', topics: ['Prompting', 'AIO'] }], primary_cta_url: '/register', internship: true } }, { db })
+  assert.equal(created.status, 200)
+  const row = db.tables.courses[0]
+  assert.deepEqual(row.skills, ['SEO', 'GEO'])
+  assert.deepEqual(row.curriculum, [{ title: 'Module 1', topics: ['Prompting', 'AIO'] }])
+  assert.equal(row.is_active, false, 'a new course is hidden until shown')
+  await call({ op: 'set_status', entity: 'courses', id: row.id, active: true }, { db })
+  assert.deepEqual([row.is_active, row.is_published, row.published, row.status], [true, true, true, 'published'])
+  await call({ op: 'set_status', entity: 'courses', id: row.id, active: false }, { db })
+  assert.deepEqual([row.is_active, row.is_published, row.published, row.status], [false, false, false, 'draft'])
+  for (const bad of [{ curriculum: [{ title: 'M', topics: 'not a list' }] }, { curriculum: [{ title: 'M', extra: 1 }] }, { primary_cta_url: 'javascript:alert(1)' }, { learning_hours: -3 }]) {
+    assert.equal((await call({ op: 'save', entity: 'courses', id: row.id, record: bad }, { db })).body.error, 'validation_failed', JSON.stringify(bad))
+  }
+  assert.equal((await call({ op: 'save', entity: 'courses', record: { title: 'Again', slug: 'ai-digital-marketing' } }, { db })).body.error, 'slug_taken')
+  // Trash and restore.
+  await call({ op: 'trash', entity: 'courses', id: row.id }, { db })
+  assert.ok(row.deleted_at)
+  await call({ op: 'restore', entity: 'courses', id: row.id }, { db })
+  assert.equal(row.deleted_at, null)
+})
+
+test('course sections: listed for one course; deleting needs a confirmation', async () => {
+  const courseId = randomUUID()
+  const otherId = randomUUID()
+  const db = fakeDb({ course_details: [
+    { id: randomUUID(), course_id: courseId, section_title: 'Overview', content: 'x', order_index: 1 },
+    { id: randomUUID(), course_id: otherId, section_title: 'Other course', content: 'y', order_index: 0 },
+  ] })
+  assert.equal((await call({ op: 'list', entity: 'course_details' }, { db })).body.error, 'parent_required')
+  const list = await call({ op: 'list', entity: 'course_details', parent_id: courseId }, { db })
+  assert.deepEqual(list.body.data.map((r) => r.section_title), ['Overview'])
+  const added = await call({ op: 'save', entity: 'course_details', record: { course_id: courseId, section_title: 'Fees', content: 'Instalments available.', order_index: 2 } }, { db })
+  assert.equal(added.status, 200)
+  assert.equal((await call({ op: 'save', entity: 'course_details', record: { section_title: 'No course' } }, { db })).body.error, 'validation_failed')
+  const id = added.body.data.id
+  assert.equal((await call({ op: 'delete', entity: 'course_details', id }, { db })).body.error, 'confirmation_required')
+  assert.equal((await call({ op: 'delete', entity: 'course_details', id, confirm: true }, { db })).status, 200)
+  assert.equal(db.tables.course_details.length, 2)
+})
+
+/* City, service and location pages -------------------------------------------------------------- */
+test('city pages: drawn fields only; item lists keep their fields', async () => {
+  const db = fakeDb({ city_pages: [] })
+  const ok = await call({ op: 'save', entity: 'city_pages', record: { city_name: 'Mysuru', slug: 'mysuru', hero_title: 'Digital marketing in Mysuru', features: [{ title: 'Live projects', text: 'Real clients', list: ['SEO', ' Ads '] }], stats: [{ label: 'Students', value: '500+' }], faqs: [{ question: 'Online?', answer: 'Yes.' }] } }, { db })
+  assert.equal(ok.status, 200)
+  const row = db.tables.city_pages[0]
+  assert.deepEqual(row.features, [{ title: 'Live projects', text: 'Real clients', list: ['SEO', 'Ads'] }])
+  assert.equal(row.is_active, false)
+  for (const bad of [{ features: [{ title: 'x', onclick: 'y' }] }, { stats: 'many' }, { faqs: [{ question: { a: 1 } }] }]) {
+    assert.equal((await call({ op: 'save', entity: 'city_pages', id: row.id, record: bad }, { db })).body.error, 'validation_failed', JSON.stringify(bad))
+  }
+})
+
+test('pages and service pages share the /<address> space; fixed website routes are refused', async () => {
+  const db = fakeDb({ pages: [{ id: randomUUID(), title: 'SEO course', slug: 'seo-course-in-bangalore', status: 'published', draft_of_id: null }], service_pages: [{ id: randomUUID(), title: 'Ads', slug: 'google-ads-course-in-bangalore' }] })
+  assert.equal((await call({ op: 'save', entity: 'service_pages', record: { title: 'Clash', slug: 'seo-course-in-bangalore' } }, { db })).body.error, 'slug_taken')
+  assert.equal((await call({ op: 'save', entity: 'pages', record: { title: 'Clash', slug: 'google-ads-course-in-bangalore' } }, { db })).body.error, 'slug_taken')
+  for (const reserved of ['blog', 'courses', 'contact']) {
+    assert.equal((await call({ op: 'save', entity: 'pages', record: { title: 'X', slug: reserved } }, { db })).body.error, 'slug_taken', reserved)
+    assert.equal((await call({ op: 'save', entity: 'service_pages', record: { title: 'X', slug: reserved } }, { db })).body.error, 'slug_taken', reserved)
+  }
+  assert.equal((await call({ op: 'save', entity: 'service_pages', record: { title: 'Meta Ads course', slug: 'meta-ads-course-in-mysuru', benefits: [{ title: 'Live', description: 'Projects' }] } }, { db })).status, 200)
+})
+
+test('sections of city, service and location pages: same section types, with a position on the page', async () => {
+  const cityId = randomUUID()
+  const db = fakeDb({ city_pages: [{ id: cityId, city_name: 'Mysuru', slug: 'mysuru' }], city_page_sections: [], pages: [{ id: randomUUID(), title: 'P', slug: 'p' }], sections: [] })
+  const saved = await call({ op: 'save', entity: 'sections', parent: 'city_pages', record: { page_id: cityId, type: 'faq', position: 'before_faq', content_json: { heading: 'Questions', items: [{ question: 'Q', answer: 'A' }] } } }, { db })
+  assert.equal(saved.status, 200)
+  assert.equal(db.tables.city_page_sections[0].city_page_id, cityId)
+  assert.equal(db.tables.city_page_sections[0].position, 'before_faq')
+  assert.equal(db.tables.sections.length, 0, 'page sections untouched')
+  assert.equal(saved.revalidated[0][0], 'city_page')
+  // Default position, invalid position, unknown parent, wrong parent id.
+  await call({ op: 'save', entity: 'sections', parent: 'city_pages', record: { page_id: cityId, type: 'text_block', content_json: { heading: 'H' } } }, { db })
+  assert.equal(db.tables.city_page_sections[1].position, 'end')
+  assert.equal((await call({ op: 'save', entity: 'sections', parent: 'city_pages', record: { page_id: cityId, type: 'faq', position: 'sidebar' } }, { db })).body.error, 'invalid_section')
+  assert.equal((await call({ op: 'save', entity: 'sections', parent: 'blogs', record: { page_id: cityId, type: 'faq' } }, { db })).body.error, 'invalid_parent')
+  assert.equal((await call({ op: 'save', entity: 'sections', parent: 'service_pages', record: { page_id: cityId, type: 'faq' } }, { db })).body.error, 'page_not_found')
+  const listed = await call({ op: 'list', entity: 'sections', parent: 'city_pages', page_id: cityId }, { db })
+  assert.equal(listed.body.data.length, 2)
+  // Pages keep working exactly as before (no position column).
+  const pageId = db.tables.pages[0].id
+  assert.equal((await call({ op: 'save', entity: 'sections', record: { page_id: pageId, type: 'hero', content_json: { heading: 'H' } } }, { db })).status, 200)
+  assert.equal('position' in db.tables.sections[0], false)
+})
+
+test('a database refusal is generic for WordPress and logged (code and message, no content) for the developer', async () => {
+  const db = fakeDb({ courses: [] })
+  const realFrom = db.from
+  db.from = (table) => { const q = realFrom(table); const insert = q.insert; q.insert = (row) => { insert(row); q.single = async () => ({ data: null, error: { code: '23502', message: 'null value in column "x" violates not-null constraint' } }); return q }; return q }
+  const logged = []
+  const r = await callWith({ op: 'save', entity: 'courses', record: { title: 'X', slug: 'x' } }, { db, deduper: createEventDeduper(), log: (level, details) => logged.push([level, details]) })
+  assert.equal(r.status, 500)
+  assert.deepEqual(r.body, { ok: false, error: 'database_error' })
+  assert.equal(logged[0][0], 'database_error')
+  assert.equal(logged[0][1].code, '23502')
+  assert.match(logged[0][1].message, /not-null/)
+  assert.equal(JSON.stringify(logged).includes('"title"'), false, 'no record content in the log')
+})
+
+test('empty values of required columns are left out (database default), not sent as null', async () => {
+  const db = fakeDb({ courses: [], menus: [] })
+  assert.equal((await call({ op: 'save', entity: 'courses', record: { title: 'Course', slug: 'course', order_index: '', noindex: false } }, { db })).status, 200)
+  assert.equal('order_index' in db.tables.courses[0], false)
+  assert.equal((await call({ op: 'save', entity: 'menus', record: { menu_location: 'footer', title: 'Home', url: '/', target: '', order_index: '' } }, { db })).status, 200)
+  assert.equal('target' in db.tables.menus[0], false)
+})
+
+/* SEO overrides and media ------------------------------------------------------------------------ */
+test('SEO overrides: shown on their page, editable, removable (then the page\'s own SEO applies)', async () => {
+  const pageId = randomUUID()
+  const overrideId = randomUUID()
+  const db = fakeDb({
+    pages: [{ id: pageId, title: 'SEO course', slug: 'seo-course-in-bangalore', status: 'published', draft_of_id: null, seo_title: 'Own title' }],
+    seo_metadata: [{ id: overrideId, page_slug: 'seo-course-in-bangalore', meta_title: 'Override title', schema_json: { a: 1 } }],
+    blog_content_blocks: [],
+  })
+  const page = await call({ op: 'get', entity: 'pages', id: pageId }, { db })
+  assert.equal(page.body.data.seo_override.meta_title, 'Override title')
+  const edited = await call({ op: 'save', entity: 'seo_metadata', id: overrideId, record: { meta_title: 'New override' } }, { db })
+  assert.equal(edited.status, 200)
+  assert.deepEqual(edited.revalidated[0], ['page', 'seo-course-in-bangalore'], 'the page at that address is refreshed')
+  assert.deepEqual(db.tables.seo_metadata[0].schema_json, { a: 1 }, 'fields not offered are kept')
+  assert.equal((await call({ op: 'save', entity: 'seo_metadata', record: { meta_title: 'x' } }, { db })).body.error, 'not_supported')
+  assert.equal((await call({ op: 'delete', entity: 'seo_metadata', id: overrideId }, { db })).body.error, 'confirmation_required')
+  assert.equal((await call({ op: 'delete', entity: 'seo_metadata', id: overrideId, confirm: true }, { db })).status, 200)
+  assert.equal((await call({ op: 'get', entity: 'pages', id: pageId }, { db })).body.data.seo_override, null)
+})
+
+function fakeStorage(db) {
+  const files = []
+  db.storage = { from: (bucket) => ({
+    upload: async (p, buf, opts) => { files.push({ bucket, path: p, size: buf.length, contentType: opts.contentType }); return { error: null } },
+    getPublicUrl: (p) => ({ data: { publicUrl: `https://db.example.test/storage/v1/object/public/${bucket}/${p}` } }),
+  }) }
+  return files
+}
+const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(64, 1)])
+
+test('media: an image is stored in Main\'s library; other types, wrong contents and large files are refused', async () => {
+  const db = fakeDb({ media: [] })
+  const files = fakeStorage(db)
+  const ok = await call({ op: 'upload', entity: 'media', filename: 'Campus Photo.PNG', content_type: 'image/png', data: PNG.toString('base64'), alt_text: 'Our campus' }, { db })
+  assert.equal(ok.status, 200)
+  assert.equal(files[0].bucket, 'site-assets')
+  assert.match(files[0].path, /^wordpress\/\d{4}\/\d{2}\/[0-9a-f]{8}-campus-photo\.png$/)
+  assert.equal(db.tables.media[0].alt_text, 'Our campus')
+  assert.match(ok.body.data.url, /\/site-assets\/wordpress\//)
+  assert.equal((await call({ op: 'upload', entity: 'media', filename: 'x.svg', content_type: 'image/svg+xml', data: Buffer.from('<svg onload="alert(1)"/>').toString('base64') }, { db })).body.error, 'unsupported_type')
+  assert.equal((await call({ op: 'upload', entity: 'media', filename: 'x.jpg', content_type: 'image/jpeg', data: PNG.toString('base64') }, { db })).body.error, 'invalid_file')
+  assert.equal((await call({ op: 'upload', entity: 'media', filename: 'x.png', content_type: 'image/png', data: Buffer.from('not an image at all').toString('base64') }, { db })).body.error, 'invalid_file')
+  const big = Buffer.concat([PNG, Buffer.alloc(3 * 1024 * 1024)])
+  assert.equal((await call({ op: 'upload', entity: 'media', filename: 'big.png', content_type: 'image/png', data: big.toString('base64') }, { db })).body.error, 'file_too_large')
+  // Large bodies are only allowed for uploads.
+  assert.equal((await call({ op: 'save', entity: 'testimonials', record: { name: 'x'.repeat(10), quote: 'y'.repeat(600 * 1024) } }, { db })).status, 413)
+  // Metadata of library items can be edited; items are not created or deleted here.
+  const id = db.tables.media[0].id
+  assert.equal((await call({ op: 'save', entity: 'media', id, record: { alt_text: 'Campus, Jayanagar' } }, { db })).status, 200)
+  assert.equal((await call({ op: 'delete', entity: 'media', id, confirm: true }, { db })).body.error, 'not_supported')
+  assert.equal((await call({ op: 'save', entity: 'media', record: { name: 'x' } }, { db })).body.error, 'not_supported')
+})
+
+test('blog authors and categories: editable; one still used by a blog cannot be deleted', async () => {
+  const authorId = randomUUID()
+  const db = fakeDb({ authors: [{ id: authorId, name: 'Team Acadvizen', slug: 'team' }], blog_categories: [], blogs: [{ id: randomUUID(), title: 'B', slug: 'b', author_id: authorId }] })
+  assert.equal((await call({ op: 'save', entity: 'blog_categories', record: { name: 'SEO', slug: 'seo' } }, { db })).status, 200)
+  assert.equal((await call({ op: 'save', entity: 'authors', id: authorId, record: { bio: 'Trainers and practitioners.' } }, { db })).status, 200)
+  const refused = await call({ op: 'delete', entity: 'authors', id: authorId, confirm: true }, { db })
+  assert.equal(refused.body.error, 'in_use')
+  assert.match(refused.body.details[0], /still used by 1 blogs/)
+  const categoryId = db.tables.blog_categories[0].id
+  assert.equal((await call({ op: 'delete', entity: 'blog_categories', id: categoryId, confirm: true }, { db })).status, 200)
+  assert.equal((await call({ op: 'save', entity: 'blogs', id: db.tables.blogs[0].id, record: { author_id: 'not-a-uuid' } }, { db })).body.error, 'validation_failed')
 })
