@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getServerSupabaseClient } from '../../../../lib/supabaseServer'
-import { createEventDeduper } from '../../../../lib/wordpress/webhook'
-import { handleContentRequest } from '../../../../lib/wordpress/contentApi'
+import { createRequestClaimer, handleContentRequest } from '../../../../lib/wordpress/contentApi'
 import { publishPage, startPageDraft } from '../../../../lib/pageDrafts'
 import { revalidateCmsMutation } from '../../cms/_utils'
 
@@ -10,8 +9,8 @@ export const dynamic = 'force-dynamic'
 
 // Structured Main content edited in the WordPress central admin (Acadvizen Master Admin → Main
 // Website). Signed with WORDPRESS_CMS_WEBHOOK_SECRET; off unless WORDPRESS_CONTENT_API_ENABLED=true.
-const deduper = createEventDeduper()
-
+// Request ids are claimed in Supabase (migration 202610110001), so a replay is refused on every
+// server instance.
 export async function POST(request) {
   const db = getServerSupabaseClient({ preferServiceRole: true })
   const { status, body } = await handleContentRequest({
@@ -23,7 +22,7 @@ export async function POST(request) {
     },
     deps: {
       db,
-      deduper,
+      claimRequest: db ? createRequestClaimer(db) : null,
       revalidate: (contentType, options) => revalidateCmsMutation(contentType, options),
       publishPage: (id) => publishPage(db, id),
       startPageDraft: (id) => startPageDraft(db, id),

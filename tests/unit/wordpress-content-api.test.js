@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
-import { handleContentRequest, blogPlainText } from '../../lib/wordpress/contentApi.js'
+import { handleContentRequest, blogPlainText, createRequestClaimer } from '../../lib/wordpress/contentApi.js'
 import { sanitizeRichHtml } from '../../lib/wordpress/richHtml.js'
 import { signPreview, verifyPreview } from '../../lib/wordpress/previewToken.js'
 import { signPayload } from '../../lib/wordpress/signature.js'
@@ -83,6 +83,19 @@ function call(body, { db, secret = SECRET, ts, cfg = config, deduper = createEve
     deps: { db, deduper, ...fakePageDeps(db, broken), revalidate: async (type, o) => { revalidated.push([type, o.slug]); return { ok: true } }, audit: async (e) => audited.push(e) },
     now: clock,
   }).then((r) => ({ ...r, revalidated, audited }))
+}
+
+/** Like call(), but the test chooses the replay protection (durable claimRequest and/or deduper). */
+function callWith(body, { db, claimRequest, deduper } = {}) {
+  const rawBody = JSON.stringify({ purpose: 'content', request_id: randomUUID(), actor: { login: 'tester' }, ...body })
+  const timestamp = Math.floor(clock / 1000)
+  return handleContentRequest({
+    rawBody,
+    headers: { 'x-acadvizen-timestamp': String(timestamp), 'x-acadvizen-signature': signPayload(rawBody, timestamp, SECRET) },
+    config,
+    deps: { db, claimRequest, deduper, ...fakePageDeps(db), revalidate: async () => ({ ok: true }), audit: async () => {} },
+    now: clock,
+  })
 }
 
 test('refuses requests that are not correctly signed, current and meant for this endpoint', async () => {
@@ -242,4 +255,68 @@ test('preview links: valid only for their record, unexpired, at most an hour ahe
   assert.equal(verifyPreview({ entity: 'pages', id, exp: far, sig: signPreview({ entity: 'pages', id, exp: far }, SECRET) }, SECRET, now).reason, 'expired')
   assert.equal(verifyPreview({ entity: 'tools_extended', id, exp, sig }, SECRET, now).reason, 'unsupported_entity')
   assert.equal(verifyPreview({ entity: 'pages', id, exp, sig }, 'short', now).reason, 'not_configured')
+})
+
+// A shared request-id store, as the wordpress_content_requests table behaves (primary key).
+function fakeRequestStore({ fail = false } = {}) {
+  const ids = new Map()
+  const pruned = []
+  return {
+    ids,
+    pruned,
+    from(table) {
+      assert.equal(table, 'wordpress_content_requests')
+      return {
+        insert: async (row) => {
+          if (fail) return { error: { code: '42P01', message: 'relation does not exist' } }
+          if (ids.has(row.request_id)) return { error: { code: '23505', message: 'duplicate key' } }
+          ids.set(row.request_id, row)
+          return { error: null }
+        },
+        delete: () => ({ lt: async (column, value) => { pruned.push([column, value]); return { error: null } } }),
+      }
+    },
+  }
+}
+
+test('replay protection is shared by every server instance (durable store, not process memory)', async () => {
+  const db = fakeDb()
+  const store = fakeRequestStore()
+  // Two independent "instances": no shared memory, only the shared store.
+  const instanceA = createRequestClaimer(store, { pruneChance: 0 })
+  const instanceB = createRequestClaimer(store, { pruneChance: 0 })
+  const request_id = randomUUID()
+  const body = { request_id, op: 'save', entity: 'tools_extended', record: { name: 'Tool', slug: 'tool-shared' } }
+  const first = await callWith(body, { db, claimRequest: instanceA })
+  const replay = await callWith(body, { db, claimRequest: instanceB })
+  assert.equal(first.status, 200)
+  assert.equal(replay.status, 409)
+  assert.equal(replay.body.error, 'duplicate_request')
+  assert.equal(db.tables.tools_extended.length, 1, 'the change is applied once')
+  assert.deepEqual(store.ids.get(request_id), { request_id, op: 'save', entity: 'tools_extended' })
+  // Reads do not use up request ids.
+  const listed = await callWith({ request_id: randomUUID(), op: 'list', entity: 'tools_extended' }, { db, claimRequest: instanceA })
+  assert.equal(listed.status, 200)
+  assert.equal(store.ids.size, 1)
+})
+
+test('if the replay store is unavailable, changes are refused rather than accepted unprotected', async () => {
+  const db = fakeDb()
+  const claimRequest = createRequestClaimer(fakeRequestStore({ fail: true }), { pruneChance: 0 })
+  const r = await callWith({ request_id: randomUUID(), op: 'save', entity: 'tools_extended', record: { name: 'Tool', slug: 'tool-x' } }, { db, claimRequest })
+  assert.equal(r.status, 503)
+  assert.equal(r.body.error, 'replay_protection_unavailable')
+  assert.equal((db.tables.tools_extended || []).length, 0)
+  const thrower = createRequestClaimer({ from: () => ({ insert: async () => { throw new Error('network') } }) })
+  assert.equal(await thrower(randomUUID()), 'unavailable')
+  // No store and no in-memory fallback configured: refused too.
+  const none = await callWith({ request_id: randomUUID(), op: 'trash', entity: 'tools_extended', id: randomUUID() }, { db, claimRequest: null, deduper: null })
+  assert.equal(none.status, 503)
+})
+
+test('old request ids are pruned now and then, well outside the 5-minute signature window', async () => {
+  const store = fakeRequestStore()
+  const claim = createRequestClaimer(store, { pruneChance: 1, retentionMs: 86400000, clock: () => Date.parse('2026-10-11T12:00:00Z') })
+  assert.equal(await claim(randomUUID(), { op: 'save', entity: 'blogs' }), 'claimed')
+  assert.deepEqual(store.pruned, [['received_at', '2026-10-10T12:00:00.000Z']])
 })
