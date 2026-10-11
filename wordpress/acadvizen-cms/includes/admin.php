@@ -181,6 +181,7 @@ function order_admin_menu(): void {
 function admin_menu_order( string $global_styles = '' ): array {
 	return array(
 		MENU_SLUG,
+		MAIN_CONTENT_PAGE,
 		'edit.php?post_type=page',
 		'edit.php?post_type=' . POST_TYPE,
 		'edit-tags.php?taxonomy=acv_blog_category&post_type=' . POST_TYPE,

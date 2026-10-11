@@ -70,6 +70,15 @@ namespace {
 		function wp_unschedule_event( $ts, $hook, $args = array() ) { unset( $GLOBALS['acv_cron'][ $ts ][ $hook ][ md5( serialize( $args ) ) ] ); return true; }
 		$GLOBALS['acv_uuid'] = 0;
 		function wp_generate_uuid4() { return 'uuid-' . ( ++$GLOBALS['acv_uuid'] ); }
+		// Main Website content screen (includes/main-content.php).
+		function current_user_can( $cap ) { return in_array( $cap, $GLOBALS['acv_caps'] ?? array(), true ); }
+		function get_current_user_id() { return (int) ( $GLOBALS['acv_user'] ?? 0 ); }
+		function wp_kses_post( $s ) { return preg_replace( '#<script\b[^>]*>.*?</script>#is', '', (string) $s ); }
+		function esc_url( $s ) { return (string) $s; }
+		if ( ! function_exists( 'wp_http_validate_url' ) ) {
+			function wp_http_validate_url( $u ) { return filter_var( $u, FILTER_VALIDATE_URL ) ? $u : false; }
+		}
+		function esc_url_raw( $s, $protocols = null ) { $s = trim( (string) $s ); $scheme = strtolower( (string) parse_url( $s, PHP_URL_SCHEME ) ); return ( $scheme && ( ! $protocols || in_array( $scheme, $protocols, true ) ) ) ? $s : ''; }
 		function update_post_meta( $id, $key, $value ) { return true; }
 		function wp_cache_delete( $key, $group = '' ) { $GLOBALS['acv_cache_deleted'][] = "$group/$key"; return true; }
 		function wp_doing_cron() { return ! empty( $GLOBALS['acv_doing_cron'] ); }
@@ -126,6 +135,7 @@ namespace {
 		require PLUGIN . 'migration.php';
 		class WP_REST_Request { private $headers; public function __construct( array $headers = array() ) { $this->headers = $headers; } public function get_header( $key ) { return $this->headers[ $key ] ?? null; } public function get_param( $key ) { return null; } }
 		require PLUGIN . 'rest.php';
+		require PLUGIN . 'main-content.php';
 	}
 }
 
@@ -211,7 +221,10 @@ namespace Acadvizen\CMS {
 		array( 'Other plugin', 'c', 'other.php' ), array( 'Courses', 'c', 'edit.php?post_type=acv_course' ), array( 'Main Blogs', 'c', 'edit.php?post_type=acv_blog' ) );
 	$sorted = array_map( static fn( $r ) => $r[0], sorted_submenu( $menu, admin_menu_order() ) );
 	check( 'menu order: content before settings, unknown rows last', array( 'Dashboard', 'Pages', 'Main Blogs', 'Courses', 'Settings', 'Other plugin' ), $sorted );
-	check( 'menu order: Global Styles link is placed with the design items', 14, array_search( 'post.php?post=7&action=elementor', admin_menu_order( 'post.php?post=7&action=elementor' ), true ) );
+	$order = admin_menu_order( 'post.php?post=7&action=elementor' );
+	$at    = array_search( 'post.php?post=7&action=elementor', $order, true );
+	check( 'menu order: Global Styles link is placed with the design items (after Menus, before Website Design)', array( 'nav-menus.php', MENU_SLUG . '-design' ), array( $order[ $at - 1 ], $order[ $at + 1 ] ) );
+	check( 'menu order: Main Website content right after the dashboard', MAIN_CONTENT_PAGE, $order[1] );
 	check( 'global styles: opens Site Settings over an Elementor page (as Elementor does)', 'post.php?post=723&action=elementor&acv-open=global-styles', global_styles_url_for( 723, 10 ) );
 	check( 'global styles: no Elementor page yet -> the kit itself', 'post.php?post=10&action=elementor', global_styles_url_for( 0, 10 ) );
 	// The small private page Global Styles opens over can never be published by any save.
@@ -604,6 +617,42 @@ namespace Acadvizen\CMS {
 	$template              = new \WP_Post( 502, 'elementor_library' );
 	$template->post_status = 'draft';
 	check( 'preview: a template is not a page to preview', false, can_preview_for_main( $template ) );
+
+	// Main Website content screen: roles decide the statuses offered; values are cleaned before sending.
+	$GLOBALS['acv_caps'] = array( 'edit_posts' );
+	check( 'main content: an author can only draft or submit a blog for review', array( 'draft', 'review' ), main_allowed_statuses( 'blogs' ) );
+	$GLOBALS['acv_caps'] = array( 'edit_posts', 'edit_others_posts', 'publish_posts', 'edit_pages', 'edit_others_pages', 'publish_pages' );
+	check( 'main content: an editor can approve, publish and archive', array( 'draft', 'review', 'approved', 'published', 'archived' ), main_allowed_statuses( 'pages' ) );
+	check( 'main content: deleting needs its own capability', false, main_can( 'pages', 'delete' ) );
+	// Ownership, as for WordPress's own posts: Editors work on every record, Authors only on their own.
+	check( 'main content: an editor manages a record someone else created', true, main_manages_record( 'blogs', 'b-1' ) );
+	$GLOBALS['acv_caps'] = array( 'edit_posts', 'publish_posts' );
+	$GLOBALS['acv_user'] = 7;
+	remember_main_owner( 'blogs', 'b-mine', 7 );
+	remember_main_owner( 'blogs', 'b-other', 8 );
+	check( 'main content: an author manages their own article', true, main_can_record( 'blogs', 'publish', 'b-mine' ) );
+	check( 'main content: an author cannot touch an article someone else wrote', false, main_can_record( 'blogs', 'edit', 'b-other' ) );
+	check( 'main content: an author cannot touch an article created outside WordPress', false, main_can_record( 'blogs', 'edit', 'b-legacy' ) );
+	check( 'main content: an author may create a new article', true, main_can_record( 'blogs', 'edit', '' ) );
+	check( 'main content: an author lands on Blogs, not Pages', 'blogs', main_default_entity() );
+	remember_main_owner( 'blogs', 'b-mine', 0 );
+	check( 'main content: a deleted record forgets its owner', false, main_manages_record( 'blogs', 'b-mine' ) );
+	$GLOBALS['acv_user'] = 0;
+	check( 'main content: a signed-out visitor owns nothing', false, main_manages_record( 'blogs', 'b-other' ) );
+	unset( $GLOBALS['acv_user'] );
+	unset( $GLOBALS['acv_caps'] );
+	check( 'main content: site-relative image paths are kept', '/blog-images/image1.jpg', main_clean_url( '/blog-images/image1.jpg' ) );
+	check( 'main content: https kept', 'https://enroll.acadvizen.com/a.png', main_clean_url( ' https://enroll.acadvizen.com/a.png ' ) );
+	check( 'main content: other schemes dropped', '', main_clean_url( 'javascript:alert(1)' ) );
+	check( 'main content: protocol-relative dropped', '', main_clean_url( '//evil.example/x.png' ) );
+	check( 'main content: public addresses per type', array( '/tools/canva', '/blog/x', '' ), array( (string) wp_parse_url( main_public_url( 'tools_extended', 'canva' ), PHP_URL_PATH ), (string) wp_parse_url( main_public_url( 'blogs', 'x' ), PHP_URL_PATH ), main_public_url( 'testimonials', 'x' ) ) );
+	check(
+		'main content: Enrollment copy of a blog drawn from the same blocks, scripts removed',
+		'<h2>Intro</h2><p>Hi <strong>there</strong></p><ul><li>One</li></ul><figure class="wp-block-image"><img src="https://x/a.png" alt="A" /><figcaption>Cap</figcaption></figure>',
+		main_blog_html( array( array( 'block_type' => 'heading', 'content_json' => array( 'text' => 'Intro', 'level' => 2 ) ), array( 'block_type' => 'paragraph', 'content_json' => array( 'text' => 'Hi <strong>there</strong><script>x</script>' ) ), array( 'block_type' => 'list', 'content_json' => array( 'items' => array( 'One' ) ) ), array( 'block_type' => 'image', 'content_json' => array( 'src' => 'https://x/a.png', 'alt' => 'A', 'caption' => 'Cap' ) ), array( 'block_type' => 'html', 'content_json' => array( 'html' => '<b>no</b>' ) ) ) )
+	);
+	// Known answer computed with signPreview() in lib/wordpress/previewToken.js (same secret): both sides agree.
+	check( 'main content: preview signature matches the Main Website', '7114d9914596634f467b2c4248861427bd4d6891cd6baf3a17155cde76f27d32', main_preview_signature( 'pages', '11111111-2222-3333-4444-555555555555', 1791640000 ) );
 
 	// Shared changes say which Main Website pages they republish before saving.
 	check( 'affected pages: none live', 'No page is published on the Main Website yet, so saving republishes nothing there.', affected_pages_summary( array() ) );

@@ -52,3 +52,33 @@ CMS_API_URL=http://localhost:8088/wp-json/acadvizen-cms/v1 WORDPRESS_CMS_WEBHOOK
 Due jobs are run the way the production server cron does (every minute), because an idle local site gets no visits to start WordPress's own cron. Everything a run creates is deleted at the end, and the global colour is restored.
 
 To use an existing stack in another folder, set `ACV_WP_COMPOSE_DIR`.
+
+## 4. Main Website screens: non-technical admin acceptance (`structured-acceptance.mjs`)
+
+This test needs a different Main set-up: Main must be connected to a **local Supabase**, never the production one, because the test edits, publishes and deletes records.
+
+1. Start the local Supabase for this repository and apply every migration:
+   ```sh
+   npx supabase@2.120.0 start
+   npx supabase@2.120.0 migration up --local
+   ```
+   Add the visibility columns production has, if the local tables lack them: `published` on `tools_extended`, `locations` and `testimonials`.
+2. Seed one existing page with sections. By default the address is `seo-course-in-bangalore`; change it with `TEST_PAGE_SLUG`. A copy of a production page gives the most realistic check.
+3. Build and start Main against the local Supabase. Set these at build **and** run time:
+   ```sh
+   NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:55321 NEXT_PUBLIC_SUPABASE_ANON_KEY=… SUPABASE_SERVICE_ROLE_KEY=… \
+   WORDPRESS_CONTENT_API_ENABLED=true WORDPRESS_CMS_WEBHOOK_SECRET="$ACV_SECRET" \
+     sh -c 'npx next build && npx next start -p 3100'
+   ```
+   Use the local keys printed by `supabase start`. Leave `WORDPRESS_CONTENT_ENABLED` unset.
+4. In WordPress, create one Author and one Contributor, then run:
+   ```sh
+   WP_ADMIN_USER=… WP_ADMIN_PASS=… WP_AUTHOR_USER=… WP_AUTHOR_PASS=… \
+   WP_CONTRIBUTOR_USER=… WP_CONTRIBUTOR_PASS=… WORDPRESS_CMS_WEBHOOK_SECRET="$ACV_SECRET" \
+     node tests/wordpress/structured-acceptance.mjs
+   ```
+   It takes about 25 minutes. Run nothing heavy (builds, other test suites) at the same time: the browser steps time out under load.
+
+The groups (A, B, D/E, E, I, H, J, Z) are described in `docs/cms-implementation/TEST-PLAN.md`. Screenshots and `results-<run>.json` are written to `docs/cms-implementation/evidence/local-structured/`. Everything the run creates is deleted at the end (group Z).
+
+Headless Chromium on Windows sometimes stops painting wp-admin. When a normal click or tick does not happen within 4 s, the test sends the same DOM event. The results JSON counts these as `click_fallbacks`.

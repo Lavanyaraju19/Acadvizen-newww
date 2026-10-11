@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Acadvizen Master Admin
  * Description:       One WordPress admin for both Acadvizen websites. Design with Elementor, choose "Publish To" (Enrollment, Main or Both) and publish. Pages for www.acadvizen.com are rendered by WordPress/Elementor and published through the Acadvizen Render Bridge.
- * Version:           0.4.1
+ * Version:           0.5.0
  * Requires at least: 6.5
  * Requires PHP:      8.0
  * Author:            Acadvizen
@@ -21,12 +21,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const VERSION        = '0.4.1';
+const VERSION        = '0.5.0';
 const POST_TYPE      = 'acv_blog';
 const REST_NAMESPACE = 'acadvizen-cms/v1';
 const MENU_SLUG      = 'acadvizen-cms';
 
-foreach ( array( 'config', 'post-type', 'targets', 'blocks', 'fields', 'main-site', 'sync', 'versions', 'render-bridge', 'publisher', 'elementor', 'content-types', 'design', 'migration', 'rest', 'admin', 'admin-site' ) as $module ) {
+foreach ( array( 'config', 'post-type', 'targets', 'blocks', 'fields', 'main-site', 'sync', 'versions', 'render-bridge', 'publisher', 'elementor', 'content-types', 'design', 'migration', 'rest', 'main-content', 'admin', 'admin-site' ) as $module ) {
 	require_once __DIR__ . '/includes/' . $module . '.php';
 }
 
@@ -41,6 +41,7 @@ add_action( 'init', __NAMESPACE__ . '\\register_shortcodes' );
 add_action( 'init', __NAMESPACE__ . '\register_design_shortcodes' );
 add_action( 'init', __NAMESPACE__ . '\\enable_elementor_for_content_types', 20 );
 add_action( 'init', __NAMESPACE__ . '\\maybe_install_versions_table' );
+add_action( 'init', __NAMESPACE__ . '\\register_main_snapshot_type' );
 // Public addresses of tools and Main blogs: if their rewrite rules are missing (first activation,
 // an update, or rules rebuilt by another plugin), rebuild the rules once.
 add_action(
@@ -117,6 +118,17 @@ add_action( STALL_CHECK_HOOK, __NAMESPACE__ . '\\requeue_stalled_renders' );
 /* Admin -------------------------------------------------------------------------------------- */
 if ( is_admin() ) {
 	add_action( 'admin_menu', __NAMESPACE__ . '\\register_admin_menu', 9 );
+	// Main Website content (the www.acadvizen.com records themselves): includes/main-content.php.
+	add_action(
+		'admin_menu',
+		static fn() => add_submenu_page( MENU_SLUG, __( 'Main Website content', 'acadvizen-cms' ), __( 'Main Website', 'acadvizen-cms' ), 'edit_posts', MAIN_CONTENT_PAGE, __NAMESPACE__ . '\\render_main_content_page' ),
+		10
+	);
+	add_action( 'admin_init', __NAMESPACE__ . '\\guard_main_screen' );
+	add_action( 'admin_post_acv_cms_main_save', __NAMESPACE__ . '\\handle_main_save' );
+	add_action( 'admin_post_acv_cms_main_action', __NAMESPACE__ . '\\handle_main_action' );
+	add_action( 'wp_ajax_acv_cms_main_section', __NAMESPACE__ . '\\ajax_main_section' );
+	add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\\enqueue_main_editor_assets' );
 	add_action( 'admin_menu', __NAMESPACE__ . '\\order_admin_menu', 999 );
 	add_filter( 'wp_insert_post_data', __NAMESPACE__ . '\\keep_global_styles_canvas_private', 10, 2 );
 	add_action( 'load-post.php', __NAMESPACE__ . '\\forget_global_styles_canvas_autosave' );
@@ -152,7 +164,7 @@ if ( is_admin() ) {
 	add_filter( 'page_row_actions', __NAMESPACE__ . '\\site_row_actions', 10, 2 );
 	add_filter( 'post_row_actions', __NAMESPACE__ . '\\site_row_actions', 10, 2 );
 	add_action( 'wp_ajax_acv_cms_import_step', __NAMESPACE__ . '\handle_import_step' );
-	foreach ( array( 'import_upload' => 'handle_import_upload', 'import_undo' => 'handle_import_undo', 'save_design' => 'handle_save_design', 'retry_sync' => 'handle_retry_request', 'retry_render' => 'handle_retry_render', 'rollback' => 'handle_rollback', 'republish_all' => 'handle_republish_all', 'preview_version' => 'handle_preview_version', 'preview_main' => 'handle_preview_main','duplicate' => 'handle_duplicate' ) as $action => $handler ) {
+	foreach ( array( 'import_upload' => 'handle_import_upload', 'import_undo' => 'handle_import_undo', 'save_design' => 'handle_save_design', 'retry_sync' => 'handle_retry_request', 'retry_render' => 'handle_retry_render', 'rollback' => 'handle_rollback', 'republish_all' => 'handle_republish_all', 'preview_version' => 'handle_preview_version', 'preview_main' => 'handle_preview_main', 'duplicate' => 'handle_duplicate' ) as $action => $handler ) {
 		add_action( 'admin_post_acv_cms_' . $action, __NAMESPACE__ . '\\' . $handler );
 	}
 }

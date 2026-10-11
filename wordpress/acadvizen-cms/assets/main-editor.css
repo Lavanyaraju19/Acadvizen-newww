@@ -1,0 +1,39 @@
+/* Acadvizen Master Admin → Main Website */
+.acv-main-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; margin-top: 12px; }
+@media (max-width: 960px) { .acv-main-grid { grid-template-columns: 1fr; } }
+.acv-main-fields, .acv-main-box { background: #fff; border: 1px solid #c3c4c7; padding: 16px 20px; }
+.acv-main-box { margin-top: 20px; }
+.acv-main-side .acv-main-box { margin-top: 0; position: sticky; top: 40px; }
+.acv-main-box h2 { margin-top: 0; }
+.acv-main-field, .acv-ed-field { margin: 0 0 14px; }
+.acv-main-field > label, .acv-ed-field > label { display: block; font-weight: 600; margin-bottom: 4px; }
+.acv-main-field input[type=text], .acv-main-field input[type=url], .acv-main-field textarea, .acv-main-field select,
+.acv-ed-field input[type=text], .acv-ed-field input[type=url], .acv-ed-field textarea { width: 100%; max-width: 760px; }
+.acv-main-field--checkbox label { font-weight: 400; }
+.acv-main-image { display: flex; gap: 8px; max-width: 760px; }
+.acv-main-image input { flex: 1; }
+.acv-main-thumb { display: block; max-width: 220px; max-height: 120px; margin-top: 6px; border: 1px solid #dcdcde; }
+.acv-main-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; background: #f0f0f1; }
+.acv-main-badge--ok { background: #d7f2e3; color: #005c2c; }
+.acv-main-badge--error { background: #fcdcdc; color: #8a1f11; }
+.acv-main-filters { margin: 12px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.acv-main-actions a.acv-danger, .acv-danger { color: #b32d2e; }
+.acv-main-empty { font-size: 14px; padding: 24px; background: #fff; border: 1px dashed #c3c4c7; }
+.acv-card { border: 1px solid #dcdcde; background: #fbfbfc; padding: 10px 12px; margin: 0 0 10px; }
+.acv-card-tools { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.acv-card-tools strong { flex: 1; }
+.acv-card-buttons { display: inline-flex; gap: 4px; }
+.acv-drag { cursor: grab; font-size: 18px; color: #787c82; }
+.acv-repeat-row { border-left: 3px solid #dcdcde; padding: 6px 0 2px 10px; margin: 6px 0; }
+.acv-add-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.acv-unsaved { color: #8a5a00; font-weight: 600; }
+.acv-section--hidden { opacity: .65; }
+.acv-section details { margin: 6px 0; }
+.acv-section summary { cursor: pointer; font-weight: 600; }
+.acv-section-status--ok { color: #005c2c; } .acv-section-status--error { color: #b32d2e; } .acv-section-status--warn { color: #8a5a00; }
+.acv-color { display: inline-flex; gap: 6px; align-items: center; }
+.acv-preview-toolbar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.acv-preview-stage { background: #e9eaec; padding: 16px; overflow: auto; border: 1px solid #c3c4c7; }
+.acv-preview-stage iframe { display: block; margin: 0 auto; height: 78vh; border: 1px solid #c3c4c7; background: #fff; max-width: none; transition: width .2s; }
+.acv-main-versions li { margin-bottom: 6px; }
+.acv-main a:focus, .acv-main button:focus { outline: 2px solid #2271b1; outline-offset: 1px; }
