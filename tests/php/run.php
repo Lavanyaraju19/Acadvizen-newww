@@ -73,6 +73,27 @@ namespace {
 		// Main Website content screen (includes/main-content.php).
 		function current_user_can( $cap ) { return in_array( $cap, $GLOBALS['acv_caps'] ?? array(), true ); }
 		function get_current_user_id() { return (int) ( $GLOBALS['acv_user'] ?? 0 ); }
+		if ( ! function_exists( 'sanitize_hex_color' ) ) {
+			// As WordPress: '' stays '', a valid #rgb/#rrggbb is kept, anything else is null.
+			function sanitize_hex_color( $c ) { return '' === $c ? '' : ( preg_match( '|^#([A-Fa-f0-9]{3}){1,2}$|', $c ) ? $c : null ); }
+		}
+		foreach ( array( 'esc_attr__', 'esc_html_e', 'esc_attr_e' ) as $acv_fn ) {
+			if ( ! function_exists( $acv_fn ) ) {
+				eval( 'function ' . $acv_fn . '( $s, $d = "" ) { ' . ( '_e' === substr( $acv_fn, -2 ) ? 'echo htmlspecialchars( (string) $s, ENT_QUOTES );' : 'return htmlspecialchars( (string) $s, ENT_QUOTES );' ) . ' }' );
+			}
+		}
+		if ( ! function_exists( 'selected' ) ) {
+			function selected( $a, $b = true, $echo = true ) { $r = (string) $a === (string) $b ? ' selected="selected"' : ''; if ( $echo ) { echo $r; } return $r; }
+		}
+		if ( ! function_exists( 'checked' ) ) {
+			function checked( $a, $b = true, $echo = true ) { $r = (string) $a === (string) $b ? ' checked="checked"' : ''; if ( $echo ) { echo $r; } return $r; }
+		}
+		if ( ! function_exists( 'esc_textarea' ) ) {
+			function esc_textarea( $s ) { return htmlspecialchars( (string) $s, ENT_QUOTES ); }
+		}
+		if ( ! function_exists( 'sanitize_textarea_field' ) ) {
+			function sanitize_textarea_field( $s ) { return trim( strip_tags( (string) $s ) ); }
+		}
 		function wp_kses_post( $s ) { return preg_replace( '#<script\b[^>]*>.*?</script>#is', '', (string) $s ); }
 		function esc_url( $s ) { return (string) $s; }
 		if ( ! function_exists( 'wp_http_validate_url' ) ) {
@@ -652,6 +673,48 @@ namespace Acadvizen\CMS {
 		main_blog_html( array( array( 'block_type' => 'heading', 'content_json' => array( 'text' => 'Intro', 'level' => 2 ) ), array( 'block_type' => 'paragraph', 'content_json' => array( 'text' => 'Hi <strong>there</strong><script>x</script>' ) ), array( 'block_type' => 'list', 'content_json' => array( 'items' => array( 'One' ) ) ), array( 'block_type' => 'image', 'content_json' => array( 'src' => 'https://x/a.png', 'alt' => 'A', 'caption' => 'Cap' ) ), array( 'block_type' => 'html', 'content_json' => array( 'html' => '<b>no</b>' ) ) ) )
 	);
 	// Known answer computed with signPreview() in lib/wordpress/previewToken.js (same secret): both sides agree.
+	// Form fields -> record (site chrome types).
+	$header = main_entity( 'header_settings' );
+	check( 'site chrome: colours as stored on Main are kept (hex, rgb, rgba, transparent)', array( '#10b981', 'rgba(255,255,255,0.1)', 'rgb(5, 11, 18)', 'transparent' ), array_map( 'Acadvizen\Cms\main_clean_color', array( ' #10b981 ', 'rgba(255,255,255,0.1)', 'rgb(5, 11, 18)', 'transparent' ) ) );
+	check( 'site chrome: anything else is not a colour', array( '', '', '' ), array_map( 'Acadvizen\Cms\main_clean_color', array( 'red', 'rgba(1,2,3,0.5);background:red', 'url(x)' ) ) );
+	$_POST  = array( 'acv_field' => array( 'announcement_text' => ' Admissions open ', 'announcement_bg_color' => '', 'announcement_text_color' => 'red', 'announcement_link' => ' /courses ' ) );
+	$rec    = main_record_from_post( $header );
+	check( 'site chrome: an empty colour stays empty (website default), never black', null, $rec['announcement_bg_color'] );
+	check( 'site chrome: an invalid colour is not sent as a colour', true, empty( $rec['announcement_text_color'] ) );
+	check( 'site chrome: text and links trimmed', array( 'Admissions open', '/courses' ), array( $rec['announcement_text'], $rec['announcement_link'] ) );
+	check( 'site chrome: an untouched structured list is not sent (stored value kept)', false, array_key_exists( 'social_items', $rec ) );
+	$_POST = array( 'acv_field' => array( 'social_items' => '[{"platform":"instagram","url":"https://instagram.com/acadvizen"}]' ) );
+	$rec   = main_record_from_post( $header );
+	check( 'site chrome: an edited structured list is sent', 'instagram', $rec['social_items'][0]->platform );
+	$_POST = array( 'acv_field' => array( 'ui_copy' => '{}' ) );
+	$rec   = main_record_from_post( main_entity( 'site_settings' ) );
+	check( 'site chrome: an empty settings object stays an object, not a list', '{}', wp_json_encode( $rec['ui_copy'] ) );
+	$_POST = array( 'acv_field' => array( 'menu_location' => 'sidebar', 'target' => '_blank', 'order_index' => '3', 'title' => 'Blog', 'url' => '/blog' ) );
+	$rec   = main_record_from_post( main_entity( 'menus' ) );
+	check( 'menus: an unknown menu is not sent; known choices and numbers are', array( null, '_blank', 3 ), array( $rec['menu_location'], $rec['target'], $rec['order_index'] ) );
+	check( 'menus: visibility switches left unticked are sent as off', array( false, false ), array( $rec['desktop_visible'], $rec['mobile_visible'] ) );
+	$_POST = array();
+	check( 'site chrome: settings rows cannot be created or trashed from the list', array( false, false, 'none' ), array( main_entity( 'footer_settings' )['creatable'], main_entity( 'footer_settings' )['trash'], main_entity( 'footer_settings' )['workflow'] ) );
+
+	// Every field of every Main Website type renders (a format error here would break the whole screen).
+	$rendered = array();
+	foreach ( array( 'header_settings', 'footer_settings', 'menus', 'site_settings', 'tools_extended' ) as $acv_entity ) {
+		foreach ( main_entity( $acv_entity )['fields'] as $acv_key => $acv_field ) {
+			$acv_sample = array( 'color' => 'rgba(255,255,255,0.1)', 'json' => array( array( 'platform' => 'instagram', 'url' => 'https://instagram.com/x' ) ), 'checkbox' => null, 'number' => 3, 'choice' => '_blank' )[ $acv_field[1] ] ?? 'Sample';
+			ob_start();
+			try {
+				render_main_field( $acv_key, $acv_field, $acv_sample, array() );
+				$rendered[ $acv_entity . '.' . $acv_key ] = (string) ob_get_clean();
+			} catch ( \Throwable $acv_error ) {
+				ob_end_clean();
+				$rendered[ $acv_entity . '.' . $acv_key ] = 'ERROR ' . $acv_error->getMessage();
+			}
+		}
+	}
+	check( 'main content: every field of the site-wide types renders', array(), array_keys( array_filter( $rendered, static fn( $html ) => 0 === strpos( $html, 'ERROR' ) || '' === $html ) ) );
+	check( 'main content: a stored rgba colour is shown as it is, with the picker at black', true, false !== strpos( $rendered['header_settings.header_border_color'], 'value="rgba(255,255,255,0.1)"' ) && false !== strpos( $rendered['header_settings.header_border_color'], 'value="#000000"' ) );
+	check( 'main content: an empty menu visibility switch is shown ticked', true, false !== strpos( $rendered['menus.desktop_visible'], 'checked' ) );
+
 	check( 'main content: preview signature matches the Main Website', '7114d9914596634f467b2c4248861427bd4d6891cd6baf3a17155cde76f27d32', main_preview_signature( 'pages', '11111111-2222-3333-4444-555555555555', 1791640000 ) );
 
 	// Shared changes say which Main Website pages they republish before saving.

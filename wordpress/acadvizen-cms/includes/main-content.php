@@ -142,6 +142,86 @@ function main_entities(): array {
 				'highlights'       => array( __( 'Highlights', 'acadvizen-cms' ), 'lines', __( 'One per line.', 'acadvizen-cms' ) ),
 			),
 		),
+		'header_settings' => array(
+			'label'     => __( 'Header', 'acadvizen-cms' ),
+			'singular'  => __( 'Header', 'acadvizen-cms' ),
+			'title'     => 'announcement_text',
+			'workflow'  => 'none',
+			'trash'     => false,
+			'creatable' => false,
+			'singleton' => true,
+			'group'     => 'site',
+			'path'      => '',
+			'fields'    => array(
+				'announcement_enabled'    => array( __( 'Show the announcement bar above the menu', 'acadvizen-cms' ), 'checkbox', '' ),
+				'announcement_text'       => array( __( 'Announcement text', 'acadvizen-cms' ), 'text', '' ),
+				'announcement_link'       => array( __( 'Announcement link', 'acadvizen-cms' ), 'link', __( 'Optional. A page address such as /courses, or https://…', 'acadvizen-cms' ) ),
+				'announcement_bg_color'   => array( __( 'Announcement background colour', 'acadvizen-cms' ), 'color', __( 'Empty: the website default.', 'acadvizen-cms' ) ),
+				'announcement_text_color' => array( __( 'Announcement text colour', 'acadvizen-cms' ), 'color', __( 'Empty: the website default.', 'acadvizen-cms' ) ),
+				'phone_number'            => array( __( 'Phone number', 'acadvizen-cms' ), 'text', '' ),
+				'email_address'           => array( __( 'Email address', 'acadvizen-cms' ), 'text', '' ),
+				'social_items'            => array( __( 'Social links', 'acadvizen-cms' ), 'json', '', false, array( 'shape' => 'array', 'template' => array( 'platform' => '', 'url' => '' ), 'hint' => __( 'Platform: linkedin, instagram, facebook or youtube. The address of your profile.', 'acadvizen-cms' ) ) ),
+				'header_border_color'     => array( __( 'Header border colour', 'acadvizen-cms' ), 'color', __( 'Empty: the website default.', 'acadvizen-cms' ) ),
+			),
+		),
+		'footer_settings' => array(
+			'label'     => __( 'Footer', 'acadvizen-cms' ),
+			'singular'  => __( 'Footer', 'acadvizen-cms' ),
+			'title'     => 'copyright_text',
+			'workflow'  => 'none',
+			'trash'     => false,
+			'creatable' => false,
+			'singleton' => true,
+			'group'     => 'site',
+			'path'      => '',
+			'fields'    => array(
+				'contact_phone'       => array( __( 'Phone', 'acadvizen-cms' ), 'text', '' ),
+				'contact_email'       => array( __( 'Email', 'acadvizen-cms' ), 'text', '' ),
+				'contact_address'     => array( __( 'Address', 'acadvizen-cms' ), 'textarea', __( 'One line per row.', 'acadvizen-cms' ) ),
+				'social_items'        => array( __( 'Social links', 'acadvizen-cms' ), 'json', '', false, array( 'shape' => 'array', 'template' => array( 'platform' => '', 'url' => '' ), 'hint' => __( 'Platform: linkedin, instagram, facebook or youtube. The address of your profile.', 'acadvizen-cms' ) ) ),
+				'copyright_text'      => array( __( 'Copyright line', 'acadvizen-cms' ), 'text', __( '{year} and {company} are filled in automatically.', 'acadvizen-cms' ) ),
+				'logo_alt'            => array( __( 'Logo description (for screen readers)', 'acadvizen-cms' ), 'text', '' ),
+				'footer_bg_color'     => array( __( 'Background colour', 'acadvizen-cms' ), 'color', __( 'Empty: the website default.', 'acadvizen-cms' ) ),
+				'footer_border_color' => array( __( 'Border colour', 'acadvizen-cms' ), 'color', __( 'Empty: the website default.', 'acadvizen-cms' ) ),
+			),
+		),
+		'menus'           => array(
+			'label'      => __( 'Menus', 'acadvizen-cms' ),
+			'singular'   => __( 'Menu link', 'acadvizen-cms' ),
+			'title'      => 'title',
+			'workflow'   => 'active',
+			'trash'      => false,
+			'group'      => 'site',
+			'path'       => '',
+			'list_extra' => 'url',
+			'filter'     => array( 'menu_location' => array( 'header' => __( 'Header menu', 'acadvizen-cms' ), 'footer' => __( 'Footer links', 'acadvizen-cms' ), 'legal' => __( 'Legal links', 'acadvizen-cms' ) ) ),
+			'fields'     => array(
+				'menu_location'   => array( __( 'Menu', 'acadvizen-cms' ), 'choice', __( 'Header: the main navigation. Footer: the footer link list. Legal: the small links at the very bottom.', 'acadvizen-cms' ), true, array( 'options' => array( 'header' => __( 'Header menu', 'acadvizen-cms' ), 'footer' => __( 'Footer links', 'acadvizen-cms' ), 'legal' => __( 'Legal links', 'acadvizen-cms' ) ) ) ),
+				'title'           => array( __( 'Text', 'acadvizen-cms' ), 'text', __( 'In the header, a link titled "Courses" opens the course menu.', 'acadvizen-cms' ), true ),
+				'url'             => array( __( 'Link', 'acadvizen-cms' ), 'link', __( 'A page address such as /courses, or https://…, #section, mailto: or tel:.', 'acadvizen-cms' ), true ),
+				'parent_id'       => array( __( 'Show under', 'acadvizen-cms' ), 'menu_parent', __( 'Optional: makes this a drop-down item under another link of the same menu.', 'acadvizen-cms' ) ),
+				'order_index'     => array( __( 'Position', 'acadvizen-cms' ), 'number', __( 'Lower numbers come first.', 'acadvizen-cms' ) ),
+				'target'          => array( __( 'Opens in', 'acadvizen-cms' ), 'choice', '', false, array( 'options' => array( '_self' => __( 'The same tab', 'acadvizen-cms' ), '_blank' => __( 'A new tab', 'acadvizen-cms' ) ) ) ),
+				'desktop_visible' => array( __( 'Show on computers and tablets', 'acadvizen-cms' ), 'checkbox', '', false, array( 'empty_means_on' => true ) ),
+				'mobile_visible'  => array( __( 'Show on phones', 'acadvizen-cms' ), 'checkbox', '', false, array( 'empty_means_on' => true ) ),
+			),
+		),
+		'site_settings'   => array(
+			'label'     => __( 'Site settings', 'acadvizen-cms' ),
+			'singular'  => __( 'Site settings', 'acadvizen-cms' ),
+			'title'     => 'company_name',
+			'workflow'  => 'none',
+			'trash'     => false,
+			'creatable' => false,
+			'singleton' => true,
+			'group'     => 'site',
+			'path'      => '',
+			'fields'    => array(
+				'company_name' => array( __( 'Company name', 'acadvizen-cms' ), 'text', __( 'Used in the header, the footer and the copyright line.', 'acadvizen-cms' ) ),
+				'social_links' => array( __( 'Social profiles (fallback)', 'acadvizen-cms' ), 'json', __( 'Used when the header and footer have no social link of that kind.', 'acadvizen-cms' ), false, array( 'shape' => 'object', 'template' => array( 'linkedin' => '', 'instagram' => '', 'facebook' => '', 'youtube' => '' ) ) ),
+				'ui_copy'      => array( __( 'Website labels', 'acadvizen-cms' ), 'json', __( 'Small texts of the header and footer. Leave a label empty to keep the website default.', 'acadvizen-cms' ), false, array( 'shape' => 'object', 'template' => array( 'nav_brand_label' => '', 'nav_menu_label' => '', 'nav_close_label' => '', 'nav_dashboard_label' => '', 'nav_signout_label' => '', 'footer_nav_heading' => '', 'footer_legal_heading' => '', 'footer_contact_heading' => '', 'footer_locations_title' => '' ) ) ),
+			),
+		),
 		'testimonials'   => array(
 			'label'    => __( 'Testimonials', 'acadvizen-cms' ),
 			'singular' => __( 'Testimonial', 'acadvizen-cms' ),
@@ -467,6 +547,12 @@ function sync_enrollment_blog_copy( string $main_id, array $record, string $targ
 /* Reading the edit form ------------------------------------------------------------------------- */
 
 /** The record as typed in the form, in the shape the Main Website expects. */
+/** A CSS colour as stored on Main (#hex, rgb()/rgba(), transparent), or '' (= the website default). */
+function main_clean_color( string $raw ): string {
+	$value = trim( $raw );
+	return preg_match( '/^(#[0-9a-fA-F]{3,8}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(0|1|0?\.\d+|\d{1,3}%)\s*)?\)|transparent)$/i', $value ) ? $value : '';
+}
+
 function main_record_from_post( array $definition ): array {
 	$record = array();
 	foreach ( $definition['fields'] as $key => $field ) {
@@ -475,6 +561,7 @@ function main_record_from_post( array $definition ): array {
 			$record[ $key ] = ! empty( $_POST['acv_field'][ $key ] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by the caller.
 			continue;
 		}
+		$config = (array) ( $field[4] ?? array() );
 		if ( ! isset( $_POST['acv_field'][ $key ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			continue;
 		}
@@ -497,8 +584,30 @@ function main_record_from_post( array $definition ): array {
 				$record[ $key ] = '' === (string) $raw ? null : max( 1, min( 5, (int) $raw ) );
 				break;
 			case 'color':
-				$record[ $key ] = (string) sanitize_hex_color( (string) $raw );
+				// Empty stays empty: the website then uses its own default colour.
+				$record[ $key ] = main_clean_color( (string) $raw );
 				break;
+			case 'link':
+				$record[ $key ] = trim( sanitize_text_field( (string) $raw ) );
+				break;
+			case 'number':
+				$record[ $key ] = '' === trim( (string) $raw ) ? null : (int) $raw;
+				break;
+			case 'choice':
+				$options        = array_keys( (array) ( $config['options'] ?? array() ) );
+				$record[ $key ] = in_array( (string) $raw, $options, true ) ? (string) $raw : null;
+				break;
+			case 'menu_parent':
+				$record[ $key ] = '' === (string) $raw ? null : sanitize_text_field( (string) $raw );
+				break;
+			case 'json':
+				// Sent only when changed in the editor. Decoded as objects so an empty {} stays {}.
+				$decoded = json_decode( (string) $raw );
+				if ( null === $decoded && 'null' !== trim( (string) $raw ) ) {
+					continue 2;
+				}
+				$record[ $key ] = $decoded;
+				continue 2;
 			case 'datetime':
 				$record[ $key ] = '' === (string) $raw ? null : get_gmt_from_date( str_replace( 'T', ' ', (string) $raw ) . ':00', 'c' );
 				break;
@@ -643,7 +752,7 @@ function handle_main_action(): void {
 	$do         = isset( $_REQUEST['do'] ) ? sanitize_key( wp_unslash( $_REQUEST['do'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$definition = main_entity( $entity );
 	check_admin_referer( "acv_cms_main_{$do}_{$entity}_{$id}" );
-	$need = array( 'trash' => 'edit', 'restore' => 'edit', 'delete' => 'delete', 'start_draft' => 'edit', 'restore_version' => 'edit', 'show' => 'publish', 'hide' => 'publish' );
+	$need = array( 'trash' => 'edit', 'restore' => 'edit', 'delete' => 'delete', 'start_draft' => 'edit', 'restore_version' => 'edit', 'show' => 'publish', 'hide' => 'publish', 'import_menus' => 'publish' );
 	if ( ! $definition || ! isset( $need[ $do ] ) || ! main_can_record( $entity, $need[ $do ], $id ) ) {
 		wp_die( esc_html__( 'You are not allowed to do this.', 'acadvizen-cms' ), 403 );
 	}
@@ -679,6 +788,20 @@ function handle_main_action(): void {
 				}
 			}
 			main_flash( $result['ok'] ? 'success' : 'error', $result['ok'] ? __( 'Deleted permanently.', 'acadvizen-cms' ) : main_error_text( $result ) );
+			wp_safe_redirect( $list );
+			exit;
+		case 'import_menus':
+			$result = main_content_request( array( 'op' => 'import_menu_defaults', 'entity' => 'menus' ) );
+			if ( $result['ok'] ) {
+				$imported = (array) ( $result['body']['data']['imported'] ?? array() );
+				$message  = $imported
+					/* translators: %s: list like "header: 5, footer: 5" */
+					? sprintf( __( 'Copied the links shown today (%s). The website looks the same; you can now edit them.', 'acadvizen-cms' ), implode( ', ', array_map( static fn( $k, $v ) => $k . ': ' . $v, array_keys( $imported ), $imported ) ) )
+					: __( 'Nothing to copy: every menu already has its own links.', 'acadvizen-cms' );
+				main_flash( 'success', $message );
+			} else {
+				main_flash( 'error', main_error_text( $result ) );
+			}
 			wp_safe_redirect( $list );
 			exit;
 		case 'start_draft':
@@ -784,14 +907,28 @@ function render_main_content_page(): void {
 }
 
 function render_main_tabs( string $current ): void {
-	echo '<nav class="nav-tab-wrapper">';
-	foreach ( main_entities() as $key => $definition ) {
+	$tab = static function ( string $key, array $definition ) use ( $current ): void {
 		if ( main_can( $key, 'edit' ) ) {
 			printf( '<a class="nav-tab%1$s" href="%2$s">%3$s</a>', $key === $current ? ' nav-tab-active' : '', esc_url( main_screen_url( array( 'entity' => $key ) ) ), esc_html( $definition['label'] ) );
+		}
+	};
+	echo '<nav class="nav-tab-wrapper">';
+	foreach ( main_entities() as $key => $definition ) {
+		if ( 'site' !== ( $definition['group'] ?? '' ) ) {
+			$tab( $key, $definition );
 		}
 	}
 	printf( '<a class="nav-tab" href="%1$s">%2$s</a>', esc_url( main_screen_url( array( 'view' => 'log' ) ) ), esc_html__( 'Activity', 'acadvizen-cms' ) );
 	echo '</nav>';
+	if ( main_can( 'pages', 'edit' ) ) {
+		echo '<nav class="nav-tab-wrapper acv-main-subtabs"><span class="acv-main-subtabs-label">' . esc_html__( 'Whole website:', 'acadvizen-cms' ) . '</span>';
+		foreach ( main_entities() as $key => $definition ) {
+			if ( 'site' === ( $definition['group'] ?? '' ) ) {
+				$tab( $key, $definition );
+			}
+		}
+		echo '</nav>';
+	}
 }
 
 function render_main_connection_notice(): bool {
@@ -810,6 +947,9 @@ function render_main_connection_notice(): bool {
 function render_main_status_badge( array $definition, array $row ): string {
 	if ( ! empty( $row['deleted_at'] ) ) {
 		return '<span class="acv-main-badge acv-main-badge--muted">' . esc_html__( 'In trash', 'acadvizen-cms' ) . '</span>';
+	}
+	if ( 'none' === $definition['workflow'] ) {
+		return '<span class="acv-main-badge acv-main-badge--ok">' . esc_html__( 'In use on Main', 'acadvizen-cms' ) . '</span>';
 	}
 	if ( 'status' === $definition['workflow'] ) {
 		$status = (string) ( $row['status'] ?? 'draft' );
@@ -831,7 +971,10 @@ function render_main_list( string $entity, array $definition ): void {
 	$trashed = ! empty( $_GET['trashed'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$paged   = max( 1, isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
-	printf( '<h1 class="wp-heading-inline">%1$s</h1> <a class="page-title-action" href="%2$s">%3$s</a>', esc_html__( 'Main Website', 'acadvizen-cms' ) . ' — ' . esc_html( $definition['label'] ), esc_url( main_screen_url( array( 'entity' => $entity, 'view' => 'edit' ) ) ), esc_html__( 'Add new', 'acadvizen-cms' ) );
+	printf( '<h1 class="wp-heading-inline">%s</h1>', esc_html__( 'Main Website', 'acadvizen-cms' ) . ' — ' . esc_html( $definition['label'] ) );
+	if ( false !== ( $definition['creatable'] ?? true ) ) {
+		printf( ' <a class="page-title-action" href="%1$s">%2$s</a>', esc_url( main_screen_url( array( 'entity' => $entity, 'view' => 'edit' ) ) ), esc_html__( 'Add new', 'acadvizen-cms' ) );
+	}
 	echo '<hr class="wp-header-end" />';
 	render_main_notice();
 	echo '<p class="description">' . esc_html__( 'This is the content www.acadvizen.com shows. Saving here updates the Main Website directly; its design stays as it is.', 'acadvizen-cms' ) . '</p>';
@@ -841,6 +984,20 @@ function render_main_list( string $entity, array $definition ): void {
 	}
 
 	$args = array( 'op' => 'list', 'entity' => $entity, 'search' => $search, 'limit' => MAIN_PER_PAGE, 'offset' => ( $paged - 1 ) * MAIN_PER_PAGE );
+	$filters = array();
+	foreach ( (array) ( $definition['filter'] ?? array() ) as $filter_field => $filter_options ) {
+		$wanted = isset( $_GET[ 'f_' . $filter_field ] ) ? sanitize_key( wp_unslash( $_GET[ 'f_' . $filter_field ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( '' !== $wanted && isset( $filter_options[ $wanted ] ) ) {
+			$filters[ $filter_field ] = $wanted;
+		}
+	}
+	if ( $filters ) {
+		$args['filter'] = $filters;
+	}
+	if ( 'menus' === $entity && main_can( 'menus', 'publish' ) ) {
+		echo '<div class="acv-main-box acv-main-import"><p>' . esc_html__( 'A menu that has no links here shows the website\'s built-in links. To change those, first copy them here: the website looks exactly the same afterwards, and you can then edit, reorder or hide each link.', 'acadvizen-cms' ) . '</p>';
+		printf( '<p><a class="button" href="%1$s" data-confirm="%2$s">%3$s</a></p></div>', esc_url( main_action_url( 'import_menus', 'menus', 'all' ) ), esc_attr__( 'Copy the links the website shows today into menus that have none yet? Menus that already have links are not changed.', 'acadvizen-cms' ), esc_html__( 'Copy the links shown today', 'acadvizen-cms' ) );
+	}
 	if ( $status ) {
 		$args['status'] = $status;
 	}
@@ -860,7 +1017,17 @@ function render_main_list( string $entity, array $definition ): void {
 				<?php endforeach; ?>
 			</select>
 		<?php endif; ?>
-		<input type="search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="<?php esc_attr_e( 'Search title or address', 'acadvizen-cms' ); ?>" />
+			<?php foreach ( (array) ( $definition['filter'] ?? array() ) as $filter_field => $filter_options ) : ?>
+				<select name="<?php echo esc_attr( 'f_' . $filter_field ); ?>" aria-label="<?php esc_attr_e( 'Show', 'acadvizen-cms' ); ?>">
+					<option value=""><?php esc_html_e( 'All', 'acadvizen-cms' ); ?></option>
+					<?php foreach ( $filter_options as $option => $option_label ) : ?>
+						<option value="<?php echo esc_attr( (string) $option ); ?>" <?php selected( $filters[ $filter_field ] ?? '', (string) $option ); ?>><?php echo esc_html( (string) $option_label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			<?php endforeach; ?>
+			<?php if ( empty( $definition['singleton'] ) ) : ?>
+			<input type="search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="<?php esc_attr_e( 'Search title or address', 'acadvizen-cms' ); ?>" />
+			<?php endif; ?>
 		<?php submit_button( __( 'Filter', 'acadvizen-cms' ), 'secondary', '', false ); ?>
 		<?php if ( $definition['trash'] ) : ?>
 			<a href="<?php echo esc_url( main_screen_url( array( 'entity' => $entity ) + ( $trashed ? array() : array( 'trashed' => 1 ) ) ) ); ?>"><?php echo $trashed ? esc_html__( '← Back to all', 'acadvizen-cms' ) : esc_html__( 'Trash', 'acadvizen-cms' ); ?></a>
@@ -886,7 +1053,13 @@ function render_main_list( string $entity, array $definition ): void {
 	foreach ( $rows as $row ) {
 		$row     = (array) $row;
 		$id      = (string) $row['id'];
-		$title   = (string) ( $row[ $definition['title'] ] ?? '' );
+		$title   = ! empty( $definition['singleton'] ) ? (string) $definition['singular'] : (string) ( $row[ $definition['title'] ] ?? '' );
+		if ( ! empty( $definition['list_extra'] ) && ! empty( $row[ $definition['list_extra'] ] ) ) {
+			$title .= ' → ' . (string) $row[ $definition['list_extra'] ];
+		}
+		if ( ! empty( $row['menu_location'] ) && isset( $definition['filter']['menu_location'][ $row['menu_location'] ] ) ) {
+			$title = $definition['filter']['menu_location'][ $row['menu_location'] ] . ': ' . $title;
+		}
 		$url     = main_public_url( $entity, (string) ( $row['slug'] ?? '' ) );
 		$edit    = main_screen_url( array( 'entity' => $entity, 'view' => 'edit', 'id' => $id ) );
 		$actions = array();
@@ -939,8 +1112,11 @@ function render_main_field( string $key, array $field, $value, array $cities ): 
 	$name     = 'acv_field[' . $key . ']';
 	$id       = 'acv-field-' . $key;
 	echo '<div class="acv-main-field acv-main-field--' . esc_attr( $type ) . '">';
+	$config = (array) ( $field[4] ?? array() );
 	if ( 'checkbox' === $type ) {
-		printf( '<label><input type="checkbox" name="%1$s" value="1" %2$s /> %3$s</label>', esc_attr( $name ), checked( ! empty( $value ), true, false ), esc_html( $label ) );
+		// Some settings are on while empty (e.g. a menu link is visible unless switched off).
+		$on = ! empty( $config['empty_means_on'] ) ? false !== $value : ! empty( $value );
+		printf( '<label><input type="checkbox" name="%1$s" value="1" %2$s /> %3$s</label>', esc_attr( $name ), checked( $on, true, false ), esc_html( $label ) );
 	} else {
 		printf( '<label for="%1$s">%2$s%3$s</label>', esc_attr( $id ), esc_html( $label ), $required ? ' <span class="required">*</span>' : '' );
 		switch ( $type ) {
@@ -954,7 +1130,42 @@ function render_main_field( string $key, array $field, $value, array $cities ): 
 				printf( '<span class="acv-main-image"><input type="url" id="%1$s" name="%2$s" value="%3$s" placeholder="https://" /> <button type="button" class="button acv-media-pick" data-target="%1$s">%4$s</button></span>%5$s', esc_attr( $id ), esc_attr( $name ), esc_attr( (string) $value ), esc_html__( 'Choose image', 'acadvizen-cms' ), $value ? '<img class="acv-main-thumb" src="' . esc_url( (string) $value ) . '" alt="" />' : '' );
 				break;
 			case 'color':
-				printf( '<input type="color" id="%1$s" name="%2$s" value="%3$s" />', esc_attr( $id ), esc_attr( $name ), esc_attr( (string) ( $value ?: '#000000' ) ) );
+				// A text field (empty = the website default) with a colour picker next to it.
+				printf( '<span class="acv-color"><input type="text" id="%1$s" name="%2$s" value="%3$s" placeholder="%4$s" pattern="(#[0-9a-fA-F]{3,8}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(0|1|0?\.\d+|\d{1,3}%%)\s*)?\)|transparent)" size="22" /> <input type="color" class="acv-color-pick" data-target="%1$s" value="%5$s" aria-label="%6$s" /></span>', esc_attr( $id ), esc_attr( $name ), esc_attr( (string) $value ), esc_attr__( 'default', 'acadvizen-cms' ), esc_attr( preg_match( '/^#[0-9a-fA-F]{6}$/', (string) $value ) ? (string) $value : '#000000' ), esc_attr__( 'Pick a colour', 'acadvizen-cms' ) );
+				break;
+			case 'link':
+				printf( '<input type="text" id="%1$s" name="%2$s" value="%3$s" placeholder="/page-address" %4$s />', esc_attr( $id ), esc_attr( $name ), esc_attr( (string) $value ), $required ? 'required' : '' );
+				break;
+			case 'number':
+				printf( '<input type="number" min="0" max="10000" step="1" id="%1$s" name="%2$s" value="%3$s" />', esc_attr( $id ), esc_attr( $name ), esc_attr( null === $value ? '' : (string) $value ) );
+				break;
+			case 'choice':
+				printf( '<select id="%1$s" name="%2$s" %3$s>', esc_attr( $id ), esc_attr( $name ), $required ? 'required' : '' );
+				if ( ! $required ) {
+					echo '<option value="">' . esc_html__( '— default —', 'acadvizen-cms' ) . '</option>';
+				}
+				foreach ( (array) ( $config['options'] ?? array() ) as $option => $option_label ) {
+					printf( '<option value="%1$s" %2$s>%3$s</option>', esc_attr( (string) $option ), selected( (string) $value, (string) $option, false ), esc_html( (string) $option_label ) );
+				}
+				echo '</select>';
+				break;
+			case 'menu_parent':
+				echo '<select id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '"><option value="">' . esc_html__( '— top level —', 'acadvizen-cms' ) . '</option>';
+				foreach ( (array) ( $GLOBALS['acv_main_menu_parents'] ?? array() ) as $parent ) {
+					printf( '<option value="%1$s" %2$s>%3$s</option>', esc_attr( (string) $parent['id'] ), selected( (string) $value, (string) $parent['id'], false ), esc_html( (string) $parent['title'] . ' (' . $parent['menu_location'] . ')' ) );
+				}
+				echo '</select>';
+				break;
+			case 'json':
+				printf(
+					'<div class="acv-json" data-value="%1$s" data-shape="%2$s" data-template="%3$s" data-hint="%4$s" data-target="%5$s"></div><input type="hidden" id="%5$s" name="%6$s" value="" />',
+					esc_attr( (string) wp_json_encode( $value ) ),
+					esc_attr( (string) ( $config['shape'] ?? 'array' ) ),
+					esc_attr( (string) wp_json_encode( $config['template'] ?? new \stdClass() ) ),
+					esc_attr( (string) ( $config['hint'] ?? '' ) ),
+					esc_attr( $id ),
+					esc_attr( $name )
+				);
 				break;
 			case 'rating':
 				printf( '<input type="number" min="1" max="5" id="%1$s" name="%2$s" value="%3$s" />', esc_attr( $id ), esc_attr( $name ), esc_attr( (string) $value ) );
@@ -1005,6 +1216,10 @@ function render_main_edit( string $entity, array $definition, string $id ): void
 	}
 	// A blog stored only as plain text (no blocks yet) opens with that text, split into paragraphs.
 	$GLOBALS['acv_main_plain_article'] = 'blogs' === $entity ? (string) ( $row['content'] ?? '' ) : '';
+	if ( 'menus' === $entity ) {
+		$parents                          = main_content_request( array( 'op' => 'list', 'entity' => 'menus', 'limit' => 200 ) );
+		$GLOBALS['acv_main_menu_parents'] = $parents['ok'] ? array_values( array_filter( array_map( static fn( $r ) => (array) $r, (array) $parents['body']['data'] ), static fn( $r ) => (string) $r['id'] !== $id && empty( $r['parent_id'] ) ) ) : array();
+	}
 	$cities = array();
 	if ( 'locations' === $entity ) {
 		$list   = main_content_request( array( 'op' => 'list', 'entity' => 'cities', 'limit' => 200 ) );
@@ -1067,8 +1282,10 @@ function render_main_edit( string $entity, array $definition, string $id ): void
 						<?php endforeach; ?>
 					</select>
 					<span class="description"><?php esc_html_e( 'Only Published is shown on the website. In review and Approved are for your team.', 'acadvizen-cms' ); ?></span></p>
-				<?php elseif ( main_can( $entity, 'publish' ) ) : ?>
+				<?php elseif ( 'active' === $definition['workflow'] && main_can( $entity, 'publish' ) ) : ?>
 					<p><label><input type="checkbox" name="acv_active" value="1" <?php checked( ! empty( $row['is_active'] ) ); ?> /> <?php esc_html_e( 'Show on the Main Website', 'acadvizen-cms' ); ?></label></p>
+				<?php elseif ( 'none' === $definition['workflow'] ) : ?>
+					<p class="description"><?php esc_html_e( 'Used on every page of www.acadvizen.com. Saving updates the website within a minute.', 'acadvizen-cms' ); ?></p>
 				<?php endif; ?>
 				<p class="acv-main-buttons">
 					<?php submit_button( $creating ? __( 'Create', 'acadvizen-cms' ) : __( 'Save', 'acadvizen-cms' ), 'primary', 'submit', false ); ?>

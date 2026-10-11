@@ -323,9 +323,102 @@
     })
   }
 
+  /* Structured lists and settings (social links, labels, homepage lists) ------------------------- */
+  // Edits the keys that exist (plus the field's template keys) in place; values that are not plain
+  // text, numbers or switches are listed as kept. Nothing is sent until something changes, so an
+  // untouched form leaves the stored value exactly as it is.
+  var LONG_KEYS = ['description', 'answer', 'body', 'text', 'testimonial', 'quote', 'subtitle', 'subheading', 'content']
+  function humanKey(key) { return key.replace(/_/g, ' ').replace(/^./, function (c) { return c.toUpperCase() }) }
+  function scalarInput(key, value, onChange) {
+    if (typeof value === 'boolean') {
+      return el('label', {}, [el('input', { type: 'checkbox', checked: value, on: { change: function (e) { onChange(e.target.checked) } } }), ' ' + humanKey(key)])
+    }
+    var id = nextId('acv-json')
+    var long = LONG_KEYS.indexOf(key) >= 0 || (typeof value === 'string' && value.length > 90)
+    var input = el(long ? 'textarea' : 'input', long ? { id: id, rows: 3 } : { id: id, type: typeof value === 'number' ? 'number' : 'text' })
+    input.value = value === null || value === undefined ? '' : String(value)
+    input.addEventListener('input', function () { onChange(typeof value === 'number' && input.value !== '' ? Number(input.value) : input.value) })
+    return el('div', { class: 'acv-ed-field' }, [el('label', { for: id, text: humanKey(key) }), input])
+  }
+  var isScalar = function (v) { return v === null || v === undefined || ['string', 'number', 'boolean'].indexOf(typeof v) >= 0 }
+
+  function initJson(root) {
+    var target = document.getElementById(root.getAttribute('data-target'))
+    var shape = root.getAttribute('data-shape') || 'array'
+    var template = {}
+    try { template = JSON.parse(root.getAttribute('data-template') || '{}') || {} } catch (e) { template = {} }
+    var value = null
+    try { value = JSON.parse(root.getAttribute('data-value') || 'null') } catch (e) { value = null }
+    var hint = root.getAttribute('data-hint')
+    var touch = function () {
+      var out = data
+      if (shape === 'array') {
+        // Rows left completely empty are dropped.
+        out = data.filter(function (item) { return Object.keys(item).some(function (k) { return !isScalar(item[k]) || (item[k] !== '' && item[k] !== null && item[k] !== undefined) }) })
+      } else {
+        out = {}
+        Object.keys(data).forEach(function (k) { if (data[k] !== '' && data[k] !== null && data[k] !== undefined) out[k] = data[k] })
+      }
+      target.value = JSON.stringify(out)
+    }
+    var data
+    if (shape === 'array') data = Array.isArray(value) ? value.map(function (item) { return item && typeof item === 'object' && !Array.isArray(item) ? item : { value: item } }) : []
+    else data = value && typeof value === 'object' && !Array.isArray(value) ? value : {}
+
+    function keysOf(item) {
+      var keys = Object.keys(template)
+      Object.keys(item).forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k) })
+      return keys
+    }
+    function objectFields(obj, container) {
+      var kept = []
+      keysOf(obj).forEach(function (key) {
+        var current = key in obj ? obj[key] : (template[key] !== undefined ? template[key] : '')
+        if (!isScalar(current)) { kept.push(humanKey(key)); return }
+        container.appendChild(scalarInput(key, current, function (v) { obj[key] = v; touch() }))
+      })
+      if (kept.length) container.appendChild(el('p', { class: 'description', text: 'Also stored here and kept as it is: ' + kept.join(', ') + '.' }))
+    }
+    function render() {
+      root.innerHTML = ''
+      if (hint) root.appendChild(el('p', { class: 'description', text: hint }))
+      if (shape !== 'array') {
+        var box = el('div', { class: 'acv-card' })
+        objectFields(data, box)
+        root.appendChild(box)
+        return
+      }
+      data.forEach(function (item, index) {
+        var card = el('div', { class: 'acv-card', 'data-index': index })
+        card.appendChild(cardTools('Item ' + (index + 1), index, data.length, {
+          up: function () { if (moveItem(data, index, -1)) { touch(); render() } },
+          down: function () { if (moveItem(data, index, 1)) { touch(); render() } },
+          remove: function () { data.splice(index, 1); touch(); render() },
+        }))
+        objectFields(item, card)
+        root.appendChild(card)
+      })
+      root.appendChild(el('p', {}, [el('button', { type: 'button', class: 'button', text: '+ Add', on: { click: function () {
+        var blank = {}
+        keysOf(data[0] || {}).forEach(function (k) { var sample = data[0] ? data[0][k] : template[k]; blank[k] = typeof sample === 'boolean' ? true : typeof sample === 'number' ? 0 : isScalar(sample) ? '' : sample })
+        data.push(blank); touch(); render()
+      } } })]))
+    }
+    render()
+  }
+
+  // A colour picker fills the colour's text field; the field stays empty (website default) until used.
+  document.addEventListener('input', function (event) {
+    var pick = event.target.closest('.acv-color-pick')
+    if (!pick) return
+    var input = document.getElementById(pick.getAttribute('data-target'))
+    if (input) input.value = pick.value
+  })
+
   document.addEventListener('DOMContentLoaded', function () {
     var blocks = document.getElementById('acv-blocks'); if (blocks) initBlocks(blocks)
     var sections = document.getElementById('acv-sections'); if (sections) initSections(sections)
     var toolbar = document.querySelector('.acv-preview-toolbar'); if (toolbar) initPreview(toolbar)
+    document.querySelectorAll('.acv-json').forEach(initJson)
   })
 })()
