@@ -128,6 +128,8 @@ if ( is_admin() ) {
 	add_action( 'admin_post_acv_cms_main_save', __NAMESPACE__ . '\\handle_main_save' );
 	add_action( 'admin_post_acv_cms_main_action', __NAMESPACE__ . '\\handle_main_action' );
 	add_action( 'wp_ajax_acv_cms_main_section', __NAMESPACE__ . '\\ajax_main_section' );
+	add_action( 'admin_post_acv_cms_main_upload', __NAMESPACE__ . '\\handle_main_upload' );
+	add_action( 'wp_ajax_acv_cms_main_media', __NAMESPACE__ . '\\ajax_main_media' );
 	add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\\enqueue_main_editor_assets' );
 	add_action( 'admin_menu', __NAMESPACE__ . '\\order_admin_menu', 999 );
 	add_filter( 'wp_insert_post_data', __NAMESPACE__ . '\\keep_global_styles_canvas_private', 10, 2 );

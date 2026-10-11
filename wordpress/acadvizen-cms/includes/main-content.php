@@ -57,6 +57,7 @@ function main_entities(): array {
 			'workflow' => 'status',
 			'trash'    => true,
 			'preview'  => true,
+			'sections' => true,
 			'path'     => '/%s',
 			'fields'   => array(
 				'title'       => array( __( 'Title', 'acadvizen-cms' ), 'text', '', true ),
@@ -79,6 +80,8 @@ function main_entities(): array {
 				'description'    => array( __( 'Summary', 'acadvizen-cms' ), 'textarea', __( 'Shown on the blog list and under the title.', 'acadvizen-cms' ) ),
 				'excerpt'        => array( __( 'Excerpt', 'acadvizen-cms' ), 'textarea', '' ),
 				'featured_image' => array( __( 'Cover image', 'acadvizen-cms' ), 'image', '' ),
+				'author_id'      => array( __( 'Author', 'acadvizen-cms' ), 'relation', __( 'Shown on the article and on the author\'s page.', 'acadvizen-cms' ), false, array( 'entity' => 'authors' ) ),
+				'category_id'    => array( __( 'Main category', 'acadvizen-cms' ), 'relation', __( 'The article is listed on this category\'s page.', 'acadvizen-cms' ), false, array( 'entity' => 'blog_categories' ) ),
 				'categories'     => array( __( 'Categories', 'acadvizen-cms' ), 'lines', __( 'One per line.', 'acadvizen-cms' ) ),
 				'tags'           => array( __( 'Tags', 'acadvizen-cms' ), 'lines', __( 'One per line.', 'acadvizen-cms' ) ),
 				'content_json'   => array( __( 'Article', 'acadvizen-cms' ), 'blocks', '' ),
@@ -101,6 +104,134 @@ function main_entities(): array {
 				'website_url' => array( __( 'Website', 'acadvizen-cms' ), 'url', '' ),
 			),
 		),
+		'city_pages'     => array(
+			'label'    => __( 'City pages', 'acadvizen-cms' ),
+			'singular' => __( 'City page', 'acadvizen-cms' ),
+			'title'    => 'city_name',
+			'workflow' => 'active',
+			'trash'    => true,
+			'preview'  => false,
+			'sections' => true,
+			'path'     => '/digital-marketing-course-in-%s',
+			'fields'   => array(
+				'city_name'            => array( __( 'City', 'acadvizen-cms' ), 'text', '', true ),
+				'slug'                 => array( __( 'Address', 'acadvizen-cms' ), 'slug', __( 'www.acadvizen.com/digital-marketing-course-in-<address>', 'acadvizen-cms' ), true ),
+				'hero_title'           => array( __( 'Heading', 'acadvizen-cms' ), 'text', '' ),
+				'hero_subtitle'        => array( __( 'Subheading', 'acadvizen-cms' ), 'text', '' ),
+				'hero_description'     => array( __( 'Introduction', 'acadvizen-cms' ), 'textarea', '' ),
+				'hero_image_url'       => array( __( 'Top image', 'acadvizen-cms' ), 'image', '' ),
+				'about_title'          => array( __( 'About heading', 'acadvizen-cms' ), 'text', '' ),
+				'about_description'    => array( __( 'About text', 'acadvizen-cms' ), 'textarea', '' ),
+				'about_image_url'      => array( __( 'About image', 'acadvizen-cms' ), 'image', '' ),
+				'features'             => array( __( 'Features', 'acadvizen-cms' ), 'json', '', false, array( 'shape' => 'array', 'template' => array( 'title' => '', 'text' => '', 'list' => array() ) ) ),
+				'stats'                => array( __( 'Figures', 'acadvizen-cms' ), 'json', __( 'Up to four are shown at the top.', 'acadvizen-cms' ), false, array( 'shape' => 'array', 'template' => array( 'label' => '', 'value' => '', 'icon' => '' ) ) ),
+				'testimonials'         => array( __( 'Testimonials', 'acadvizen-cms' ), 'json', '', false, array( 'shape' => 'array', 'template' => array( 'name' => '', 'quote' => '', 'role' => '', 'company' => '', 'rating' => 5 ) ) ),
+				'faqs'                 => array( __( 'Questions and answers', 'acadvizen-cms' ), 'json', '', false, array( 'shape' => 'array', 'template' => array( 'question' => '', 'answer' => '' ) ) ),
+				'contact_phone'        => array( __( 'Phone', 'acadvizen-cms' ), 'text', '' ),
+				'contact_email'        => array( __( 'Email', 'acadvizen-cms' ), 'text', '' ),
+				'contact_address'      => array( __( 'Address', 'acadvizen-cms' ), 'textarea', '' ),
+				'seo_title'            => array( __( 'SEO title', 'acadvizen-cms' ), 'text', '' ),
+				'seo_description'      => array( __( 'SEO description', 'acadvizen-cms' ), 'textarea', '' ),
+				'canonical_url'        => array( __( 'Canonical address', 'acadvizen-cms' ), 'url', __( 'Only if this content also exists at another address. Usually empty.', 'acadvizen-cms' ) ),
+				'exclude_from_sitemap' => array( __( 'Leave out of the sitemap', 'acadvizen-cms' ), 'checkbox', '' ),
+			),
+		),
+		'service_pages'  => array(
+			'label'    => __( 'Service pages', 'acadvizen-cms' ),
+			'singular' => __( 'Service page', 'acadvizen-cms' ),
+			'title'    => 'title',
+			'workflow' => 'active',
+			'trash'    => false,
+			'sections' => true,
+			'path'     => '/%s',
+			'fields'   => array(
+				'title'            => array( __( 'Title', 'acadvizen-cms' ), 'text', '', true ),
+				'slug'             => array( __( 'Address', 'acadvizen-cms' ), 'slug', __( 'www.acadvizen.com/<address>, e.g. google-ads-course-in-mysuru. Cannot be the address of a page.', 'acadvizen-cms' ), true ),
+				'hero_title'       => array( __( 'Heading', 'acadvizen-cms' ), 'text', '' ),
+				'hero_subtitle'    => array( __( 'Subheading', 'acadvizen-cms' ), 'text', '' ),
+				'overview'         => array( __( 'Overview', 'acadvizen-cms' ), 'textarea', '' ),
+				'curriculum'       => array( __( 'Curriculum', 'acadvizen-cms' ), 'json', '', false, array( 'shape' => 'array', 'template' => array( 'title' => '' ) ) ),
+				'benefits'         => array( __( 'Why choose this programme', 'acadvizen-cms' ), 'json', '', false, array( 'shape' => 'array', 'template' => array( 'title' => '', 'description' => '' ) ) ),
+				'faqs'             => array( __( 'Questions and answers', 'acadvizen-cms' ), 'json', '', false, array( 'shape' => 'array', 'template' => array( 'question' => '', 'answer' => '' ) ) ),
+				'meta_title'       => array( __( 'SEO title', 'acadvizen-cms' ), 'text', '' ),
+				'meta_description' => array( __( 'SEO description', 'acadvizen-cms' ), 'textarea', '' ),
+				'order_index'      => array( __( 'Position', 'acadvizen-cms' ), 'number', '' ),
+			),
+		),
+		'courses'        => array(
+			'label'    => __( 'Courses', 'acadvizen-cms' ),
+			'singular' => __( 'Course', 'acadvizen-cms' ),
+			'title'    => 'title',
+			'workflow' => 'active',
+			'trash'    => true,
+			'path'     => '/courses/%s',
+			'fields'   => array(
+				'title'               => array( __( 'Title', 'acadvizen-cms' ), 'text', '', true ),
+				'slug'                => array( __( 'Address', 'acadvizen-cms' ), 'slug', __( 'www.acadvizen.com/courses/<address>', 'acadvizen-cms' ), true ),
+				'subtitle'            => array( __( 'Subtitle', 'acadvizen-cms' ), 'text', '' ),
+				'badge'               => array( __( 'Badge', 'acadvizen-cms' ), 'text', __( 'e.g. Most popular', 'acadvizen-cms' ) ),
+				'short_description'   => array( __( 'Short description', 'acadvizen-cms' ), 'textarea', __( 'Shown on the course list and at the top of the course page.', 'acadvizen-cms' ) ),
+				'description'         => array( __( 'Description', 'acadvizen-cms' ), 'textarea', '' ),
+				'image_url'           => array( __( 'Main image', 'acadvizen-cms' ), 'image', '' ),
+				'thumbnail_url'       => array( __( 'Thumbnail', 'acadvizen-cms' ), 'image', '' ),
+				'duration_value'      => array( __( 'Duration', 'acadvizen-cms' ), 'number', __( 'A number, e.g. 6', 'acadvizen-cms' ) ),
+				'duration_unit'       => array( __( 'Duration unit', 'acadvizen-cms' ), 'text', __( 'e.g. months', 'acadvizen-cms' ) ),
+				'learning_mode'       => array( __( 'Learning mode', 'acadvizen-cms' ), 'text', __( 'e.g. Online and classroom', 'acadvizen-cms' ) ),
+				'learning_hours'      => array( __( 'Learning hours', 'acadvizen-cms' ), 'number', '' ),
+				'projects_count'      => array( __( 'Projects', 'acadvizen-cms' ), 'number', '' ),
+				'case_studies_count'  => array( __( 'Case studies', 'acadvizen-cms' ), 'number', '' ),
+				'ai_tools_count'      => array( __( 'AI tools', 'acadvizen-cms' ), 'number', '' ),
+				'certification_count' => array( __( 'Certifications', 'acadvizen-cms' ), 'number', '' ),
+				'internship'          => array( __( 'Includes an internship', 'acadvizen-cms' ), 'checkbox', '' ),
+				'placement_support'   => array( __( 'Includes placement support', 'acadvizen-cms' ), 'checkbox', '' ),
+				'skills'              => array( __( 'Skills', 'acadvizen-cms' ), 'lines', __( 'One per line.', 'acadvizen-cms' ) ),
+				'curriculum'          => array( __( 'Curriculum', 'acadvizen-cms' ), 'json', __( 'Modules in order, each with its topics.', 'acadvizen-cms' ), false, array( 'shape' => 'array', 'template' => array( 'title' => '', 'topics' => array() ) ) ),
+				'brochure_url'        => array( __( 'Brochure (PDF link)', 'acadvizen-cms' ), 'url', '' ),
+				'primary_cta_label'   => array( __( 'Main button text', 'acadvizen-cms' ), 'text', '' ),
+				'primary_cta_url'     => array( __( 'Main button link', 'acadvizen-cms' ), 'link', '' ),
+				'secondary_cta_label' => array( __( 'Second button text', 'acadvizen-cms' ), 'text', '' ),
+				'secondary_cta_url'   => array( __( 'Second button link', 'acadvizen-cms' ), 'link', '' ),
+				'order_index'         => array( __( 'Position on the course list', 'acadvizen-cms' ), 'number', __( 'Lower numbers come first.', 'acadvizen-cms' ) ),
+				'is_featured'         => array( __( 'Featured', 'acadvizen-cms' ), 'checkbox', '' ),
+				'meta_title'          => array( __( 'SEO title', 'acadvizen-cms' ), 'text', '' ),
+				'meta_description'    => array( __( 'SEO description', 'acadvizen-cms' ), 'textarea', '' ),
+				'canonical_url'       => array( __( 'Canonical address', 'acadvizen-cms' ), 'url', __( 'Only if this content also exists at another address. Usually empty.', 'acadvizen-cms' ) ),
+				'og_image_url'        => array( __( 'Social sharing image', 'acadvizen-cms' ), 'image', '' ),
+				'noindex'             => array( __( 'Hide from search engines (noindex)', 'acadvizen-cms' ), 'checkbox', '' ),
+				'exclude_from_sitemap' => array( __( 'Leave out of the sitemap', 'acadvizen-cms' ), 'checkbox', '' ),
+			),
+		),
+		'course_details' => array(
+			'label'    => __( 'Course sections', 'acadvizen-cms' ),
+			'singular' => __( 'Course section', 'acadvizen-cms' ),
+			'title'    => 'section_title',
+			'workflow' => 'none',
+			'trash'    => false,
+			'path'     => '',
+			'parent'   => array( 'field' => 'course_id', 'entity' => 'courses', 'label' => __( 'Course', 'acadvizen-cms' ) ),
+			'fields'   => array(
+				'course_id'     => array( __( 'Course', 'acadvizen-cms' ), 'parent_select', '', true ),
+				'section_title' => array( __( 'Section heading', 'acadvizen-cms' ), 'text', '', true ),
+				'content'       => array( __( 'Text', 'acadvizen-cms' ), 'textarea', '' ),
+				'order_index'   => array( __( 'Position', 'acadvizen-cms' ), 'number', __( 'Lower numbers come first.', 'acadvizen-cms' ) ),
+			),
+		),
+		'media'          => array(
+			'label'      => __( 'Media library', 'acadvizen-cms' ),
+			'singular'   => __( 'Image', 'acadvizen-cms' ),
+			'title'      => 'name',
+			'workflow'   => 'none',
+			'trash'      => false,
+			'creatable'  => false,
+			'deletable'  => false,
+			'path'       => '',
+			'list_thumb' => 'url',
+			'fields'     => array(
+				'name'     => array( __( 'Name', 'acadvizen-cms' ), 'text', '' ),
+				'alt_text' => array( __( 'Description for screen readers and search engines (alt text)', 'acadvizen-cms' ), 'text', '' ),
+				'caption'  => array( __( 'Caption', 'acadvizen-cms' ), 'text', '' ),
+			),
+		),
 		'locations'      => array(
 			'label'    => __( 'Locations', 'acadvizen-cms' ),
 			'singular' => __( 'Location', 'acadvizen-cms' ),
@@ -108,6 +239,7 @@ function main_entities(): array {
 			'workflow' => 'active',
 			'trash'    => false,
 			'path'     => '/digital-marketing-courses-%s',
+			'sections' => true,
 			'fields'   => array(
 				'name'             => array( __( 'Name', 'acadvizen-cms' ), 'text', __( 'e.g. Jayanagar', 'acadvizen-cms' ), true ),
 				'slug'             => array( __( 'Address', 'acadvizen-cms' ), 'slug', __( 'www.acadvizen.com/digital-marketing-courses-<address>', 'acadvizen-cms' ), true ),
@@ -140,6 +272,112 @@ function main_entities(): array {
 				'meta_description' => array( __( 'SEO description', 'acadvizen-cms' ), 'textarea', '' ),
 				'intro_text'       => array( __( 'Introduction', 'acadvizen-cms' ), 'textarea', '' ),
 				'highlights'       => array( __( 'Highlights', 'acadvizen-cms' ), 'lines', __( 'One per line.', 'acadvizen-cms' ) ),
+			),
+		),
+		'homepage_hero'   => array(
+			'label'     => __( 'Banner', 'acadvizen-cms' ),
+			'singular'  => __( 'Homepage banner', 'acadvizen-cms' ),
+			'title'     => 'heading',
+			'workflow'  => 'none',
+			'trash'     => false,
+			'creatable' => false,
+			'singleton' => true,
+			'group'     => 'home',
+			'path'      => '',
+			'fields'    => array(
+				'badge_text' => array( __( 'Badge above the heading', 'acadvizen-cms' ), 'text', __( 'Empty: the built-in badge.', 'acadvizen-cms' ) ),
+				'heading'    => array( __( 'Heading', 'acadvizen-cms' ), 'text', __( 'Empty: the built-in heading.', 'acadvizen-cms' ) ),
+				'subheading' => array( __( 'Text under the heading', 'acadvizen-cms' ), 'textarea', __( 'Empty: the built-in text.', 'acadvizen-cms' ) ),
+			),
+		),
+		'homepage_cta'    => array(
+			'label'     => __( 'Closing call to action', 'acadvizen-cms' ),
+			'singular'  => __( 'Closing call to action', 'acadvizen-cms' ),
+			'title'     => 'title',
+			'workflow'  => 'none',
+			'trash'     => false,
+			'creatable' => false,
+			'singleton' => true,
+			'group'     => 'home',
+			'path'      => '',
+			'fields'    => array(
+				'title'       => array( __( 'Heading', 'acadvizen-cms' ), 'text', '' ),
+				'description' => array( __( 'Text', 'acadvizen-cms' ), 'textarea', '' ),
+				'button_text' => array( __( 'Button text', 'acadvizen-cms' ), 'text', '' ),
+				'button_link' => array( __( 'Button link', 'acadvizen-cms' ), 'link', __( 'A page address such as /courses.', 'acadvizen-cms' ) ),
+			),
+		),
+		'home_sections'   => array(
+			'label'      => __( 'Sections', 'acadvizen-cms' ),
+			'singular'   => __( 'Homepage section', 'acadvizen-cms' ),
+			'title'      => 'title',
+			'workflow'   => 'active',
+			'trash'      => false,
+			'creatable'  => false,
+			'group'      => 'home',
+			'path'       => '',
+			'key_labels' => array( 'who_for' => __( 'Who is this for', 'acadvizen-cms' ), 'blog_section' => __( 'From the blog', 'acadvizen-cms' ), 'registration_popup' => __( 'Registration pop-up', 'acadvizen-cms' ) ),
+			'fields'     => array(
+				'title'      => array( __( 'Heading', 'acadvizen-cms' ), 'text', '' ),
+				'subtitle'   => array( __( 'Subheading', 'acadvizen-cms' ), 'text', '' ),
+				'body'       => array( __( 'Text', 'acadvizen-cms' ), 'textarea', '' ),
+				'items_json' => array( __( 'Items', 'acadvizen-cms' ), 'json', __( 'Who is this for: a description shorter than the built-in one is not shown (the longer text wins).', 'acadvizen-cms' ), false, array( 'shape' => 'array', 'template' => array( 'title' => '', 'desc' => '' ) ) ),
+				'cta_json'   => array( __( 'Button', 'acadvizen-cms' ), 'json', '', false, array( 'shape' => 'object', 'template' => array() ) ),
+			),
+		),
+		'home_lists'      => array(
+			'label'     => __( 'Lists', 'acadvizen-cms' ),
+			'singular'  => __( 'Homepage list', 'acadvizen-cms' ),
+			'title'     => 'title',
+			'workflow'  => 'active',
+			'trash'     => false,
+			'creatable' => false,
+			'group'     => 'home',
+			'path'      => '',
+			'fields'    => array(
+				'items_json' => array( __( 'Items', 'acadvizen-cms' ), 'json', __( 'Exactly what the homepage shows, in this order. Hide the list to bring back the built-in one.', 'acadvizen-cms' ), false, array( 'shape' => 'array', 'template' => array() ) ),
+			),
+		),
+		'authors'         => array(
+			'label'    => __( 'Authors', 'acadvizen-cms' ),
+			'singular' => __( 'Author', 'acadvizen-cms' ),
+			'title'    => 'name',
+			'workflow' => 'none',
+			'trash'    => false,
+			'group'    => 'blog',
+			'path'     => '/blog/author/%s',
+			'fields'   => array(
+				'name'   => array( __( 'Name', 'acadvizen-cms' ), 'text', '', true ),
+				'slug'   => array( __( 'Address', 'acadvizen-cms' ), 'slug', __( 'www.acadvizen.com/blog/author/<address>', 'acadvizen-cms' ), true ),
+				'bio'    => array( __( 'About the author', 'acadvizen-cms' ), 'textarea', '' ),
+				'avatar' => array( __( 'Photo', 'acadvizen-cms' ), 'image', '' ),
+			),
+		),
+		'blog_categories' => array(
+			'label'    => __( 'Categories', 'acadvizen-cms' ),
+			'singular' => __( 'Category', 'acadvizen-cms' ),
+			'title'    => 'name',
+			'workflow' => 'none',
+			'trash'    => false,
+			'group'    => 'blog',
+			'path'     => '/blog/category/%s',
+			'fields'   => array(
+				'name'        => array( __( 'Name', 'acadvizen-cms' ), 'text', '', true ),
+				'slug'        => array( __( 'Address', 'acadvizen-cms' ), 'slug', __( 'www.acadvizen.com/blog/category/<address>', 'acadvizen-cms' ), true ),
+				'description' => array( __( 'Description', 'acadvizen-cms' ), 'textarea', '' ),
+			),
+		),
+		'blog_tags'       => array(
+			'label'    => __( 'Tags', 'acadvizen-cms' ),
+			'singular' => __( 'Tag', 'acadvizen-cms' ),
+			'title'    => 'name',
+			'workflow' => 'none',
+			'trash'    => false,
+			'group'    => 'blog',
+			'path'     => '/blog/tag/%s',
+			'fields'   => array(
+				'name' => array( __( 'Name', 'acadvizen-cms' ), 'text', '', true ),
+				'slug' => array( __( 'Address', 'acadvizen-cms' ), 'slug', __( 'www.acadvizen.com/blog/tag/<address>', 'acadvizen-cms' ), true ),
 			),
 		),
 		'header_settings' => array(
@@ -204,6 +442,24 @@ function main_entities(): array {
 				'target'          => array( __( 'Opens in', 'acadvizen-cms' ), 'choice', '', false, array( 'options' => array( '_self' => __( 'The same tab', 'acadvizen-cms' ), '_blank' => __( 'A new tab', 'acadvizen-cms' ) ) ) ),
 				'desktop_visible' => array( __( 'Show on computers and tablets', 'acadvizen-cms' ), 'checkbox', '', false, array( 'empty_means_on' => true ) ),
 				'mobile_visible'  => array( __( 'Show on phones', 'acadvizen-cms' ), 'checkbox', '', false, array( 'empty_means_on' => true ) ),
+			),
+		),
+		'seo_metadata'    => array(
+			'label'        => __( 'SEO overrides', 'acadvizen-cms' ),
+			'singular'     => __( 'SEO override', 'acadvizen-cms' ),
+			'title'        => 'page_slug',
+			'workflow'     => 'none',
+			'trash'        => false,
+			'creatable'    => false,
+			'group'        => 'site',
+			'path'         => '/%s',
+			'delete_label' => __( 'Remove override', 'acadvizen-cms' ),
+			'delete_note'  => __( 'Remove this override? The page\'s own SEO fields apply again.', 'acadvizen-cms' ),
+			'fields'       => array(
+				'meta_title'       => array( __( 'SEO title', 'acadvizen-cms' ), 'text', __( 'Shown instead of the page\'s own SEO title.', 'acadvizen-cms' ) ),
+				'meta_description' => array( __( 'SEO description', 'acadvizen-cms' ), 'textarea', '' ),
+				'canonical_url'    => array( __( 'Canonical address', 'acadvizen-cms' ), 'url', '' ),
+				'og_image'         => array( __( 'Social sharing image', 'acadvizen-cms' ), 'image', '' ),
 			),
 		),
 		'site_settings'   => array(
@@ -285,6 +541,29 @@ function remember_main_owner( string $entity, string $id, int $user_id ): void {
 }
 
 /** The first content type this user may work on (Pages for Editors, Blogs for Authors). */
+/** Records of a type, as id => title (choices for relations, e.g. a blog's author). */
+function main_relation_options( string $entity ): array {
+	static $cache = array();
+	$definition = main_entity( $entity );
+	if ( ! $definition ) {
+		return array();
+	}
+	if ( ! isset( $cache[ $entity ] ) ) {
+		$list             = main_content_request( array( 'op' => 'list', 'entity' => $entity, 'limit' => 200 ) );
+		$cache[ $entity ] = array();
+		foreach ( $list['ok'] ? (array) $list['body']['data'] : array() as $row ) {
+			$row                                    = (array) $row;
+			$cache[ $entity ][ (string) $row['id'] ] = (string) ( $row[ $definition['title'] ] ?? $row['id'] );
+		}
+	}
+	return $cache[ $entity ];
+}
+
+/** Records a child type can belong to (e.g. the courses of course sections), as id => title. */
+function main_parent_options( array $definition ): array {
+	return empty( $definition['parent'] ) ? array() : main_relation_options( (string) $definition['parent']['entity'] );
+}
+
 function main_default_entity(): string {
 	foreach ( array_keys( main_entities() ) as $key ) {
 		if ( main_can( $key, 'edit' ) ) {
@@ -598,6 +877,8 @@ function main_record_from_post( array $definition ): array {
 				$record[ $key ] = in_array( (string) $raw, $options, true ) ? (string) $raw : null;
 				break;
 			case 'menu_parent':
+			case 'parent_select':
+			case 'relation':
 				$record[ $key ] = '' === (string) $raw ? null : sanitize_text_field( (string) $raw );
 				break;
 			case 'json':
@@ -665,6 +946,16 @@ function handle_main_save(): void {
 	}
 	$record = main_record_from_post( $definition );
 	$back   = static fn( $record_id ) => main_screen_url( array( 'entity' => $entity, 'view' => 'edit', 'id' => $record_id ) );
+
+	// The first change made here to existing Main content keeps the content as it was before, so
+	// "Restore" can always undo it (versions otherwise start with the first save in this admin).
+	if ( '' !== $id && ! list_main_snapshots( $entity, $id ) ) {
+		$before = main_content_request( array( 'op' => 'get', 'entity' => $entity, 'id' => $id ) );
+		if ( $before['ok'] ) {
+			$before_row = (array) $before['body']['data'];
+			save_main_snapshot( $entity, $id, array_intersect_key( $before_row, $definition['fields'] ), (string) ( $before_row['status'] ?? '' ) );
+		}
+	}
 
 	$saved = main_content_request( array( 'op' => 'save', 'entity' => $entity, 'id' => '' !== $id ? $id : null, 'record' => $record ) );
 	if ( ! $saved['ok'] ) {
@@ -752,7 +1043,7 @@ function handle_main_action(): void {
 	$do         = isset( $_REQUEST['do'] ) ? sanitize_key( wp_unslash( $_REQUEST['do'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$definition = main_entity( $entity );
 	check_admin_referer( "acv_cms_main_{$do}_{$entity}_{$id}" );
-	$need = array( 'trash' => 'edit', 'restore' => 'edit', 'delete' => 'delete', 'start_draft' => 'edit', 'restore_version' => 'edit', 'show' => 'publish', 'hide' => 'publish', 'import_menus' => 'publish' );
+	$need = array( 'trash' => 'edit', 'restore' => 'edit', 'delete' => 'delete', 'start_draft' => 'edit', 'restore_version' => 'edit', 'show' => 'publish', 'hide' => 'publish', 'import_menus' => 'publish', 'import_home' => 'publish' );
 	if ( ! $definition || ! isset( $need[ $do ] ) || ! main_can_record( $entity, $need[ $do ], $id ) ) {
 		wp_die( esc_html__( 'You are not allowed to do this.', 'acadvizen-cms' ), 403 );
 	}
@@ -788,6 +1079,22 @@ function handle_main_action(): void {
 				}
 			}
 			main_flash( $result['ok'] ? 'success' : 'error', $result['ok'] ? __( 'Deleted permanently.', 'acadvizen-cms' ) : main_error_text( $result ) );
+			wp_safe_redirect( $list );
+			exit;
+		case 'import_home':
+			$result = main_content_request( array( 'op' => 'import_homepage_defaults', 'entity' => 'home_lists' ) );
+			if ( $result['ok'] ) {
+				$imported = (array) ( $result['body']['data']['imported'] ?? array() );
+				main_flash(
+					'success',
+					$imported
+						/* translators: %d: number of lists */
+						? sprintf( __( 'Copied %d lists the homepage shows today. The homepage looks the same; you can now edit them.', 'acadvizen-cms' ), count( $imported ) )
+						: __( 'Nothing to copy: every list has already been copied.', 'acadvizen-cms' )
+				);
+			} else {
+				main_flash( 'error', main_error_text( $result ) );
+			}
 			wp_safe_redirect( $list );
 			exit;
 		case 'import_menus':
@@ -839,12 +1146,16 @@ function main_action_url( string $do, string $entity, string $id, array $extra =
 /** Section editing for a page (admin-ajax): save, delete, reorder. */
 function ajax_main_section(): void {
 	check_ajax_referer( 'acv_cms_main_section', 'nonce' );
-	if ( ! main_can_record( 'pages', 'edit', isset( $_POST['page_id'] ) ? sanitize_text_field( wp_unslash( $_POST['page_id'] ) ) : '' ) ) {
+	$parent = isset( $_POST['parent'] ) ? sanitize_key( wp_unslash( $_POST['parent'] ) ) : 'pages';
+	if ( ! in_array( $parent, array( 'pages', 'city_pages', 'service_pages', 'locations' ), true ) ) {
+		wp_send_json_error( array( 'message' => 'invalid_parent' ), 400 );
+	}
+	if ( ! main_can_record( $parent, 'edit', isset( $_POST['page_id'] ) ? sanitize_text_field( wp_unslash( $_POST['page_id'] ) ) : '' ) ) {
 		wp_send_json_error( array( 'message' => __( 'You are not allowed to do this.', 'acadvizen-cms' ) ), 403 );
 	}
 	$op      = isset( $_POST['op'] ) ? sanitize_key( wp_unslash( $_POST['op'] ) ) : '';
 	$page_id = isset( $_POST['page_id'] ) ? sanitize_text_field( wp_unslash( $_POST['page_id'] ) ) : '';
-	$args    = array( 'entity' => 'sections', 'page_id' => $page_id );
+	$args    = array( 'entity' => 'sections', 'parent' => $parent, 'page_id' => $page_id );
 	if ( 'save' === $op ) {
 		// Decoded as objects so an empty {} (e.g. a section with no design settings) is re-sent as {}, not [].
 		$record = json_decode( (string) wp_unslash( $_POST['record'] ?? '' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- validated by the Main Website.
@@ -864,6 +1175,53 @@ function ajax_main_section(): void {
 	wp_send_json_success( $result['body']['data'] ?? array() );
 }
 
+/** Upload of one image into the Main Website media library (validated again by the Main Website). */
+function handle_main_upload(): void {
+	check_admin_referer( 'acv_cms_main_upload' );
+	if ( ! main_can( 'media', 'edit' ) ) {
+		wp_die( esc_html__( 'You are not allowed to do this.', 'acadvizen-cms' ), 403 );
+	}
+	$back = main_screen_url( array( 'entity' => 'media' ) );
+	$file = $_FILES['acv_file'] ?? null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- checked below and by the Main Website.
+	if ( ! is_array( $file ) || UPLOAD_ERR_OK !== (int) ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) || ! is_uploaded_file( (string) $file['tmp_name'] ) ) {
+		main_flash( 'error', __( 'No image was received. Choose a file and try again.', 'acadvizen-cms' ) );
+		wp_safe_redirect( $back );
+		exit;
+	}
+	if ( (int) $file['size'] > 3 * 1024 * 1024 ) {
+		main_flash( 'error', __( 'The image is larger than 3 MB. Make it smaller and try again.', 'acadvizen-cms' ) );
+		wp_safe_redirect( $back );
+		exit;
+	}
+	$type   = wp_check_filetype_and_ext( (string) $file['tmp_name'], (string) $file['name'] );
+	$result = main_content_request(
+		array(
+			'op'           => 'upload',
+			'entity'       => 'media',
+			'filename'     => sanitize_file_name( (string) $file['name'] ),
+			'content_type' => (string) ( $type['type'] ?: $file['type'] ),
+			'alt_text'     => isset( $_POST['acv_alt'] ) ? sanitize_text_field( wp_unslash( $_POST['acv_alt'] ) ) : '',
+			'data'         => base64_encode( (string) file_get_contents( (string) $file['tmp_name'] ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode,WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- sent to the Main Website as data.
+		)
+	);
+	main_flash( $result['ok'] ? 'success' : 'error', $result['ok'] ? __( 'Image added to the Main Website library.', 'acadvizen-cms' ) : main_error_text( $result ) );
+	wp_safe_redirect( $back );
+	exit;
+}
+
+/** The Main Website media library, for the image picker (search by name or alt text). */
+function ajax_main_media(): void {
+	check_ajax_referer( 'acv_cms_main_media', 'nonce' );
+	if ( ! current_user_can( 'edit_posts' ) ) {
+		wp_send_json_error( array( 'message' => __( 'You are not allowed to do this.', 'acadvizen-cms' ) ), 403 );
+	}
+	$result = main_content_request( array( 'op' => 'list', 'entity' => 'media', 'search' => isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '', 'limit' => 60 ) );
+	if ( ! $result['ok'] ) {
+		wp_send_json_error( array( 'message' => main_error_text( $result ) ), 400 );
+	}
+	wp_send_json_success( array_map( static fn( $row ) => array( 'url' => (string) ( (array) $row )['url'], 'name' => (string) ( ( (array) $row )['name'] ?? '' ), 'alt' => (string) ( ( (array) $row )['alt_text'] ?? '' ) ), (array) $result['body']['data'] ) );
+}
+
 /* Screens ------------------------------------------------------------------------------------- */
 
 function enqueue_main_editor_assets( string $hook ): void {
@@ -873,6 +1231,7 @@ function enqueue_main_editor_assets( string $hook ): void {
 	wp_enqueue_media();
 	wp_enqueue_style( 'acadvizen-cms-main-editor', plugins_url( 'assets/main-editor.css', __DIR__ ), array(), VERSION );
 	wp_enqueue_script( 'acadvizen-cms-main-editor', plugins_url( 'assets/main-editor.js', __DIR__ ), array(), VERSION, true );
+	wp_localize_script( 'acadvizen-cms-main-editor', 'acvMainLibrary', array( 'ajax' => admin_url( 'admin-ajax.php' ), 'nonce' => wp_create_nonce( 'acv_cms_main_media' ) ) );
 }
 
 function render_main_notice(): void {
@@ -914,20 +1273,22 @@ function render_main_tabs( string $current ): void {
 	};
 	echo '<nav class="nav-tab-wrapper">';
 	foreach ( main_entities() as $key => $definition ) {
-		if ( 'site' !== ( $definition['group'] ?? '' ) ) {
+		if ( '' === ( $definition['group'] ?? '' ) ) {
 			$tab( $key, $definition );
 		}
 	}
 	printf( '<a class="nav-tab" href="%1$s">%2$s</a>', esc_url( main_screen_url( array( 'view' => 'log' ) ) ), esc_html__( 'Activity', 'acadvizen-cms' ) );
 	echo '</nav>';
 	if ( main_can( 'pages', 'edit' ) ) {
-		echo '<nav class="nav-tab-wrapper acv-main-subtabs"><span class="acv-main-subtabs-label">' . esc_html__( 'Whole website:', 'acadvizen-cms' ) . '</span>';
-		foreach ( main_entities() as $key => $definition ) {
-			if ( 'site' === ( $definition['group'] ?? '' ) ) {
-				$tab( $key, $definition );
+		foreach ( array( 'home' => __( 'Homepage:', 'acadvizen-cms' ), 'blog' => __( 'Blog:', 'acadvizen-cms' ), 'site' => __( 'Whole website:', 'acadvizen-cms' ) ) as $group => $group_label ) {
+			echo '<nav class="nav-tab-wrapper acv-main-subtabs"><span class="acv-main-subtabs-label">' . esc_html( $group_label ) . '</span>';
+			foreach ( main_entities() as $key => $definition ) {
+				if ( ( $definition['group'] ?? '' ) === $group ) {
+					$tab( $key, $definition );
+				}
 			}
+			echo '</nav>';
 		}
-		echo '</nav>';
 	}
 }
 
@@ -984,6 +1345,22 @@ function render_main_list( string $entity, array $definition ): void {
 	}
 
 	$args = array( 'op' => 'list', 'entity' => $entity, 'search' => $search, 'limit' => MAIN_PER_PAGE, 'offset' => ( $paged - 1 ) * MAIN_PER_PAGE );
+	$parent_id = isset( $_GET['parent_id'] ) ? sanitize_text_field( wp_unslash( $_GET['parent_id'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( ! empty( $definition['parent'] ) ) {
+		$options = main_parent_options( $definition );
+		echo '<form method="get" class="acv-main-filters"><input type="hidden" name="page" value="' . esc_attr( MAIN_CONTENT_PAGE ) . '" /><input type="hidden" name="entity" value="' . esc_attr( $entity ) . '" />';
+		echo '<label>' . esc_html( (string) $definition['parent']['label'] ) . ' <select name="parent_id" onchange="this.form.submit()"><option value="">' . esc_html__( '— choose —', 'acadvizen-cms' ) . '</option>';
+		foreach ( $options as $option_id => $option_label ) {
+			printf( '<option value="%1$s" %2$s>%3$s</option>', esc_attr( (string) $option_id ), selected( $parent_id, (string) $option_id, false ), esc_html( (string) $option_label ) );
+		}
+		echo '</select></label> <noscript><input type="submit" class="button" value="' . esc_attr__( 'Show', 'acadvizen-cms' ) . '" /></noscript></form>';
+		if ( '' === $parent_id || ! isset( $options[ $parent_id ] ) ) {
+			echo '<p class="acv-main-empty">' . esc_html__( 'Choose a course to see its sections.', 'acadvizen-cms' ) . '</p>';
+			return;
+		}
+		$args['parent_id'] = $parent_id;
+		printf( '<p><a class="button" href="%1$s">%2$s</a></p>', esc_url( main_screen_url( array( 'entity' => $entity, 'view' => 'edit', 'parent_id' => $parent_id ) ) ), esc_html__( 'Add a section to this course', 'acadvizen-cms' ) );
+	}
 	$filters = array();
 	foreach ( (array) ( $definition['filter'] ?? array() ) as $filter_field => $filter_options ) {
 		$wanted = isset( $_GET[ 'f_' . $filter_field ] ) ? sanitize_key( wp_unslash( $_GET[ 'f_' . $filter_field ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -993,6 +1370,22 @@ function render_main_list( string $entity, array $definition ): void {
 	}
 	if ( $filters ) {
 		$args['filter'] = $filters;
+	}
+	if ( 'media' === $entity && main_can( 'media', 'edit' ) ) {
+		?>
+		<form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="acv-main-box acv-main-upload">
+			<input type="hidden" name="action" value="acv_cms_main_upload" />
+			<?php wp_nonce_field( 'acv_cms_main_upload' ); ?>
+			<p><strong><?php esc_html_e( 'Add an image to the Main Website library', 'acadvizen-cms' ); ?></strong><br /><span class="description"><?php esc_html_e( 'JPEG, PNG, WebP, GIF or AVIF, at most 3 MB.', 'acadvizen-cms' ); ?></span></p>
+			<p><input type="file" name="acv_file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" required />
+			<label><?php esc_html_e( 'Alt text', 'acadvizen-cms' ); ?> <input type="text" name="acv_alt" size="40" /></label>
+			<?php submit_button( __( 'Upload', 'acadvizen-cms' ), 'secondary', 'submit', false ); ?></p>
+		</form>
+		<?php
+	}
+	if ( 'home_lists' === $entity && main_can( 'home_lists', 'publish' ) ) {
+		echo '<div class="acv-main-box acv-main-import"><p>' . esc_html__( 'The homepage shows built-in lists until an edited version exists. To change one, first copy what the homepage shows today: it looks exactly the same afterwards, and you can then edit, reorder or remove items. Hiding a list brings back the built-in one.', 'acadvizen-cms' ) . '</p>';
+		printf( '<p><a class="button" href="%1$s" data-confirm="%2$s">%3$s</a></p></div>', esc_url( main_action_url( 'import_home', 'home_lists', 'all' ) ), esc_attr__( 'Copy the lists the homepage shows today? Lists already copied are not changed.', 'acadvizen-cms' ), esc_html__( 'Copy what the homepage shows today', 'acadvizen-cms' ) );
 	}
 	if ( 'menus' === $entity && main_can( 'menus', 'publish' ) ) {
 		echo '<div class="acv-main-box acv-main-import"><p>' . esc_html__( 'A menu that has no links here shows the website\'s built-in links. To change those, first copy them here: the website looks exactly the same afterwards, and you can then edit, reorder or hide each link.', 'acadvizen-cms' ) . '</p>';
@@ -1054,6 +1447,12 @@ function render_main_list( string $entity, array $definition ): void {
 		$row     = (array) $row;
 		$id      = (string) $row['id'];
 		$title   = ! empty( $definition['singleton'] ) ? (string) $definition['singular'] : (string) ( $row[ $definition['title'] ] ?? '' );
+		if ( 'seo_metadata' === $entity ) {
+			$url = main_public_url( 'pages', (string) ( $row['page_slug'] ?? '' ) );
+		}
+		if ( ! empty( $definition['key_labels'][ $row['section_key'] ?? '' ] ) ) {
+			$title = $definition['key_labels'][ $row['section_key'] ] . ( '' !== $title ? ' — ' . $title : '' );
+		}
 		if ( ! empty( $definition['list_extra'] ) && ! empty( $row[ $definition['list_extra'] ] ) ) {
 			$title .= ' → ' . (string) $row[ $definition['list_extra'] ];
 		}
@@ -1082,17 +1481,21 @@ function render_main_list( string $entity, array $definition ): void {
 			$actions[] = '<a href="' . esc_url( main_action_url( 'restore', $entity, $id ) ) . '">' . esc_html__( 'Restore', 'acadvizen-cms' ) . '</a>';
 		}
 		$deletable = $definition['trash'] ? ! empty( $row['deleted_at'] ) : empty( $row['is_active'] );
+		if ( false === ( $definition['deletable'] ?? true ) ) {
+			$deletable = false;
+		}
 		if ( $deletable && main_can( $entity, 'delete' ) ) {
-			$actions[] = '<a class="acv-danger" href="' . esc_url( main_action_url( 'delete', $entity, $id ) ) . '" data-confirm="' . esc_attr__( 'Delete permanently? This cannot be undone.', 'acadvizen-cms' ) . '">' . esc_html__( 'Delete permanently', 'acadvizen-cms' ) . '</a>';
+			$actions[] = '<a class="acv-danger" href="' . esc_url( main_action_url( 'delete', $entity, $id ) ) . '" data-confirm="' . esc_attr( (string) ( $definition['delete_note'] ?? __( 'Delete permanently? This cannot be undone.', 'acadvizen-cms' ) ) ) . '">' . esc_html( (string) ( $definition['delete_label'] ?? __( 'Delete permanently', 'acadvizen-cms' ) ) ) . '</a>';
 		}
 		printf(
-			'<tr><td><strong><a href="%1$s">%2$s</a></strong></td><td>%3$s</td><td>%4$s</td><td>%5$s</td><td class="acv-main-actions">%6$s</td></tr>',
+			'<tr><td>%7$s<strong><a href="%1$s">%2$s</a></strong></td><td>%3$s</td><td>%4$s</td><td>%5$s</td><td class="acv-main-actions">%6$s</td></tr>',
 			esc_url( $edit ),
 			esc_html( '' !== $title ? $title : __( '(no title)', 'acadvizen-cms' ) ),
 			$url ? '<code>' . esc_html( (string) wp_parse_url( $url, PHP_URL_PATH ) ) . '</code>' : '—',
 			render_main_status_badge( $definition, $row ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside.
 			esc_html( ! empty( $row['updated_at'] ) ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( (string) $row['updated_at'] ) ) : '' ),
-			implode( ' | ', $actions ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts.
+			implode( ' | ', $actions ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts.
+			! empty( $definition['list_thumb'] ) && ! empty( $row[ $definition['list_thumb'] ] ) ? '<img class="acv-main-thumb acv-main-thumb--list" src="' . esc_url( (string) $row[ $definition['list_thumb'] ] ) . '" alt="" loading="lazy" /> ' : ''
 		);
 	}
 	echo '</tbody></table>';
@@ -1127,7 +1530,7 @@ function render_main_field( string $key, array $field, $value, array $cities ): 
 				printf( '<textarea id="%1$s" name="%2$s" rows="4">%3$s</textarea>', esc_attr( $id ), esc_attr( $name ), esc_textarea( implode( "\n", (array) $value ) ) );
 				break;
 			case 'image':
-				printf( '<span class="acv-main-image"><input type="url" id="%1$s" name="%2$s" value="%3$s" placeholder="https://" /> <button type="button" class="button acv-media-pick" data-target="%1$s">%4$s</button></span>%5$s', esc_attr( $id ), esc_attr( $name ), esc_attr( (string) $value ), esc_html__( 'Choose image', 'acadvizen-cms' ), $value ? '<img class="acv-main-thumb" src="' . esc_url( (string) $value ) . '" alt="" />' : '' );
+				printf( '<span class="acv-main-image"><input type="url" id="%1$s" name="%2$s" value="%3$s" placeholder="https://" /> <button type="button" class="button acv-media-pick" data-target="%1$s">%4$s</button> <button type="button" class="button acv-main-library-pick" data-target="%1$s">' . esc_html__( 'Main library', 'acadvizen-cms' ) . '</button></span>%5$s', esc_attr( $id ), esc_attr( $name ), esc_attr( (string) $value ), esc_html__( 'Choose image', 'acadvizen-cms' ), $value ? '<img class="acv-main-thumb" src="' . esc_url( (string) $value ) . '" alt="" />' : '' );
 				break;
 			case 'color':
 				// A text field (empty = the website default) with a colour picker next to it.
@@ -1146,6 +1549,20 @@ function render_main_field( string $key, array $field, $value, array $cities ): 
 				}
 				foreach ( (array) ( $config['options'] ?? array() ) as $option => $option_label ) {
 					printf( '<option value="%1$s" %2$s>%3$s</option>', esc_attr( (string) $option ), selected( (string) $value, (string) $option, false ), esc_html( (string) $option_label ) );
+				}
+				echo '</select>';
+				break;
+			case 'relation':
+				echo '<select id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '"><option value="">' . esc_html__( '— none —', 'acadvizen-cms' ) . '</option>';
+				foreach ( main_relation_options( (string) ( $config['entity'] ?? '' ) ) as $option_id => $option_label ) {
+					printf( '<option value="%1$s" %2$s>%3$s</option>', esc_attr( (string) $option_id ), selected( (string) $value, (string) $option_id, false ), esc_html( (string) $option_label ) );
+				}
+				echo '</select>';
+				break;
+			case 'parent_select':
+				echo '<select id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '" required><option value="">' . esc_html__( '— choose —', 'acadvizen-cms' ) . '</option>';
+				foreach ( (array) ( $GLOBALS['acv_main_parent_options'] ?? array() ) as $option_id => $option_label ) {
+					printf( '<option value="%1$s" %2$s>%3$s</option>', esc_attr( (string) $option_id ), selected( (string) $value, (string) $option_id, false ), esc_html( (string) $option_label ) );
 				}
 				echo '</select>';
 				break;
@@ -1216,6 +1633,19 @@ function render_main_edit( string $entity, array $definition, string $id ): void
 	}
 	// A blog stored only as plain text (no blocks yet) opens with that text, split into paragraphs.
 	$GLOBALS['acv_main_plain_article'] = 'blogs' === $entity ? (string) ( $row['content'] ?? '' ) : '';
+	if ( ! empty( $definition['parent'] ) ) {
+		$GLOBALS['acv_main_parent_options'] = main_parent_options( $definition );
+		if ( $creating && isset( $_GET['parent_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$row[ $definition['parent']['field'] ] = sanitize_text_field( wp_unslash( $_GET['parent_id'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		}
+	}
+	if ( 'home_lists' === $entity && ! empty( $row['list_shape'] ) ) {
+		$shape                                  = (array) $row['list_shape'];
+		$definition['fields']['items_json'][4] = array(
+			'shape'    => ! empty( $shape['strings'] ) ? 'strings' : 'array',
+			'template' => array_fill_keys( array_map( 'strval', (array) ( $shape['fields'] ?? array() ) ), '' ),
+		);
+	}
 	if ( 'menus' === $entity ) {
 		$parents                          = main_content_request( array( 'op' => 'list', 'entity' => 'menus', 'limit' => 200 ) );
 		$GLOBALS['acv_main_menu_parents'] = $parents['ok'] ? array_values( array_filter( array_map( static fn( $r ) => (array) $r, (array) $parents['body']['data'] ), static fn( $r ) => (string) $r['id'] !== $id && empty( $r['parent_id'] ) ) ) : array();
@@ -1239,6 +1669,17 @@ function render_main_edit( string $entity, array $definition, string $id ): void
 	}
 	if ( $is_draft ) {
 		echo '<div class="notice notice-info"><p>' . esc_html__( 'This is a private draft copy of a live page. Visitors keep seeing the live page until you set the status to Published.', 'acadvizen-cms' ) . '</p></div>';
+	}
+	if ( 'pages' === $entity && ! empty( $row['seo_override']['id'] ) ) {
+		printf(
+			'<div class="notice notice-warning"><p>%1$s <a href="%2$s">%3$s</a> · <a href="%4$s" data-confirm="%5$s">%6$s</a></p></div>',
+			esc_html__( 'An SEO override for this address is in use: search engines see its title and description, not the SEO fields below.', 'acadvizen-cms' ),
+			esc_url( main_screen_url( array( 'entity' => 'seo_metadata', 'view' => 'edit', 'id' => (string) $row['seo_override']['id'] ) ) ),
+			esc_html__( 'Edit the override', 'acadvizen-cms' ),
+			esc_url( main_action_url( 'delete', 'seo_metadata', (string) $row['seo_override']['id'] ) ),
+			esc_attr__( 'Remove this override? The page\'s own SEO fields apply again.', 'acadvizen-cms' ),
+			esc_html__( 'Remove it', 'acadvizen-cms' )
+		);
 	}
 	if ( 'blogs' === $entity && ! empty( $row['legacy_blocks'] ) ) {
 		echo '<div class="notice notice-warning"><p>' . esc_html__( 'This blog\'s article is drawn from an older storage on the Main Website, so changes to the article below will not show there. Title, summary, images and SEO fields work as usual. Ask your developer to convert it.', 'acadvizen-cms' ) . '</p></div>';
@@ -1316,8 +1757,8 @@ function render_main_edit( string $entity, array $definition, string $id ): void
 		</aside>
 	</form>
 	<?php
-	if ( 'pages' === $entity && ! $creating ) {
-		$sections = main_content_request( array( 'op' => 'list', 'entity' => 'sections', 'page_id' => $id ) );
+	if ( ! empty( $definition['sections'] ) && ! $creating ) {
+		$sections = main_content_request( array( 'op' => 'list', 'entity' => 'sections', 'parent' => $entity, 'page_id' => $id ) );
 		?>
 		<div class="acv-main-box acv-main-sections-box">
 			<h2><?php esc_html_e( 'Sections', 'acadvizen-cms' ); ?></h2>
@@ -1325,6 +1766,8 @@ function render_main_edit( string $entity, array $definition, string $id ): void
 			<?php if ( $sections['ok'] ) : ?>
 				<div id="acv-sections"
 					data-page-id="<?php echo esc_attr( $id ); ?>"
+					data-parent="<?php echo esc_attr( $entity ); ?>"
+					data-positions="<?php echo esc_attr( 'pages' === $entity ? '' : 'top,after_intro,before_faq,end' ); ?>"
 					data-sections="<?php echo esc_attr( (string) wp_json_encode( (array) $sections['body']['data'] ) ); ?>"
 					data-ajax="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>"
 					data-nonce="<?php echo esc_attr( wp_create_nonce( 'acv_cms_main_section' ) ); ?>"></div>
@@ -1338,7 +1781,7 @@ function render_main_edit( string $entity, array $definition, string $id ): void
 		$snapshots = list_main_snapshots( $entity, $id );
 		echo '<div class="acv-main-box"><h2>' . esc_html__( 'Earlier versions', 'acadvizen-cms' ) . '</h2>';
 		if ( ! $snapshots ) {
-			echo '<p class="description">' . esc_html__( 'Versions are kept from the first save in this admin.', 'acadvizen-cms' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'No earlier versions yet. The first change you save here keeps the version before it, so it can always be undone.', 'acadvizen-cms' ) . '</p>';
 		} else {
 			echo '<ul class="acv-main-versions">';
 			foreach ( $snapshots as $index => $snapshot ) {

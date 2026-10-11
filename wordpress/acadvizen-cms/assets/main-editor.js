@@ -30,6 +30,38 @@
     event.preventDefault()
     pickImage(function (url) { var input = document.getElementById(button.getAttribute('data-target')); if (input) { input.value = url; input.dispatchEvent(new Event('input', { bubbles: true })) } })
   })
+  // "Main library": pick an image already in the Main Website's media library.
+  document.addEventListener('click', function (event) {
+    var button = event.target.closest('.acv-main-library-pick')
+    if (!button || !window.acvMainLibrary) return
+    var target = document.getElementById(button.getAttribute('data-target'))
+    var overlay = el('div', { class: 'acv-library' })
+    var panel = el('div', { class: 'acv-library-panel', role: 'dialog', 'aria-label': 'Main Website media library' })
+    var search = el('input', { type: 'search', placeholder: 'Search by name or alt text' })
+    var grid = el('div', { class: 'acv-library-grid' })
+    var close = function () { overlay.remove() }
+    var load = function () {
+      grid.textContent = 'Loading…'
+      var body = new FormData()
+      body.append('action', 'acv_cms_main_media'); body.append('nonce', window.acvMainLibrary.nonce); body.append('search', search.value)
+      fetch(window.acvMainLibrary.ajax, { method: 'POST', credentials: 'same-origin', body: body }).then(function (r) { return r.json() }).then(function (json) {
+        grid.innerHTML = ''
+        if (!json || !json.success) { grid.textContent = (json && json.data && json.data.message) || 'The library could not be loaded.'; return }
+        if (!json.data.length) { grid.textContent = 'Nothing found.'; return }
+        json.data.forEach(function (item) {
+          grid.appendChild(el('button', { type: 'button', class: 'acv-library-item', title: item.name, on: { click: function () { target.value = item.url; target.dispatchEvent(new Event('input', { bubbles: true })); close() } } }, [el('img', { src: item.url, alt: item.alt || '', loading: 'lazy' }), el('span', { text: item.name || '' })]))
+        })
+      })
+    }
+    var timer = null
+    search.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(load, 300) })
+    panel.appendChild(el('p', {}, [search, ' ', el('button', { type: 'button', class: 'button', text: 'Close', on: { click: close } })]))
+    panel.appendChild(grid)
+    overlay.appendChild(panel)
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) close() })
+    document.body.appendChild(overlay)
+    load()
+  })
   // Confirmation for destructive links (trash, delete, restore a version).
   document.addEventListener('click', function (event) {
     var link = event.target.closest('a[data-confirm]')
@@ -159,6 +191,12 @@
     three_column_layout: { label: 'Three columns', fields: [['heading', 'text', 'Heading'], ['subheading', 'text', 'Subheading'], ['columns', 'repeat:columns', 'Columns']], style: ['card', 'buttons'] },
     faq: { label: 'FAQ', fields: [['heading', 'text', 'Heading'], ['subheading', 'text', 'Subheading'], ['items', 'repeat:faq', 'Questions']], style: ['card'] },
     testimonial: { label: 'Testimonials', fields: [['heading', 'text', 'Heading'], ['subheading', 'text', 'Subheading'], ['items', 'repeat:testimonials', 'Testimonials']], style: ['card'] },
+    courses_feed: { label: 'Live list: courses', fields: [['heading', 'text', 'Heading'], ['text', 'textarea', 'Text above the list'], ['limit', 'text', 'How many to show (number)']], style: [] },
+    tools_feed: { label: 'Live list: tools', fields: [['heading', 'text', 'Heading'], ['text', 'textarea', 'Text above the list'], ['limit', 'text', 'How many to show (number)']], style: [] },
+    testimonials_feed: { label: 'Live list: testimonials', fields: [['heading', 'text', 'Heading'], ['text', 'textarea', 'Text above the list'], ['limit', 'text', 'How many to show (number)']], style: [] },
+    placement_feed: { label: 'Live list: placements', fields: [['heading', 'text', 'Heading'], ['text', 'textarea', 'Text above the list'], ['limit', 'text', 'How many to show (number)']], style: [] },
+    company_logos_feed: { label: 'Live list: hiring partners', fields: [['heading', 'text', 'Heading'], ['text', 'textarea', 'Text above the list'], ['limit', 'text', 'How many to show (number)']], style: [] },
+    success_stories_feed: { label: 'Live list: success stories', fields: [['heading', 'text', 'Heading'], ['text', 'textarea', 'Text above the list'], ['limit', 'text', 'How many to show (number)']], style: [] },
     lead_form: { label: 'Lead form', fields: [['heading', 'text', 'Heading'], ['subheading', 'text', 'Subheading'], ['text', 'textarea', 'Text'], ['form_type', 'text', 'Form type (shown in Leads)'], ['source', 'text', 'Source (shown in Leads)'], ['name_label', 'text', 'Name field label'], ['email_label', 'text', 'Email field label'], ['phone_label', 'text', 'Phone field label'], ['submit_label', 'text', 'Button text']], style: ['alignment', 'card', 'buttons'] },
   }
   var COLOR = function (key, label) { return [key, 'color', label] }
@@ -209,7 +247,9 @@
     return box
   }
 
+  var POSITION_LABELS = { top: 'At the top', after_intro: 'After the introduction', before_faq: 'Before the questions', end: 'At the end' }
   function initSections(root) {
+    var positions = (root.getAttribute('data-positions') || '').split(',').filter(Boolean)
     var pageId = root.getAttribute('data-page-id')
     var ajax = root.getAttribute('data-ajax')
     var nonce = root.getAttribute('data-nonce')
@@ -222,7 +262,7 @@
 
     function post(fields) {
       var body = new FormData()
-      body.append('action', 'acv_cms_main_section'); body.append('nonce', nonce); body.append('page_id', pageId)
+      body.append('action', 'acv_cms_main_section'); body.append('nonce', nonce); body.append('page_id', pageId); body.append('parent', root.getAttribute('data-parent') || 'pages')
       Object.keys(fields).forEach(function (k) { body.append(k, fields[k]) })
       return fetch(ajax, { method: 'POST', credentials: 'same-origin', body: body }).then(function (r) { return r.json() }).then(function (json) {
         if (!json || !json.success) throw new Error((json && json.data && json.data.message) || 'The Main Website did not accept the change.')
@@ -246,6 +286,7 @@
           down: function () { if (moveItem(sections, index, 1)) { orderDirty = true; render() } },
           duplicate: section.id ? function () {
             var copy = { type: section.type, content_json: JSON.parse(JSON.stringify(c)), style_json: JSON.parse(JSON.stringify(st)), visibility: section.visibility !== false, order_index: index + 1 }
+            if (positions.length) copy.position = section.position || 'end'
             post({ op: 'save', record: JSON.stringify(copy) }).then(function (saved) { saved._dirty = false; sections.splice(index + 1, 0, saved); orderDirty = true; render() }).catch(function (err) { status(line, err.message, 'error') })
           } : null,
           remove: function () {
@@ -277,6 +318,11 @@
           ;['base'].concat(schema.style).forEach(function (group) {
             STYLE_GROUPS[group].forEach(function (f) { design.appendChild(field(f[2], input(f[1], st[f[0]], function (v) { if (v === '' || v === null) delete st[f[0]]; else st[f[0]] = v; markDirty() }))) })
           })
+          if (positions.length) {
+            var where = el('select', { on: { change: function (e) { section.position = e.target.value; markDirty() } } })
+            positions.forEach(function (p) { var o = el('option', { value: p, text: POSITION_LABELS[p] || p }); if ((section.position || 'end') === p) o.selected = true; where.appendChild(o) })
+            design.appendChild(el('div', { class: 'acv-ed-field' }, [el('label', { text: 'Where on the page' }), where]))
+          }
           design.appendChild(el('label', {}, [el('input', { type: 'checkbox', checked: !!c.mobile_hidden, on: { change: function (e) { if (e.target.checked) c.mobile_hidden = true; else delete c.mobile_hidden; markDirty() } } }), ' Hide on phones']))
           design.appendChild(el('label', {}, [el('input', { type: 'checkbox', checked: !!c.desktop_hidden, on: { change: function (e) { if (e.target.checked) c.desktop_hidden = true; else delete c.desktop_hidden; markDirty() } } }), ' Hide on tablets and computers']))
           card.appendChild(design)
@@ -284,6 +330,7 @@
           card.appendChild(el('p', {}, [el('button', { type: 'button', class: 'button button-primary', text: 'Save section', on: { click: function () {
             status(line, 'Saving…')
             var record = { type: section.type, content_json: c, style_json: st, visibility: section.visibility !== false, order_index: index }
+            if (positions.length) record.position = section.position || 'end'
             post({ op: 'save', id: section.id || '', record: JSON.stringify(record) }).then(function (saved) {
               section.id = saved.id; section._dirty = false
               status(line, 'Saved. The Main Website shows it within a minute' + (document.querySelector('.notice-info') ? ' in this draft.' : '.'), 'ok')
@@ -341,6 +388,14 @@
     return el('div', { class: 'acv-ed-field' }, [el('label', { for: id, text: humanKey(key) }), input])
   }
   var isScalar = function (v) { return v === null || v === undefined || ['string', 'number', 'boolean'].indexOf(typeof v) >= 0 }
+  var isLines = function (v) { return Array.isArray(v) && v.every(function (x) { return typeof x === 'string' }) }
+  function linesInput(label, lines, onChange) {
+    var id = nextId('acv-json')
+    var input = el('textarea', { id: id, rows: Math.min(14, Math.max(3, lines.length + 1)) })
+    input.value = lines.join('\n')
+    input.addEventListener('input', function () { onChange(input.value.split('\n').map(function (l) { return l.trim() }).filter(Boolean)) })
+    return el('div', { class: 'acv-ed-field' }, [el('label', { for: id, text: label + ' (one per line)' }), input])
+  }
 
   function initJson(root) {
     var target = document.getElementById(root.getAttribute('data-target'))
@@ -352,9 +407,11 @@
     var hint = root.getAttribute('data-hint')
     var touch = function () {
       var out = data
-      if (shape === 'array') {
+      if (shape === 'strings') {
+        out = data
+      } else if (shape === 'array') {
         // Rows left completely empty are dropped.
-        out = data.filter(function (item) { return Object.keys(item).some(function (k) { return !isScalar(item[k]) || (item[k] !== '' && item[k] !== null && item[k] !== undefined) }) })
+        out = data.filter(function (item) { return Object.keys(item).some(function (k) { var v = item[k]; return isLines(v) ? v.length > 0 : !isScalar(v) || (v !== '' && v !== null && v !== undefined) }) })
       } else {
         out = {}
         Object.keys(data).forEach(function (k) { if (data[k] !== '' && data[k] !== null && data[k] !== undefined) out[k] = data[k] })
@@ -362,7 +419,8 @@
       target.value = JSON.stringify(out)
     }
     var data
-    if (shape === 'array') data = Array.isArray(value) ? value.map(function (item) { return item && typeof item === 'object' && !Array.isArray(item) ? item : { value: item } }) : []
+    if (shape === 'strings') data = isLines(value) ? value.slice() : []
+    else if (shape === 'array') data = Array.isArray(value) ? value.map(function (item) { return item && typeof item === 'object' && !Array.isArray(item) ? item : { value: item } }) : []
     else data = value && typeof value === 'object' && !Array.isArray(value) ? value : {}
 
     function keysOf(item) {
@@ -374,6 +432,7 @@
       var kept = []
       keysOf(obj).forEach(function (key) {
         var current = key in obj ? obj[key] : (template[key] !== undefined ? template[key] : '')
+        if (isLines(current)) { container.appendChild(linesInput(humanKey(key), current, function (v) { obj[key] = v; touch() })); return }
         if (!isScalar(current)) { kept.push(humanKey(key)); return }
         container.appendChild(scalarInput(key, current, function (v) { obj[key] = v; touch() }))
       })
@@ -382,6 +441,10 @@
     function render() {
       root.innerHTML = ''
       if (hint) root.appendChild(el('p', { class: 'description', text: hint }))
+      if (shape === 'strings') {
+        root.appendChild(linesInput('Items', data, function (v) { data = v; touch() }))
+        return
+      }
       if (shape !== 'array') {
         var box = el('div', { class: 'acv-card' })
         objectFields(data, box)
@@ -400,7 +463,7 @@
       })
       root.appendChild(el('p', {}, [el('button', { type: 'button', class: 'button', text: '+ Add', on: { click: function () {
         var blank = {}
-        keysOf(data[0] || {}).forEach(function (k) { var sample = data[0] ? data[0][k] : template[k]; blank[k] = typeof sample === 'boolean' ? true : typeof sample === 'number' ? 0 : isScalar(sample) ? '' : sample })
+        keysOf(data[0] || {}).forEach(function (k) { var sample = data[0] ? data[0][k] : template[k]; blank[k] = typeof sample === 'boolean' ? true : typeof sample === 'number' ? 0 : isLines(sample) ? [] : isScalar(sample) ? '' : sample })
         data.push(blank); touch(); render()
       } } })]))
     }

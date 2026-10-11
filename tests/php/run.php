@@ -88,6 +88,19 @@ namespace {
 		if ( ! function_exists( 'checked' ) ) {
 			function checked( $a, $b = true, $echo = true ) { $r = (string) $a === (string) $b ? ' checked="checked"' : ''; if ( $echo ) { echo $r; } return $r; }
 		}
+		if ( ! function_exists( 'wp_get_current_user' ) ) {
+			function wp_get_current_user() { return (object) array( 'ID' => (int) ( $GLOBALS['acv_user'] ?? 0 ), 'user_login' => 'tester', 'display_name' => 'Tester' ); }
+		}
+		if ( ! function_exists( 'Acadvizen\CMS\post_to_main' ) && ! function_exists( 'post_to_main' ) ) {
+			// As main-site.php without a connection (not loaded by these tests).
+			function post_to_main( $path, $payload, $timeout ) { return array( 'ok' => false, 'status' => 0, 'body' => array(), 'error' => 'not_configured' ); }
+		}
+		if ( ! function_exists( 'wp_date' ) ) {
+			function wp_date( $format, $ts = null ) { return gmdate( $format, null === $ts ? time() : (int) $ts ); }
+		}
+		if ( ! function_exists( 'wp_timezone_string' ) ) {
+			function wp_timezone_string() { return 'UTC'; }
+		}
 		if ( ! function_exists( 'esc_textarea' ) ) {
 			function esc_textarea( $s ) { return htmlspecialchars( (string) $s, ENT_QUOTES ); }
 		}
@@ -698,7 +711,7 @@ namespace Acadvizen\CMS {
 
 	// Every field of every Main Website type renders (a format error here would break the whole screen).
 	$rendered = array();
-	foreach ( array( 'header_settings', 'footer_settings', 'menus', 'site_settings', 'tools_extended' ) as $acv_entity ) {
+	foreach ( array( 'header_settings', 'footer_settings', 'menus', 'site_settings', 'tools_extended', 'homepage_hero', 'homepage_cta', 'home_sections', 'home_lists', 'courses', 'course_details', 'city_pages', 'service_pages', 'media', 'seo_metadata', 'authors', 'blog_categories', 'blog_tags', 'blogs' ) as $acv_entity ) {
 		foreach ( main_entity( $acv_entity )['fields'] as $acv_key => $acv_field ) {
 			$acv_sample = array( 'color' => 'rgba(255,255,255,0.1)', 'json' => array( array( 'platform' => 'instagram', 'url' => 'https://instagram.com/x' ) ), 'checkbox' => null, 'number' => 3, 'choice' => '_blank' )[ $acv_field[1] ] ?? 'Sample';
 			ob_start();

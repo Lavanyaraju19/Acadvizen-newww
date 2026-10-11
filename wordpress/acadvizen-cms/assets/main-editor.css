@@ -37,3 +37,12 @@
 .acv-preview-stage iframe { display: block; margin: 0 auto; height: 78vh; border: 1px solid #c3c4c7; background: #fff; max-width: none; transition: width .2s; }
 .acv-main-versions li { margin-bottom: 6px; }
 .acv-main a:focus, .acv-main button:focus { outline: 2px solid #2271b1; outline-offset: 1px; }
+
+/* Main Website media library picker and list thumbnails. */
+.acv-main-thumb--list { width: 48px; height: 48px; object-fit: cover; vertical-align: middle; margin-right: 8px; border-radius: 4px; }
+.acv-library { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); z-index: 100000; display: flex; align-items: center; justify-content: center; }
+.acv-library-panel { background: #fff; width: min(960px, 94vw); max-height: 86vh; overflow: auto; padding: 16px; border-radius: 6px; }
+.acv-library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.acv-library-item { display: flex; flex-direction: column; gap: 4px; padding: 6px; border: 1px solid #c3c4c7; background: #f6f7f7; cursor: pointer; text-align: left; }
+.acv-library-item img { width: 100%; height: 100px; object-fit: cover; }
+.acv-library-item span { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
