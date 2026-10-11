@@ -8,30 +8,7 @@ import CmsPageResolver from '../../../components/cms/CmsPageResolver'
 import { fetchCmsPageBySlug, fetchRedirectByPath, fetchSeoBySlug } from '../../../lib/cmsServer'
 import { buildMetadata } from '../../lib/seo'
 import { isPublicCmsEnabled } from '../../lib/publicCms'
-
-function ensureRenderableSections(page) {
-  if (!page) return page
-  if (Array.isArray(page.sections) && page.sections.some((section) => section?.visibility !== false)) return page
-  const text = page.description || page.seo_description || page.title
-  if (!text) return page
-  return {
-    ...page,
-    sections: [
-      {
-        id: `fallback-${page.id || page.slug}`,
-        page_id: page.id,
-        type: 'custom_rich_text',
-        order_index: 0,
-        visibility: true,
-        content_json: {
-          heading: page.title,
-          text,
-        },
-        style_json: {},
-      },
-    ],
-  }
-}
+import { ensureRenderableSections } from '../../../lib/cmsPageRender'
 
 export async function generateMetadata({ params }) {
   const { slug } = await params

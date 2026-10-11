@@ -106,6 +106,36 @@ const nextConfig = {
     }
   },
   async headers() {
+    const contentSecurityPolicy = (frameAncestors) => [
+      "default-src 'self'",
+      [
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co https://*.vercel-insights.com https://www.googletagmanager.com https://connect.facebook.net https://www.google.com https://www.gstatic.com",
+        bridgeEmbeds.script,
+      ].filter(Boolean).join(' '),
+      ["style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", bridgeEmbeds.style].filter(Boolean).join(' '),
+      [
+        "img-src 'self' data: blob: https://*.supabase.co https://logo.clearbit.com https://images.unsplash.com https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://www.googletagmanager.com https://www.google-analytics.com https://www.facebook.com https://www.gstatic.com https://*.basemaps.cartocdn.com",
+        wordpressImageOrigin?.origin,
+        bridgeEmbeds.img,
+      ].filter(Boolean).join(' '),
+      ["font-src 'self' https://fonts.gstatic.com", bridgeEmbeds.font].filter(Boolean).join(' '),
+      bridgeEmbeds.worker,
+      bridgeEmbeds.media,
+      [
+        "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+        configuredSupabaseOrigin,
+        "https://*.vercel-insights.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://connect.facebook.net https://www.facebook.com https://www.google.com",
+      ].filter(Boolean).join(' '),
+      // https://www.google.com/recaptcha/ - only reached when NEXT_PUBLIC_RECAPTCHA_SITE_KEY is configured (see components/cms/FormEmbedRenderer.jsx)
+      ["frame-src 'self' https://*.supabase.co https://www.googletagmanager.com https://www.google.com", bridgeEmbeds.frame].filter(Boolean).join(' '),
+      `frame-ancestors ${frameAncestors}`,
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].filter(Boolean).join('; ')
+    // The signed preview of a record edited in the WordPress central admin is shown inside the
+    // WordPress admin (desktop / tablet / mobile frames), so only that route may be framed, and only
+    // by the configured WordPress origin. Every other route keeps frame-ancestors 'none'.
+    const previewAncestors = wordpressImageOrigin ? `'self' ${wordpressImageOrigin.origin}` : "'none'"
     return [
       {
         source: '/(.*)',
@@ -114,39 +144,17 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              [
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co https://*.vercel-insights.com https://www.googletagmanager.com https://connect.facebook.net https://www.google.com https://www.gstatic.com",
-                bridgeEmbeds.script,
-              ].filter(Boolean).join(' '),
-              ["style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", bridgeEmbeds.style].filter(Boolean).join(' '),
-              [
-                "img-src 'self' data: blob: https://*.supabase.co https://logo.clearbit.com https://images.unsplash.com https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://www.googletagmanager.com https://www.google-analytics.com https://www.facebook.com https://www.gstatic.com https://*.basemaps.cartocdn.com",
-                wordpressImageOrigin?.origin,
-                bridgeEmbeds.img,
-              ].filter(Boolean).join(' '),
-              ["font-src 'self' https://fonts.gstatic.com", bridgeEmbeds.font].filter(Boolean).join(' '),
-              bridgeEmbeds.worker,
-              bridgeEmbeds.media,
-              [
-                "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
-                configuredSupabaseOrigin,
-                "https://*.vercel-insights.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://connect.facebook.net https://www.facebook.com https://www.google.com",
-              ].filter(Boolean).join(' '),
-              // https://www.google.com/recaptcha/ - only reached when NEXT_PUBLIC_RECAPTCHA_SITE_KEY is configured (see components/cms/FormEmbedRenderer.jsx)
-              ["frame-src 'self' https://*.supabase.co https://www.googletagmanager.com https://www.google.com", bridgeEmbeds.frame].filter(Boolean).join(' '),
-              "frame-ancestors 'none'",
-              "base-uri 'self'",
-              "form-action 'self'",
-            ].filter(Boolean).join('; '),
-          },
+          { key: 'Content-Security-Policy', value: contentSecurityPolicy("'none'") },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()' },
           { key: 'X-XSS-Protection', value: '1; mode=block' },
           { key: 'X-DNS-Prefetch-Control', value: 'on' },
         ],
+      },
+      {
+        // Later rules override earlier ones for the same header. With frame-ancestors present,
+        // browsers ignore X-Frame-Options, so the WordPress admin may frame this route only.
+        source: '/preview/wordpress/:path*',
+        headers: [{ key: 'Content-Security-Policy', value: contentSecurityPolicy(previewAncestors) }],
       },
     ]
   },
