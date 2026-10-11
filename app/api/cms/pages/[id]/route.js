@@ -119,7 +119,9 @@ export async function PATCH(request, { params }) {
     const previousSlug = existingRecord?.slug || ''
     const currentSlug = data?.slug || ''
     let warning = null
-    if (previousSlug && currentSlug && previousSlug !== currentSlug) {
+    // A draft copy's address change takes effect when the copy is published (publish route):
+    // redirecting now would send visitors of the live page to an unpublished address.
+    if (previousSlug && currentSlug && previousSlug !== currentSlug && !existingRecord?.draft_of_id) {
       try {
         await createSlugRedirectRecord(supabase, {
           fromPath: `/${previousSlug}`, toPath: `/${currentSlug}`, statusCode: 301,
@@ -158,7 +160,9 @@ export async function DELETE(request, { params }) {
     const { error } = await supabase.from('pages').delete().eq('id', id)
     if (error) return jsonError(`Failed to delete page: ${error.message}`, 500)
     await logAuditEvent(supabase, { userId: adminContext.user.id, action: 'delete', entityType: 'pages', entityId: id, changes: { deleted_slug: existingRecord?.slug || null }, request })
-    if (existingRecord?.slug) {
+    // A private draft copy shares its live page's address: discarding it must not remove the live
+    // page's SEO settings.
+    if (existingRecord?.slug && !existingRecord.draft_of_id) {
       await clearSeoMetadataForSlug(supabase, existingRecord.slug).catch(() => {})
     }
     const revalidation = revalidateCmsMutation('page', { previousSlug: existingRecord?.slug || '' })

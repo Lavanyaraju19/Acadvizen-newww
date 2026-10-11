@@ -7,6 +7,9 @@ import {
 } from '../../../_utils'
 import { checkDraftForBrokenLinks } from '../../../../../../lib/publishGuard'
 import { getCanonicalPublicUrl } from '../../../../../../lib/cmsPublishing'
+import { createSlugRedirectRecord } from '../../../../../../lib/redirects'
+import { reassignSeoMetadataSlug } from '../../../../../../lib/cmsServer'
+import { applyPublishedAddressChange, liveAddressBeforePublish } from '../../../../../../lib/draftAddressChange'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,15 +46,17 @@ export async function POST(request, { params }) {
       return jsonError(`Cannot publish: ${guard.broken.length} broken link(s) found.`, 409, { broken: guard.broken })
     }
 
+    const previousSlug = await liveAddressBeforePublish(supabase, draft)
     const { data: live, error: publishError } = await supabase.rpc('publish_page_draft', { p_draft_id: id })
     if (publishError) return jsonError(`Failed to publish page: ${publishError.message}`, 500)
 
-    const revalidation = revalidateCmsMutation('page', { slug: live?.slug })
+    const moved = await applyPublishedAddressChange(supabase, { draft, previousSlug, live }, { createRedirect: createSlugRedirectRecord, moveSeo: reassignSeoMetadataSlug })
+    const revalidation = revalidateCmsMutation('page', { slug: live?.slug, previousSlug: moved.previousSlug })
     const responseData = live?.slug ? { ...live, canonical_public_url: getCanonicalPublicUrl('page', live.slug) } : live
     if (!revalidation.ok) {
       return jsonError('Page published, but cache revalidation failed. Please retry.', 500, responseData)
     }
-    return jsonOk(responseData)
+    return jsonOk(responseData, moved.warning ? { warning: moved.warning } : undefined)
   } catch (error) {
     return jsonError(`Internal server error: ${error.message}`, 500)
   }
