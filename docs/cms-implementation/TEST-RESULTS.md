@@ -1,6 +1,59 @@
-# Test results — 10 October 2026, updated 11 October 2026
+# Test results — 10 October 2026, updated 12 October 2026
 
 The statuses used are PASS, PARTIAL, FAIL, BLOCKED and NOT TESTED. The level (Automated, LOCAL, PRODUCTION) is stated on every row.
+
+## 11–12 October 2026: complete Main Website editing (plugin 0.6.0) and three production releases
+
+### PRODUCTION (verified on the live site)
+
+| Check | Result | Status |
+|---|---|---|
+| Release 1 (draft-copy 404 fix): live deployment, all sitemap URLs | `dpl_2ZCk4Vtf…`; 314/314 answer 200; `verify-production.mjs` same as before (26/10) | PASS |
+| Release 2 (Next.js 15.5.27): live deployment, build log, URLs, errors | `dpl_9ZCRdZD4…`; build log "Next.js 15.5.27"; 314/314; 26/10; no error logs | PASS |
+| Release 3 (menu duplication; draft address/SEO): live deployment, URLs, navigation | `dpl_9ZdvT6jS…`; 314/314; each navigation link once across repeated requests; no error logs | PASS |
+| Release 4 (Main side of the central CMS, API off): pre-release comparison with the live site on production data | 314/314 URLs answer 200. Ten key pages at 1440 and 390 px: 0.001–0.098 % of pixels differ (/tools: 0.064 % once its grid had loaded; phone heights equal) | PASS |
+| Release 4: live deployment | `dpl_EuZnhizE…` (**live**); all sitemap URLs answer 200; `verify-production.mjs` 27 passed / 9 failed (the tool page check now passes; the 9 are the known Enrollment issues); content API answers 503 `content_api_disabled`; no error logs | PASS |
+| Plugin 0.6.0 package | `dist/acadvizen-cms-0.6.0-45d78b9/acadvizen-cms.zip`, SHA-256 `93d5e3913c7ac1f492ab6062ec88eb7047754afc6f709778c03eceffccdcf8f3`, 24 files, byte-identical to commit `45d78b9`; scanned: no secrets, env files or logs | PASS |
+| `npm audit --omit=dev` after the upgrade | 0 critical (was 1); 6 high remain in other packages | PARTIAL |
+| Draft copy of a live page created through Main `/admin`, live page stays 200 | Main admin login refused ("Invalid email or password"), stopped after 2 tries | BLOCKED |
+| Plugin 0.6.0 installed; content API enabled; acceptance on production | No WordPress login, migration not applied, no backup confirmed | BLOCKED |
+
+### Automated (main branch, commit `45d78b9`)
+
+| Suite | Result | Status |
+|---|---|---|
+| Node unit tests (`npm run test:unit`) | 194 pass, 0 fail (content API 29 tests, page privacy 9, draft address change 4, menu grouping 2, navigation defaults 2, …) | PASS |
+| PHP plugin tests | 242 pass, 0 fail, including a rendering test of every field of every Main Website type | PASS |
+| PHP lint | 26 files, 0 errors | PASS |
+| TypeScript, ESLint | 0 errors (10 old ESLint warnings) | PASS |
+| Production build (integration off) | compiled, Next.js 15.5.27 | PASS |
+
+### LOCAL browser acceptance (real WordPress admin, local Main build on local Supabase), final run
+
+| Suite | Checks | Status |
+|---|---|---|
+| Pages, blogs, permissions, security (`structured-acceptance.mjs`) | 55/55 | PASS |
+| Header, footer, menus, site labels (`site-chrome-acceptance.mjs`) | 18/18. The homepage after copying the menu links differs in 0.003–0.049 % of pixels (threshold 0.1 %); untouched rgba colours keep their values | PASS |
+| Homepage (`homepage-acceptance.mjs`) | 14/14. After copying the 8 lists: 0.000–0.018 % of pixels differ. An FAQ edit shows and **Restore** brings it back; hiding a list restores the built-in one | PASS |
+| Courses (`courses-acceptance.mjs`) | 12/12. Course page with curriculum and skills; "Live list: courses"; restore; course sections; hiding | PASS |
+| City and service pages, SEO overrides, media (`more-content-acceptance.mjs`) | 15/15. City page with a feature and a section at the top; an address clash with a page is refused; the override changes and restores the title; upload, public URL, "Main library" picker | PASS |
+| **Total** | **114/114** | **PASS (LOCAL)** |
+
+In headless Chromium, some steps used the DOM-event fallback instead of a real click (counts in each run's `results-*.json`). Those steps prove what the screens do, not that each button is visibly clickable.
+
+### Defects found and fixed by these tests
+
+| Defect | Where | Effect before the fix |
+|---|---|---|
+| Menu rows grouped into shared arrays | Main `lib/siteCmsServer.js` (live code, latent) | Each page view appended the rows again: links multiplied and deleted links kept showing until a restart |
+| City page feature cards passed as `features`, read as `cards` | Main `CityPageRenderer` | Feature cards never appeared on city pages |
+| Discarding a draft copy deleted the live page's SEO override; renaming a draft copy redirected the live page early | Main `/admin` page routes (live) | The live page lost its SEO, or redirected to an unpublished address |
+| Empty colour fields saved as black; rgba colours refused | Plugin | Saving an untouched header or footer would have changed its colours |
+| A `%` in a colour pattern inside `printf` | Plugin | Every screen with a colour field crashed partway (PHP fatal error) |
+| Empty values of required columns sent as null | Content API | Saving a course (or a menu link with "Opens in: default") failed |
+| The first change of existing content had no earlier version | Plugin | "Restore" could not undo the first change |
+| Section types list out of step with the renderer | Content API | Live-list sections (courses, tools…) could not be added; two listed types did not exist |
+| Course section created without its course | Content API | An orphan record |
 
 ## 11 October 2026: Main Website screens (hybrid structured editing, plugin 0.5.0)
 

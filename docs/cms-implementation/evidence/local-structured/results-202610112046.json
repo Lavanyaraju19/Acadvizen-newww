@@ -1,5 +1,5 @@
 {
- "run": "202610110809",
+ "run": "202610112046",
  "main": "http://localhost:3100",
  "wordpress": "http://localhost:8088",
  "click_fallbacks": 43,
@@ -17,12 +17,12 @@
   {
    "name": "A2 one tab per Main content type, plus Activity",
    "ok": true,
-   "detail": "Pages, Blogs, Tools, Locations, Cities, Testimonials, Activity"
+   "detail": "Pages, Blogs, Tools, City pages, Service pages, Courses, Course sections, Media library, Locations, Cities, Testimonials, Activity, Banner, Closing call to action, Sections, Lists, Authors, Categories, Tags, Header, Footer, Menus, SEO overrides, Site settings"
   },
   {
    "name": "A3 the existing Main page is listed with its address and status",
    "ok": true,
-   "detail": "SEO Course In Bangalore /seo-course-in-bangalore Published October 11, 2026 12:49 am Edit | Preview | View live | Trash"
+   "detail": "SEO Course In Bangalore /seo-course-in-bangalore Published October 11, 2026 8:13 am Edit | Preview | View live | Trash"
   },
   {
    "name": "B1 \"Prepare changes privately\" opens a private draft copy",
@@ -72,7 +72,7 @@
   {
    "name": "B8 restoring brings the original heading back",
    "ok": true,
-   "detail": "draft a9db71cd"
+   "detail": "draft 8b62d332"
   },
   {
    "name": "B9 restored page is visually identical to before (desktop)",
@@ -272,7 +272,7 @@
   {
    "name": "J2 the Activity log records the changes",
    "ok": true,
-   "detail": "146 entries"
+   "detail": "262 entries"
   },
   {
    "name": "Z cleanup: test content removed from Main",

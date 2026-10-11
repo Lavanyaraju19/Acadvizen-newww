@@ -25,6 +25,10 @@ npx tsc --noEmit && npx next lint && npx next build
 node tools/build-cms-plugin.mjs            # reproducible package + verification
 node tests/wordpress/scenarios.mjs         # LOCAL end-to-end (README in tests/wordpress)
 node tests/wordpress/structured-acceptance.mjs   # LOCAL admin acceptance, Main Website screens
+node tests/wordpress/site-chrome-acceptance.mjs  # header, footer, menus, site labels
+node tests/wordpress/homepage-acceptance.mjs     # homepage banner, call to action, lists
+node tests/wordpress/courses-acceptance.mjs      # courses, course sections, course lists
+node tests/wordpress/more-content-acceptance.mjs # city and service pages, SEO overrides, media library
 node tools/cms-api-smoke.mjs               # PRODUCTION plugin API, read-only
 node tools/verify-production.mjs           # PRODUCTION websites, read-only
 ```
@@ -63,3 +67,14 @@ node tools/verify-production.mjs           # PRODUCTION websites, read-only
 | H | Tests permissions and security: Authors, Contributors, forged statuses, preview links, unsigned and replayed requests | Author: no pages (403), only their own articles.<br>Contributor: draft or review only; a forged "Published" is refused.<br>A changed or foreign preview link is refused.<br>An unsigned request gets 401.<br>A replayed signed change is applied once (409). |
 | J | Regression | `/`, `/blog`, `/tools` and the edited page answer 200; the Activity log records the changes |
 | Z | Cleanup | Every CMS TEST record is removed and its address answers 404 |
+
+### Further Main Website areas (plugin 0.6.0)
+
+| Suite | What a non-technical admin does | Pass criteria |
+|---|---|---|
+| Site chrome | Copies the links shown today into menus; edits, hides and shows a link; turns on the announcement bar; changes the copyright line and a label | The homepage is pixel-identical after the copy (< 0.1 % of pixels differ). Each change shows on the website. Untouched colours (including rgba) keep their values. Everything is put back |
+| Homepage | Copies what the homepage shows today; edits an FAQ question and restores the earlier version; hides a list; changes the banner and the closing call to action | Pixel-identical after the copy. The edit shows; the restore brings the original back. Hiding a list brings back the built-in one unchanged. Banner and call-to-action changes show |
+| Courses | Creates a course with a curriculum and skills; edits and restores it; adds a course section; hides the course | The course page shows the title, modules, topics and skills. A "Live list: courses" section lists the course. Restore works. Hiding removes the course everywhere |
+| City and service pages, SEO, media | Creates a city page with a feature and a section placed at the top; tries a service page address already used by a page, then a free one; edits and removes an SEO override; uploads an image and picks it from "Main library" | The city page shows its heading, feature and the top section. The clash is refused with a message. The override changes the page title and its removal restores the page's own. The image is publicly reachable and fills an image field |
+
+The production runs of these suites use CMS PRODUCTION TEST content. The copy steps (menus and homepage lists) are real, intended changes: copying keeps the website identical. On production they are run once, when the client starts editing, not as tests.

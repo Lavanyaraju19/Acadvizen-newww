@@ -1,0 +1,82 @@
+{
+ "run": "202610112104",
+ "main": "http://localhost:3100",
+ "click_fallbacks": 12,
+ "results": [
+  {
+   "name": "1 city page created and shown",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "1 the city page shows its heading and feature",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "name": "1 the section shows at the top of the city page",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "2 an address already used by a page is refused",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "2 service page created",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "2 the service page answers at its address",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "3 precondition: an override is in use on the page",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "3 the page editor says an SEO override is in use",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "3 an edited override changes the page title",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "3 removing it brings back the page's own title",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "4 an image is added to the Main Website library",
+   "ok": true,
+   "detail": "Image added to the Main Website library."
+  },
+  {
+   "name": "4 it is listed with a thumbnail",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "4 the stored image is publicly reachable",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "name": "4 \"Main library\" fills an image field with the library image",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Z test pages are gone",
+   "ok": true,
+   "detail": ""
+  }
+ ]
+}

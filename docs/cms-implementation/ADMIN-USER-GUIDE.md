@@ -28,7 +28,7 @@ An empty "Main Blogs" list today does **not** mean the blogs are gone. They are 
 
 ## Editing the Main website's existing content: Acadvizen Master Admin → Main Website
 
-> **Status (11 October 2026).** This screen is in plugin **0.5.0**. It was tested on a local copy only; it is **not installed or switched on** for the live websites yet. Until it is, the screen shows "needs the connection to the Main Website", and Main content is still edited in `https://www.acadvizen.com/admin`.
+> **Status (12 October 2026).** These screens are in plugin **0.6.0**. They were tested on a local copy only; they are **not installed or switched on** for the live websites yet (the live Enrollment site runs plugin 0.4.0). Until they are, the screens show "needs the connection to the Main Website", and Main content is still edited in `https://www.acadvizen.com/admin`.
 
 This screen works directly on what www.acadvizen.com shows today: its pages, blogs, tools, locations, cities and testimonials. You change the text, pictures and settings; the Main website keeps drawing them **in its own design**, so a page looks exactly as before apart from what you changed.
 
@@ -46,11 +46,79 @@ Sections can be added (**Add a section**), moved (drag ⠿, or ↑ ↓, then **S
 
 **Tools, locations, cities, testimonials.** Edit the fields and tick **Show on the Main Website** to make the item visible; untick it to hide it.
 
-**Undo a change.** Every save is kept under **Earlier versions** on the edit screen (the last 20). Click **Restore** next to a version to bring it back; the status is not changed. For pages, versions cover the page's own settings (title, address, SEO); section changes are protected by the private copy, so nothing reaches visitors before you publish.
+**Undo a change.** Every save is kept under **Earlier versions** on the edit screen (the last 20). The first change you save to existing content also keeps the version before it, so even that first change can be undone. Click **Restore** next to a version to bring it back; the status is not changed. For pages, versions cover the page's own settings (title, address, SEO); section changes are protected by the private copy, so nothing reaches visitors before you publish.
 
 **Remove something.** **Trash** takes it off the website at once; open the list's **Trash** link to **Restore** it (it comes back as a draft, not public). Only Editors and Administrators can **Delete permanently**, and only from the trash.
 
 **See who changed what.** The **Activity** tab lists every change, who made it and whether it worked (Editors and Administrators).
+
+### The homepage
+
+Open **Main Website → Homepage** (the second row of tabs).
+
+- **Banner:** the badge, heading and text at the very top of www.acadvizen.com. Leave a field empty to keep the built-in text.
+- **Closing call to action:** the large box near the end (heading, text, button text and button link).
+- **Lists:** the homepage's lists, such as course modules, skills, case studies, tools, hiring partners and frequently asked questions.
+  - **The first time:** click **Copy what the homepage shows today**. The homepage looks exactly the same afterwards, and each list becomes editable.
+  - **Editing a list:** open it, change, add, reorder (↑ ↓) or remove items, and **Save**.
+  - **Hiding a list:** brings back the built-in one.
+- **Sections:** the "Who is this for", "From the blog" and registration pop-up texts. In "Who is this for", a description is only shown when it is longer than the built-in one.
+
+### Courses
+
+**Courses** lists every course, with these fields:
+- title, address, short description, images, duration and counts;
+- **Skills**, one per line;
+- **Curriculum**: modules, each with its topics, one per line;
+- button texts and links, and SEO.
+
+Tick **Show on the Main Website** to publish a course at www.acadvizen.com/courses/<address>, or untick it to hide the course.
+
+**Course sections** are the extra text blocks of a course. Choose the course first, then **Add a section to this course**.
+
+The **/courses** page itself is a page (Pages → *courses*). To list your courses there, add a **Live list: courses** section to it.
+
+### City pages and service pages
+
+- **City pages** appear at www.acadvizen.com/digital-marketing-course-in-<address>. They have a heading and introduction, an about block, features, figures, testimonials and questions.
+- **Service pages** appear at www.acadvizen.com/<address>, for example *google-ads-course-in-mysuru*. They have a heading, overview, curriculum, benefits and questions. An address already used by a page, or by a fixed part of the website such as *blog* or *courses*, is refused, with a message.
+- **Extra sections:** both, and **Locations**, can carry extra sections, added with the same section editor as pages. In **Design and devices**, choose **Where on the page**: at the top, after the introduction, before the questions, or at the end.
+
+### Images: the Main Website media library
+
+**Media library** shows the images the Main Website uses.
+- **Adding an image:** choose a file (JPEG, PNG, WebP, GIF or AVIF, at most 3 MB), write a short description (alt text) and click **Upload**.
+- **Using an image:** every image field has two buttons. **Choose image** picks from the WordPress (Enrollment) library. **Main library** picks from the Main Website's library.
+- **Describing an image:** open it to change its name, alt text or caption.
+
+### Blog authors, categories and tags
+
+The **Blog** row of tabs has:
+- **Authors:** name, photo and a short bio, shown at www.acadvizen.com/blog/author/<address>;
+- **Categories:** www.acadvizen.com/blog/category/<address>;
+- **Tags.**
+
+On a blog, choose its **Author** and **Main category**. An author or category that is still used by a blog cannot be deleted. The message says how many blogs use it.
+
+### SEO overrides
+
+Some addresses have an **SEO override**: a title and description that replace the page's own SEO fields in search results.
+- **On the page:** its edit screen says so, with **Edit the override** and **Remove it**.
+- **All overrides:** the **SEO overrides** tab lists them all.
+- **Removing one:** the page's own SEO fields apply again.
+
+### Header, footer and menus
+
+The **Whole website** row of tabs has:
+- **Header:** the announcement bar above the menu (on or off, text, link, colours), the phone, email and social links.
+- **Footer:** contact details, social links, the copyright line (*{year}* and *{company}* are filled in automatically) and colours.
+- **Menus:** the links of the header menu, the footer list and the small legal links.
+  - **The first time:** click **Copy the links shown today**. The website looks the same, and every link becomes editable.
+  - **Each link has** its text, address, a position, and **Show under** (to make it a drop-down item). It also has switches for computers and phones.
+  - **In the header:** a link called *Courses* opens the course menu.
+- **Site settings:** the company name, fallback social profiles and the small labels of the header and footer.
+
+Colours left empty use the website's own colours. A colour such as *rgba(255,255,255,0.1)* (a see-through white) is kept as it is.
 
 ## The one choice that matters: Publish To
 
