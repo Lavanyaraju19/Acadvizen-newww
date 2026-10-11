@@ -119,7 +119,7 @@ export default async function CityPageRenderer({ cityPage }) {
 
       {cityPage.features?.length > 0 ? (
         <SectionFrame bg="grid" eyebrow="Why Acadvizen" title="Course Features">
-          <FeatureGrid features={cityPage.features} />
+          <FeatureGrid cards={cityPage.features} />
         </SectionFrame>
       ) : null}
 
