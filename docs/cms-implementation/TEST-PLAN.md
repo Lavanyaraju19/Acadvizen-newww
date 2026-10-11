@@ -24,6 +24,7 @@ npm run test:unit                          # Node tests
 npx tsc --noEmit && npx next lint && npx next build
 node tools/build-cms-plugin.mjs            # reproducible package + verification
 node tests/wordpress/scenarios.mjs         # LOCAL end-to-end (README in tests/wordpress)
+node tests/wordpress/structured-acceptance.mjs   # LOCAL admin acceptance, Main Website screens
 node tools/cms-api-smoke.mjs               # PRODUCTION plugin API, read-only
 node tools/verify-production.mjs           # PRODUCTION websites, read-only
 ```
@@ -44,3 +45,21 @@ node tools/verify-production.mjs           # PRODUCTION websites, read-only
 | J | Scheduling: a test page scheduled 10 minutes ahead | As C, plus the server cron | Not public before; public within about 2 minutes after; timezone recorded |
 | K | Forms and enquiries | Separate approval for one test enquiry | Stored and notified as before; the enquiry API still answers |
 | L | Regression | — | `verify-production.mjs` no worse than baseline; `cms-api-smoke.mjs` all pass |
+
+## Main Website screens (hybrid structured editing, plugin 0.5.0)
+
+`tests/wordpress/structured-acceptance.mjs` drives the real WordPress admin in a browser, acting as a non-technical administrator.
+- **Target:** a local Main build connected to a local Supabase. The Supabase holds a copy of one production page, one production blog and one production tool.
+- **Evidence:** screenshots and a results JSON in `docs/cms-implementation/evidence/local-structured/`.
+- **Production:** once the connection is on, the same steps are the PRODUCTION acceptance script, run on CMS PRODUCTION TEST content only. Step B is the exception: it needs the owner to choose an existing page.
+
+| Group | What the admin does | Pass criteria |
+|---|---|---|
+| A | Finds Acadvizen Master Admin → Main Website (with mouse and with keyboard), the tabs, and an existing page | Menu entry present; one tab per content type; the page is listed with its address and status |
+| B | Changes an existing live page through a private copy: edits a section, previews on desktop, tablet and mobile, publishes, then restores the original | While the draft exists, the live page answers 200 and is unchanged.<br>Preview renders at 1280, 820 and 390 px.<br>After publishing, the change is live.<br>The restored page is pixel-identical (< 0.1 % of pixels differ) on desktop and mobile.<br>An unchanged save changes nothing. |
+| D/E | Creates a blog, publishes it to Main, Enrollment and Both, edits it, restores an earlier version, trashes it and restores it | Each website checked separately.<br>noindex is honoured.<br>The restored version is the one live.<br>Trash removes it from both websites.<br>Restore brings it back as a private draft. |
+| E | Creates a tool (show, then hide) and a new page with three sections and design settings | The tool appears, then disappears.<br>The page stays private until published.<br>Sections appear in order.<br>Alignment and "hide on phones" are applied.<br>Unpublishing takes the page off. |
+| I | Uses an address that is already taken | A clear message; the typed text is kept |
+| H | Tests permissions and security: Authors, Contributors, forged statuses, preview links, unsigned and replayed requests | Author: no pages (403), only their own articles.<br>Contributor: draft or review only; a forged "Published" is refused.<br>A changed or foreign preview link is refused.<br>An unsigned request gets 401.<br>A replayed signed change is applied once (409). |
+| J | Regression | `/`, `/blog`, `/tools` and the edited page answer 200; the Activity log records the changes |
+| Z | Cleanup | Every CMS TEST record is removed and its address answers 404 |

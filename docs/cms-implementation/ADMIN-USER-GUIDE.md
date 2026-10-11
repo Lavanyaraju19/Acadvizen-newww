@@ -26,6 +26,32 @@
 
 An empty "Main Blogs" list today does **not** mean the blogs are gone. They are still in the Main website's database and online, and they appear in WordPress once the import has run.
 
+## Editing the Main website's existing content: Acadvizen Master Admin → Main Website
+
+> **Status (11 October 2026).** This screen is in plugin **0.5.0**. It was tested on a local copy only; it is **not installed or switched on** for the live websites yet. Until it is, the screen shows "needs the connection to the Main Website", and Main content is still edited in `https://www.acadvizen.com/admin`.
+
+This screen works directly on what www.acadvizen.com shows today: its pages, blogs, tools, locations, cities and testimonials. You change the text, pictures and settings; the Main website keeps drawing them **in its own design**, so a page looks exactly as before apart from what you changed.
+
+**Find something.** Pick a tab (Pages, Blogs, Tools, Locations, Cities, Testimonials), then type part of the title or address and click **Filter**. Each row has **Edit**, **Preview**, **View live** and **Trash**.
+
+**Change a live page safely.**
+1. Open the page and click **Prepare changes privately**. You now work on a private copy; visitors still see the live page.
+2. Under **Sections**, open a section, change its text, and click **Save section** under it. Use **Design and devices** for alignment, spacing, colours, text sizes, and **Hide on phones** / **Hide on tablets and computers**.
+3. Click **Preview (desktop, tablet, mobile)** to see the copy exactly as www.acadvizen.com will draw it.
+4. When it is right, set **Status** to **Published** and click **Save**. The message "Your draft copy was published onto the live page" confirms it. The page address does not change.
+
+Sections can be added (**Add a section**), moved (drag ⠿, or ↑ ↓, then **Save order**), duplicated or deleted. Only the settings the Main website actually uses are offered. Anything else stored in a section is listed as "kept as it is" and never removed.
+
+**Blogs.** Write the article with the block buttons (**Heading**, **Paragraph**, **List**, **Image**…), set **Publish To** (Main Website, Enrollment Website or Both Websites) and **Status**, then **Save**. With Both, each website shows the article in its own design.
+
+**Tools, locations, cities, testimonials.** Edit the fields and tick **Show on the Main Website** to make the item visible; untick it to hide it.
+
+**Undo a change.** Every save is kept under **Earlier versions** on the edit screen (the last 20). Click **Restore** next to a version to bring it back; the status is not changed. For pages, versions cover the page's own settings (title, address, SEO); section changes are protected by the private copy, so nothing reaches visitors before you publish.
+
+**Remove something.** **Trash** takes it off the website at once; open the list's **Trash** link to **Restore** it (it comes back as a draft, not public). Only Editors and Administrators can **Delete permanently**, and only from the trash.
+
+**See who changed what.** The **Activity** tab lists every change, who made it and whether it worked (Editors and Administrators).
+
 ## The one choice that matters: Publish To
 
 Every page, course, location, blog and tool has a **Publish To** box on the right of the edit screen:
@@ -153,6 +179,11 @@ Headers, footers, menus, global colours and fonts, and the shared designs under 
 ## Who can do what
 
 - **Editors** can create, edit and publish.
+- On the **Main Website** screen, WordPress's usual roles apply:
+  - **Editors and Administrators** work on everything;
+  - **Authors** see and publish only the articles they wrote there;
+  - **Contributors** save drafts and submit them for review;
+  - pages, tools, locations, cities and testimonials need an Editor.
 - Only **administrators** can:
   - replace an existing Main website page or set the Main homepage;
   - change Settings;
