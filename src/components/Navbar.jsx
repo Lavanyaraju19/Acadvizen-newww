@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { useAuth } from '../contexts/AuthContext'
 import { canAccessAdminProfile, isFullAdminProfile } from '../../lib/adminPermissions'
 import { buildMenuTree, pruneMenuTree } from '../../lib/menuTree'
+import { fallbackMenuLinks } from '../../lib/navigationDefaults'
 import { DesktopNavItem, MobileNavAccordionItem } from '../../components/cms/NavDropdown'
 import { CourseMegaMenuPanel, CourseMobileMenu } from '../../components/cms/CourseMegaMenu'
 
@@ -50,27 +51,10 @@ export function Navbar({ menus, settings }) {
   const [showPanel, setShowPanel] = useState(false)
   const uiCopy = settings?.ui_copy && typeof settings.ui_copy === 'object' ? settings.ui_copy : {}
 
-  const uiFallbackLinks = Array.isArray(uiCopy.header_fallback_links)
-    ? uiCopy.header_fallback_links
-        .filter((item) => item && typeof item === 'object')
-        .map((item) => ({
-          title: String(item.title || '').trim(),
-          url: String(item.url || '').trim(),
-          target: item.target || '_self',
-        }))
-        .filter((item) => item.title && item.url)
-    : []
-
-  const fallbackHeaderLinks = [
-    { title: 'Courses', url: '/courses', target: '_self' },
-    { title: 'Placement', url: '/placement', target: '_self' },
-    { title: 'Achievements', url: '/achievements', target: '_self' },
-    { title: 'Blog', url: '/blog', target: '_self' },
-    { title: 'Contact', url: '/contact', target: '_self' },
-  ]
+  // Without header menu rows: the ui_copy list, else the built-in links (lib/navigationDefaults.js).
   const headerLinks = ensureAchievementsLink(Array.isArray(menus?.header) && menus.header.length
     ? menus.header
-    : (uiFallbackLinks.length ? uiFallbackLinks : fallbackHeaderLinks))
+    : fallbackMenuLinks('header', uiCopy))
   // Prune per-surface visibility on the built tree, not the flat list beforehand - filtering
   // the flat list first would orphan a hidden parent's still-visible children, incorrectly
   // promoting them to top-level instead of hiding the whole branch with their parent.

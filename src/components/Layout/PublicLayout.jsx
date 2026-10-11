@@ -8,6 +8,7 @@ import { Navbar } from '../Navbar'
 import { Facebook, Instagram, Linkedin, Youtube } from 'lucide-react'
 import { useSiteCms } from '../../hooks/useSiteCms'
 import { buildMenuTree, pruneMenuTree } from '../../../lib/menuTree'
+import { fallbackMenuLinks } from '../../../lib/navigationDefaults'
 import { getCanonicalPath } from '../../../lib/cmsPublishing'
 
 const CustomCursor = dynamic(() => import('../ui/CustomCursor').then((mod) => mod.CustomCursor), {
@@ -18,18 +19,6 @@ const BottomDockNav = dynamic(() => import('../BottomDockNav').then((mod) => mod
 })
 const BannerSlot = dynamic(() => import('../../../components/cms/BannerSlot'), { ssr: false })
 const PopupEngine = dynamic(() => import('../../../components/cms/PopupEngine'), { ssr: false })
-
-function normalizeMenuItems(value = []) {
-  if (!Array.isArray(value)) return []
-  return value
-    .filter((item) => item && typeof item === 'object')
-    .map((item) => ({
-      title: String(item.title || '').trim(),
-      url: String(item.url || '').trim(),
-      target: String(item.target || '_self'),
-    }))
-    .filter((item) => item.title && item.url)
-}
 
 function normalizeStringList(value = []) {
   if (Array.isArray(value)) return value.map((entry) => String(entry || '').trim()).filter(Boolean)
@@ -239,23 +228,9 @@ export function PublicLayout({ children, initialSiteCmsData = null }) {
         href: item.href || getCanonicalPath('location', slugifyLocationValue(item.label.replace(/^digital marketing courses in\s+/i, ''))),
       }))
     : (dynamicLocationLinks.length ? dynamicLocationLinks : fallbackLocationLinks)
-  const uiFooterFallback = normalizeMenuItems(uiCopy.footer_fallback_links)
-  const uiLegalFallback = normalizeMenuItems(uiCopy.legal_fallback_links)
-  const footerLinksRaw = Array.isArray(menus?.footer) && menus.footer.length
-    ? menus.footer
-    : (uiFooterFallback.length ? uiFooterFallback : [
-        { title: 'Home', url: '/' },
-        { title: 'Course Catalog', url: '/courses' },
-        { title: 'Our Story', url: '/about' },
-        { title: 'Hiring Partners', url: '/contact' },
-        { title: 'Enroll Today', url: '/register' },
-      ])
-  const legalLinksRaw = Array.isArray(menus?.legal) && menus.legal.length
-    ? menus.legal
-    : (uiLegalFallback.length ? uiLegalFallback : [
-        { title: 'Terms of Service', url: '/terms-of-service' },
-        { title: 'Privacy Policy', url: '/privacy-policy' },
-      ])
+  // Without footer/legal menu rows: the ui_copy lists, else the built-in links (lib/navigationDefaults.js).
+  const footerLinksRaw = Array.isArray(menus?.footer) && menus.footer.length ? menus.footer : fallbackMenuLinks('footer', uiCopy)
+  const legalLinksRaw = Array.isArray(menus?.legal) && menus.legal.length ? menus.legal : fallbackMenuLinks('legal', uiCopy)
   // The footer's own layout is already a fully-expanded list of links, not an interactive
   // header - a child menu item there just renders as an indented sub-item under its parent,
   // no hover/click dropdown needed.
