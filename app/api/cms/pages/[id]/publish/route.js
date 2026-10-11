@@ -31,12 +31,12 @@ export async function POST(request, { params }) {
     if (!result.ok) return result.broken ? jsonError(result.error, result.status, { broken: result.broken }) : jsonError(result.error, result.status)
     const { live } = result
 
-    const revalidation = revalidateCmsMutation('page', { slug: live?.slug })
+    const revalidation = revalidateCmsMutation('page', { slug: live?.slug, previousSlug: result.previousSlug || '' })
     const responseData = live?.slug ? { ...live, canonical_public_url: getCanonicalPublicUrl('page', live.slug) } : live
     if (!revalidation.ok) {
       return jsonError('Page published, but cache revalidation failed. Please retry.', 500, responseData)
     }
-    return jsonOk(responseData)
+    return jsonOk(responseData, result.warning ? { warning: result.warning } : undefined)
   } catch (error) {
     return jsonError(`Internal server error: ${error.message}`, 500)
   }
