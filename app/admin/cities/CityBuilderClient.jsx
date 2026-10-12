@@ -540,7 +540,7 @@ export default function CityBuilderClient() {
                       />
                     </label>
                     
-                    <label className="text-xs text-slate-400">
+                    <div className="text-xs text-slate-400">
                       Hero Description
                       <RichTextEditor
                         content={cityForm.hero_description}
@@ -548,7 +548,7 @@ export default function CityBuilderClient() {
                         placeholder="Enter hero description..."
                         maxLength={500}
                       />
-                    </label>
+                    </div>
                     
                     <label className="text-xs text-slate-400">
                       Hero Image URL
@@ -608,7 +608,7 @@ export default function CityBuilderClient() {
                       />
                     </label>
                     
-                    <label className="text-xs text-slate-400">
+                    <div className="text-xs text-slate-400">
                       About Description
                       <RichTextEditor
                         content={cityForm.about_description}
@@ -616,7 +616,7 @@ export default function CityBuilderClient() {
                         placeholder="Enter about description..."
                         maxLength={1000}
                       />
-                    </label>
+                    </div>
                     
                     <label className="text-xs text-slate-400">
                       About Image URL
@@ -882,7 +882,7 @@ export default function CityBuilderClient() {
                           />
                         </label>
                         
-                        <label className="text-xs text-slate-400">
+                        <div className="text-xs text-slate-400">
                           Answer
                           <RichTextEditor
                             content={faq.answer}
@@ -890,7 +890,7 @@ export default function CityBuilderClient() {
                             placeholder="Enter answer..."
                             maxLength={500}
                           />
-                        </label>
+                        </div>
                         
                         <button
                           type="button"

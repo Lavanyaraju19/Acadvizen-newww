@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { STATIC_ROUTES, REDIRECTED_PATHS, withoutRedirected } from '../../lib/publicSitemapRoutes.js'
+import { STATIC_ROUTES, REDIRECTED_PATHS, indexableRows, withoutRedirected } from '../../lib/publicSitemapRoutes.js'
 
 test('the fixed sitemap routes do not list addresses that permanently redirect', () => {
   const paths = STATIC_ROUTES.map((route) => route.path)
@@ -23,4 +23,18 @@ test('both redirecting route files really redirect where the comment says', asyn
     const source = fs.readFileSync(new URL(`../../app/(public)/${path}/page.jsx`, import.meta.url), 'utf8')
     assert.match(source, new RegExp(`permanentRedirect\\(['"]${target}['"]\\)`))
   }
+})
+
+test('rows marked noindex, or with a noindex SEO override, are left out of the sitemap', () => {
+  const rows = [{ slug: 'kept' }, { slug: 'own-flag', noindex: true }, { slug: 'override' }, { slug: 'flag-false', noindex: false }, null]
+  assert.deepEqual(indexableRows(rows, new Set(['override'])).map((r) => r.slug), ['kept', 'flag-false'])
+  assert.deepEqual(indexableRows(undefined), [])
+})
+
+test('the sitemap builder applies the noindex rules to pages, page SEO overrides and blogs', async () => {
+  const fs = await import('node:fs')
+  const source = fs.readFileSync(new URL('../../lib/publicSitemap.js', import.meta.url), 'utf8')
+  assert.match(source, /fetchSlugRows\(supabase, 'pages', \{[^}]*\}\], respectNoindex: true \}\)/)
+  assert.match(source, /indexableRows\(pages, noindexSeoSlugs\)/)
+  assert.match(source, /indexableRows\(await fetchPublishedPublicBlogs\(\{ select: '[^']*noindex'/)
 })

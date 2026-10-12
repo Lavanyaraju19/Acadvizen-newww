@@ -11,6 +11,7 @@ import { randomUUID } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
 import { signPayload } from '../../lib/wordpress/signature.js'
+import { removeEnrollmentCopies, enrollmentCopiesLeft } from './acceptanceKit.mjs'
 
 const require = createRequire(import.meta.url)
 const { chromium } = require('playwright')
@@ -394,6 +395,10 @@ try {
   }
   const leftovers = await Promise.all([`/blog/cms-test-blog-${T}`, `/cms-test-page-${T}`].map(async (p) => (await get(p)).status))
   check('Z cleanup: test content removed from Main', leftovers.every((s) => s === 404), leftovers.join(','))
+  // The test blog's Enrollment copy (kept as a draft once the blog left Enrollment) is deleted too.
+  await removeEnrollmentCopies(admin, `CMS TEST blog ${T}`).catch(() => {})
+  const copiesLeft = await enrollmentCopiesLeft(admin, `CMS TEST blog ${T}`).catch(() => -1)
+  check('Z cleanup: the Enrollment copy of the test blog is deleted', copiesLeft === 0, `${copiesLeft} left`)
   fs.writeFileSync(path.join(OUT, `results-${T}.json`), JSON.stringify({ run: T, main: MAIN, wordpress: WP, click_fallbacks: clickFallbacks, results }, null, 1))
   console.log(`\n${results.filter((r) => r.ok).length} passed, ${results.filter((r) => !r.ok).length} failed`)
   await browser.close()

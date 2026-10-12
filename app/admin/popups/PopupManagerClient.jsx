@@ -321,7 +321,7 @@ export default function PopupManagerClient() {
                     />
                   </label>
                   
-                  <label className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-400">
                     Popup Content
                     <RichTextEditor
                       content={popupForm.content}
@@ -329,7 +329,7 @@ export default function PopupManagerClient() {
                       placeholder="Enter your popup content..."
                       maxLength={5000}
                     />
-                  </label>
+                  </div>
                 </div>
               </div>
 

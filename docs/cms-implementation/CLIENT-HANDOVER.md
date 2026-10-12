@@ -23,7 +23,14 @@ These need things only the owner can give (below).
 
 **Security warning:** a Main database master key is visible in the public GitHub history. The owner decided not to change it for now. Until it is changed, anyone who finds it can read and change the Main website's data. Changing it is strongly recommended (`PRODUCTION-READINESS-AUDIT.md`).
 
-**Overall status: NOT READY for daily use.** It is ready for the connection steps below.
+**The exact owner steps are in `OWNER-ACTIONS.md`. Every result, labelled PRODUCTION or LOCAL, is in `FINAL-EVIDENCE-REPORT.md`.** The Vercel side of the connection was set on 12 October; it switches on with the next deployment.
+
+**Overall status (12 October): implemented, and waiting for specific owner actions.** It is not ready for daily use from WordPress yet. Three things are needed:
+- WordPress access, or a plugin upload by the owner (step 4);
+- the shared secret on Vercel plus a redeploy, and in `wp-config.php` (step 6);
+- ~~an Enrollment backup~~: **verified 12 Oct**. The files and database backups of 10 Oct are complete and valid, and kept privately outside Git.
+
+Three local fixes are also waiting for the owner's commit and deploy (`PRODUCTION-RELEASE-AND-ROLLBACK.md`, release 9).
 
 ## How to use it (once connected)
 
@@ -45,11 +52,11 @@ Step-by-step guide for editors: `ADMIN-USER-GUIDE.md`. It covers:
 | # | Action | Who | Time |
 |---|---|---|---|
 | 1 | Strongly recommended: rotate the Supabase key that is in the public GitHub history (Supabase → Project Settings → API), then update it in Vercel and redeploy | Owner | 30 min |
-| 2 | Back up **enroll.acadvizen.com** (files and database): hPanel → Websites → enroll.acadvizen.com → Backups. Note the date. Confirm in Supabase → Database → Backups that daily backups exist | Owner | 20 min |
-| 3 | In Supabase → SQL Editor, run the file `supabase/migrations/202610110001_wordpress_content_request_ids.sql`. It only adds one table, used to stop repeated requests | Supabase owner | 5 min |
-| 4 | Give the engineer a working WordPress administrator account. Put it in the local file `C:\Users\HP\.acadvizen-production.env` as `WP_PROD_USER` and `WP_PROD_PASS`, never in chat. The earlier one was refused | Owner | 5 min |
-| 5 | Give a working Main admin login, the same way (`MAIN_ADMIN_EMAIL`, `MAIN_ADMIN_PASSWORD`). The one in the checklist was refused | Owner | 5 min |
-| 6 | The engineer installs plugin 0.6.0 (`dist/acadvizen-cms-0.6.0-45d78b9/acadvizen-cms.zip`, SHA-256 `93d5e3913c7ac1f492ab6062ec88eb7047754afc6f709778c03eceffccdcf8f3`, 24 files, byte-identical to commit `45d78b9`), sets the secret code in `wp-config.php` and Vercel, and switches the connection on. The Main side is already live | Engineer (needs 2–5) | 1 h |
+| 2 | Back up **enroll.acadvizen.com** (files and database): hPanel → Websites → enroll.acadvizen.com → Backups. Keep the downloaded files private, outside the project folder. Supabase daily backups: **confirmed** (8 completed, latest 11 Oct; point-in-time recovery off) | Owner | 20 min |
+| 3 | ~~Run migration `202610110001`~~ **Done 12 Oct** and verified (no public access) | — | — |
+| 4 | WordPress access. Either: (a) while signed in to WordPress, create a dedicated Administrator user for the integration, or set a new password on your profile, and put it in `C:\Users\HP\.acadvizen-production.env` as `WP_PROD_USER` / `WP_PROD_PASS` (never in chat); or (b) install the plugin yourself: Plugins → Add New → Upload Plugin → the ZIP below → **Replace current with uploaded**. The account's email address should also be changed to one you can read, so the password can be reset | Owner | 5–10 min |
+| 5 | ~~Main admin login~~ **Done:** the operations admin account works | — | — |
+| 6 | Plugin 0.6.0 (`dist/acadvizen-cms-0.6.0-45d78b9/acadvizen-cms.zip`, SHA-256 `93d5e3913c7ac1f492ab6062ec88eb7047754afc6f709778c03eceffccdcf8f3`, 24 files, byte-identical to commit `45d78b9`). Then connect the sites. The secret and the two Vercel variables are already set; what remains is two lines in `wp-config.php` and the release-9 deployment. Exact steps: `OWNER-ACTIONS.md`, steps 3–4. The Main side is already live | Owner (Vercel redeploy, wp-config) + engineer | 30 min |
 | 7 | Production acceptance on "CMS PRODUCTION TEST" content, with screenshots, then deleted (`TEST-PLAN.md`) | Engineer | 2–3 h |
 | 8 | When you start editing: click **Copy the links shown today** (Menus) and **Copy what the homepage shows today** (Homepage, Lists). The website looks the same afterwards | Editor | 2 min |
 | 9 | Enrollment fixes: sitemaps, three redirects, `/contact-us/`, the logo link (`../ACADVIZEN_CLIENT_HANDOVER.md` §10) | Owner or engineer | 30 min |
@@ -70,11 +77,12 @@ Step-by-step guide for editors: `ADMIN-USER-GUIDE.md`. It covers:
 | SEO fields and SEO overrides | Yes | PASS | Not installed |
 | Permissions (Author, Contributor, Editor) | Yes | PASS | Not installed |
 | Security (signatures, replay, forged status, preview links) | Yes | PASS | The plugin API's refusals are verified live (13/13) |
-| Draft never breaks a live page | Yes | PASS | **Released**; all live pages answer 200 |
+| Draft never breaks a live page | Yes | PASS | **Released, and PASS on production** (12 Oct): a live test page stayed 200 and unchanged on 10/10 requests while its draft copy existed; cleaned up |
+| Noindex pages left out of the sitemap | Yes (12 Oct) | PASS | **Not released.** Found by the production test; no live page is affected today |
 | Next.js security upgrade | Yes | PASS | **Released** |
 | Menu duplication, draft address/SEO fixes | Yes | PASS | **Released** |
 | Existing enquiry form and leads | Unchanged | — | Route registered; no live test enquiry sent (needs approval) |
-| Backups | — | — | **Not confirmed** (owner, step 2) |
+| Backups | — | — | Supabase: **confirmed** (daily, no point-in-time recovery). Enrollment (Hostinger): see step 2 |
 
 ## Can the client use it today?
 

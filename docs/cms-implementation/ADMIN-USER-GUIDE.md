@@ -48,7 +48,7 @@ Sections can be added (**Add a section**), moved (drag ⠿, or ↑ ↓, then **S
 
 **Undo a change.** Every save is kept under **Earlier versions** on the edit screen (the last 20). The first change you save to existing content also keeps the version before it, so even that first change can be undone. Click **Restore** next to a version to bring it back; the status is not changed. For pages, versions cover the page's own settings (title, address, SEO); section changes are protected by the private copy, so nothing reaches visitors before you publish.
 
-**Remove something.** **Trash** takes it off the website at once; open the list's **Trash** link to **Restore** it (it comes back as a draft, not public). Only Editors and Administrators can **Delete permanently**, and only from the trash.
+**Remove something.** **Trash** takes it off the website at once; open the list's **Trash** link to **Restore** it (it comes back as a draft, not public). Only Editors and Administrators can **Delete permanently**, and only from the trash. For a blog that was also on the Enrollment website, its Enrollment copy goes to WordPress's own trash (**Posts → Trash**) as a safety net. WordPress empties that trash after 30 days. Delete it there sooner if you want it gone now, but use the post's own **Delete Permanently** link, not **Empty Trash**, which would also remove other people's trashed posts.
 
 **See who changed what.** The **Activity** tab lists every change, who made it and whether it worked (Editors and Administrators).
 

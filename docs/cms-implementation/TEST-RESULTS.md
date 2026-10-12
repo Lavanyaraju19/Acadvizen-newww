@@ -15,8 +15,24 @@ The statuses used are PASS, PARTIAL, FAIL, BLOCKED and NOT TESTED. The level (Au
 | Release 4: live deployment | `dpl_EuZnhizE…` (**live**); all sitemap URLs answer 200; `verify-production.mjs` 27 passed / 9 failed (the tool page check now passes; the 9 are the known Enrollment issues); content API answers 503 `content_api_disabled`; no error logs | PASS |
 | Plugin 0.6.0 package | `dist/acadvizen-cms-0.6.0-45d78b9/acadvizen-cms.zip`, SHA-256 `93d5e3913c7ac1f492ab6062ec88eb7047754afc6f709778c03eceffccdcf8f3`, 24 files, byte-identical to commit `45d78b9`; scanned: no secrets, env files or logs | PASS |
 | `npm audit --omit=dev` after the upgrade | 0 critical (was 1); 6 high remain in other packages | PARTIAL |
-| Draft copy of a live page created through Main `/admin`, live page stays 200 | Main admin login refused ("Invalid email or password"), stopped after 2 tries | BLOCKED |
-| Plugin 0.6.0 installed; content API enabled; acceptance on production | No WordPress login, migration not applied, no backup confirmed | BLOCKED |
+| Dependency fixes, 12 Oct (LOCAL, uncommitted, not deployed) | `npm audit fix` (19 patch/minor bumps, including sharp 0.35.5, nodemailer 9.1.1, prosemirror-view 1.42.6, nanoid, source-map-js) plus all tiptap packages ^3.28.0 → ^3.31.4 (same major). Production advisories went from 6 high + 27 moderate to **2 high, 0 moderate**. Left: `nodemailer` (the fix is major version 10) and the `sharp` copy that Next.js pins inside `next/node_modules` (needs a Next.js release). Previous lock file kept outside the repo | PARTIAL |
+| Draft copy of a live page created through Main `/admin`, live page stays 200 (12 Oct, `prod-draft-404-test`, disposable noindex page `/cms-production-test-202610112251`) | **14/15.** Created as draft (404 while unpublished) → published (200) → private draft copy started and edited → live page 200 and unchanged on **10/10** requests → noindex robots → copy discarded, live page still 200 → test page deleted → address 404 → 0 test rows left. **One failure:** the noindex test page was listed in `sitemap.xml` (see the sitemap defect below) | PASS (draft fix); FAIL (sitemap) |
+| Supabase migration `202610110001` (replay-protection table) | Applied on 12 Oct with `supabase db query --linked -f` (the table was confirmed missing first; `supabase db push` was **not** used). Verified: RLS on, 0 policies, no privileges for `anon`/`authenticated`, 0 rows, the anon REST call answers 401. Then recorded with `supabase migration repair --status applied 202610110001`. The 14 other unrecorded local migrations were left untouched | PASS |
+| Supabase backups (project `hhfccftkfryesjirauwf`) | 8 daily physical backups, all COMPLETED, latest 11 Oct 2026 18:44 UTC. Point-in-time recovery is **off**. Storage files (images) are not part of these backups | PASS (with limits) |
+| Plugin 0.6.0 installed; content API enabled; acceptance on production | Live plugin is still 0.4.0. No usable WordPress login (the password given was refused). Vercel variables are set (12 Oct), but the API stays off until the owner deploys; `wp-config.php` constants not yet set (owner) | BLOCKED (owner actions, `OWNER-ACTIONS.md`) |
+| Vercel Production variables for the content API | `WORDPRESS_CMS_WEBHOOK_SECRET` (Sensitive) and `WORDPRESS_CONTENT_API_ENABLED` set through the Vercel API. The secret exists only in the private credentials file. Live API still 503 (no deployment yet) | PASS (configuration) |
+| `tools/verify-content-api-live.mjs` against production before the deployment | Stops before any change: "content API still switched off (503)" | PASS (safe guard) |
+| Enrollment backup files (10 Oct backup, downloaded 12 Oct) | Files archive read completely (95,489 entries; enroll.acadvizen.com 45,435 entries, 1.47 GB). Enrollment database dump: gzip OK, 108 tables, "Dump completed"; it is the database named in Enrollment's `wp-config.php`. No content printed or copied | PASS |
+
+### Release 9 build, final LOCAL regression (12 Oct)
+
+| Suite | Result | Status |
+|---|---|---|
+| Pages, blogs, permissions, security (`structured-acceptance.mjs`) | 56/56, including a new check that the test blog's Enrollment copy is deleted | PASS (LOCAL) |
+| Site chrome / homepage / more content / courses | 18/18, 14/14, 15/15, 12/12 (courses on rerun) | PASS (LOCAL) |
+| `tools/verify-content-api-live.mjs` | 16/16 | PASS (LOCAL) |
+| `tools/verify-wordpress-live.mjs` | 15/15 (Main only, Enrollment only, Both, edit to both, cleanup in both trash cans, Elementor home still served) | PASS (LOCAL) |
+| Unit / PHP / PHP lint / TypeScript / ESLint / build | 197/197, 242/242, 0, 0, 0 errors, compiled | PASS |
 
 ### Automated (main branch, commit `45d78b9`)
 
@@ -54,6 +70,8 @@ In headless Chromium, some steps used the DOM-event fallback instead of a real c
 | The first change of existing content had no earlier version | Plugin | "Restore" could not undo the first change |
 | Section types list out of step with the renderer | Content API | Live-list sections (courses, tools…) could not be added; two listed types did not exist |
 | Course section created without its course | Content API | An orphan record |
+| A published page marked noindex (by its own flag or by an SEO override), or a noindex blog, was still listed in `sitemap.xml`. Found by the PRODUCTION draft test on 12 Oct. No live page or blog is noindex today, so no live URL is affected yet. Fixed locally in `lib/publicSitemap.js` (not deployed) | Main sitemap (live code, latent) | The sitemap would invite search engines to pages that tell them not to index |
+| The rich-text editor was wrapped in a `<label>` on four Main `/admin` fields: popup content, and the city builder's hero description, about description and FAQ answer. A click inside a label also clicks its first button, here **Bold**. Found by the LOCAL editor smoke test after the dependency upgrade (12 Oct). Fixed locally: the wrappers are `<div>`s, and a regression test checks every screen (not deployed) | Main `/admin` (live code) | Each click into the text toggled bold and the first letter typed was lost |
 
 ## 11 October 2026: Main Website screens (hybrid structured editing, plugin 0.5.0)
 

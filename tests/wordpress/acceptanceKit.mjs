@@ -106,6 +106,41 @@ export async function viewer(browser) {
   return page
 }
 
+/**
+ * Removes a test blog's Enrollment copy for good, through WordPress's own Posts screens: rows whose
+ * title is exactly `title` are trashed, then deleted permanently one by one. "Empty Trash" is never
+ * used, so posts trashed by anyone else stay untouched. Returns how many copies were deleted.
+ */
+export async function removeEnrollmentCopies(page, title) {
+  const rows = async (status) => {
+    await page.goto(`${WP}/wp-admin/edit.php?post_type=post&post_status=${status}&s=${encodeURIComponent(title)}`)
+    const found = []
+    for (const row of await page.locator('#the-list tr').all()) {
+      // Every row carries its exact title in WordPress's hidden quick-edit data (trashed rows have no title link).
+      if ((await row.locator('.hidden .post_title').textContent().catch(() => '') || '').trim() !== title) continue
+      found.push(await row.locator(status === 'trash' ? '.row-actions .delete a' : '.row-actions .trash a').getAttribute('href'))
+    }
+    return found.filter(Boolean)
+  }
+  for (const href of await rows('all')) await page.goto(new URL(href, `${WP}/wp-admin/`).href)
+  let deleted = 0
+  for (const href of await rows('trash')) {
+    await page.goto(new URL(href, `${WP}/wp-admin/`).href)
+    deleted++
+  }
+  return deleted
+}
+
+/** How many Enrollment posts titled exactly `title` remain (listed or in the trash). */
+export async function enrollmentCopiesLeft(page, title) {
+  let left = 0
+  for (const status of ['all', 'trash']) {
+    await page.goto(`${WP}/wp-admin/edit.php?post_type=post&post_status=${status}&s=${encodeURIComponent(title)}`)
+    for (const cell of await page.locator('#the-list tr .hidden .post_title').allTextContents()) if (cell.trim() === title) left++
+  }
+  return left
+}
+
 export const notice = async (page) => (await page.locator('.notice-success p, .notice-error p').first().innerText().catch(() => '')).trim()
 export async function saveForm(page) { await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('#acv-main-form input[type=submit]').click()]); return notice(page) }
 export async function follow(page, locator) { await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), locator.click()]); return notice(page) }

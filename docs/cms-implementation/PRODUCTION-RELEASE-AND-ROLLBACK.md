@@ -32,10 +32,50 @@ Promote is exactly the step Vercel's dashboard offers; the API equivalent is a p
 
 | # | What | Ready | Blocked by |
 |---|---|---|---|
-| 5 | Supabase migration `202610110001_wordpress_content_request_ids.sql` (replay protection; additive) | Tested locally: idempotent, duplicates refused, no public access | Database access: the Supabase SQL editor (owner), or a database password / Supabase access token for `supabase db push` |
-| 6 | WordPress plugin 0.6.0 on Enrollment | Package `dist/acadvizen-cms-0.6.0-45d78b9/acadvizen-cms.zip`, SHA-256 `93d5e3913c7ac1f492ab6062ec88eb7047754afc6f709778c03eceffccdcf8f3`, 24 files, byte-identical to commit `45d78b9` | A working WordPress administrator login, and a confirmed Enrollment backup |
-| 7 | Shared secret and API URL on both sides; `WORDPRESS_CONTENT_API_ENABLED=true` | Names are in `IMPLEMENTATION.md` | Steps 5 and 6. The secret must be set in `wp-config.php`, which needs Hostinger File Manager or SFTP |
-| 8 | Production acceptance on labelled test content (the `tests/wordpress` suites, pointed at production) | Scripts ready | Step 7, and one approved test enquiry |
+| 5 | Supabase migration `202610110001_wordpress_content_request_ids.sql` (replay protection; additive) | **Done, 12 Oct 2026.** Applied as one file and recorded with `migration repair`; verified: RLS on, no policies, no public access | — |
+| 6 | WordPress plugin 0.6.0 on Enrollment (live is still 0.4.0, checked 12 Oct) | Package `dist/acadvizen-cms-0.6.0-45d78b9/acadvizen-cms.zip`, SHA-256 `93d5e3913c7ac1f492ab6062ec88eb7047754afc6f709778c03eceffccdcf8f3`, 24 files, byte-identical to commit `45d78b9` | An Enrollment backup kept safely, then WordPress access or the owner's own upload (`OWNER-ACTIONS.md` steps 1–2) |
+| 7 | Connect the two sites | **Vercel side done 12 Oct:** both variables set on Production (the secret as Sensitive), and the secret saved only in the private credentials file. The live API still answers 503 until the next deployment | `wp-config.php` constants (owner, `OWNER-ACTIONS.md` step 3) and a production deployment (step 4) |
+| 8 | Production acceptance | `tools/verify-content-api-live.mjs` (16 checks) and `tools/verify-wordpress-live.mjs` (15 checks): both pass on LOCAL and both refuse to run until the API is on | Steps 6, 7 and 9 |
+| 9 | Release 9 (`RELEASE-REVIEW.md`): sitemap leaves out noindex pages; rich-text editor fix; dependency security updates; live verification tools; tests and docs | All checks below pass on LOCAL; no secrets or archives in the change set | The owner's commit, push and deploy (`OWNER-ACTIONS.md` step 4) |
+
+### Release 9 evidence (LOCAL unless stated)
+
+| Check | Result |
+|---|---|
+| Unit tests | 197/197 |
+| PHP plugin tests / PHP lint | 242/242 / 20 files, 0 errors (plugin unchanged) |
+| TypeScript / ESLint | 0 errors / 0 errors (10 old warnings) |
+| Production build | Compiled (Next.js 15.5.27) |
+| WordPress browser acceptance on this build | Pages/blogs/permissions/security 56/56; site chrome 18/18; homepage 14/14; city, service, SEO and media 15/15; courses 12/12. **Total 115/115.** Courses passed on a rerun: the first run lost a checkbox click in headless Chromium and saved the course inactive |
+| Sitemap noindex fix | 7/7. Pages with their own noindex flag or a noindex SEO override answer 200 with `noindex, follow` and are not in `sitemap.xml`; the indexable control page is listed; the sitemap still builds when the override column is missing. **PRODUCTION:** 0 noindex pages, blogs or overrides today, so deploying removes no current URL |
+| Editor fix | 6/6. Fast and slow typing give exactly the expected HTML. With the live code, one click toggled Bold; this was reproduced on the old dependencies, so it is not caused by the upgrade |
+| Dependency updates | `npm audit --omit=dev`: 6 high and 27 moderate → 2 high and 0 moderate. Upload smoke 5/5 (sharp 0.35.5 still turns a PNG into WebP) |
+| `tools/verify-content-api-live.mjs` | LOCAL 16/16. PRODUCTION: stops before changing anything while the API is off (verified) |
+| `tools/verify-wordpress-live.mjs` | LOCAL 15/15, including the Enrollment copy being deleted for good |
+
+### Step 7 exactly
+
+One random secret of at least 32 characters, the same on both sides. Store it only in the private credentials file, never in Git, chat or documents.
+
+1. **Vercel** → project `acadvizen-newww-ua9d` → Settings → Environment Variables → Production:
+   - `WORDPRESS_CMS_WEBHOOK_SECRET` = the secret (type **Sensitive**);
+   - `WORDPRESS_CONTENT_API_ENABLED` = `true`.
+
+   Do **not** set `WORDPRESS_CMS_API_URL` or `WORDPRESS_CONTENT_ENABLED`. Those switch on the separate Elementor Render Bridge and WordPress-blog features, which are not part of this release.
+   **Status: done 12 Oct.**
+2. **Deploy** production: release 9 through **Promote to Production** (`OWNER-ACTIONS.md` step 4). A promoted preview is rebuilt with the Production variables. Then `POST https://www.acadvizen.com/api/wordpress/content` without a signature must answer **401**, not 503. `tools/verify-content-api-live.mjs` checks this first.
+3. **WordPress** (hPanel → File Manager → `wp-config.php` of enroll.acadvizen.com, above "That's all, stop editing"):
+   ```php
+   define( 'ACADVIZEN_CMS_MAIN_URL', 'https://www.acadvizen.com' );
+   define( 'ACADVIZEN_CMS_WEBHOOK_SECRET', '<the same secret>' );
+   ```
+   The plugin reads these only as constants. There is no settings-page alternative.
+4. WordPress → Master Admin → Main Website: the screens list live records.
+
+Rollback, fastest first:
+- **Instant Rollback:** promote `dpl_EuZnhizEMjYzDATZg45okXUgs1WY` again. That build keeps its old variables, so the API answers 503.
+- Deactivate the plugin.
+- Remove the two Vercel variables and deploy.
 
 ## Production checks done without changing content
 
@@ -44,4 +84,7 @@ Promote is exactly the step Vercel's dashboard offers; the API equivalent is a p
 
 ## Not verified on production
 
-**The draft-copy scenario through Main's own admin.** The Main admin password in the owner's access checklist was rejected twice ("Invalid email or password"), and I stopped to avoid a lockout. Release 1 is verified on every public URL, against production data, and by the regression tests. The live draft test needs a working Main admin login, or steps 5–7 (the signed API is now deployed, switched off).
+- Everything that needs plugin 0.6.0 on Enrollment and the API switched on: WordPress → Main publishing, Enrollment-only and Both publishing, permissions, menus, media, SEO and responsive views on production. Each is covered by the two live tools and `TEST-PLAN.md`, and each is waiting for `OWNER-ACTIONS.md` steps 1–4.
+- The Enrollment backup: no downloaded copy was found on this PC.
+
+**Verified since:** the draft-copy scenario through Main's own admin. It passed on PRODUCTION on 12 Oct: the live page answered 200 and was unchanged on 10/10 requests while its draft copy existed, and the test page was cleaned up. The sitemap defect that test found is fixed in release 9.
