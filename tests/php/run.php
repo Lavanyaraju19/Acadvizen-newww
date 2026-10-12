@@ -658,6 +658,20 @@ namespace Acadvizen\CMS {
 	$GLOBALS['acv_caps'] = array( 'edit_posts', 'edit_others_posts', 'publish_posts', 'edit_pages', 'edit_others_pages', 'publish_pages' );
 	check( 'main content: an editor can approve, publish and archive', array( 'draft', 'review', 'approved', 'published', 'archived' ), main_allowed_statuses( 'pages' ) );
 	check( 'main content: deleting needs its own capability', false, main_can( 'pages', 'delete' ) );
+	// "Enrollment only" blogs: the Main record is always a draft, so the editor sees (and keeps) the
+	// Enrollment copy's status. Found on production: a second save unpublished the Enrollment copy.
+	$editor = array( 'draft', 'review', 'approved', 'published', 'archived' );
+	$author = array( 'draft', 'review' );
+	check( 'enrollment only: the editor sees the live copy as Published, not the Main draft', 'published', main_blog_display_status( TARGET_ENROLLMENT, 'draft', 'published' ) );
+	check( 'enrollment only: without a copy the Main status is shown', 'draft', main_blog_display_status( TARGET_ENROLLMENT, 'draft', '' ) );
+	check( 'main / both: the Main status is shown', array( 'published', 'draft' ), array( main_blog_display_status( TARGET_MAIN, 'published', 'draft' ), main_blog_display_status( TARGET_BOTH, 'draft', 'published' ) ) );
+	check( 'enrollment only: saving again with Published keeps the copy published', 'published', enrollment_status_for_save( TARGET_ENROLLMENT, 'published', true, $editor, 'draft', 'published' ) );
+	check( 'enrollment only: a save without a status keeps the copy as it is (the regression)', 'published', enrollment_status_for_save( TARGET_ENROLLMENT, '', true, $editor, 'draft', 'published' ) );
+	check( 'enrollment only: choosing Draft explicitly takes it off Enrollment', 'draft', enrollment_status_for_save( TARGET_ENROLLMENT, 'draft', true, $editor, 'draft', 'published' ) );
+	check( 'enrollment only: an author cannot publish; the copy stays as it is', array( 'draft', 'published' ), array( enrollment_status_for_save( TARGET_ENROLLMENT, 'published', false, $author, 'draft', 'draft' ), enrollment_status_for_save( TARGET_ENROLLMENT, 'archived', false, $author, 'draft', 'published' ) ) );
+	check( 'enrollment only: first publish of a new blog', 'published', enrollment_status_for_save( TARGET_ENROLLMENT, 'published', true, $editor, 'draft', '' ) );
+	check( 'main / both: the copy follows the Main record', array( 'published', 'draft' ), array( enrollment_status_for_save( TARGET_BOTH, '', true, $editor, 'published', 'draft' ), enrollment_status_for_save( TARGET_MAIN, 'published', true, $editor, 'draft', 'published' ) ) );
+	check( 'restoring a version keeps an Enrollment-only copy published', 'published', enrollment_status_for_save( TARGET_ENROLLMENT, '', false, array(), 'draft', 'published' ) );
 	// Ownership, as for WordPress's own posts: Editors work on every record, Authors only on their own.
 	check( 'main content: an editor manages a record someone else created', true, main_manages_record( 'blogs', 'b-1' ) );
 	$GLOBALS['acv_caps'] = array( 'edit_posts', 'publish_posts' );

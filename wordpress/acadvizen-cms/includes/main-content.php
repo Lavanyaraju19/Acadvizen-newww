@@ -789,6 +789,44 @@ function find_enrollment_blog_copy( string $main_id ): int {
 	return $ids ? (int) $ids[0] : 0;
 }
 
+/** 'published' or 'draft' for the Enrollment copy of a blog, or '' when it has none. */
+function enrollment_copy_status( string $main_id ): string {
+	$copy = find_enrollment_blog_copy( $main_id );
+	if ( ! $copy ) {
+		return '';
+	}
+	return 'publish' === get_post_status( $copy ) ? 'published' : 'draft';
+}
+
+/**
+ * The status an editor sees for a blog. An "Enrollment only" blog is always a draft on the Main
+ * Website, so its own status would read "Draft" even while it is live on Enrollment; the status that
+ * matters there is the Enrollment copy's.
+ */
+function main_blog_display_status( string $target, string $main_status, string $copy_status ): string {
+	return TARGET_ENROLLMENT === $target && '' !== $copy_status ? $copy_status : $main_status;
+}
+
+/**
+ * The status the Enrollment copy gets when a blog is saved.
+ * - Main / Both: the copy follows the Main Website record.
+ * - Enrollment only: only an explicit, allowed choice changes it. Saving without a Status (or with
+ *   one this role may not set) keeps the copy as it is, so editing a live article never unpublishes it.
+ */
+function enrollment_status_for_save( string $target, string $requested, bool $may_publish, array $allowed, string $main_status, string $copy_status ): string {
+	if ( TARGET_ENROLLMENT !== $target ) {
+		return $main_status;
+	}
+	$unchanged = '' !== $copy_status ? $copy_status : $main_status;
+	if ( 'published' === $requested ) {
+		return $may_publish ? 'published' : $unchanged;
+	}
+	if ( '' === $requested || ! in_array( $requested, $allowed, true ) ) {
+		return $unchanged;
+	}
+	return $requested;
+}
+
 /**
  * Keeps the Enrollment website's copy of a blog in step with its Publish To choice: Enrollment
  * and Both publish a normal WordPress post (drawn by the Enrollment theme); Main alone takes the
@@ -1017,7 +1055,8 @@ function handle_main_save(): void {
 		$targets           = main_blog_targets();
 		$targets[ $id ]    = $target;
 		update_option( MAIN_BLOG_TARGETS, $targets, false );
-		$enrollment_status = TARGET_ENROLLMENT === $target && in_array( sanitize_key( wp_unslash( $_POST['acv_status'] ?? '' ) ), array( 'published' ), true ) && main_can( $entity, 'publish' ) ? 'published' : $status;
+		$requested         = isset( $_POST['acv_status'] ) ? sanitize_key( wp_unslash( $_POST['acv_status'] ) ) : '';
+		$enrollment_status = enrollment_status_for_save( $target, $requested, main_can( $entity, 'publish' ), main_allowed_statuses( $entity ), $status, enrollment_copy_status( $id ) );
 		$error             = sync_enrollment_blog_copy( $id, array_merge( $record, $row ), $target, $enrollment_status );
 		$notes[]           = '' === $error
 			? ( targets_enrollment( $target ) ? __( 'Enrollment Website: updated.', 'acadvizen-cms' ) : '' )
@@ -1128,8 +1167,11 @@ function handle_main_action(): void {
 					$status = (string) ( $result['body']['data']['status'] ?? '' );
 					save_main_snapshot( $entity, $id, array_intersect_key( array_merge( $data['record'], (array) $result['body']['data'] ), $definition['fields'] ), $status );
 					if ( 'blogs' === $entity ) {
-						// The Enrollment copy follows the restored version too.
-						sync_enrollment_blog_copy( $id, array_merge( $data['record'], (array) $result['body']['data'] ), main_blog_target( $id ), $status );
+						// The Enrollment copy follows the restored version too, keeping its own status for an
+						// "Enrollment only" blog (restoring never changes a status).
+						$restore_target = main_blog_target( $id );
+						$copy_status    = enrollment_status_for_save( $restore_target, '', false, array(), $status, enrollment_copy_status( $id ) );
+						sync_enrollment_blog_copy( $id, array_merge( $data['record'], (array) $result['body']['data'] ), $restore_target, $copy_status );
 					}
 				}
 				main_flash( $result['ok'] ? 'success' : 'error', $result['ok'] ? __( 'The earlier version is back. Its status was not changed.', 'acadvizen-cms' ) : main_error_text( $result ) );
@@ -1314,6 +1356,9 @@ function render_main_status_badge( array $definition, array $row ): string {
 	}
 	if ( 'status' === $definition['workflow'] ) {
 		$status = (string) ( $row['status'] ?? 'draft' );
+		if ( ! empty( $definition['targets'] ) && ! empty( $row['id'] ) && TARGET_ENROLLMENT === main_blog_target( (string) $row['id'] ) ) {
+			$status = main_blog_display_status( TARGET_ENROLLMENT, $status, enrollment_copy_status( (string) $row['id'] ) );
+		}
 		$label  = main_status_labels()[ $status ] ?? $status;
 		if ( 'published' === $status && ! empty( $row['scheduled_publish_at'] ) && strtotime( (string) $row['scheduled_publish_at'] ) > time() ) {
 			/* translators: %s: date */
@@ -1659,6 +1704,9 @@ function render_main_edit( string $entity, array $definition, string $id ): void
 	$is_draft = ! empty( $row['draft_of_id'] );
 	$url      = main_public_url( $entity, (string) ( $row['slug'] ?? '' ) );
 	$target   = 'blogs' === $entity && ! $creating ? main_blog_target( $id ) : TARGET_MAIN;
+	if ( 'blogs' === $entity && ! $creating ) {
+		$status = main_blog_display_status( $target, $status, enrollment_copy_status( $id ) );
+	}
 
 	/* translators: %s: content type */
 	printf( '<h1>%1$s</h1>', esc_html( sprintf( $creating ? __( 'New %s', 'acadvizen-cms' ) : __( 'Edit %s', 'acadvizen-cms' ), strtolower( $definition['singular'] ) ) ) );

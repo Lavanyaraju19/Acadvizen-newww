@@ -1,7 +1,7 @@
 === Acadvizen Master Admin ===
 Requires at least: 6.5
 Requires PHP: 8.0
-Stable tag: 0.6.0
+Stable tag: 0.6.1
 
 One WordPress admin for both Acadvizen websites. Design with Elementor, choose "Publish To"
 (Enrollment, Main or Both), publish. Pages for www.acadvizen.com are rendered by WordPress and
