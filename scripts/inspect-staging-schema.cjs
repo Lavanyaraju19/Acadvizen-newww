@@ -1,6 +1,6 @@
 const { Client } = require('pg');
 
-const CONNECTION_STRING = 'postgresql://postgres:Acadvizen%212026Staging@hhfccftkfryesjirauwf.supabase.co:5432/postgres';
+const CONNECTION_STRING = `postgresql://postgres:${encodeURIComponent(process.env.SUPABASE_DB_PASSWORD || "")}@hhfccftkfryesjirauwf.supabase.co:5432/postgres`;
 
 const REQUIRED_COLUMNS = {
   pages: ['id','title','slug','description','seo_title','seo_description','content','status','created_at','updated_at','is_active','is_published','published_at','scheduled_publish_at','scheduled_unpublish_at','deleted_at','canonical_url','og_image','noindex','exclude_from_sitemap','sections_json','page_template_id','parent_id','order_index','workflow_status','created_by','updated_by'],

@@ -2,7 +2,7 @@ const { Client } = require('pg');
 
 async function main() {
   // Use URL-encoded password to avoid shell issues
-  const connString = 'postgresql://postgres:Acadvizen%212026Staging@hhfccftkfryesjirauwf.supabase.co:5432/postgres';
+  const connString = `postgresql://postgres:${encodeURIComponent(process.env.SUPABASE_DB_PASSWORD || "")}@hhfccftkfryesjirauwf.supabase.co:5432/postgres`;
   
   console.log('Connecting to staging Supabase (direct pg)...');
   const client = new Client({ connectionString: connString, ssl: { rejectUnauthorized: false } });

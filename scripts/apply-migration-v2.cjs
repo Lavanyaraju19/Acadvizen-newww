@@ -6,7 +6,7 @@ async function main() {
     host: 'hhfccftkfryesjirauwf.supabase.co',
     port: 5432,
     user: 'postgres',
-    password: 'Acadvizen!2026Staging',
+    password: process.env.SUPABASE_DB_PASSWORD,
     database: 'postgres',
     ssl: { rejectUnauthorized: false }
   });

@@ -16,7 +16,9 @@
     "test:e2e:list": "playwright test --list",
     "test:production": "npm run build && node scripts/run-playwright-production.cjs",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:headed": "playwright test --headed"
+    "test:e2e:headed": "playwright test --headed",
+    "secrets:check": "node tools/check-secrets.mjs --all",
+    "hooks:install": "git config core.hooksPath .githooks"
   },
   "dependencies": {
     "@axe-core/playwright": "^4.12.1",

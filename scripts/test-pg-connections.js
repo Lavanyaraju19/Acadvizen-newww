@@ -7,7 +7,7 @@ const { Client } = require('pg');
 
 dns.setDefaultResultOrder('ipv4first');
 
-const PASSWORD = 'Acadvizen!2026Staging';
+const PASSWORD = process.env.SUPABASE_DB_PASSWORD;
 const REF = 'hhfccftkfryesjirauwf';
 
 const strategies = [

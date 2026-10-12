@@ -25,7 +25,7 @@ async function main() {
 
   // Try direct SQL via pg connection
   const { Client } = require('pg');
-  const connString = `postgresql://postgres:Acadvizen%212026Staging@${projectRef}.supabase.co:5432/postgres`;
+  const connString = `postgresql://postgres:${encodeURIComponent(process.env.SUPABASE_DB_PASSWORD || "")}@${projectRef}.supabase.co:5432/postgres`;
 
   try {
     console.log('Connecting to database...');
@@ -105,7 +105,7 @@ async function main() {
     // Try alternative: direct pooler connection
     try {
       console.log('Trying pooler connection...');
-      const poolerConnString = `postgresql://postgres:Acadvizen%212026Staging@${projectRef}.pooler.supabase.com:6543/postgres`;
+      const poolerConnString = `postgresql://postgres:${encodeURIComponent(process.env.SUPABASE_DB_PASSWORD || "")}@${projectRef}.pooler.supabase.com:6543/postgres`;
       const client = new Client({ connectionString: poolerConnString, ssl: { rejectUnauthorized: false } });
       await client.connect();
       console.log('Connected via pooler!');

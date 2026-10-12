@@ -2,7 +2,7 @@ const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
 
-const CONNECTION_STRING = 'postgresql://postgres:Acadvizen%212026Staging@hhfccftkfryesjirauwf.supabase.co:5432/postgres';
+const CONNECTION_STRING = `postgresql://postgres:${encodeURIComponent(process.env.SUPABASE_DB_PASSWORD || "")}@hhfccftkfryesjirauwf.supabase.co:5432/postgres`;
 
 async function main() {
   const client = new Client({ connectionString: CONNECTION_STRING, ssl: { rejectUnauthorized: false } });

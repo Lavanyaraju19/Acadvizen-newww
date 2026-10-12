@@ -1,7 +1,7 @@
 const { Client } = require('pg');
 
 const REF = 'hhfccftkfryesjirauwf';
-const PASSWORD = 'Acadvizen!2026Staging';
+const PASSWORD = process.env.SUPABASE_DB_PASSWORD;
 
 const CANDIDATES = [
   // Direct

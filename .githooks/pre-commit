@@ -1,0 +1,3 @@
+#!/bin/sh
+# Refuses a commit that would add a secret or an environment file (see tools/check-secrets.mjs).
+exec node tools/check-secrets.mjs --staged
