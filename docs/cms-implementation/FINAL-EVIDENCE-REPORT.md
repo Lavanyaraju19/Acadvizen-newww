@@ -8,7 +8,7 @@ A LOCAL pass is never counted as a live result.
 
 ## Verdict
 
-**Main side live and verified on production. NOT client-ready yet.**
+**Main side live and verified; plugin 0.6.0 installed on Enrollment with the site preserved. NOT client-ready yet:** the `wp-config.php` constants are missing, so the plugin is "Not connected", and the three live publishing tests have not run. The notes below describe the blocker as it stood before the install.
 
 The WordPress side is blocked by one external dependency: a working WordPress administrator password.
 - The saved password was refused a fourth time on 12 Oct ("password … incorrect").
@@ -46,7 +46,12 @@ None is in the current files any more, and a guard now blocks new ones. But hist
 | Releases 1–4 | Live and verified: 314/314 sitemap URLs answer 200 | 11–12 Oct |
 | `tools/verify-production.mjs` after release 4 | 27 passed, 9 failed. All 9 failures are known Enrollment issues: the sitemaps, three redirects, `/contact-us/` and the logo link | 12 Oct |
 | Enrollment backup (Hostinger, taken 10 Oct about 09:24–09:29 server time, downloaded 12 Oct) | **Verified** (details in the next table) | 12 Oct |
-| WordPress production login | Refused four times, the last on 12 Oct when the owner sent the same password again. Stopped to avoid a lockout | 11–12 Oct |
+| WordPress production login | Refused four times with the old password. The owner's new password **worked** at about 15:44 IST (administrator; Site Health 0 critical). It was **refused** at about 15:53 IST, after the session had been signed out, with the credentials file unchanged. The account password was changed in WordPress in between. Not retried | 12 Oct |
+| Plugin 0.6.0 install | **Installed and active** (about 16:30 IST, with the owner's dedicated administrator account). The package hash was checked; WordPress reported "Plugin updated successfully" (0.4.0 → 0.6.0) | 12 Oct |
+| Enrollment after the install | Only the Acadvizen plugin version changed. Site Health 0 critical; 60/60 pages identical to the baseline; enquiry route intact (POST); Course Enquiries, CF7, MetForm and Elementor active | 12 Oct |
+| WordPress → Main connection | **Working (13:57 UTC).** The owner set the `wp-config.php` constants. Settings: "Shared secret: Set"; Main Website → Pages lists 50 Main pages. The "Test connection" button and editor previews need release 10 plus the already-set `WORDPRESS_CMS_API_URL` to be deployed | 12 Oct |
+| Main's shared secret | Equals the credentials-file secret (signed read-only request, HTTP 200). This is the authoritative value for `wp-config.php` | 12 Oct |
+| Two defects found on production, fixes ready (release 10, not deployed) | (1) WordPress's "Test connection" gets 503 from `/slug-check`. (2) WordPress's preview frames are refused (`frame-ancestors 'none'`; `WORDPRESS_CMS_API_URL` missing). LOCAL with production-like settings: Connected; preview allowed only for WordPress; reading/bridge stays off; 56/56 + 16/16 + 15/15 + 210 unit | 12 Oct |
 | Main-only, Enrollment-only, Both publishing from the WordPress admin | **NOT TESTED on production:** needs WordPress access (plugin 0.6.0 and `wp-config.php`). LOCAL 15/15 with the same tool | — |
 
 ## Enrollment backup verification (files kept privately in the owner's Downloads folder, outside Git)

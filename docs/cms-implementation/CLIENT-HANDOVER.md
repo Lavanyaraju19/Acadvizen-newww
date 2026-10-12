@@ -20,7 +20,9 @@
   - the text editor no longer toggles bold on click;
   - security updates.
 
-**Not live yet:** the new WordPress screens. Enrollment still runs plugin 0.4.0, and the new screens are in 0.6.0. Installing it needs a working WordPress administrator password: the saved one was refused four times. The owner sets a new one in 3 minutes (`OWNER-ACTIONS.md` step 2).
+**Installed 12 October:** plugin **0.6.0** on the Enrollment website, with the site preserved (all 60 pages identical, enquiry route intact).
+
+**Connected 12 October:** WordPress → Main works on production; the Main Website screens list the live Main pages. The "Test connection" button and the editor's preview frames start working with release 10 (awaiting the owner's approval). The live publishing tests (Main only, Enrollment only, Both) have not run yet.
 
 **Security warning (not passed):** old commits in the public GitHub history contain:
 - the Supabase service-role key;

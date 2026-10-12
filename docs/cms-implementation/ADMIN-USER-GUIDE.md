@@ -2,7 +2,8 @@
 
 > **Status (12 October 2026).**
 > - The Main website's side of the connection is **live**: release 9, with the signed connection switched on and checked on production.
-> - The Enrollment website still runs plugin **0.4.0**. The **Main Website** screens described below arrive with plugin **0.6.0**, which is installed once the owner restores WordPress access (`OWNER-ACTIONS.md`).
+> - Plugin **0.6.0** is installed on the Enrollment website (12 October), so the **Main Website** screens below exist.
+> - They show "Not connected to the Main Website" until two configuration lines are added (`OWNER-ACTIONS.md` step 3).
 > - Until then, keep editing Main content in `https://www.acadvizen.com/admin`.
 >
 > All screens were tested on a local copy (115 browser checks). The connection itself was tested on the live Main website.

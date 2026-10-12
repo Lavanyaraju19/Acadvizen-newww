@@ -1,3 +1,73 @@
+# Release 10: review sheet (prepared 12 October 2026 evening, NOT committed, pushed or deployed)
+
+Base: `headless-wordpress` at `5d2f64a`. Live is release 9 (`dpl_4YpH3TaN…`, `dde1328`).
+
+## Why
+
+Two production defects, both found while resolving the "configuration mismatch" between `WORDPRESS_CONTENT_ENABLED` and `WORDPRESS_CONTENT_API_ENABLED`. These are **not** a mismatch: they are two independent integrations, and neither may enable the other. Turning on reading would let WordPress/Elementor pages take over Main addresses.
+
+1. **WordPress's "Test connection" button reports "Not connected" even when the connection works.**
+   - It calls `/api/wordpress/slug-check`, which only answered when WordPress *reading* was on.
+   - PRODUCTION answers it with 503 `wordpress_content_disabled` today.
+   - Fix: the slug check (signed, read-only) answers when **either** integration is on.
+2. **Previews inside the WordPress editor are blocked.**
+   - Main allows the WordPress origin to frame `/preview/wordpress/…` only when `WORDPRESS_CMS_API_URL` is set; production doesn't set it (live header: `frame-ancestors 'none'`).
+   - Fix: a **configuration change, not code:** set that variable in Vercel Production.
+   - Tests now prove it does not switch on reading.
+
+## Files
+
+| File | Change |
+|---|---|
+| `lib/wordpress/config.js` | Documents the two integrations. Adds `getContentApiConfig()` (content API) and `getSlugCheckConfig()` (either integration). `getWordPressConfig()` (reading) is unchanged |
+| `app/api/wordpress/content/route.js` | Uses `getContentApiConfig()`. Same behaviour; secrets under 32 characters were already refused |
+| `app/api/wordpress/slug-check/route.js` | Uses `getSlugCheckConfig()` |
+| `tools/verify-content-api-live.mjs` | Reads only the quoted secret, so a comment or joined line in the credentials file is ignored |
+| `tests/unit/wordpress-integration-switches.test.js` (new, 8 tests) | Defaults off; only `"true"` counts; neither switch enables the other; bad URLs and short secrets fail closed; the slug check under every combination (signed, wrong secret, stale, unsigned); the content API refused when only reading is on; each route uses its own switch |
+| `tests/unit/wordpress-preview-framing.test.js` (new, 3 tests) | With the URL: only the preview route may be framed, only by WordPress, and no bridge scripts or frames. Without it, or with an invalid one: nothing may be framed |
+| `tests/wordpress/structured-acceptance.mjs` | An interrupted run now discards its own private draft copy (never the live page) |
+| `docs/cms-implementation/*.md`, `evidence/local-structured/results-202610121319.json` | Corrected Step 7 (set `WORDPRESS_CMS_API_URL`), owner actions, results; the 56/56 LOCAL run |
+
+Not included (owner's own changes, leave unstaged): `.gitignore`, `lib/wordpress/config.js.pre-integration-fix.bak`.
+
+## Commits (prepared locally as three narrow commits; push and deploy only with the owner's approval)
+
+1. **Code and unit tests:**
+   - `lib/wordpress/config.js`
+   - `app/api/wordpress/content/route.js`
+   - `app/api/wordpress/slug-check/route.js`
+   - `tests/unit/wordpress-integration-switches.test.js`
+   - `tests/unit/wordpress-preview-framing.test.js`
+2. **Tooling and the test harness:**
+   - `tools/verify-content-api-live.mjs`
+   - `tests/wordpress/structured-acceptance.mjs`
+3. **Docs and evidence:** `docs/cms-implementation/*`
+
+Not committed (owner's own files): `.gitignore`, `lib/wordpress/config.js.pre-integration-fix.bak`.
+
+**Vercel Production variables (status 12 Oct 13:56 UTC):**
+- `WORDPRESS_CMS_API_URL` is set (by the owner, 13:54 UTC; value verified);
+- `WORDPRESS_CONTENT_ENABLED` is **not** set, and must stay unset.
+
+**Actions that need approval:**
+```
+git push origin headless-wordpress     # never main; creates a Preview only
+```
+Then Deployments → the new `headless-wordpress` Preview (Ready) → ⋯ → **Promote to Production**. That rebuilds with the Production variables, so both fixes go live together.
+
+After the deployment, check:
+
+```
+curl -sI https://www.acadvizen.com/preview/wordpress/pages/x | grep -i frame-ancestors     # 'self' https://enroll.acadvizen.com
+curl -s -X POST -d '{}' https://www.acadvizen.com/api/wordpress/slug-check                 # 401 missing_timestamp (not 503)
+curl -s -o /dev/null -w '%{http_code}\n' https://www.acadvizen.com/api/wordpress/bridge-manifest   # 404: reading stays off
+node tools/verify-content-api-live.mjs
+```
+
+**Undo:** promote `dpl_4YpH3TaN11ijr6gfzfjorRmMxQ4X` again, and remove the variable.
+
+---
+
 # Release 9: review sheet (prepared 12 October 2026, not committed)
 
 Base: branch `headless-wordpress` at `80edb95`. That commit equals the live code (`45d78b9`) plus documentation only, and equals `origin/headless-wordpress`.

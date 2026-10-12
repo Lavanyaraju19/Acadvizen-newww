@@ -39,10 +39,11 @@ Promote is exactly the step Vercel's dashboard offers; the API equivalent is a p
 | # | What | Ready | Blocked by |
 |---|---|---|---|
 | 5 | Supabase migration `202610110001_wordpress_content_request_ids.sql` (replay protection; additive) | **Done, 12 Oct 2026.** Applied as one file and recorded with `migration repair`; verified: RLS on, no policies, no public access | — |
-| 6 | WordPress plugin 0.6.0 on Enrollment (live is still 0.4.0, checked 12 Oct) | Package `dist/acadvizen-cms-0.6.0-45d78b9/acadvizen-cms.zip`, SHA-256 `93d5e3913c7ac1f492ab6062ec88eb7047754afc6f709778c03eceffccdcf8f3`, 24 files, byte-identical to commit `45d78b9`. Enrollment backups verified 12 Oct | WordPress access. The saved password was refused a fourth time on 12 Oct; the owner must set a new one (`OWNER-ACTIONS.md` step 2) or upload the ZIP |
-| 7 | Connect the two sites | **Main side done and live (12 Oct):** both variables set, release 9 deployed, the API is on, and unsigned requests are refused | The `wp-config.php` constants on Enrollment (`OWNER-ACTIONS.md` step 3) |
+| 6 | WordPress plugin 0.6.0 on Enrollment: **DONE 12 Oct about 16:30 IST**, active, Enrollment preserved (60/60 pages identical, Site Health 0 critical). Rollback: Plugins → deactivate, or upload `dist/acadvizen-cms-0.4.0-a795fb0` with "Replace current with uploaded". The text below is history | Package `dist/acadvizen-cms-0.6.0-45d78b9/acadvizen-cms.zip`, SHA-256 `93d5e3913c7ac1f492ab6062ec88eb7047754afc6f709778c03eceffccdcf8f3`, 24 files, byte-identical to commit `45d78b9`. Enrollment backups verified 12 Oct | WordPress access. The saved password was refused a fourth time on 12 Oct; the owner must set a new one (`OWNER-ACTIONS.md` step 2) or upload the ZIP |
+| 7 | Connect the two sites | **Main side done and live (12 Oct):** both variables set, release 9 deployed, the API is on, and unsigned requests are refused. The Enrollment plugin reports "Not connected" until the constants exist | The `wp-config.php` constants on Enrollment: file access is needed (SFTP or hPanel File Manager; `OWNER-ACTIONS.md` step 3) |
 | 8 | Production acceptance | `verify-content-api-live.mjs` **16/16 PRODUCTION** (12 Oct). `verify-wordpress-live.mjs` (Main only, Enrollment only, Both through the WordPress admin) passes LOCAL 15/15 and waits for steps 6 and 7 | WordPress access |
 | 9 | Release 9 (`RELEASE-REVIEW.md`) | **Done, 12 Oct**: live as `dpl_4YpH3TaN…` (see "Releases made") | — |
+| 11 | **Release 10** (`RELEASE-REVIEW.md`): separate switches; the "Test connection" slug check answers when the content API is on; plus the Vercel variable `WORDPRESS_CMS_API_URL` for preview frames | LOCAL with production-like settings: all suites pass. **Not committed, pushed or deployed** | Owner approval (commands in `RELEASE-REVIEW.md`) |
 | 10 | Secret guard and removal of the hard-coded production database password from 12 scripts (`8535030`). No website code changed, so no deployment is needed | Pushed to `headless-wordpress`; the GitHub "Secret scan" workflow passed | — |
 
 ### Release 9 evidence (LOCAL unless stated)
@@ -68,7 +69,12 @@ One random secret of at least 32 characters, the same on both sides. Store it on
    - `WORDPRESS_CMS_WEBHOOK_SECRET` = the secret (type **Sensitive**);
    - `WORDPRESS_CONTENT_API_ENABLED` = `true`.
 
-   Do **not** set `WORDPRESS_CMS_API_URL` or `WORDPRESS_CONTENT_ENABLED`. Those switch on the separate Elementor Render Bridge and WordPress-blog features, which are not part of this release.
+   - **Corrected 12 Oct:** `WORDPRESS_CMS_API_URL` = `https://enroll.acadvizen.com/wp-json/acadvizen-cms/v1` (not secret).
+     - It is **needed** so the WordPress editor may show Main's preview in its desktop, tablet and mobile frames. It sets `frame-ancestors` for `/preview/wordpress/…` only.
+     - Without it, PRODUCTION answers `frame-ancestors 'none'` (checked live), so previews would be blocked inside WordPress.
+     - It does **not** switch on WordPress reading or the Render Bridge (`tests/unit/wordpress-integration-switches.test.js`, `wordpress-preview-framing.test.js`).
+
+   Do **not** set `WORDPRESS_CONTENT_ENABLED`. That alone switches on the separate Render Bridge and WordPress-blog reading, which are not part of this architecture.
    **Status: done 12 Oct.**
 2. **Deploy** production: release 9 through **Promote to Production** (`OWNER-ACTIONS.md` step 4). A promoted preview is rebuilt with the Production variables. Then `POST https://www.acadvizen.com/api/wordpress/content` without a signature must answer **401**, not 503. `tools/verify-content-api-live.mjs` checks this first.
 3. **WordPress** (hPanel → File Manager → `wp-config.php` of enroll.acadvizen.com, above "That's all, stop editing"):
