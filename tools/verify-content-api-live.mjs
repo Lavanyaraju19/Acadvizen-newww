@@ -18,7 +18,11 @@ function readSecret() {
   const file = path.join(os.homedir(), '.acadvizen-production.env')
   if (!fs.existsSync(file)) return ''
   const line = fs.readFileSync(file, 'utf8').split(/\r?\n/).find((l) => l.startsWith('ACADVIZEN_CMS_WEBHOOK_SECRET='))
-  return line ? line.slice(line.indexOf('=') + 1).replace(/^'|'$/g, '') : ''
+  if (!line) return ''
+  // NAME='value' (anything after the closing quote, such as a comment, is ignored) or NAME=value.
+  const raw = line.slice(line.indexOf('=') + 1)
+  const quoted = raw.match(/^'([^']*)'/) || raw.match(/^"([^"]*)"/)
+  return quoted ? quoted[1] : raw.trim().split(/\s+/)[0]
 }
 const SECRET = readSecret()
 

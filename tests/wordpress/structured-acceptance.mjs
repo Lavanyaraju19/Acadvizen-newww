@@ -163,6 +163,9 @@ try {
   await Promise.all([admin.waitForNavigation({ waitUntil: 'domcontentloaded' }), admin.locator('a', { hasText: 'Prepare changes privately' }).click()])
   const draftId = idFromUrl(admin)
   check('B1 "Prepare changes privately" opens a private draft copy', draftId && draftId !== liveId && /private draft copy/i.test(await admin.locator('.notice-info').innerText().catch(() => '')))
+  // If the run stops before publishing, the cleanup discards this private copy (never the live page);
+  // once published it is merged into the live page and no longer exists, so the cleanup skips it.
+  if (draftId && draftId !== liveId) created.push(['pages', draftId])
   const hero = admin.locator('#acv-sections .acv-section').first()
   await hero.locator('summary', { hasText: 'Content' }).click()
   const heading = hero.getByLabel('Heading', { exact: true })
