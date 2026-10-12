@@ -1,10 +1,34 @@
-# Owner actions to finish the production release (12 October 2026)
+# Owner actions (updated 13 October 2026)
 
 These are the steps only the owner can take. Do them in this order. After step 5, tell the engineer, who then runs the live checks in step 6 and reports real results.
 
 Never paste a password or the shared secret into chat, Git, a document or a screenshot.
 
-## Remaining, as of 12 October 2026, 18:40 UTC (current)
+## Remaining, as of 13 October 2026 (current; production re-verified 12 Oct 19:33–19:50 UTC)
+
+**Production is unchanged and healthy:**
+- Release 10 is live;
+- plugin 0.6.1 is installed;
+- "Test connection" says Connected;
+- 314 Main addresses and 60 Enrollment pages are identical to the baselines.
+
+**Your decision, recorded:** existing passwords and keys are not changed, rotated, revoked or deleted. The exposure in public Git history therefore remains an open risk (`FINAL-SECURITY-REPORT.md`).
+
+**Your actions, all optional unless you decide otherwise:**
+1. **Release 11** is committed locally (`f855e33`, `8e27175` + docs) but not pushed. It changes nothing visible; it only makes a later key replacement possible without code changes. To release it: `git push origin headless-wordpress`, then promote the new Preview in Vercel (`FINAL-RELEASE-AND-ROLLBACK.md` §3).
+2. **Decide O-2 to O-6** (`FINAL-OPEN-ISSUES.md`):
+   - keep the content connection on (recommended) or switch it off;
+   - the Enrollment homepage duplicate;
+   - the `syd1` function region;
+   - a staging environment;
+   - WordPress updates via staging.
+3. **Confirm the three plugins** added to Enrollment on 12 Oct (Clarity, WPConsent, Pixel Manager) are intended (O-11).
+4. **Your credentials file:** put the SSH host on its own line (O-10).
+5. **If you later decide to rotate:** follow the optional plan in `FINAL-SECURITY-REPORT.md` §1.
+
+Done by the engineer on 12 Oct 19:47 UTC: the redundant `%TEMP%\acadvizen-production-verify.env` copy was removed. It was confirmed unreferenced, and all its settings are in Vercel.
+
+## Earlier status, as of 12 October 2026, 18:40 UTC
 
 Everything technical is done and verified on production:
 - Release 10 is live (`dpl_8C59rWUwpicv7eaqiqinsRWeKP5T`);

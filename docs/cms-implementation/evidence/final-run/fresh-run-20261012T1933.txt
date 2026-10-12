@@ -1,0 +1,17 @@
+LOCAL fresh full test run, 12 Oct 2026 19:33-19:47 UTC (13 Oct IST), working tree = 0554e5f + release-11 key fallback + new tests
+Local Main: production build of this tree with production switch settings (content API on, WORDPRESS_CMS_API_URL set, Render Bridge off); local WordPress with plugin 0.6.1
+
+[19:33:23Z] local Main 200 (build of the current code)
+[19:33:25Z] unit exit 0 :: ℹ tests 214 ℹ pass 214 ℹ fail 0 
+[19:33:32Z] tsc exit 0
+[19:33:38Z] lint exit 0 :: errors 0 warnings 10
+[19:33:40Z] php exit 0 :: 252 tests, 252 passed, 0 failed | php -l ok files 20
+[19:33:43Z] secrets exit 0 :: No secrets found (all tracked files).
+[19:33:46Z] audit :: 2 high severity vulnerabilities
+[19:35:42Z] structured-acceptance exit 0 :: 56 passed, 0 failed
+[19:35:59Z] permissions-acceptance exit 0 :: 9 passed, 0 failed (http://localhost:8088)
+[19:43:07Z] scheduling-acceptance exit 0 :: 7 passed, 0 failed | http://localhost:3100 | page /cms-test-scheduled-202610121936
+[19:44:37Z] blog targets exit 0 :: 16 passed, 0 failed [LOCAL] | test blog /cms-production-test-blog-202610121943
+[19:46:06Z] page workflow exit 0 :: 17 passed, 0 failed [LOCAL] | test page /cms-production-test-page-202610121944 | click fallbacks 0
+[19:46:08Z] signed API exit 0 :: 16 passed, 0 failed [LOCAL] | test address /cms-production-test-202610121946
+[19:47:50Z] production-equivalent build exit 0 ::  ✓ Compiled successfully in 26.0s

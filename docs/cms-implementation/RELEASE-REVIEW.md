@@ -1,3 +1,30 @@
+# Release 11: review sheet (13 October 2026)
+
+**Status: committed locally; NOT pushed or deployed.** The owner pushes and promotes it (`FINAL-RELEASE-AND-ROLLBACK.md` §3).
+
+**Base:** `0554e5f`, which is on GitHub. Live is Release 10 (`dpl_8C59rWUwpicv7eaqiqinsRWeKP5T`, built from `80134d4`). The only Main application code differences between `80134d4` and release 11 are the three files below.
+
+**Why:**
+- `src/middleware.js` and the two `/admin` notification routes read only `SUPABASE_SERVICE_ROLE_KEY`.
+- With release 11 they prefer `SUPABASE_SECRET_KEY`, as `lib/env.ts` already does. A later key replacement then needs no code change.
+- Production sets only the legacy variable, so **behaviour is unchanged**.
+- By the owner's decision, no key is being changed now.
+
+| Commit | Files | Review notes |
+|---|---|---|
+| `f855e33` | `src/middleware.js`, `app/api/admin/notifications/route.js`, `app/api/admin/notifications/[id]/read/route.js` (1 line each, 3 places, plus a comment); `tests/unit/supabase-key-rotation.test.js` (new); `tests/unit/wordpress-content-api.test.js` (+2 tests) | The guard test fails on the old code. Comments use neutral wording (no mention of the exposure in the public code) |
+| `8e27175` | `tests/wordpress/scheduling-acceptance.mjs`, `tests/wordpress/permissions-acceptance.mjs` | Test tools only; not part of the site build |
+| docs | `docs/cms-implementation/*` | Handover set, fresh evidence |
+
+**Checks:**
+- fresh run 12 Oct 19:33–19:47 UTC: all PASS (`TEST-RESULTS.md` F-11 to F-13);
+- unit rerun after the comment edit: 214/214;
+- pre-commit secret guard: clean on both commits.
+
+**Excluded (the owner's):** `.gitignore`, `lib/wordpress/config.js.pre-integration-fix.bak`.
+
+**Rollback:** promote `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T` again.
+
 # Release 10: review sheet
 
 **Status (12 October 2026, 18:40 UTC): released.** Commit `80134d4` was pushed and its Preview `dpl_HRwdKQX423uCLGUwUsDdTLPd1skC` promoted, so **`dpl_8C59rWUwpicv7eaqiqinsRWeKP5T` is live** (READY 16:04:24 UTC). Every gate below passed first.

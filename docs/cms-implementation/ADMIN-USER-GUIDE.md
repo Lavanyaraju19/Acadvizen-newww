@@ -1,6 +1,6 @@
 # Publishing with the Acadvizen Master Admin — guide for editors
 
-> **Status (12 October 2026, 18:40 UTC): live and connected.**
+> **Status (13 October 2026; re-verified 12 Oct 19:46 UTC): live and connected.**
 > - Main website Release 10; Enrollment plugin **0.6.1**.
 > - **Settings → Test connection** says **Connected**.
 > - The workflows below were proven on the live websites through this admin, using labelled test content that was then removed (`TEST-RESULTS.md`, R10).
@@ -173,6 +173,15 @@ Drafts are never sent to the Main website.
 **Undo a change**
 1. Open Acadvizen Master Admin → **Versions & Rollback**, choose the page, and click **Make live** on an earlier version.
 2. That version stays live until the page is next updated.
+
+**Schedule a page or blog (Main Website screens)**
+1. Set **Status** to **Published**.
+2. Fill in **Publish automatically on** (when it should appear) and, if needed, **Remove automatically on** (when it should disappear).
+3. Click **Save**. The list shows "Scheduled for …" until the time is reached.
+
+- **Times are in the site's time zone, which is UTC.** The field shows "+00:00" next to it. India is UTC+5:30, so subtract 5 h 30 min: 09:00 IST is entered as 03:30.
+- Nothing runs in the background. From that time on, the Main website shows or hides the item the next time someone visits the address.
+- Proven end to end on a local copy (12 Oct, twice: it appeared and disappeared within seconds of the set times). It has not been tried on the live site, because that would publish test content on a timer.
 
 ## Redesigning
 

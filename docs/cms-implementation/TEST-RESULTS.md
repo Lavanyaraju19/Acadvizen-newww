@@ -1,6 +1,32 @@
-# Test results — 10 October 2026, updated 12 October 2026
+# Test results — 10 October 2026, updated 13 October 2026
 
 The statuses used are PASS, PARTIAL, FAIL, BLOCKED and NOT TESTED. The level (Automated, LOCAL, PRODUCTION) is stated on every row.
+
+## 13 October 2026 (IST): final regression and handover run (12 Oct 19:33–19:50 UTC)
+
+Live during the run: deployment `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T` with plugin 0.6.1. No content was created on production. The production admin acceptance from 12 Oct (R10-x below) was reused, because the deployment and plugin are unchanged since then.
+
+| ID | Level | Check | Result | Status |
+|---|---|---|---|---|
+| F-1 | PRODUCTION | 314 Main sitemap URLs vs the pre-Release-10 snapshot | 314 identical, 0 different | PASS |
+| F-2 | PRODUCTION | Published Enrollment pages and posts vs the first baseline and vs the post-Release-10 capture | 60/60 identical, against both | PASS |
+| F-3 | PRODUCTION | Content API: unsigned / wrong secret / stale / wrong purpose / unknown entity / signed read-only list | 401 / 401 / 401 / 400 / 400 / 200 | PASS |
+| F-4 | PRODUCTION | Slug check: free / existing `/blog` / `/a/../b` | no conflict / "reserved" / 400 | PASS |
+| F-5 | PRODUCTION | Preview framing; Render Bridge manifest; plugin `/manifest` unsigned; enquiry route | Enrollment origin on the preview route only, `'none'` elsewhere; 404; 401; POST registered (none sent) | PASS |
+| F-6 | PRODUCTION | `/admin-login` 200; `/admin` signed out = noindex shell without data; notifications API signed out → 401 | As stated | PASS |
+| F-7 | PRODUCTION | Public JavaScript: 30 chunks from 6 pages vs private values and patterns; source maps | 0 findings; `.map` 404 | PASS |
+| F-8 | PRODUCTION | WordPress Settings → Test connection (saved integration session) | "Connected. The Main Website accepted a signed request." (19:46) | PASS |
+| F-9 | PRODUCTION | Plugin provenance: the publicly served plugin files vs package `dd6fcf27…` | 4/4 byte-identical; plugin source unchanged since `2cc2148` | PASS |
+| F-10 | PRODUCTION | TTFB, 3 runs each (19:45) | Main `/` 1.67–1.94 s, `/blog` 1.16–1.54 s, a course page 1.58–1.73 s, all cache MISS via `bom1::iad1`. Enrollment `/` 0.12–0.32 s (LiteSpeed hit) | Measured (O-4) |
+| F-11 | Automated | Unit / TypeScript / ESLint / PHP / `php -l` / secret guard / audit | 214/214 / 0 / 0 errors, 10 warnings / 252/252 / 20 clean / clean / 2 high, pre-existing | PASS |
+| F-12 | LOCAL | Structured 56/56; permissions 9/9; scheduling 7/7; blog tool 16/16; page tool 17/17 (0 fallbacks); API tool 16/16 | All pass | PASS (LOCAL) |
+| F-13 | LOCAL | Production-equivalent build of the current tree | Compiled, exit 0 | PASS |
+
+**Logs and evidence:**
+- `evidence/final-run/fresh-run-20261012T1933.txt`;
+- `evidence/local-structured/results-202610121933.json`.
+
+**Commits created afterwards (local only, not pushed):** `f855e33` (release 11 key fallback + unit tests) and `8e27175` (acceptance tests).
 
 ## 12 October 2026 (evening): Release 10 live, plugin 0.6.1, production acceptance through the real WordPress admin
 
