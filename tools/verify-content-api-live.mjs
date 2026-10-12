@@ -98,6 +98,9 @@ try {
   const second = await post(edit)
   check('edit saved', first.status === 200, `HTTP ${first.status} ${first.body.error || ''}`)
   check('the same signed change sent again is refused (durable replay protection)', second.status === 409 && second.body.error === 'duplicate_request', `HTTP ${second.status} ${second.body.error || ''}`)
+} catch (error) {
+  // Never let an unexpected error look like a pass (the exit in finally would otherwise hide it).
+  check('run finished without an unexpected error', false, String(error.message || error).split(/\r?\n/)[0].slice(0, 200))
 } finally {
   if (id) {
     const trashed = await api({ op: 'trash', entity: 'pages', id })

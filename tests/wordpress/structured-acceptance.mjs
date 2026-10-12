@@ -74,7 +74,8 @@ async function login(context, user, pass) {
   return page
 }
 const notice = async (page) => (await page.locator('.notice-success p, .notice-error p').first().innerText().catch(() => '')).trim()
-async function saveForm(page) { await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('#acv-main-form input[type=submit]').click()]); return notice(page) }
+// Submits the form exactly once (see acceptanceKit.mjs saveForm).
+async function saveForm(page) { await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 180000 }), page.locator('#acv-main-form input[type=submit]').dispatchEvent('click')]); return notice(page) }
 const idFromUrl = (page) => new URL(page.url()).searchParams.get('id')
 /** Saves one section card and returns what the editor reports (success or the Main Website's error). */
 async function saveSection(card) {
@@ -84,7 +85,8 @@ async function saveSection(card) {
   return { ok: (await status.getAttribute('class')).includes('--ok'), text: await status.innerText() }
 }
 
-const browser = await chromium.launch()
+// Keeps Chromium painting on Windows (see acceptanceKit.mjs launch()).
+const browser = await chromium.launch({ args: ['--disable-gpu', '--disable-features=CalculateNativeWinOcclusion'] })
 // Headless Chromium sometimes stops painting wp-admin tabs (seen with Elementor's admin scripts). A
 // normal click then waits for a stable, painted element forever. Clicks are therefore tried normally
 // first and, if that does not happen within 4 s, sent as the same DOM click event. Counted in the results.

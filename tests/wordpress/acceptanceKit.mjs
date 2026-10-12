@@ -65,7 +65,9 @@ export async function adminShot(page, file) {
  * Clicks and ticks are tried normally first, then sent as the same DOM event (counted).
  */
 export async function launch() {
-  const browser = await chromium.launch()
+  // On Windows, Chromium can treat its window as hidden ("occluded") and stop painting it; that is
+  // what stalled clicks and screenshots in wp-admin. These switches keep it painting.
+  const browser = await chromium.launch({ args: ['--disable-gpu', '--disable-features=CalculateNativeWinOcclusion'] })
   const counter = { fallbacks: 0 }
   const probe = await (await browser.newContext()).newPage()
   const proto = Object.getPrototypeOf(probe.locator('body'))
@@ -142,5 +144,7 @@ export async function enrollmentCopiesLeft(page, title) {
 }
 
 export const notice = async (page) => (await page.locator('.notice-success p, .notice-error p').first().innerText().catch(() => '')).trim()
-export async function saveForm(page) { await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('#acv-main-form input[type=submit]').click()]); return notice(page) }
+// Submits the form exactly once (a retried click could submit the reloaded form a second time on a
+// slow server) and allows for slow production responses.
+export async function saveForm(page) { await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 180000 }), page.locator('#acv-main-form input[type=submit]').dispatchEvent('click')]); return notice(page) }
 export async function follow(page, locator) { await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), locator.click()]); return notice(page) }
