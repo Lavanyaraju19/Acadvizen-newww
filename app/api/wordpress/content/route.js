@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSupabaseClient } from '../../../../lib/supabaseServer'
 import { createRequestClaimer, handleContentRequest } from '../../../../lib/wordpress/contentApi'
+import { getContentApiConfig } from '../../../../lib/wordpress/config'
 import { publishPage, startPageDraft } from '../../../../lib/pageDrafts'
 import { revalidateCmsMutation } from '../../cms/_utils'
 
@@ -16,10 +17,7 @@ export async function POST(request) {
   const { status, body } = await handleContentRequest({
     rawBody: await request.text(),
     headers: request.headers,
-    config: {
-      enabled: process.env.WORDPRESS_CONTENT_API_ENABLED === 'true',
-      secret: String(process.env.WORDPRESS_CMS_WEBHOOK_SECRET || ''),
-    },
+    config: getContentApiConfig(),
     deps: {
       db,
       claimRequest: db ? createRequestClaimer(db) : null,
