@@ -13,24 +13,28 @@
 - The website runs a patched Next.js version, which closes a critical security advisory.
 - Menu links can no longer multiply.
 - Editing a draft no longer disturbs the live page's address or SEO.
-- The Main website already has the part that receives changes from WordPress, switched off until the steps below. An unpublished test tool page is now correctly hidden.
+- An unpublished test tool page is now correctly hidden.
+- **Release 9 (12 October), live and checked on production:**
+  - the Main website now **receives changes from WordPress**, through a signed connection (16/16 live checks);
+  - noindex pages stay out of the sitemap;
+  - the text editor no longer toggles bold on click;
+  - security updates.
 
-**Not live yet:**
-- The new WordPress screens: the Enrollment website runs plugin 0.4.0; the new screens are in 0.6.0.
-- The connection between the two websites.
+**Not live yet:** the new WordPress screens. Enrollment still runs plugin 0.4.0, and the new screens are in 0.6.0. Installing it needs a working WordPress administrator password: the saved one was refused four times. The owner sets a new one in 3 minutes (`OWNER-ACTIONS.md` step 2).
 
-These need things only the owner can give (below).
+**Security warning (not passed):** old commits in the public GitHub history contain:
+- the Supabase service-role key;
+- the production database password;
+- the working Main admin password.
 
-**Security warning:** a Main database master key is visible in the public GitHub history. The owner decided not to change it for now. Until it is changed, anyone who finds it can read and change the Main website's data. Changing it is strongly recommended (`PRODUCTION-READINESS-AUDIT.md`).
+They are no longer in the current files, and a guard now blocks new ones. But the old values stay readable until each one is changed. The owner decided not to rotate the Supabase key for now. The other two can be reset without affecting the websites (`FINAL-EVIDENCE-REPORT.md`, "Security").
 
-**The exact owner steps are in `OWNER-ACTIONS.md`. Every result, labelled PRODUCTION or LOCAL, is in `FINAL-EVIDENCE-REPORT.md`.** The Vercel side of the connection was set on 12 October; it switches on with the next deployment.
+**The exact owner steps are in `OWNER-ACTIONS.md`. Every result, labelled PRODUCTION or LOCAL, is in `FINAL-EVIDENCE-REPORT.md`.**
 
-**Overall status (12 October): implemented, and waiting for specific owner actions.** It is not ready for daily use from WordPress yet. Three things are needed:
-- WordPress access, or a plugin upload by the owner (step 4);
-- the shared secret on Vercel plus a redeploy, and in `wp-config.php` (step 6);
-- ~~an Enrollment backup~~: **verified 12 Oct**. The files and database backups of 10 Oct are complete and valid, and kept privately outside Git.
-
-Three local fixes are also waiting for the owner's commit and deploy (`PRODUCTION-RELEASE-AND-ROLLBACK.md`, release 9).
+**Overall status (12 October): the Main side is live and verified; not client-ready yet.**
+- Enrollment backups: **verified**.
+- Release 9: **live**.
+- What remains: a working WordPress password. With it, the engineer installs plugin 0.6.0, sets the `wp-config.php` constants and runs the live Main-only, Enrollment-only and Both tests.
 
 ## How to use it (once connected)
 
@@ -46,6 +50,37 @@ Step-by-step guide for editors: `ADMIN-USER-GUIDE.md`. It covers:
 - checking that a change is live;
 - restoring an earlier version;
 - what to do when something fails.
+
+## Quick guide for the client (plain language)
+
+Everything below is done in the Enrollment WordPress admin. Routine content work does **not** need the Main website's separate `/admin` dashboard. That dashboard is only for leads, enquiries, students and users.
+
+1. **Sign in.**
+   - Go to `https://enroll.acadvizen.com/wp-admin/` and sign in with your own WordPress account.
+   - **Lost access?** Use **Lost your password?** on the sign-in page. That only works if the account's email address is one you can read, so keep it up to date. Otherwise, the person who holds the Hostinger account opens hPanel → Websites → enroll.acadvizen.com → **WP Admin** (it signs in without a password) → **Users** → your account → **Set New Password**.
+2. **Edit the Main website.** Go to **Acadvizen Master Admin → Main Website** and pick a tab:
+   - Pages, Blogs, Courses, Homepage, Header and footer, Menus, City and service pages, Media library or SEO;
+   - then **Filter**, then **Edit**.
+
+   **Edit the Enrollment website** as before, in **Pages** with Elementor.
+3. **Choose where a blog appears.** Set **Publish To**: **Main Website**, **Enrollment Website** or **Both Websites**, then **Save**. With Both, each website shows it in its own design.
+4. **Preview and publish safely.**
+   1. On a live page, click **Prepare changes privately**. Visitors keep seeing the live page.
+   2. Edit, then click **Preview (desktop, tablet, mobile)**.
+   3. When it's right, set **Status** to **Published** and **Save**.
+
+   Nothing reaches visitors before that last step.
+5. **SEO.**
+   - Each page and blog has an SEO title, description and **noindex** ("hide from search engines"). A noindex page is also left out of the sitemap.
+   - The **SEO** tab overrides these for any address.
+6. **When something fails.**
+   - A red message at the top says what went wrong, for example that the address is already used, a link is broken, or the Main website couldn't be reached. The live website keeps the previous version.
+   - **Retrying is safe:** press **Save** again. The same change is never applied twice, and a second page with the same address is refused, so retries never create duplicates.
+   - For a page with a publish problem, **Publishing** shows the reason and a **Retry** button.
+7. **Undo and remove.**
+   - **Earlier versions → Restore** brings back any of the last 20 saves.
+   - **Trash** takes something off the website at once. **Restore** in the trash brings it back as a draft.
+8. **Who to contact.** The website administrator, who is the owner of the Hostinger, Vercel and Supabase accounts, for access problems or anything this guide doesn't cover. The full editor guide is `ADMIN-USER-GUIDE.md`.
 
 ## What you need to do, in order
 
@@ -86,8 +121,8 @@ Step-by-step guide for editors: `ADMIN-USER-GUIDE.md`. It covers:
 
 ## Can the client use it today?
 
-**No.** On the live websites the new screens are not installed yet, and the connection is not switched on. Today the client keeps editing:
+**Not yet for Main content from WordPress.** The Main website's side is switched on and checked live, but the new WordPress screens (plugin 0.6.0) cannot be installed until a working WordPress password exists. Today the client keeps editing:
 - Main content in `www.acadvizen.com/admin`;
 - Enrollment in WordPress, as before.
 
-Everything is ready for steps 2–7. After them, the client edits both websites from WordPress.
+Once the owner sets the password, the remaining work takes about an hour: install the plugin, add the two `wp-config.php` lines, then run the live Main-only, Enrollment-only and Both tests and clean up. After that, the client edits both websites from WordPress.

@@ -8,23 +8,35 @@ A LOCAL pass is never counted as a live result.
 
 ## Verdict
 
-**Implemented, and waiting for specific owner actions. Not yet production-ready.**
+**Main side live and verified on production. NOT client-ready yet.**
 
-The required live tests (Main only, Enrollment only and Both publishing from WordPress) cannot run until all of the following are done:
-- plugin 0.6.0 is installed on Enrollment;
-- the shared secret is in `wp-config.php`;
-- Main is deployed with the content API switched on.
+The WordPress side is blocked by one external dependency: a working WordPress administrator password.
+- The saved password was refused a fourth time on 12 Oct ("password … incorrect").
+- No further attempts were made.
+- Until the owner sets a new password (`OWNER-ACTIONS.md` step 2), these cannot be done or tested on the live sites:
+  - plugin 0.6.0 installation;
+  - the `wp-config.php` constants;
+  - publishing from WordPress to Main only, Enrollment only and Both.
 
-These need the owner (`OWNER-ACTIONS.md` steps 1–4). They are not claimed as done.
+They are not claimed as done.
 
-**Security is not passed.** A Supabase service-role key is exposed in the public GitHub history, and by the owner's decision it has not been rotated. Anyone who finds it can read and change all Main data, including leads.
+**Security is not passed.** Old commits in the public GitHub history (every branch, including `main`) contain production credentials:
+- the Supabase service-role key (not rotated, by the owner's decision);
+- the production database password;
+- the working Main admin password;
+- another admin password.
+
+None is in the current files any more, and a guard now blocks new ones. But history is public, so anyone can still read these values. Each one stays a live risk until it is changed. See "Security" below.
 
 ## PRODUCTION evidence
 
 | Area | Result | Date |
 |---|---|---|
-| Live Main deployment | `dpl_EuZnhizEMjYzDATZg45okXUgs1WY` (commit `45d78b9`, release 4) | 12 Oct |
-| Content API state | 503 `content_api_disabled` (off until the next deployment) | 12 Oct |
+| Live Main deployment | `dpl_4YpH3TaN11ijr6gfzfjorRmMxQ4X` = release 9 (commit `dde1328`, promoted from Preview `dpl_9HgzJNtZ…`). The first promotion failed with `git_info_fail` without touching live; the retry succeeded. Rollback target: `dpl_EuZnhizE…` | 12 Oct |
+| Release 9 compared with the previous live site (production data, before promotion) | 314/314 sitemap URLs identical in status, title, description, robots, canonical and og:url; 20 key-page screenshots differ by 0.000–0.094 % of pixels | 12 Oct |
+| After promotion | 314/314 sitemap URLs answer 200; `verify-production.mjs` 27 passed / 9 failed, unchanged (known Enrollment issues) | 12 Oct |
+| Content API (`verify-content-api-live.mjs`) | **16/16 PRODUCTION.** Unsigned, wrong-secret and stale requests refused (401); signed request accepted. Main-only publishing of a disposable noindex page: draft not public → published with its section → noindex → not in the sitemap → edit → the same signed change sent again refused (409) → removed → 404 → 0 rows left | 12 Oct |
+| Editor fix on production `/admin/popups` | One click plus typing gives exactly the typed text (Bold no longer toggles). Nothing was saved | 12 Oct |
 | Vercel Production variables | `WORDPRESS_CMS_WEBHOOK_SECRET` (Sensitive) and `WORDPRESS_CONTENT_API_ENABLED` set. No other variable was changed | 12 Oct |
 | Replay-protection table (migration `202610110001`) | Applied and recorded. RLS on, 0 policies, no access for `anon` or `authenticated`. `db push` was not used | 12 Oct |
 | Supabase backups | 8 daily backups completed, latest 11 Oct 18:44 UTC. No point-in-time recovery; storage files are not included | 12 Oct |
@@ -34,7 +46,8 @@ These need the owner (`OWNER-ACTIONS.md` steps 1–4). They are not claimed as d
 | Releases 1–4 | Live and verified: 314/314 sitemap URLs answer 200 | 11–12 Oct |
 | `tools/verify-production.mjs` after release 4 | 27 passed, 9 failed. All 9 failures are known Enrollment issues: the sitemaps, three redirects, `/contact-us/` and the logo link | 12 Oct |
 | Enrollment backup (Hostinger, taken 10 Oct about 09:24–09:29 server time, downloaded 12 Oct) | **Verified** (details in the next table) | 12 Oct |
-| WordPress production login | Refused three times. Not retried | 11–12 Oct |
+| WordPress production login | Refused four times, the last on 12 Oct when the owner sent the same password again. Stopped to avoid a lockout | 11–12 Oct |
+| Main-only, Enrollment-only, Both publishing from the WordPress admin | **NOT TESTED on production:** needs WordPress access (plugin 0.6.0 and `wp-config.php`). LOCAL 15/15 with the same tool | — |
 
 ## Enrollment backup verification (files kept privately in the owner's Downloads folder, outside Git)
 
@@ -76,13 +89,39 @@ Rollback readiness, from least to most disruptive:
 | Test runs left the Enrollment copy of their test blog behind | Test tools | Fixed. The 7 old LOCAL leftovers are removed |
 | The live replay check used a read, which is never claimed | New live tool | Fixed. It now replays a change, which is refused with 409 |
 
+## Security (12 October 2026)
+
+Every branch and tag of the repository was scanned, along with every tracked file. Values were compared against the private credentials file and `.env.local`, plus secret patterns. Only names, commits and files were printed.
+
+| Credential | In the current files | In public history | Status |
+|---|---|---|---|
+| Supabase service-role key | No | Commits `07fb544`, `e0207ee` (3 scripts), on all 17 branches including `main` | **UNRESOLVED.** Full read and write access to Main data, including leads. Not rotated, by the owner's instruction |
+| Production database password (project `hhfc…`) | **Removed 12 Oct** (`8535030`): it was in 12 scripts, 6 of them inside connection URLs | Commit `e0207ee` | **UNRESOLVED until it is reset.** Direct database access. Resetting it does not change the API keys and does not affect the websites, which do not use it |
+| Main admin password (working account) | No | 4 commits (`5dd9b15` … `e0207ee`) | **UNRESOLVED until it is changed.** Gives access to `www.acadvizen.com/admin` |
+| Another admin password (`ADMIN_PASSWORD` in `.env.local`) | No | 3 commits | Change it if that account still exists |
+| Supabase anon key | No | 4 commits | Public by design (it is in every page). Not a risk |
+| The new content-API shared secret | No | No | Clean. It exists only in the private credentials file and in Vercel (Sensitive) |
+
+**Put in place:**
+- `tools/check-secrets.mjs` refuses keys, tokens, private keys, hard-coded passwords and service keys, and environment files. It prints no values.
+- `.githooks/pre-commit` (`npm run hooks:install`; installed in this clone) runs the guard on every commit. It refused a commit during setup, so it was seen working.
+- `.github/workflows/secret-scan.yml` runs it on every push and pull request. It passed on `8535030`.
+- `.env*` files are ignored by Git.
+
+**Not done, and why:**
+- **Rewriting history** would need force-pushing every branch, including `main` (forbidden). It would not remove copies already cloned, forked or cached either. The values must be treated as public.
+- **Rotating any credential** needs the owner's decision.
+
 ## Remaining, with owner
 
 1. ~~Enrollment backup~~: done and verified on 12 Oct.
-2. WordPress access, or the owner uploads plugin 0.6.0 (2).
-3. The `wp-config.php` constants (3).
-4. Commit, push and Promote release 9 (4). Then the engineer runs the live tools and the production acceptance, and reports PRODUCTION results.
-5. Strongly recommended:
-   - rotate the exposed Supabase service-role key;
-   - change the passwords shared in chat;
-   - fix the known Enrollment issues (sitemaps, redirects, `/contact-us/`, logo link).
+2. **Set a new WordPress password** for the administrator account and save it in the credentials file (`OWNER-ACTIONS.md` step 2). That is all that blocks:
+   - installing plugin 0.6.0;
+   - the `wp-config.php` constants (or the owner adds them, step 3);
+   - the live Main-only, Enrollment-only and Both tests.
+3. ~~Release 9~~: live and verified on 12 Oct.
+4. **Security decisions:**
+   - reset the production database password and the Main admin password (strongly recommended; neither is a Supabase API key);
+   - rotate the service-role key (strongly recommended; on hold by the owner's instruction);
+   - change the passwords shared in chat, including the WordPress password just sent.
+5. Fix the known Enrollment issues: sitemaps, redirects, `/contact-us/` and the logo link.

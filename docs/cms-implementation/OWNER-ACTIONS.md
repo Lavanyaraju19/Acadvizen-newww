@@ -35,7 +35,12 @@ The backup listed in hPanel is itself a restore point (Backups → Restore). The
 
 ## 2. Give the engineer WordPress access, or install the plugin yourself (10 minutes)
 
-The WordPress password given earlier was refused three times. It will not be tried again. The account's email address should be changed to one you can read, so its password can be reset. Choose **one** of these two options.
+**This is the one remaining blocker.** On 12 Oct, the password sent again in chat was compared with the saved one: it is the same. One more attempt was made and refused ("The password you entered … is incorrect"). That is four refusals in all, so it will not be tried again.
+
+Quickest fix (about 3 minutes):
+1. hPanel → **Websites** → enroll.acadvizen.com → **WP Admin**. This signs you in without a password.
+2. **Users → Profile → Set New Password**, then **Update Profile**.
+3. Put the new password in `C:\Users\HP\.acadvizen-production.env` as `WP_PROD_PASS='…'`. Then tell the engineer "password updated". Not in chat. The account's email address should be changed to one you can read, so its password can be reset. Choose **one** of these two options.
 
 **Option A, preferred: an engineer account.**
 1. While signed in to WordPress → **Users** → **Add New User**.
@@ -71,7 +76,14 @@ It does not write `.htaccess`, and it does not change Elementor pages, the theme
    Replace `PASTE-THE-SECRET-HERE` with the copied value, keeping the quotes. **Save.**
 4. Reload any WordPress admin page. If it shows an error, the lines have a typing mistake. Remove the two lines and save to undo.
 
-## 4. Release Main (commit, push, deploy): your manual step (15 minutes)
+## 4. Release Main (commit, push, deploy)
+
+**Done on 12 Oct**, under the owner's Option 2 approval:
+- commit `dde1328` was pushed to `headless-wordpress` (never `main`);
+- the Preview was checked, then promoted;
+- live is `dpl_4YpH3TaN…`, and the content API is on and verified.
+
+The steps below are kept for future releases.
 
 This one deployment does two things: it releases the reviewed fixes (`RELEASE-REVIEW.md`), and it switches the content API on, using the variables already set.
 
@@ -107,6 +119,10 @@ None of these checks touches leads or sends an enquiry. Results are reported as 
 
 ## 7. Security (strongly recommended)
 
+- **Also in the public history (found 12 Oct):** the production database password and the working Main admin password. Neither is a Supabase API key, and resetting them does not affect the websites.
+  - **Database password:** Supabase → Project Settings → Database → Reset database password.
+  - **Main admin password:** `www.acadvizen.com/admin` → your profile.
+  - Then keep the new values out of chat. Scripts read the database password from `SUPABASE_DB_PASSWORD`.
 - **Unresolved serious risk:** the Supabase service-role key is in the public GitHub history. Anyone who finds it can read and change all Main data, including leads. By your decision it has not been rotated. Rotating it is the single most important security step left: Supabase → Project Settings → API → roll the service role key, then update it in Vercel and redeploy.
 - Change the passwords shared in chat during the project: Hostinger, WordPress, FTP and the Vercel login.
 - A VS Code AI extension (Blackbox) keeps a compressed copy of the project's `.env.local` in its own storage. Consider removing it, or clearing that extension's storage.

@@ -11,6 +11,12 @@ Every release goes out on its own, from a branch that contains only what is bein
 | 4 | Main side of the central CMS. It includes:<ul><li>the WordPress content API, **switched off**;</li><li>the homepage lists and navigation refactors (no visible change);</li><li>city page feature cards;</li><li>the unpublished-tool page fix;</li><li>durable replay protection.</li></ul> | `release/cms-main`, `45d78b9` | `dpl_EuZnhizEMjYzDATZg45okXUgs1WY` (**live**, 12 Oct 2026) | <ul><li>All sitemap URLs answer 200.</li><li>`verify-production.mjs`: **27 passed, 9 failed** (the tool page check now passes; the rest are the known Enrollment issues).</li><li>The content API answers 503 `content_api_disabled`.</li><li>No error logs.</li><li>Before release, against production data: 314/314 URLs answered 200. Ten key pages, at desktop and phone width, differed from the live site by 0.001–0.098 % of pixels (/tools compared once its tool grid had loaded).</li></ul> |
 | 3 | Menu links no longer multiply across page views; a draft copy no longer changes the live page's address or SEO before publishing | `release/admin-fixes`, `0cb4886` | `dpl_9ZdvT6jSoj6pauZaSmXUtc9ufSzt` | <ul><li>314/314 URLs answer 200.</li><li>Navigation links appear once each over repeated requests.</li><li>Same baseline (26/10).</li><li>No error logs.</li></ul> |
 
+| 9 | Sitemap leaves out noindex pages; rich-text editor fix; dependency security updates; **content API switched on**; live verification tools | `headless-wordpress`, `dde1328` (Preview `dpl_9HgzJNtZZAEvNpnqSopxMnngaNWQ`, promoted) | `dpl_4YpH3TaN11ijr6gfzfjorRmMxQ4X` (**live**, 12 Oct 2026) | <ul><li>Before promotion, the release build ran on production data: 314/314 sitemap URLs identical to live in status, title, description, robots, canonical and og:url. Twenty key-page screenshots differed from live by 0.000–0.094 % of pixels (`/tools` compared once its 67-tool grid had loaded).</li><li>After promotion: 314/314 URLs answer 200; `verify-production.mjs` 27/9, unchanged; the API refuses unsigned requests (401).</li><li>`verify-content-api-live.mjs`: **16/16 PRODUCTION**.</li><li>Editor fix checked on production `/admin/popups` (nothing saved).</li></ul> |
+
+Release 9's first promotion failed with `git_info_fail` (Vercel could not read the commit from GitHub) before building. The live site was not affected: `www` stayed on `dpl_EuZnhizE…`. One retry succeeded, as with release 3.
+
+The Preview environment has no Supabase variables, so a Preview cannot show database content. A promoted Preview is rebuilt with the Production variables, which is why every release is checked on production data before promotion.
+
 Before each release, its build ran against **production data** (read-only page loads). It answered all 314 sitemap URLs with 200, and unknown addresses with 404, exactly like the live site.
 
 Release 3's first deployment attempt was refused by Vercel with `git_info_fail` before building. That was a transient failure to read the commit from GitHub: the commit was on GitHub, and the GitHub API answered. One retry succeeded. Nothing was released by the failed attempt.
@@ -19,7 +25,7 @@ Release 3's first deployment attempt was refused by Vercel with `git_info_fail` 
 
 | Situation | Step | Effect |
 |---|---|---|
-| The live Main website misbehaves after a release | Vercel → project `acadvizen-newww-ua9d` → Deployments → the previous deployment from the table above → **Promote to Production** | The previous release serves again within a minute. Data is not touched |
+| The live Main website misbehaves after a release | Vercel → project `acadvizen-newww-ua9d` → Deployments → the previous deployment from the table above → **Promote to Production**. For release 9, that is `dpl_EuZnhizEMjYzDATZg45okXUgs1WY` (release 4, content API off) | The previous release serves again within a minute. Data is not touched |
 | Roll back to before all four releases | Promote `dpl_ApR7YEAzC1r1bJfA3EiEdvAnqo56` (commit `d48492b`) | The site as it was on 10 October |
 | The WordPress plugin misbehaves | WordPress → Plugins → Deactivate "Acadvizen Master Admin", or upload the previous package from `dist/` | Main content is not affected (it lives in Supabase) |
 | The WordPress content API misbehaves (once enabled) | Vercel: remove `WORDPRESS_CONTENT_API_ENABLED` and redeploy (or Promote the previous deployment) | The API answers 503; nothing can change Main content from WordPress |
@@ -33,10 +39,11 @@ Promote is exactly the step Vercel's dashboard offers; the API equivalent is a p
 | # | What | Ready | Blocked by |
 |---|---|---|---|
 | 5 | Supabase migration `202610110001_wordpress_content_request_ids.sql` (replay protection; additive) | **Done, 12 Oct 2026.** Applied as one file and recorded with `migration repair`; verified: RLS on, no policies, no public access | — |
-| 6 | WordPress plugin 0.6.0 on Enrollment (live is still 0.4.0, checked 12 Oct) | Package `dist/acadvizen-cms-0.6.0-45d78b9/acadvizen-cms.zip`, SHA-256 `93d5e3913c7ac1f492ab6062ec88eb7047754afc6f709778c03eceffccdcf8f3`, 24 files, byte-identical to commit `45d78b9` | An Enrollment backup kept safely, then WordPress access or the owner's own upload (`OWNER-ACTIONS.md` steps 1–2) |
-| 7 | Connect the two sites | **Vercel side done 12 Oct:** both variables set on Production (the secret as Sensitive), and the secret saved only in the private credentials file. The live API still answers 503 until the next deployment | `wp-config.php` constants (owner, `OWNER-ACTIONS.md` step 3) and a production deployment (step 4) |
-| 8 | Production acceptance | `tools/verify-content-api-live.mjs` (16 checks) and `tools/verify-wordpress-live.mjs` (15 checks): both pass on LOCAL and both refuse to run until the API is on | Steps 6, 7 and 9 |
-| 9 | Release 9 (`RELEASE-REVIEW.md`): sitemap leaves out noindex pages; rich-text editor fix; dependency security updates; live verification tools; tests and docs | All checks below pass on LOCAL; no secrets or archives in the change set | The owner's commit, push and deploy (`OWNER-ACTIONS.md` step 4) |
+| 6 | WordPress plugin 0.6.0 on Enrollment (live is still 0.4.0, checked 12 Oct) | Package `dist/acadvizen-cms-0.6.0-45d78b9/acadvizen-cms.zip`, SHA-256 `93d5e3913c7ac1f492ab6062ec88eb7047754afc6f709778c03eceffccdcf8f3`, 24 files, byte-identical to commit `45d78b9`. Enrollment backups verified 12 Oct | WordPress access. The saved password was refused a fourth time on 12 Oct; the owner must set a new one (`OWNER-ACTIONS.md` step 2) or upload the ZIP |
+| 7 | Connect the two sites | **Main side done and live (12 Oct):** both variables set, release 9 deployed, the API is on, and unsigned requests are refused | The `wp-config.php` constants on Enrollment (`OWNER-ACTIONS.md` step 3) |
+| 8 | Production acceptance | `verify-content-api-live.mjs` **16/16 PRODUCTION** (12 Oct). `verify-wordpress-live.mjs` (Main only, Enrollment only, Both through the WordPress admin) passes LOCAL 15/15 and waits for steps 6 and 7 | WordPress access |
+| 9 | Release 9 (`RELEASE-REVIEW.md`) | **Done, 12 Oct**: live as `dpl_4YpH3TaN…` (see "Releases made") | — |
+| 10 | Secret guard and removal of the hard-coded production database password from 12 scripts (`8535030`). No website code changed, so no deployment is needed | Pushed to `headless-wordpress`; the GitHub "Secret scan" workflow passed | — |
 
 ### Release 9 evidence (LOCAL unless stated)
 

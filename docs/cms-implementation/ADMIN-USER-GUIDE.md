@@ -1,12 +1,11 @@
 # Publishing with the Acadvizen Master Admin — guide for editors
 
-> **Status (10 October 2026, 15:05 UTC).** On the live Enrollment website the plugin (Acadvizen Master Admin 0.4.0) **is installed and active**, so the screens below exist there.
+> **Status (12 October 2026).**
+> - The Main website's side of the connection is **live**: release 9, with the signed connection switched on and checked on production.
+> - The Enrollment website still runs plugin **0.4.0**. The **Main Website** screens described below arrive with plugin **0.6.0**, which is installed once the owner restores WordPress access (`OWNER-ACTIONS.md`).
+> - Until then, keep editing Main content in `https://www.acadvizen.com/admin`.
 >
-> **Publishing to the Main website is not switched on yet.** A page set to "Main Website" or "Both Websites" will not appear on www.acadvizen.com until your developer finishes the connection (`CLIENT-HANDOVER.md`, "What you need to do"). Until then:
-> - use "Enrollment Website" for real pages;
-> - keep editing the existing Main pages and blogs in `https://www.acadvizen.com/admin`.
->
-> Everything here was tested on a local copy and on the staging copy (`docs/ACADVIZEN_VISUAL_BUILDER.md`).
+> All screens were tested on a local copy (115 browser checks). The connection itself was tested on the live Main website.
 
 ## Where to work
 
@@ -21,10 +20,7 @@
 |---|---|
 | Enrollment pages (53) and posts (7) | WordPress → **Pages** / **Posts** (search box at the top right) |
 | Images used on Enrollment | WordPress → **Media** (786 files) |
-| Main website blogs (86 published), pages (134), tools (67), locations | `https://www.acadvizen.com/admin` → Blogs / Pages / Tools / Locations, **until the one-time import is run** |
-| After the import | WordPress → Acadvizen Master Admin → **Main Blogs**, **Tools**, **Locations**, and **Pages**. Each record keeps its www.acadvizen.com address |
-
-An empty "Main Blogs" list today does **not** mean the blogs are gone. They are still in the Main website's database and online, and they appear in WordPress once the import has run.
+| Main website pages, blogs, tools, courses, homepage, header, footer, menus, city and service pages, images, SEO | WordPress → **Acadvizen Master Admin → Main Website** (plugin 0.6.0). These screens edit the Main website's own records directly; nothing is imported or copied, and each record keeps its www.acadvizen.com address |
 
 ## Editing the Main website's existing content: Acadvizen Master Admin → Main Website
 
@@ -220,7 +216,6 @@ To undo, do the same the other way round. Alternatively, redesign the live page 
 ## What still needs a developer
 
 - New features or new kinds of data (anything that is not a page, a design or a record of an existing type).
-- Moving the current Main website pages into WordPress. This is a one-time import, and it has not been done on the live site yet. Until then, edit the existing Main pages in `www.acadvizen.com/admin`.
 - The optional website settings (separate headers and footers per website, sitemap clean-up, login logo).
 
 ## What the status messages mean
