@@ -1,4 +1,4 @@
-# Final evidence report: Acadvizen central CMS (12 October 2026)
+# Final evidence report: Acadvizen central CMS (updated 12 October 2026, 18:40 UTC)
 
 Every result below is labelled by where it ran:
 - **PRODUCTION:** the live websites and database.
@@ -6,7 +6,56 @@ Every result below is labelled by where it ran:
 
 A LOCAL pass is never counted as a live result.
 
-## Verdict
+## Verdict (12 October 2026, 18:40 UTC)
+
+**The CMS works end to end on production. Overall status: NOT CLIENT-READY**, for one reason only: an unresolved **critical security risk**. Production credentials (the Supabase service-role key, the production database password and the Main admin password) are readable in public Git history and have not been changed. Rotating the service-role key is on hold by the owner's instruction. Once those credentials are changed, nothing else blocks client use.
+
+Proven on production, through the real WordPress admin:
+- Main only, Enrollment only and Both publishing, including updates;
+- create, draft, preview, publish, private copy, update, address clash, unpublish and delete;
+- cleanup of every test item on both sites;
+- no change to the 314 Main URLs or the 60 Enrollment pages.
+
+Details: "Release 10 and production acceptance" below.
+
+## Release 10 and production acceptance (PRODUCTION, 12 October 2026)
+
+| Item | Evidence |
+|---|---|
+| Main deployment | **`dpl_8C59rWUwpicv7eaqiqinsRWeKP5T`**, commit **`80134d4`**, READY at 16:04:24 UTC, serving `www.acadvizen.com` and `acadvizen.com`. Promoted from the reviewed Preview `dpl_HRwdKQX423uCLGUwUsDdTLPd1skC`. Rollback target: Release 9 `dpl_4YpH3TaN11ijr6gfzfjorRmMxQ4X` (READY) |
+| Enrollment plugin | **Acadvizen Master Admin 0.6.1**, active, installed 18:16 UTC. Package `dist/acadvizen-cms-0.6.1-2cc2148/acadvizen-cms.zip`, SHA-256 `dd6fcf27dfa101eb5940e868d11673d0bc8fec67f5a7264110039cfa2295e32c`, 24 files identical to commit `2cc2148`. Rollback: the 0.6.0 package with "Replace current with uploaded", or deactivate |
+| WordPress connection | Settings: Main Website address set, "Shared secret: Set", optional features off. **"Test connection" → "Connected. The Main Website accepted a signed request."** (16:10 and 18:37 UTC). Main Website → Pages lists 50 Main pages, and 24 content tabs |
+| API security (`verify-content-api-live.mjs`) | **16/16** at 16:34 and 18:24 UTC. Unsigned, wrong-secret and stale requests refused (401); replayed change refused (409); errors carry codes only. Slug check: signed 200; unsigned and wrong secret 401; invalid path 400; existing address reported as a conflict. Bridge manifest 404 |
+| Preview framing | `/preview/wordpress/…` sends `frame-ancestors 'self' https://enroll.acadvizen.com`; every other route keeps `'none'` / `SAMEORIGIN`. The editor shows Main's page in Main's design inside the frame (`evidence/production-r10/03`, `04`) |
+| Page workflow in the real admin (`verify-wordpress-pages-live.mjs`) | **17/17** on 0.6.0 (16:35 UTC) and **17/17** on 0.6.1 (18:20 UTC, 0 click fallbacks). Labelled noindex page: create → draft private (404) → sections → editor preview → publish (public 200, noindex, canonical to itself, not in sitemap) → private copy (live unchanged) → publish copy (update live, fresh request too) → an existing address refused, nothing overwritten → unpublish (404) → Trash + Delete permanently → 404, not in sitemap |
+| Blogs Main / Enrollment / Both in the real admin (`verify-wordpress-live.mjs`) | **16/16** on 0.6.1 (18:17 UTC). Main only: public on Main, absent from Enrollment, noindex. Enrollment only: one form submission, Enrollment copy `publish`, public 200; not on Main; **saving again keeps it live (shown as Published)**. Both: public on both; an edit reaches both. Cleanup: Main admin list and trash empty, Enrollment copy deleted for good, both URLs 404. Elementor home 200 |
+| Regression | Main: **314/314 sitemap URLs identical** to the pre-release snapshot (status, title, description, robots, canonical), before and after all tests. Enrollment: **60/60 pages identical** (status, title, robots, canonical, Elementor). Site Health: 0 critical. Enquiry route registered (POST). `/admin-login` 200 |
+| Cleanup | 0 test pages or blogs on Main (list and trash). 0 Enrollment posts titled "CMS PRODUCTION TEST" in any status, including trash. Nothing in the Main sitemap or the public Enrollment post list |
+
+### Defects found on production and fixed
+
+| Defect | Fix | Proof |
+|---|---|---|
+| WordPress "Test connection" answered `wordpress_content_disabled` | Release 10 (`16a549e`): the slug check answers when the content API is on | "Connected" on production |
+| Editor previews blocked (`frame-ancestors 'none'`) | `WORDPRESS_CMS_API_URL` set (owner) and deployed with Release 10 | Header on production; editor screenshots |
+| An "Enrollment only" blog showed Status "Draft", so the next save (or a version restore) unpublished it from Enrollment | Plugin **0.6.1** (`2cc2148`), with 10 PHP tests | Production 16/16, including "saving again keeps it live" |
+| Test tooling: a retried click submitted the reloaded form twice on the slow server; errors could end with "0 failed"; Windows Chromium stopped painting wp-admin | `367309f` | One POST per save; errors reported as FAIL; 0 click fallbacks |
+
+### Not tested on production, and why
+
+- **Author and Contributor permissions:** there are no such test accounts on production, and creating users is a production change. LOCAL: PASS (403 for the screens each role may not open).
+- **Main media library upload, menus, header and footer, homepage lists, courses, city and service pages:** an edit there shows to every visitor immediately. LOCAL: PASS (`TEST-RESULTS.md`).
+- **Scheduled publishing:** not tested on any level.
+- **A Preview with WordPress settings:** BLOCKED. No non-production database is active, the staging WordPress runs plugin 0.3.0, and production secrets must not be copied into Preview.
+
+### Observations for the owner (not caused by the CMS)
+
+- **The Enrollment homepage now shows "Where Our Learners Build Their Careers" twice.** It was edited in Elementor at 11:44 and 12:42 UTC by WordPress user ID 1 (the integration account is ID 2 and never edited it).
+- **Three plugins were added to Enrollment during the day:** Microsoft Clarity and WPConsent (active), and Pixel Manager for WooCommerce (inactive).
+- **Updates pending:** WordPress 7.1.3, and 13 plugin updates.
+- **Enrollment is slow:** public pages take 3–5 s, and the Main Website admin screens about 20 s.
+
+## Earlier verdict (12 October, before Release 10), kept for history
 
 **Main side live and verified; plugin 0.6.0 installed on Enrollment with the site preserved. NOT client-ready yet:** the `wp-config.php` constants are missing, so the plugin is "Not connected", and the three live publishing tests have not run. The notes below describe the blocker as it stood before the install.
 
@@ -119,14 +168,15 @@ Every branch and tag of the repository was scanned, along with every tracked fil
 
 ## Remaining, with owner
 
-1. ~~Enrollment backup~~: done and verified on 12 Oct.
-2. **Set a new WordPress password** for the administrator account and save it in the credentials file (`OWNER-ACTIONS.md` step 2). That is all that blocks:
-   - installing plugin 0.6.0;
-   - the `wp-config.php` constants (or the owner adds them, step 3);
-   - the live Main-only, Enrollment-only and Both tests.
-3. ~~Release 9~~: live and verified on 12 Oct.
-4. **Security decisions:**
+Already done: the Enrollment backup, WordPress access, plugin 0.6.1, `wp-config.php`, Release 10, and the live tests.
+
+1. **Security, the only thing between this CMS and "client-ready":**
    - reset the production database password and the Main admin password (strongly recommended; neither is a Supabase API key);
    - rotate the service-role key (strongly recommended; on hold by the owner's instruction);
-   - change the passwords shared in chat, including the WordPress password just sent.
-5. Fix the known Enrollment issues: sitemaps, redirects, `/contact-us/` and the logo link.
+   - change the passwords shared in chat, including the WordPress password shared on 12 Oct;
+   - the integration account's username is the example name from the docs, so it is guessable: keep its password unique and strong, or replace the account.
+2. **Enrollment content:** remove the duplicated "Where Our Learners Build Their Careers" section from the homepage (an Elementor edit made on 12 Oct).
+3. **Known Enrollment issues:** the sitemaps, the redirects, `/contact-us/` and the logo link.
+4. **Optional:**
+   - WordPress and plugin updates (test on staging first);
+   - a staging database, so future Previews can be tested with real settings.

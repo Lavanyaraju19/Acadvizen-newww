@@ -2,6 +2,33 @@
 
 The statuses used are PASS, PARTIAL, FAIL, BLOCKED and NOT TESTED. The level (Automated, LOCAL, PRODUCTION) is stated on every row.
 
+## 12 October 2026 (evening): Release 10 live, plugin 0.6.1, production acceptance through the real WordPress admin
+
+Raw run output: `evidence/production-r10/production-*-run-20261012.txt`. Screenshots: `evidence/production-r10/0*.jpg`.
+
+| ID | Check (PRODUCTION unless stated) | Time (UTC) | Result | Status |
+|---|---|---|---|---|
+| R10-1 | Release gates: commit `80134d4` = tested tree; unit 210/210; secrets clean; Production variables correct; `WORDPRESS_CONTENT_ENABLED` absent; rollback deployment READY; 314/314 Main URLs 200 before | 16:01 | All met | PASS |
+| R10-2 | Promote Preview `dpl_HRwdKQX…` → **`dpl_8C59rWUwpicv7eaqiqinsRWeKP5T`** (`80134d4`) | 16:04 | READY; `www` and the apex domain both point to it | PASS |
+| R10-3 | Main regression: every sitemap URL vs the pre-release snapshot | 16:07, 18:28 | 314/314 identical (status, title, description, robots, canonical) | PASS |
+| R10-4 | Preview header | 16:08 | Preview route `frame-ancestors 'self' https://enroll.acadvizen.com`; `/`, `/about`, `/blog`, `/admin-login` `'none'` + `SAMEORIGIN` | PASS |
+| R10-5 | API security (signed list 200; unsigned, wrong secret and stale 401); slug check (signed 200; unsigned and wrong secret 401; invalid path 400; `/about` reported as a reserved conflict); bridge manifest 404 | 16:08 | As expected; error bodies are codes only | PASS |
+| R10-6 | WordPress Settings + **Test connection** (real button) | 16:10, 18:37 | "Connected. The Main Website accepted a signed request." Main URL set, shared secret Set, optional features off | PASS |
+| R10-7 | Main Website → Pages in WordPress | 16:23 | 50 pages listed (about 22 s, as Enrollment is slow), 24 tabs, filter works | PASS |
+| R10-8 | `verify-content-api-live.mjs` (signed API + Main-only API page + replay 409 + cleanup) | 16:34, 18:24 | 16/16, 16/16 | PASS |
+| R10-9 | `verify-wordpress-pages-live.mjs`: the page workflow in the real admin | 16:35 (0.6.0), 18:20 (0.6.1) | 17/17, 17/17 (0 click fallbacks) | PASS |
+| R10-10 | `verify-wordpress-live.mjs`: blogs Main only / Enrollment only / Both in the real admin, on plugin 0.6.0 | 16:40–18:06 | 14/15 in four runs: "Enrollment only" stayed 404. Diagnosis: the second POST in each run carried Status = draft (see R10-12) | FAIL → fixed |
+| R10-11 | Direct reproduction: one save as "Enrollment only", and "Main only" followed by "Enrollment only" (labelled, cleaned) | 17:08, 17:11 | Copy `publish`, public 200 in about 10 s, Main 404; cleanup 404/404 | PASS |
+| R10-12 | **Defect:** an "Enrollment only" blog showed Status "Draft" (the Main record), so the next save or a version restore unpublished its Enrollment copy | 18:05 | Fixed in plugin **0.6.1** (`2cc2148`); PHP 252/252 (10 new) | Fixed |
+| R10-13 | Plugin 0.6.1 installed (hash re-checked; WordPress "0.6.0 → 0.6.1", "Plugin updated successfully") | 18:16 | Active; public readme 0.6.1; Enrollment home 200 | PASS |
+| R10-14 | `verify-wordpress-live.mjs` on 0.6.1 | 18:17 | **16/16**: Main only, Enrollment only (one POST, copy `publish`, 200; **saving again keeps it live, shown as Published**), Both + edit to both, cleanup on both sites and both trashes, Elementor home 200 | PASS |
+| R10-15 | Enrollment regression: 60 pages vs the baseline | 16:10, 18:28 | 60/60 identical; Site Health 0 critical; enquiry route (POST) registered; Course Enquiries, CF7, MetForm and Elementor active | PASS |
+| R10-16 | Cleanup sweep | 18:30 | 0 test rows on Main (pages and blogs, list and trash); 0 Enrollment posts in any status including trash; not in the sitemap or the public post list | PASS |
+| R10-17 | LOCAL, plugin 0.6.1 | 18:13 | Pages/blogs/permissions/security 56/56 (0 click fallbacks); blog tool 16/16 | PASS (LOCAL) |
+| R10-18 | Author and Contributor permissions on production | — | No such accounts on production (creating users is a production change). LOCAL PASS | NOT TESTED (PRODUCTION) |
+| R10-19 | Media upload, menus, header and footer, homepage lists, courses, city and service pages on production | — | Global, visitor-facing edits were not made on the live site. LOCAL PASS | NOT TESTED (PRODUCTION) |
+| R10-20 | A Preview with WordPress and Supabase settings | — | No active non-production database; the staging WordPress runs plugin 0.3.0; production secrets must not go to Preview | BLOCKED |
+
 ## 11–12 October 2026: complete Main Website editing (plugin 0.6.0) and three production releases
 
 ### PRODUCTION (verified on the live site)

@@ -1,0 +1,94 @@
+{
+ "run": "202610121820",
+ "level": "PRODUCTION",
+ "wp": "https://enroll.acadvizen.com",
+ "main": "https://www.acadvizen.com",
+ "click_fallbacks": 0,
+ "results": [
+  {
+   "name": "administrator signed in and Main Website → Pages opened",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "P1 page created as a draft from the admin",
+   "ok": true,
+   "detail": "Saved on the Main Website."
+  },
+  {
+   "name": "P2 two sections (hero, text) saved",
+   "ok": true,
+   "detail": "Saved. The Main Website shows it within a minute in this draft. / Saved. The Main Website shows it within a minute in this draft."
+  },
+  {
+   "name": "P3 a draft is not public on Main",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "P4 editor preview shows the draft in Main's design",
+   "ok": true,
+   "detail": "Hero 202610121820"
+  },
+  {
+   "name": "P5 published: the public Main URL shows both sections",
+   "ok": true,
+   "detail": "Saved on the Main Website."
+  },
+  {
+   "name": "P6 SEO on the public page: title, noindex, canonical to its own address",
+   "ok": true,
+   "detail": "robots=noindex, follow canonical=https://www.acadvizen.com/cms-production-test-page-202610121820"
+  },
+  {
+   "name": "P7 noindex test page is kept out of search engines and the sitemap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "P8 \"Prepare changes privately\" opens a private copy",
+   "ok": true,
+   "detail": "Private draft copy ready. Your changes stay private until you publish the draft."
+  },
+  {
+   "name": "P9 while the change is private, the live page is unchanged",
+   "ok": true,
+   "detail": "Saved. The Main Website shows it within a minute in this draft."
+  },
+  {
+   "name": "P10 publishing the private copy updates the live page (cache refreshed)",
+   "ok": true,
+   "detail": "Saved on the Main Website. Your draft copy was published onto the live page."
+  },
+  {
+   "name": "P11 a fresh request also gets the updated page",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "P12 an address already used on Main is refused, nothing is overwritten",
+   "ok": true,
+   "detail": "/blog: This address is already used by another record. slug \"blog\" is already used by another pag"
+  },
+  {
+   "name": "P13 unpublishing takes the page off Main",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Z1 test page removed through Trash and Delete permanently (list and trash empty)",
+   "ok": true,
+   "detail": "0 listed, 0 in trash"
+  },
+  {
+   "name": "Z2 test address answers 404 after cleanup",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Z3 test address is not in the sitemap",
+   "ok": true,
+   "detail": ""
+  }
+ ]
+}

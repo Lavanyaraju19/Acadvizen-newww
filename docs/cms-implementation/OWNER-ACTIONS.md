@@ -4,7 +4,28 @@ These are the steps only the owner can take. Do them in this order. After step 5
 
 Never paste a password or the shared secret into chat, Git, a document or a screenshot.
 
-## Remaining, as of 12 October 2026 (evening)
+## Remaining, as of 12 October 2026, 18:40 UTC (current)
+
+Everything technical is done and verified on production:
+- Release 10 is live (`dpl_8C59rWUwpicv7eaqiqinsRWeKP5T`);
+- plugin 0.6.1 is installed;
+- "Test connection" says Connected;
+- Main only, Enrollment only and Both pass through the real admin, with all test content removed.
+
+Owner actions left:
+1. **Critical: change the credentials exposed in public Git history.** Without this, the project is not client-ready.
+   - **Production database password:** Supabase → Project Settings → Database → Reset. The websites do not use it.
+   - **Main admin password:** in `www.acadvizen.com/admin`.
+   - **Service-role key:** on hold by your instruction. It gives full read and write access to all Main data, including leads.
+2. **Passwords shared in chat:** change them (Hostinger, WordPress, FTP, Vercel). Give the WordPress integration account a unique password; its username is guessable.
+3. **Enrollment homepage:** "Where Our Learners Build Their Careers" now appears twice (Elementor edit on 12 Oct, 11:44 and 12:42 UTC, by WordPress user ID 1). Remove the duplicate in Elementor if it is not intended.
+4. **Your credentials file:** put the SSH host on its own line. It is joined onto the end of the `ACADVIZEN_CMS_WEBHOOK_SECRET` line.
+5. **Optional:**
+   - WordPress 7.1.3 and 13 plugin updates (test first);
+   - a staging database for future Preview testing;
+   - the known Enrollment issues (sitemaps, redirects, `/contact-us/`, logo link).
+
+## Earlier status, as of 12 October 2026 (evening)
 
 **Update, 12 Oct 13:57 UTC:**
 - **`wp-config.php` is done**, by the owner. Plugin Settings show "Main Website address https://www.acadvizen.com" and "Shared secret: Set". The **Main Website → Pages** screen lists 50 Main pages, so WordPress → Main signed requests work on production.

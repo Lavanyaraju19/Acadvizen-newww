@@ -1,10 +1,9 @@
 # Publishing with the Acadvizen Master Admin — guide for editors
 
-> **Status (12 October 2026).**
-> - The Main website's side of the connection is **live**: release 9, with the signed connection switched on and checked on production.
-> - Plugin **0.6.0** is installed on the Enrollment website (12 October), so the **Main Website** screens below exist.
-> - They show "Not connected to the Main Website" until two configuration lines are added (`OWNER-ACTIONS.md` step 3).
-> - Until then, keep editing Main content in `https://www.acadvizen.com/admin`.
+> **Status (12 October 2026, 18:40 UTC): live and connected.**
+> - Main website Release 10; Enrollment plugin **0.6.1**.
+> - **Settings → Test connection** says **Connected**.
+> - The workflows below were proven on the live websites through this admin, using labelled test content that was then removed (`TEST-RESULTS.md`, R10).
 >
 > All screens were tested on a local copy (115 browser checks). The connection itself was tested on the live Main website.
 
@@ -25,7 +24,7 @@
 
 ## Editing the Main website's existing content: Acadvizen Master Admin → Main Website
 
-> **Status (12 October 2026).** These screens are in plugin **0.6.0**. They were tested on a local copy only; they are **not installed or switched on** for the live websites yet (the live Enrollment site runs plugin 0.4.0). Until they are, the screens show "needs the connection to the Main Website", and Main content is still edited in `https://www.acadvizen.com/admin`.
+> **Status (12 October 2026).** These screens are live (plugin 0.6.1) and connected to www.acadvizen.com. A Main Website screen takes about 20 seconds to open, because the Enrollment server is slow. Wait for it; do not click Save twice.
 
 This screen works directly on what www.acadvizen.com shows today: its pages, blogs, tools, locations, cities and testimonials. You change the text, pictures and settings; the Main website keeps drawing them **in its own design**, so a page looks exactly as before apart from what you changed.
 
@@ -40,6 +39,8 @@ This screen works directly on what www.acadvizen.com shows today: its pages, blo
 Sections can be added (**Add a section**), moved (drag ⠿, or ↑ ↓, then **Save order**), duplicated or deleted. Only the settings the Main website actually uses are offered. Anything else stored in a section is listed as "kept as it is" and never removed.
 
 **Blogs.** Write the article with the block buttons (**Heading**, **Paragraph**, **List**, **Image**…), set **Publish To** (Main Website, Enrollment Website or Both Websites) and **Status**, then **Save**. With Both, each website shows the article in its own design.
+
+For **Enrollment Website** only, the article is a normal post on enroll.acadvizen.com, and it is kept as a private draft on the Main website. **Status** shows whether it is live on Enrollment. Later edits keep it live; choose **Draft** to take it off Enrollment.
 
 **Tools, locations, cities, testimonials.** Edit the fields and tick **Show on the Main Website** to make the item visible; untick it to hide it.
 

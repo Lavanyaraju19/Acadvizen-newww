@@ -1,0 +1,19 @@
+PASS [PRODUCTION] administrator signed in and Main Website → Pages opened
+PASS [PRODUCTION] P1 page created as a draft from the admin — Saved on the Main Website.
+PASS [PRODUCTION] P2 two sections (hero, text) saved — Saved. The Main Website shows it within a minute in this draft. / Saved. The Main Website shows it within a minute in this draft.
+PASS [PRODUCTION] P3 a draft is not public on Main
+PASS [PRODUCTION] P4 editor preview shows the draft in Main's design — Hero 202610121820
+PASS [PRODUCTION] P5 published: the public Main URL shows both sections — Saved on the Main Website.
+PASS [PRODUCTION] P6 SEO on the public page: title, noindex, canonical to its own address — robots=noindex, follow canonical=https://www.acadvizen.com/cms-production-test-page-202610121820
+PASS [PRODUCTION] P7 noindex test page is kept out of search engines and the sitemap
+PASS [PRODUCTION] P8 "Prepare changes privately" opens a private copy — Private draft copy ready. Your changes stay private until you publish the draft.
+PASS [PRODUCTION] P9 while the change is private, the live page is unchanged — Saved. The Main Website shows it within a minute in this draft.
+PASS [PRODUCTION] P10 publishing the private copy updates the live page (cache refreshed) — Saved on the Main Website. Your draft copy was published onto the live page.
+PASS [PRODUCTION] P11 a fresh request also gets the updated page
+PASS [PRODUCTION] P12 an address already used on Main is refused, nothing is overwritten — /blog: This address is already used by another record. slug "blog" is already used by another pag
+PASS [PRODUCTION] P13 unpublishing takes the page off Main
+PASS [PRODUCTION] Z1 test page removed through Trash and Delete permanently (list and trash empty) — 0 listed, 0 in trash
+PASS [PRODUCTION] Z2 test address answers 404 after cleanup
+PASS [PRODUCTION] Z3 test address is not in the sitemap
+
+17 passed, 0 failed [PRODUCTION] | test page /cms-production-test-page-202610121820 | click fallbacks 0

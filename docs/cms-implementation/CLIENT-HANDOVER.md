@@ -1,6 +1,40 @@
-# Client handover: Acadvizen central CMS (12 October 2026)
+# Client handover: Acadvizen central CMS (12 October 2026, updated 18:40 UTC)
 
-## Where things stand, in plain language
+## Status today
+
+**The CMS works on the live websites, but it is NOT CLIENT-READY**, because of one critical security item the owner must resolve (below). Nothing else blocks client use.
+
+| | Live today |
+|---|---|
+| Main website | Release 10: deployment `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T`, commit `80134d4`, live since 12 Oct 2026 16:04 UTC |
+| Enrollment WordPress | Acadvizen Master Admin **0.6.1** (12 Oct 2026 18:16 UTC), connected: "Test connection" says **Connected** |
+| Proven on the live sites, through the real WordPress admin | Create, save as draft (private), preview in Main's design, publish, change a live page privately and publish the change, refuse an address already in use, unpublish, delete. Blogs to **Main only**, **Enrollment only** and **Both**, including later edits. All test content removed from both sites |
+| Unchanged | All 314 Main addresses (titles, descriptions, robots, canonicals), all 60 Enrollment pages and their Elementor layouts, the enquiry endpoint, Main's own `/admin` |
+| Evidence | `FINAL-EVIDENCE-REPORT.md`, `TEST-RESULTS.md` (R10), screenshots in `evidence/production-r10/` |
+
+**Critical, owner:** production credentials (the database master key, the database password and the Main admin password) can be read in old public GitHub commits. Change them (`OWNER-ACTIONS.md`, top section). The database password and the admin password can be changed without affecting the websites.
+
+### How WordPress and the Main website work together
+
+When you edit Main content in WordPress (**Acadvizen Master Admin → Main Website**), WordPress sends the change to the Main website over a signed, secret-protected connection. The Main website stores it and shows it in its own design within about a minute. WordPress never changes Main's design, and Main never changes Enrollment.
+
+Blogs can also be copied to the Enrollment website, where they appear as normal WordPress posts in the Enrollment design. Enrollment pages themselves are still edited as before, in **Pages** with Elementor.
+
+### Client administrator checklist
+
+1. Sign in at `https://enroll.acadvizen.com/wp-admin/` with your own administrator account.
+2. Go to **Acadvizen Master Admin → Settings** and press **Test connection**. It must say **Connected**. If not, see "When something fails" below.
+3. **Change a live page:** **Main Website → Pages** → **Edit** → **Prepare changes privately** → edit and **Save section** → **Preview** → Status **Published** → **Save**. Visitors see nothing until that last step.
+4. **New blog:** **Main Website → Blogs** → **Add new** → title, address, text blocks, image and SEO fields → **Publish To** (Main, Enrollment or Both) → Status **Published** → **Save**. Open the public address to check it.
+5. **Hide something:** set Status to **Draft** and **Save**, or use **Trash** (it can be restored from the trash).
+6. **Undo a change:** **Earlier versions → Restore** on the edit screen.
+7. **If the website looks wrong after a change:** restore the earlier version. If the whole site is affected, ask the owner to roll back the deployment (`PRODUCTION-RELEASE-AND-ROLLBACK.md`, one click in Vercel).
+8. **Known limits:**
+   - global edits (menus, header, footer, homepage lists) show to every visitor at once: preview first;
+   - scheduled publishing has not been tested;
+   - the Enrollment admin is slow (about 20 s per Main Website screen).
+
+## Background: how we got here
 
 **Built and tested, on a copy of both websites:**
 - One WordPress admin edits the Main website's existing content: pages, the homepage, courses, blogs, tools, city and service pages, header, footer, menus, images and SEO. Main keeps its own design, because WordPress changes the content and Main draws it exactly as before.
@@ -33,10 +67,7 @@ They are no longer in the current files, and a guard now blocks new ones. But th
 
 **The exact owner steps are in `OWNER-ACTIONS.md`. Every result, labelled PRODUCTION or LOCAL, is in `FINAL-EVIDENCE-REPORT.md`.**
 
-**Overall status (12 October): the Main side is live and verified; not client-ready yet.**
-- Enrollment backups: **verified**.
-- Release 9: **live**.
-- What remains: a working WordPress password. With it, the engineer installs plugin 0.6.0, sets the `wp-config.php` constants and runs the live Main-only, Enrollment-only and Both tests.
+**Earlier status (12 October, before Release 10):** the Main side was live and verified, and a working WordPress password was the remaining blocker. That has since been resolved (see "Status today").
 
 ## How to use it (once connected)
 
@@ -123,8 +154,6 @@ Everything below is done in the Enrollment WordPress admin. Routine content work
 
 ## Can the client use it today?
 
-**Not yet for Main content from WordPress.** The Main website's side is switched on and checked live, but the new WordPress screens (plugin 0.6.0) cannot be installed until a working WordPress password exists. Today the client keeps editing:
-- Main content in `www.acadvizen.com/admin`;
-- Enrollment in WordPress, as before.
+**Technically yes, from 12 October.** Main content can be edited from the Enrollment WordPress admin, and Enrollment as before. This was proven on the live websites. Main's own `/admin` is still there for leads, enquiries, students and users.
 
-Once the owner sets the password, the remaining work takes about an hour: install the plugin, add the two `wp-config.php` lines, then run the live Main-only, Enrollment-only and Both tests and clean up. After that, the client edits both websites from WordPress.
+**Formally, not yet:** the project stays NOT CLIENT-READY until the owner changes the credentials exposed in public GitHub history (`OWNER-ACTIONS.md`).

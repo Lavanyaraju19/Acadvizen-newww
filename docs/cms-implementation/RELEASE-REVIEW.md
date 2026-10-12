@@ -1,4 +1,16 @@
-# Release 10: review sheet (prepared 12 October 2026 evening, NOT committed, pushed or deployed)
+# Release 10: review sheet
+
+**Status (12 October 2026, 18:40 UTC): released.** Commit `80134d4` was pushed and its Preview `dpl_HRwdKQX423uCLGUwUsDdTLPd1skC` promoted, so **`dpl_8C59rWUwpicv7eaqiqinsRWeKP5T` is live** (READY 16:04:24 UTC). Every gate below passed first.
+
+The push did not trigger a Vercel build: no deployment and no GitHub status appeared. The Preview was therefore created through the Vercel API for exactly `80134d4`, with target **preview**, before promotion.
+
+Follow-up, found by the production acceptance tests:
+- plugin **0.6.1** (`2cc2148`), an "Enrollment only" blog stays live when edited again; installed on Enrollment;
+- acceptance tooling `367309f`.
+
+Results: `TEST-RESULTS.md` (R10-1 … R10-20).
+
+*(Prepared on 12 October 2026, evening, for the owner's review; the text below is the original sheet.)*
 
 Base: `headless-wordpress` at `5d2f64a`. Live is release 9 (`dpl_4YpH3TaN…`, `dde1328`).
 
