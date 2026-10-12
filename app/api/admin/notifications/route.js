@@ -21,7 +21,8 @@ export async function GET(request) {
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
+      // The new secret key (SUPABASE_SECRET_KEY) first, so the legacy key can be retired later.
+      process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
     )
 
     const { data, error } = await supabase
@@ -66,7 +67,8 @@ export async function POST(request) {
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
+      // The new secret key (SUPABASE_SECRET_KEY) first, so the legacy key can be retired later.
+      process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
     )
 
     const { error } = await supabase

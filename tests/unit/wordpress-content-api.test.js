@@ -648,3 +648,25 @@ test('blog authors and categories: editable; one still used by a blog cannot be 
   assert.equal((await call({ op: 'delete', entity: 'blog_categories', id: categoryId, confirm: true }, { db })).status, 200)
   assert.equal((await call({ op: 'save', entity: 'blogs', id: db.tables.blogs[0].id, record: { author_id: 'not-a-uuid' } }, { db })).body.error, 'validation_failed')
 })
+
+test('addresses: malformed ones are refused, never normalised onto another record', async () => {
+  const db = fakeDb({ pages: [{ id: randomUUID(), title: 'Existing', slug: 'taken', status: 'published' }] })
+  for (const slug of ['Taken', 'taken/', '/taken', 'TAKEN', 'taken--x', '-taken', 'taken-', '../taken', 'taken?x=1', 'tak en', 'tāken']) {
+    const r = await call({ op: 'save', entity: 'pages', record: { title: 'T', slug } }, { db })
+    assert.equal(r.status, 400, `"${slug}" must be refused`)
+    assert.equal(r.body.error, 'validation_failed', slug)
+  }
+  assert.equal(db.tables.pages.length, 1, 'nothing was created')
+})
+
+test('addresses: renaming a record onto an address in use is refused and leaves both records unchanged', async () => {
+  const a = randomUUID()
+  const b = randomUUID()
+  const db = fakeDb({ pages: [{ id: a, title: 'A', slug: 'first', status: 'published' }, { id: b, title: 'B', slug: 'second', status: 'draft' }] })
+  const r = await call({ op: 'save', entity: 'pages', id: b, record: { title: 'B', slug: 'first' } }, { db })
+  assert.equal(r.status, 409)
+  assert.equal(r.body.error, 'slug_taken')
+  assert.deepEqual(db.tables.pages.map((p) => [p.id, p.slug]), [[a, 'first'], [b, 'second']])
+  // A rename to a free address is accepted.
+  assert.equal((await call({ op: 'save', entity: 'pages', id: b, record: { title: 'B', slug: 'second-renamed' } }, { db })).status, 200)
+})
