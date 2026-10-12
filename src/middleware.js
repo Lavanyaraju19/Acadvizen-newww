@@ -4,6 +4,7 @@ import { decideBridgeRoute, normalizeBridgePath } from '../lib/wordpress/bridgeR
 import { INTERNAL_HEADER, PATH_HEADER, deriveInternalToken } from '../lib/wordpress/internalToken.js'
 import { OWNED_CONTENT_MESSAGE, isWordPressOwnedWrite, isWordPressOwnershipEnabled } from '../lib/wordpress/contentOwnership.js'
 import { fetchCmsPagePrivacy as fetchPageStatusAtAddress, shouldHidePage } from '../lib/cmsPagePrivacy.js'
+import { selectSupabaseServiceKey } from '../lib/supabaseServiceKey.js'
 
 // Acadvizen Render Bridge: pages designed in Elementor and published to the Main Website from
 // WordPress are served by app/wp-render (an internal rewrite, so the address stays the same).
@@ -88,8 +89,11 @@ function getSupabaseRestConfig() {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
     process.env.SUPABASE_PUBLISHABLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
-  // The new secret key (SUPABASE_SECRET_KEY) first, as lib/env.ts does, so the legacy key can be retired later.
-  const serviceKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  // The new secret key first when it is valid, as lib/env.ts does, so the legacy key can be retired later.
+  const serviceKey = selectSupabaseServiceKey({
+    SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  })
   return { supabaseUrl, anonKey, serviceKey }
 }
 

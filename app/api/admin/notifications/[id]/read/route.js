@@ -1,6 +1,21 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { resolveAdminContext } from '../../../../cms/_utils'
+import { selectSupabaseServiceKey } from '../../../../../../lib/supabaseServiceKey.js'
+
+function serverSupabaseKey() {
+  // The new secret key first when it is valid, so the legacy key can be retired later.
+  return selectSupabaseServiceKey({
+    SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  })
+}
+
+const notConfigured = () =>
+  NextResponse.json(
+    { success: false, data: null, error: 'Server database access is not configured' },
+    { status: 503 }
+  )
 
 export const dynamic = 'force-dynamic'
 
@@ -22,11 +37,9 @@ export async function POST(request, { params }) {
   }
 
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      // The new secret key (SUPABASE_SECRET_KEY) first, so the legacy key can be retired later.
-      process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
-    )
+    const serviceKey = serverSupabaseKey()
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !serviceKey) return notConfigured()
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, serviceKey)
 
     const { error } = await supabase
       .from('notifications')

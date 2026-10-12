@@ -6,6 +6,8 @@
  * The application will fail at startup if required variables are missing.
  */
 
+import { selectSupabaseServiceKey } from './supabaseServiceKey.js'
+
 // ── Validation ──────────────────────────────────────────────────────────
 
 /**
@@ -115,9 +117,13 @@ export const SUPABASE_ANON_KEY =
 // (sb_secret_...) as the service-role equivalent alongside the legacy service_role JWT. A project
 // that has rotated to the new key system may only have SUPABASE_SECRET_KEY configured, so without
 // this fallback SUPABASE_SERVICE_ROLE_KEY silently resolves to '' and every admin write falls back
-// to an unauthenticated/anon client - which RLS then correctly rejects.
-export const SUPABASE_SERVICE_ROLE_KEY =
-  process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+// to an unauthenticated/anon client - which RLS then correctly rejects. The new key is used only when
+// it has the shape of a server key (lib/supabaseServiceKey.js), so a malformed value cannot displace
+// a working legacy key.
+export const SUPABASE_SERVICE_ROLE_KEY = selectSupabaseServiceKey({
+  SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+})
 export const NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://acadvizen.com'
 
 // ── Convenience checks ──────────────────────────────────────────────────
