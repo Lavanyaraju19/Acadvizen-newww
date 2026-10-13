@@ -1,0 +1,93 @@
+{
+  "label": "g1-core-7.1.3",
+  "at": "2026-10-12T20:48:57.038Z",
+  "core": "$wp_version = '7.1.3';",
+  "pages": {
+    "/": {
+      "status": 200,
+      "error": false,
+      "text_sha": "032d45c2534e",
+      "widgets": "",
+      "forms": 0,
+      "chars": 547
+    },
+    "/elementor-rehearsal/": {
+      "status": 200,
+      "error": false,
+      "text_sha": "20732e4d7429",
+      "widgets": "button,counter,heading,icon-list,shortcode,text-editor",
+      "forms": 1,
+      "chars": 541
+    },
+    "/contact/": {
+      "status": 200,
+      "error": false,
+      "text_sha": "7c1c298149f6",
+      "widgets": "",
+      "forms": 1,
+      "chars": 413
+    },
+    "/rehearsal-post/": {
+      "status": 200,
+      "error": false,
+      "text_sha": "7de208da022a",
+      "widgets": "",
+      "forms": 0,
+      "chars": 655
+    }
+  },
+  "rest": {
+    "root": {
+      "status": 200,
+      "namespaces": 57
+    },
+    "cms_manifest_unsigned": {
+      "status": 401
+    },
+    "cms_blogs": {
+      "status": 200
+    },
+    "cf7": {
+      "status": 403
+    }
+  },
+  "admin": {
+    "/wp-admin/": {
+      "status": 200,
+      "error": false
+    },
+    "/wp-admin/plugins.php": {
+      "status": 200,
+      "error": false
+    },
+    "/wp-admin/site-health.php": {
+      "status": 200,
+      "error": false
+    },
+    "/wp-admin/admin.php?page=acadvizen-cms": {
+      "status": 200,
+      "error": false
+    },
+    "/wp-admin/admin.php?page=acadvizen-cms-settings": {
+      "status": 200,
+      "error": false
+    },
+    "/wp-admin/post.php?post=12&action=elementor": {
+      "status": 200,
+      "error": false
+    },
+    "/wp-admin/admin.php?page=wpcf7": {
+      "status": 200,
+      "error": false
+    }
+  },
+  "test_connection": "Connected. The Main Website accepted a signed request.",
+  "php": {
+    "fatal": 0,
+    "warning": 0,
+    "deprecated": 0,
+    "notice": 0,
+    "distinct": []
+  },
+  "plugins": "acadvizen-cms,active,0.6.1;akismet,inactive,5.7.2;contact-form-7,active,6.1.7;cool-timeline,active,4.0.0;elementor,active,4.3.3;elementskit-lite,inactive,4.0.7;emailkit,inactive,1.6.9;essential-addons-for-elementor-lite,active,6.8.5;getgenie,active,4.5.6;duracelltomi-google-tag-manager,inactive,2.0.5;gutenkit-blocks-addon,active,2.5.1;hello,inactive,1.7.2;hostinger-reach,active,1.8.4;litespeed-cache,active,7.9.1;megamenu,active,3.10.8;metform,active,4.3.2;microsoft-clarity,active,0.10.35;pixel-manager-for-woocommerce,inactive,2.2.2;popup-builder-block,active,2.3.6;seo-by-rank-math,active,1.0.279;royal-elementor-addons,active,1.7.1068;shopengine,active,4.9.6;google-site-kit,active,1.189.0;timeline-widget-addon-for-elementor,active,1.7.2;header-footer-elementor,active,2.9.5;unlimited-elements-for-elementor,active,2.0.23;woocommerce,active,11.2.1;insert-headers-and-footers,active,2.3.9;wpconsent-cookies-banner-privacy-suite,active,1.2.0;wordpress-seo,inactive,28.5"
+}

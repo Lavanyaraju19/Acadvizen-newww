@@ -1,0 +1,304 @@
+ok   css same-origin
+ok   font same-origin
+ok   svg same-origin
+ok   image direct from WordPress
+ok   video direct from WordPress
+ok   wp-includes js
+ok   rest route
+ok   rest root
+ok   admin-ajax
+ok   wp-admin is never mapped
+ok   pages are not mapped
+ok   no wp-json left
+ok   no admin-ajax left
+ok   inline fetch literal
+ok   absolute stylesheet same-origin
+ok   absolute img stays on WordPress
+ok   srcset entries direct
+ok   css url() image direct
+ok   css url() font same-origin
+ok   json-escaped rest root
+ok   json-escaped ajax
+ok   json-escaped assets
+ok   json-escaped image direct
+ok   mid-path text untouched
+ok   other hosts untouched
+ok   rank math: main-only row dropped
+ok   rank math: other row kept
+ok   rank math: terms untouched
+ok   theme builder: untargeted template kept (Both by default)
+ok   theme builder: Both template kept on Enrollment
+ok   theme builder: Main-only template skipped on Enrollment
+ok   theme builder: Enrollment template kept on Enrollment
+ok   theme builder: invalid id untouched
+ok   preview: no /_acv/ left
+ok   preview: stylesheet
+ok   preview: escaped rest + ajax
+ok   preview: inline fetch
+ok   preview: sandbox shim is the first thing in <head>
+ok   preview: shim added once and paths still mapped
+ok   preview round-trip: render then preview restores WordPress paths
+ok   menu order: content before settings, unknown rows last
+ok   menu order: Global Styles link is placed with the design items (after Menus, before Website Design)
+ok   menu order: Main Website content right after the dashboard
+ok   global styles: opens Site Settings over an Elementor page (as Elementor does)
+ok   global styles: no Elementor page yet -> the kit itself
+ok   global styles page: Publish keeps it private
+ok   global styles page: can still be trashed
+ok   global styles page: other pages unaffected
+ok   shortcode flag 'yes' is yes
+ok   shortcode flag 'YES' is yes
+ok   shortcode flag '1' is yes
+ok   shortcode flag 'true' is yes
+ok   shortcode flag 'on' is yes
+ok   shortcode flag ' yes ' is yes
+ok   shortcode flag 'no' is no
+ok   shortcode flag '0' is no
+ok   shortcode flag 'false' is no
+ok   shortcode flag 'off' is no
+ok   shortcode flag '' is no
+ok   shortcode flag 'nope' is no
+ok   autosave document (Elementor flag) is skipped
+ok   autosave document (revision post) is skipped
+ok   published page document is not an autosave
+ok   Elementor editor save request detected
+ok   Quick Edit (other ajax) is not an Elementor save
+ok   normal page request is not an Elementor save
+ok   stall: job still waiting in WP-Cron is never stalled
+ok   stall: job lost and idle for 10 min is stalled
+ok   stall: job running (touched 60 s ago, no longer waiting) is not stalled
+ok   stall: retry scheduled in the future (touch ahead of now) is not stalled
+ok   stall: page stuck from before this check existed (no touch time) is stalled
+ok   rerender: nothing requested -> not overdue
+ok   rerender: job still waiting -> not overdue
+ok   rerender: requested 60 s ago (job runs after 30 s) -> not overdue yet
+ok   rerender: requested 3 min ago, no job waiting -> overdue
+ok   rerender: request is recorded outside WP-Cron
+ok   rerender: kit + menu + template changes wait as ONE site-wide re-render
+ok   render jobs: a newer request replaces the waiting job of the same page
+ok   render jobs: a saved page runs before a waiting site-wide re-render
+ok   render jobs: a delayed job keeps its delay
+ok   site re-render: the saved page keeps its own waiting job
+ok   site re-render: the other pages are queued
+ok   cron: the in-memory job list is dropped after a job
+ok   cron: outside a cron run nothing is reloaded
+ok   cron: in a cron run the list is read fresh before a job is removed
+ok   main css: blog typography kept when the pages bundle is imported after it
+ok   main css: an incoming marked part replaces the saved one
+ok   import lock: the first step takes it
+ok   import lock: an overlapping step is refused
+ok   import lock: an overlapping request only reports progress
+ok   import lock: a lock left by a step that died is taken over
+ok   optional features: none registered by default
+ok   optional features: unknown name is off
+ok   native publishing (Publish To boxes, native post types) is hidden unless wp-config.php turns it on
+ok   sitemap (default): builder internals stay in Rank Math
+ok   sitemap (default): Main-only tools still left out
+ok   sitemap (default): core sitemap keeps internals, drops Main-only types
+ok   optional features: turned on, each registers its hooks
+ok   sitemap: elementor-hf left out of Rank Math
+ok   sitemap: popupkit-campaigns left out of Rank Math
+ok   sitemap: metform-form left out of Rank Math
+ok   sitemap: wpr_mega_menu left out of Rank Math
+ok   sitemap: pages stay in Rank Math
+ok   sitemap: core sitemap keeps pages, drops internals
+ok   login logo: says Acadvizen
+ok   sitemap rules: missing Rank Math rule rebuilds once, softly
+ok   sitemap rules: not checked again within the hour
+ok   sitemap rules: present rule leaves the rules alone
+ok   media: a long file name is shortened, extension kept
+ok   media: two long names stay different
+ok   media: a short name is kept
+ok   main css: theme container padding off on phones too
+ok   read more: clamped to --acv-lines (6 by default) until opened
+ok   read more: toggle labels and state
+ok   read time: counted from the text
+ok   read time: the imported Main figure
+ok   read time: counted again once the text is edited
+ok   render: superseded while rendering
+ok   render: still current
+ok   content field: design template shows a placeholder
+ok   content field: a record containing its own content field does not recurse
+ok   hfe header: Enrollment gets its own header, not the first (Main-only) match
+ok   hfe header: no Enrollment header at all -> none (theme header)
+ok   site re-render order: homepage, pages, courses, tools, blogs
+ok   versions: stored compressed
+ok   versions: at most a fifth of the size
+ok   versions: read back unchanged
+ok   versions: uncompressed rows still read
+ok   versions: kept per page
+ok   rewrite: both prefixes present
+ok   rewrite: missing prefix detected
+ok   element cache: heading with [acv_field] is dynamic
+ok   element cache: image with #acv-field token is dynamic
+ok   element cache: plain heading stays cacheable
+ok   kit settings change queues re-render
+ok   other posts / meta keys ignored
+ok   https upgrade followed
+ok   other host refused
+ok   other path refused
+ok   https downgrade refused
+ok   look-alike host refused
+ok   valid signed IP applied
+ok   other IP with that signature refused
+ok   unsigned IP refused
+ok   expired signature refused
+ok   other purpose refused
+ok   invalid IP refused
+ok   lead form: form type and page
+ok   lead form: posts to the Main leads API
+ok   lead form: message box when asked
+ok   lead form: labels are escaped
+ok   lead form: script printed once per page
+ok   lead form: defaults
+ok   lead form: runs inside Elementor widgets
+ok   lead form: page_slug is the page address
+ok   lead form: course page_slug as on Main
+ok   loop: several sort keys
+ok   loop: one sort key kept as is
+ok   loop filter: options in Main order
+ok   loop filter: each category once
+ok   loop filter: count and search box
+ok   lead form: labels above the fields
+ok   lead form: fields in the given order
+ok   lead form: two fields side by side
+ok   lead form: experience choice with its options
+ok   lead form: labelled form spacing
+ok   lead form: script sends experience_level
+ok   lead form: a field is listed once
+ok   lead form: learning mode choices, first selected
+ok   lead form: consent checkbox
+ok   lead form: every field required
+ok   lead form: script checks consent and sends learning_mode
+ok   main css: accordion title inherits its Elementor colour
+ok   signed routes: unsigned manifest refused
+ok   signed routes: signed manifest accepted
+ok   signed routes: other secret refused
+ok   signed routes: expired timestamp refused
+ok   signed routes: malformed signature refused
+ok   signed routes: render accepted for its own path
+ok   signed routes: render signature for another path refused
+ok   render request: publish signature -> publish mode
+ok   render request: preview signature -> preview mode
+ok   render request: signature for another page refused
+ok   render request: signature for another address refused
+ok   render request: expired preview refused
+ok   render request: other purpose (client-ip) refused
+ok   render request: no headers -> not a render
+ok   preview: a draft page can be previewed as on Main
+ok   preview: pending page can be previewed
+ok   preview: future page can be previewed
+ok   preview: private page can be previewed
+ok   preview: publish page can be previewed
+ok   preview: a trashed page cannot
+ok   preview: a template is not a page to preview
+ok   main content: an author can only draft or submit a blog for review
+ok   main content: an editor can approve, publish and archive
+ok   main content: deleting needs its own capability
+ok   enrollment only: the editor sees the live copy as Published, not the Main draft
+ok   enrollment only: without a copy the Main status is shown
+ok   main / both: the Main status is shown
+ok   enrollment only: saving again with Published keeps the copy published
+ok   enrollment only: a save without a status keeps the copy as it is (the regression)
+ok   enrollment only: choosing Draft explicitly takes it off Enrollment
+ok   enrollment only: an author cannot publish; the copy stays as it is
+ok   error text: a code from Main is translated
+ok   error text: a local code (no response body) is translated too
+ok   error text: Main unreachable says nothing changed and to try again, keeping the detail
+ok   error text: an unknown code from Main is shown as it is
+ok   error text: an HTTP failure without a code keeps the detail
+ok   error text: nothing at all
+ok   error text: edit conflict says nothing was overwritten and what to do
+ok   sync: same instant across offsets and fractions
+ok   sync: fingerprint ignores whitespace differences, not content
+ok   sync: Main unchanged -> nothing to do
+ok   sync: Main changed, copy untouched -> update the copy
+ok   sync: Main changed and the copy changed here too -> conflict (nothing overwritten)
+ok   sync: a copy never aligned (no fingerprint) is not overwritten
+ok   sync: removed or trashed on Main -> live copy set to draft, never deleted
+ok   sync: editor HTML -> Main blocks keeps inline formatting, drops the leading cover
+ok   sync: nothing unsupported in that article
+ok   sync: unsupported content is reported, groups are opened, quotes become paragraphs
+ok   sync: a cover image that is not first stays in the article
+ok   approval: the fingerprint ignores key order
+ok   approval: any change (design, media file, title) changes the fingerprint
+ok   approval: referenced media are found anywhere in the design, plus the featured image
+ok   approval: submit makes it pending for exactly that revision
+ok   approval: only a reviewer approves
+ok   approval: a revision changed after submitting cannot be approved
+ok   approval: a reviewer approves exactly the submitted revision
+ok   approval: self-approval is recorded as such
+ok   approval: any edit after approval invalidates it
+ok   approval: saving without a change keeps the approval
+ok   approval: only an approved, unchanged revision can be scheduled
+ok   approval: a scheduled revision is not published early, only by its due job
+ok   approval: an edit cancels a schedule; an unchanged save keeps it; cancelling returns to approved
+ok   approval: a due job still refuses a revision that changed
+ok   approval: submitting the approved revision again (e.g. a re-import) keeps the approval; a changed one needs a new one
+ok   approval: an invalidated revision cannot be published
+ok   approval: publishing checks the revision once more
+ok   approval: the approved revision publishes
+ok   approval: a design that cannot be reproduced is refused at every step
+ok   approval: typed code needs a reviewer who confirms it
+ok   approval: rejection goes back to the editor with a note
+ok   approval: history keeps every step
+ok   publication: success only when every chosen website shows the revision
+ok   publication: the public mark is a short, stable form of the revision
+ok   registry: widget usage is counted through nested containers
+ok   registry: page features worth a look are listed
+ok   registry: per widget and website
+ok   registry: a missing widget explains the fix
+ok   registry: report takes the worst class over widgets, websites and features
+ok   registry: Pro-only element settings are flagged, and said plainly NOT SHOWN when Pro is not active (never silently dropped)
+ok   registry: a plain design for Both is ok
+ok   enrollment only: first publish of a new blog
+ok   main / both: the copy follows the Main record
+ok   restoring a version keeps an Enrollment-only copy published
+ok   main content: an editor manages a record someone else created
+ok   main content: an author manages their own article
+ok   main content: an author cannot touch an article someone else wrote
+ok   main content: an author cannot touch an article created outside WordPress
+ok   main content: an author may create a new article
+ok   main content: an author lands on Blogs, not Pages
+ok   main content: a deleted record forgets its owner
+ok   main content: a signed-out visitor owns nothing
+ok   main content: site-relative image paths are kept
+ok   main content: https kept
+ok   main content: other schemes dropped
+ok   main content: protocol-relative dropped
+ok   main content: public addresses per type
+ok   main content: Enrollment copy of a blog drawn from the same blocks, scripts removed
+ok   site chrome: colours as stored on Main are kept (hex, rgb, rgba, transparent)
+ok   site chrome: anything else is not a colour
+ok   site chrome: an empty colour stays empty (website default), never black
+ok   site chrome: an invalid colour is not sent as a colour
+ok   site chrome: text and links trimmed
+ok   site chrome: an untouched structured list is not sent (stored value kept)
+ok   site chrome: an edited structured list is sent
+ok   site chrome: an empty settings object stays an object, not a list
+ok   menus: an unknown menu is not sent; known choices and numbers are
+ok   menus: visibility switches left unticked are sent as off
+ok   site chrome: settings rows cannot be created or trashed from the list
+ok   main content: every field of the site-wide types renders
+ok   main content: a stored rgba colour is shown as it is, with the picker at black
+ok   main content: an empty menu visibility switch is shown ticked
+ok   main content: preview signature matches the Main Website
+ok   affected pages: none live
+ok   affected pages: listed, sorted, duplicates once
+ok   affected pages: long list shortened with a count
+ok   affected pages: one page
+ok   signed routes: no secret configured -> refused
+ok   guard https://cms.acadvizen.com -> https://www.acadvizen.com
+ok   guard https://cms.acadvizen.com -> https://acadvizen.com/
+ok   guard https://cms.acadvizen.com -> https://WWW.Acadvizen.com
+ok   guard https://cms.acadvizen.com -> https://staging-main.vercel.app (internal https://www.acadvizen.com)
+ok   guard https://cms.acadvizen.com -> https://staging-main.vercel.app
+ok   guard https://cms.acadvizen.com -> https://www.acadvizen.com.evil.example
+ok   guard https://enroll.acadvizen.com -> https://www.acadvizen.com
+ok   guard https://cms.acadvizen.com -> https://www.acadvizen.com [CMS + public address]
+ok   guard https://enroll.acadvizen.com -> https://www.acadvizen.com [CMS + public address]
+ok   guard https://staging-cms.acadvizen.com -> https://www.acadvizen.com [CMS + public address]
+ok   guard https://cms.acadvizen.com -> https://www.acadvizen.com [CMS + public address] info
+ok   guard https://cms.acadvizen.com -> https://staging-main.vercel.app info
+
+302 tests, 302 passed, 0 failed

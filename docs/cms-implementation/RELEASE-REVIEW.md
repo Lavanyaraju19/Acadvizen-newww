@@ -1,25 +1,25 @@
 # Release 11: review sheet (13 October 2026)
 
-**Status: committed locally; NOT pushed or deployed.** The owner pushes and promotes it (`FINAL-RELEASE-AND-ROLLBACK.md` §3).
+**Status: committed locally on `headless-wordpress`; NOT pushed or deployed.** The owner pushes and promotes it (`FINAL-RELEASE-AND-ROLLBACK.md` §3).
 
-**Base:** `0554e5f`, which is on GitHub. Live is Release 10 (`dpl_8C59rWUwpicv7eaqiqinsRWeKP5T`, built from `80134d4`). The only Main application code differences between `80134d4` and release 11 are the three files below.
+**Base:** `0554e5f` (on GitHub). Live is Release 10 (`dpl_8C59rWUwpicv7eaqiqinsRWeKP5T`, built from `80134d4`).
 
-**Why:**
-- `src/middleware.js` and the two `/admin` notification routes read only `SUPABASE_SERVICE_ROLE_KEY`.
-- With release 11 they prefer `SUPABASE_SECRET_KEY`, as `lib/env.ts` already does. A later key replacement then needs no code change.
-- Production sets only the legacy variable, so **behaviour is unchanged**.
-- By the owner's decision, no key is being changed now.
-
-| Commit | Files | Review notes |
+| Commit | What | Review notes |
 |---|---|---|
-| `f855e33` | `src/middleware.js`, `app/api/admin/notifications/route.js`, `app/api/admin/notifications/[id]/read/route.js` (1 line each, 3 places, plus a comment); `tests/unit/supabase-key-rotation.test.js` (new); `tests/unit/wordpress-content-api.test.js` (+2 tests) | The guard test fails on the old code. Comments use neutral wording (no mention of the exposure in the public code) |
-| `8e27175` | `tests/wordpress/scheduling-acceptance.mjs`, `tests/wordpress/permissions-acceptance.mjs` | Test tools only; not part of the site build |
-| docs | `docs/cms-implementation/*` | Handover set, fresh evidence |
+| `f855e33` | Middleware and notification routes prefer `SUPABASE_SECRET_KEY`; slug tests | Superseded in detail by `03d18dc` |
+| `8e27175` | Scheduling and role-permission acceptance tests | Test tools only |
+| `13eac79` | First version of the handover documents | Docs |
+| `03d18dc` | `lib/supabaseServiceKey.js`: the new key is used only when it has a server-key shape, otherwise the legacy key. `lib/env.ts`, the middleware and the notification routes use it. The routes answer 503 when no key is configured | Found in review: the plain `||` let a malformed new value displace the working key. 7 tests. Proven locally with only `sb_secret_`/`sb_publishable_` keys (all suites pass) |
+| `df30076` | Site settings and menus load concurrently (`lib/siteMenus.js`) | 15 tests; identical output to the old sequential code in 12 cases |
+| `fc53a7e` | `nodemailer` 10.1.0; Next.js's `sharp` 0.35.5 via override | `npm audit` 0; mailer tests 11/11; Node 20.x on Vercel; local image optimiser AVIF/WebP/PNG OK |
+| `436a822` | CMS lookups stop early when a slug has no row in a table | 9 tests; hits, preview and custom selects unchanged; tool pages 6.2 → 1.9 s at 200 ms per query |
+| docs commit | Final documents and evidence | Docs |
 
-**Checks:**
-- fresh run 12 Oct 19:33–19:47 UTC: all PASS (`TEST-RESULTS.md` F-11 to F-13);
-- unit rerun after the comment edit: 214/214;
-- pre-commit secret guard: clean on both commits.
+**Production effect:**
+- the same key is selected, so no visible change;
+- same content, faster pages;
+- dependencies patched.
+- **No environment variable, region or feature-switch change.**
 
 **Excluded (the owner's):** `.gitignore`, `lib/wordpress/config.js.pre-integration-fix.bak`.
 

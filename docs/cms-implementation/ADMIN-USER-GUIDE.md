@@ -6,6 +6,12 @@
 > - The workflows below were proven on the live websites through this admin, using labelled test content that was then removed (`TEST-RESULTS.md`, R10).
 >
 > All screens were tested on a local copy (115 browser checks). The connection itself was tested on the live Main website.
+>
+> **Which screens to use for everyday work:**
+> - **Pages** and **Blogs** are proven on the live websites.
+> - Header, Footer, Menus, homepage lists, Courses, city and service pages, Media and SEO overrides are proven on a full local copy only, because there is no staging site yet.
+>   - Their changes show to every visitor at once.
+>   - Preview first, change one thing at a time, and use **Earlier versions → Restore** if something looks wrong.
 
 ## Where to work
 
@@ -118,7 +124,52 @@ The **Whole website** row of tabs has:
 
 Colours left empty use the website's own colours. A colour such as *rgba(255,255,255,0.1)* (a see-through white) is kept as it is.
 
+### Redirects (plugin 0.7.0)
+
+**Main Website → Redirects** (in the *Whole website* row) sends visitors from an old address to a new one on www.acadvizen.com.
+
+1. **Add new**: fill in the **Old address** (e.g. */old-seo-course*), **Send visitors to** (e.g. */seo-course-in-bangalore*, or a full web address) and the **Kind of redirect** (Permanent is right for a page that has moved). Then **Save**. The redirect is saved **switched off**.
+2. Check the addresses. Tick **Show on the Main Website** and click **Save**. Visitors to the old address now go to the new one.
+3. **Remove it:** untick **Show on the Main Website** and **Save**. Only then can it be deleted.
+
+The website refuses, with a clear message, any redirect that would:
+- take over its own system addresses (such as the admin);
+- point to itself;
+- create a chain or a loop;
+- duplicate an existing redirect;
+- **hide a published page or blog** (unpublish that first, if this is really intended).
+
+### One blog on both websites: edit it anywhere (plugin 0.7.0)
+
+A blog published to **Both** (or Enrollment) is one blog with two appearances: the Main Website's article and a normal post on the Enrollment website. Edit it wherever you like; the change reaches both:
+- **Main Website → Blogs:** saves both at once (as before).
+- **Posts** (the regular WordPress editor), on that post:
+  - **Update** also updates the Main Website.
+  - The **Main Website** box on the right, and a message after saving, say whether it worked.
+- **The Main Website's own admin:** the Enrollment post follows within 5 minutes. **Main Website → Blogs → Check now** makes it happen at once.
+
+**New post in the regular editor:** tick **Also publish on the Main Website** in the **Main Website** box, then **Publish**. The post also appears on www.acadvizen.com/blog in the Main Website's design. From then on the two stay linked.
+
+**What reaches the Main Website from the regular editor:**
+- Headings, paragraphs (with bold, italics and links), lists and images.
+- Tables, embedded videos, galleries and shortcodes stay on the Enrollment website only. The message after saving lists them.
+
+**Removing:** moving the post to the trash removes it from the Enrollment website only. To take it off the Main Website as well, unpublish or delete it in **Main Website → Blogs**. A blog removed on the Main Website sets its Enrollment post to **Draft**; it is never deleted automatically.
+
+### If someone else changed it meanwhile (plugin 0.7.0)
+
+**If the content changed after you opened it**, Save is refused with a red message instead of silently replacing their work. The change might have been made in the Main Website's own admin, or by a colleague.
+- What you typed stays in the form.
+- Check the live version first. Clicking **Save** again then replaces their change with yours.
+
+**For a blog changed in two places** before the websites were the same again, nothing is overwritten. The post and the Blogs screen show **Conflict**. To resolve it:
+1. Open it in **Main Website → Blogs**.
+2. Compare the two versions.
+3. Save the one to keep. Both websites then show that version.
+
 ## The one choice that matters: Publish To
+
+> **Only when the optional Render Bridge is switched on.** It is **off** on the live websites, and from plugin 0.7.0 the "Publish To" boxes are hidden while it is off, so nothing appears to publish where nothing would show. Use **Main Website** (above) for Main content. The rest of this section, and *Everyday tasks* / *Redesigning* below, describe that optional mode.
 
 Every page, course, location, blog and tool has a **Publish To** box on the right of the edit screen:
 
@@ -182,6 +233,33 @@ Drafts are never sent to the Main website.
 - **Times are in the site's time zone, which is UTC.** The field shows "+00:00" next to it. India is UTC+5:30, so subtract 5 h 30 min: 09:00 IST is entered as 03:30.
 - Nothing runs in the background. From that time on, the Main website shows or hides the item the next time someone visits the address.
 - Proven end to end on a local copy (12 Oct, twice: it appeared and disappeared within seconds of the set times). It has not been tried on the live site, because that would publish test content on a timer.
+
+## When approval is switched on (plugin 0.7.0)
+
+> Prepared and tested on a local copy (`approval-acceptance.mjs` 46 checks, `approval-reliability-acceptance.mjs` 29 checks). **Not switched on on production yet**: it needs plugin 0.7.0 and `ACADVIZEN_CMS_APPROVAL` in wp-config.php (`DEPLOYMENT-REPORT.md`).
+
+Approval changes how Elementor pages, WordPress pages, site documents and templates reach the websites. The Main Website screens (forms) are not affected.
+
+| You do | What happens |
+|---|---|
+| **Publish** (Elementor or the WordPress editor) | **Submits** exactly this revision. Status becomes "Waiting for approval"; nothing goes live |
+| Open a **live** page to edit it | You are taken to its **working copy**. Visitors keep seeing the live page. You no longer need the Duplicate-and-swap method described under Redesigning |
+| Save after submitting or after approval | The approval is cancelled automatically, because the revision changed. Submit again |
+| A reviewer approves | **Publish approved revision** (in Approvals) puts exactly that revision live on the websites in Publish To, then checks each one |
+| Save **Global Styles** | Only reviewers can; it changes both websites at once |
+| Trash a live page | Only reviewers can |
+| Undo a published change | A reviewer uses **Approvals → Restore**. It replaces **Versions & Rollback → Make live** for pages under approval |
+| Throw away an unfinished working copy | **Discard working copy** in the page's **Approval** box |
+| Want it published later | Set a future publish date before submitting. Approval then offers **Schedule approved revision for …**; at that time it is published only if unchanged. **Cancel schedule** keeps the approval |
+
+**Where to see the state:**
+- the **Approval** box on the edit screen;
+- the page list, where working copies are labelled;
+- **Acadvizen Master Admin → Approvals**.
+
+**Why a submit is refused:** the message names the widget, the website, the reason and the fix. Examples: a widget whose plugin is not active; a shop or login widget on a page for Main. Typed HTML or shortcodes can be submitted, but need a reviewer who checks the code.
+
+More: `HOW-TO-PUBLISH.md` (plain steps), `REVIEWER-GUIDE.md`, `DESTINATION-GUIDE.md`, `WIDGET-COMPATIBILITY.md`.
 
 ## Redesigning
 

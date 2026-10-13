@@ -1,0 +1,58 @@
+PASS A1 "Main Website" is in the Acadvizen Master Admin menu
+PASS A1b the menu entry can be reached with the keyboard and leads to the Main Website screen
+PASS A2 one tab per Main content type, plus Activity — Pages, Blogs, Tools, City pages, Service pages, Courses, Course sections, Media library, Locations, Cities, Testimonials, Activity, Banner, Closing call to action, Sections, Lists, Authors, Categories, Tags, Header, Footer, Menus, SEO overrides, Redirects, Site settings
+PASS A3 the existing Main page is listed with its address and status — SEO Course In Bangalore /seo-course-in-bangalore Published October 13, 2026 8:15 am Edit | Preview | View live | Trash
+FAIL B1 "Prepare changes privately" opens a private draft copy
+PASS B2 section saved in the draft
+PASS B3 the live page stays up and unchanged while the change is a draft — status 200
+PASS B4 preview shows the draft with Main's own design
+PASS B5 preview at desktop width — 1280px
+PASS B5 preview at tablet width — 820px
+PASS B5 preview at mobile width — 390px
+PASS B6 publishing the draft merges it onto the live page — Saved on the Main Website. Your draft copy was published onto the live page.
+PASS B7 the public page shows the change
+PASS B8 restoring brings the original heading back — draft 6c940580
+PASS B9 restored page is visually identical to before (desktop) — 0.000% pixels differ, 1440x6134
+PASS B9 restored page is visually identical to before (mobile) — 0.000% pixels differ, 390x9691
+PASS B10 saving without changes leaves the public page visually identical — 0.000% pixels differ
+PASS E1 blog created and published to Main — Saved on the Main Website.
+PASS E2 Main page of the blog has noindex as chosen
+PASS D1 Main only: not on the Enrollment website
+PASS D2 Enrollment only: published on Enrollment, not public on Main — Saved on the Main Website. Kept as a draft on the Main Website because Publish To is "Enrollment Website". Enrollment Website: updated.
+PASS D3 Both: on Main and on Enrollment, each in its own design
+PASS E3 an edit reaches both websites
+PASS H1 earlier versions are listed — 4 versions
+PASS H2 restoring an earlier version brings its article back — The earlier version is back. Its status was not changed.
+PASS E4 trash removes it from Main and Enrollment — Moved to the trash and removed from the Main Website.
+PASS E5 restore brings it back as a draft (not public)
+PASS E6 tool created and shown on Main
+PASS E7 hiding the tool removes its name from its page
+PASS E-section 3 saved — Saved. The Main Website shows it within a minute in this draft.
+PASS E-section 4 saved — Saved. The Main Website shows it within a minute in this draft.
+PASS E-section 5 saved — Saved. The Main Website shows it within a minute in this draft.
+PASS E8 draft page not public before publishing
+PASS E9 new page published with its sections, in order, on Main
+PASS E10 design settings applied (centred hero, text hidden on phones)
+PASS E11 on a phone the "hidden on phones" section is not shown
+PASS E12 unpublishing takes the page off Main
+PASS I1 an address already in use is refused with a clear message, typed text kept — This address is already used by another record. slug "seo-course-in-bangalore" is already used by another pages record
+PASS H3 an Author cannot open Main pages (refused with 403) — 403
+PASS H3b "Main Website" opens on Blogs for an Author
+PASS H3c an Author cannot open an article someone else wrote — 403
+PASS H3d an Author publishes their own article — Saved on the Main Website.
+PASS H3e an Author's list shows only their own articles — 1 row(s)
+PASS H4 a Contributor can only save drafts or submit for review — Draft, In review
+PASS H5 a forged "Published" from a Contributor is refused; the article stays private — Saved on the Main Website. Your role cannot set that status; the content was saved without changing it.
+PASS H6 a preview link with a changed signature is refused
+PASS H7 a preview link for another record is refused
+PASS H8 the content API refuses unsigned requests — 401
+PASS H9 a replayed signed change is applied once — 200 then 409
+PASS J1 / answers
+PASS J1 /blog answers
+PASS J1 /tools answers
+PASS J1 /seo-course-in-bangalore answers
+PASS J2 the Activity log records the changes — 300 entries
+PASS Z cleanup: test content removed from Main — 404,404
+PASS Z cleanup: the Enrollment copy of the test blog is deleted — 0 left
+
+55 passed, 1 failed

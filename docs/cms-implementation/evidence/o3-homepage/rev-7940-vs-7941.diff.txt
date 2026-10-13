@@ -1,0 +1,39 @@
+# PRODUCTION, read-only, 12 Oct 2026 ~20:20 UTC. Enrollment homepage (page 6177, slug home1), REST revisions via the saved integration session.
+# Text-only diff (one line per heading, paragraph or image alt) of revision 7940 (11:44:04 UTC) -> 7941 (11:44:05 UTC), both by WordPress user ID 1.
+# HTML-level: 80 elements inserted after element 1095, 0 removed, 0 changed. Revision 7946 (12:34:46) = 7941 apart from gallery image order.
+# Live page: the heading appears twice; original in Elementor container cf4e51b, copy in container 0e5d41f.
+@@ -379,4 +379,34 @@ Empowering learners with practical skills, real-world experience, and opportunit
+ [img: ]
+ [img: ]
++[img: Acadvizen Awards &amp; Accolades]
++[img: Campus to Career]
++[img: Acadvizen Awards]
++[img: Acadvizen Awards]
++Where Our Learners Build Their Careers
++Empowering learners with practical skills, real-world experience, and opportunities to grow with leading companies.
++[img: AI Tool]
++[img: AI Tool]
++[img: AI Tool]
++[img: AI Tool]
++[img: AI Tool]
++[img: AI Tool]
++[img: AI Tool]
++[img: AI Tool]
++[img: AI Tool]
++[img: AI Tool]
++[img: AI Tool]
++[img: AI Tool]
++[img: AI Tool]
++[img: AI Tool]
++[img: ey]
++[img: kpmg]
++[img: ]
++[img: microsoft]
++[img: meesho]
++[img: deloitte]
++[img: swiggy]
++[img: capgemini]
++[img: ]
++[img: ]
+ Success Stories from Acadvizen Learners
+ Real journeys, real experiences, and real career transformations. Career Success

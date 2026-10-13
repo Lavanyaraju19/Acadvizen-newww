@@ -1,12 +1,28 @@
 # Acadvizen central CMS: client handover (13 October 2026)
 
-**Status: NOT READY for an unconditional handover.**
+## Status
 
-- **The CMS works on the live websites.** Re-verified 12 Oct 19:33–19:47 UTC: 314 Main addresses and 60 Enrollment pages unchanged, signed security, "Test connection" Connected.
-- **Security limitation:** production credentials remain readable in old public GitHub commits. The owner decided on 13 Oct that existing passwords and keys are not to be changed in this work, so that risk is **open, not fixed** (`FINAL-SECURITY-REPORT.md`, `FINAL-OPEN-ISSUES.md` O-1).
-- **Open owner decisions:** O-2 to O-6 (content-connection switch, Enrollment homepage duplicate, performance, staging, WordPress updates).
+**BLOCKED for a full handover, by production authorization only. No engineering defect is open.**
 
-Handing over with these limitations written down is the owner's call.
+- **Live and verified:** editing Main pages and blogs from WordPress, and publishing to Main, Enrollment or Both.
+- **Built and tested LOCAL, every suite passing:** the Elementor admin for both websites with mandatory approval.
+- **Waiting for your go-ahead:** plugin 0.7.0, the approval and bridge switches, and the migration of Main pages (`OWNER-ACTIONS.md`).
+
+| Area | Status |
+|---|---|
+| Editing Main **pages and blogs** from WordPress, on the live sites | `PASS — VERIFIED` |
+| Header, footer, menus, homepage lists, courses, city and service pages, media, SEO overrides, scheduling, Author/Contributor roles | `PASS — VERIFIED LOCALLY ONLY` (no staging; O-5) |
+| Existing content on both sites | `PASS — VERIFIED` unchanged: 314 Main addresses (status, title, description, robots, canonical; 12 Oct 23:46 – 13 Oct 02:55 UTC) and 60 Enrollment pages (status, title, robots, canonical, Elementor markup; 12 Oct 23:45 UTC) |
+| Security of the old credentials in public Git history | `ACCEPTED RESIDUAL RISK`, by the owner's decision not to change them (`FINAL-SECURITY-REPORT.md`) |
+| Release 11 (security readiness, faster pages, dependency fixes) | Committed locally; waiting for the owner's manual push and promote (`FINAL-RELEASE-AND-ROLLBACK.md` §3) |
+| Open owner decisions | O-2 to O-6, O-8, O-11, O-14, O-20 to O-22, O-29 (`FINAL-OPEN-ISSUES.md`); the ordered list is in `OWNER-ACTIONS.md` |
+| Does **Publish** update the live Main site? | **Yes**: pages and blogs, verified on production 12 Oct with labelled test content (removed afterwards) |
+| Does **Publish** update the live Enrollment site? | **Yes, for blogs** with Publish To = Enrollment or Both (a normal WordPress post), verified on production 12 Oct. Enrollment pages are edited as before with Elementor |
+| Does **Both** update both? | **Yes**, verified on production 12 Oct (publish and an edit reach both). Failure handling for Both verified locally only; the clearer partial-failure warning needs plugin 0.6.2 (O-14) |
+| Production switches (observed 12 Oct) | WordPress → Main content connection **ON** (since 12 Oct, earlier approval); Render Bridge **OFF**. Your 13 Oct instruction asks for it off until you approve: see `FINAL-PUBLISHING-WORKFLOW.md` §1. Nothing changed by the engineer |
+| Plugin | 0.6.1 live; **0.7.0** prepared locally, not installed: blogs editable in any editor and kept in step, edit-conflict protection, Redirects, clearer failure messages, **approval-first Elementor publishing** and the **widget compatibility registry** (`FINAL-FEATURE-INVENTORY.md` §F) |
+| **One Elementor admin for both websites, with mandatory approval** | `PASS — VERIFIED LOCALLY ONLY` (final ordered run, 13 Oct 11:13–12:53 UTC). Covered by `approval-acceptance.mjs` 46/46, `approval-reliability-acceptance.mjs` 29/29, `migration-acceptance.mjs` 13/13 and the bridge scenarios 44/44:<ul><li>the real Elementor editor;</li><li>Main / Enrollment / Both, each verified on the public page;</li><li>approval tied to the exact revision; any edit cancels it; reviewers only;</li><li>audit history;</li><li>partial failure, retry and rollback;</li><li>blocked widgets and typed code;</li><li>desktop/tablet/phone layout on both websites.</li></ul>**Not on production:** it needs plugin 0.7.0, two wp-config switches and the Main switch (a production traffic change). Runbook in `MAIN-MIGRATION-PLAN.md`; state in `DEPLOYMENT-REPORT.md` |
+| Moving Main's existing pages into Elementor | Tool and runbook ready. One real page (`/soft-skills`) moved end to end LOCAL: content, SEO and canonical identical; visually close, not identical (O-28). Production migration not started: `OWNER APPROVAL REQUIRED` at each step (`MAIN-MIGRATION-PLAN.md`) |
 
 ## 1. How it fits together
 
@@ -14,7 +30,7 @@ Handing over with these limitations written down is the owner's call.
 |---|---|---|
 | **Main website**: www.acadvizen.com | Next.js on Vercel; content in a Supabase database | From WordPress (**Acadvizen Master Admin → Main Website**), or Main's own `/admin` |
 | **Enrollment website**: enroll.acadvizen.com | WordPress with Elementor | WordPress **Pages** / **Posts** with Elementor, exactly as before |
-| **The connection** | WordPress sends each Main change to `www.acadvizen.com/api/wordpress/content`, signed with a shared secret. Main checks the signature, stores the change, and shows it **in Main's own design** within about a minute | Automatic |
+| **The connection** | WordPress sends each Main change to `www.acadvizen.com/api/wordpress/content`, signed with a shared secret. Main checks the signature, stores the change, and shows it **in Main's own design** | Automatic |
 
 - WordPress never changes Main's design, and the Main website never changes Enrollment.
 - The optional "Render Bridge", which would serve WordPress/Elementor pages at Main addresses, is **off**.
@@ -26,25 +42,23 @@ Handing over with these limitations written down is the owner's call.
 - **Lost password:** use **Lost your password?**, which works only if your account email is current.
 - **Otherwise:** the Hostinger account holder opens hPanel → Websites → enroll.acadvizen.com → **WP Admin** → Users → your account → **Set New Password**.
 
-Then **Acadvizen Master Admin → Settings → Test connection** should say **Connected**.
+Then **Acadvizen Master Admin → Settings → Test connection** should say **Connected** (verified 12 Oct 19:46 UTC).
 
 ## 3. What you can edit, and where it appears
 
 | Content | Screen | Appears on | Verified |
 |---|---|---|---|
-| Existing and new Main pages, with sections | Main Website → **Pages** | www.acadvizen.com/&lt;address&gt; | **Live** (17/17) |
-| Blogs | Main Website → **Blogs** | Main, Enrollment, or Both (**Publish To**) | **Live** (16/16) |
+| Existing and new Main pages, with sections | Main Website → **Pages** | www.acadvizen.com/&lt;address&gt; | Live (17/17) |
+| Blogs | Main Website → **Blogs** | Main, Enrollment, or Both (**Publish To**) | Live (16/16) |
 | Header, footer, menus, site labels | Main Website → **Header**, **Footer**, **Menus**, **Site settings** | Every Main page | Local copy (18/18) |
 | Homepage banner, call to action, lists | Main Website → **Banner**, **Closing call to action**, **Lists**, **Sections** | Main homepage | Local copy (14/14) |
 | Courses and course sections | Main Website → **Courses**, **Course sections** | Main course pages | Local copy (12/12) |
-| City pages, service pages, locations, cities | Main Website → those tabs | Main | Local copy (15/15) |
-| Tools, testimonials | Main Website → those tabs | Main | Local copy |
-| Images for Main | Main Website → **Media library** (upload, pick) | Main | Local copy |
-| SEO overrides | Main Website → **SEO overrides** | Main | Local copy |
-| Blog authors, categories, tags | Main Website → those tabs | Main blog | Local copy |
+| City pages, service pages, locations, cities, tools, testimonials, media, SEO overrides, blog authors/categories/tags | Main Website → those tabs | Main | Local copy (15/15 and the structured suite) |
+| Blogs in the regular **Posts** editor (edit a linked post, or "Also publish on the Main Website") | Posts | Both websites | Local copy (18/18), plugin 0.7.0 |
+| Redirects on the Main Website | Main Website → **Redirects** | Main | Local copy (11/11), plugin 0.7.0 |
 | Enrollment pages | WordPress **Pages** + Elementor (unchanged) | Enrollment | — |
 
-"Local copy" means the feature was proven on a full copy of both sites but not yet on the live sites, because those edits show to every visitor at once. Preview first, and keep "Earlier versions" in mind.
+**Recommendation until staging exists:** use the live-verified **Pages** and **Blogs** screens for everyday work. Use the other screens carefully: preview first, change one thing at a time, and keep **Earlier versions → Restore** in mind. Those edits show to every visitor at once.
 
 ## 4. Everyday tasks
 
@@ -52,21 +66,15 @@ The full step-by-step guide is `ADMIN-USER-GUIDE.md`.
 
 1. **Change a live page safely:**
    1. **Pages → Edit → Prepare changes privately.** Visitors keep seeing the live page.
-   2. Edit sections, clicking **Save section** under each.
+   2. Edit the sections, clicking **Save section** under each.
    3. **Preview (desktop, tablet, mobile).**
-   4. Set **Status** to **Published** and click **Save**. The change replaces the live page.
-2. **New page:** **Pages → Add new**, then title, address, description and SEO, then **Save** (draft, private). Add sections, preview, then Published and **Save**.
-3. **New blog:** **Blogs → Add new**, then write with the block buttons, set **Publish To** and **Status**, and **Save**.
-   - **Main:** www.acadvizen.com/blog/…
-   - **Enrollment:** a normal post on enroll.acadvizen.com, kept private on Main. Status shows whether it is live on Enrollment, and later edits keep it live.
-   - **Both:** each site shows it in its own design.
-4. **SEO:** each page and blog has an SEO title, description and **noindex**. A noindex item is hidden from search engines and left out of the sitemap. **SEO overrides** change these for any address.
-5. **Images:** **Media library → Upload** (images up to 3 MB; the file type is checked), then pick them with **Choose from the Main library**. Write a short description of each image (alt text) where the field is offered.
-6. **Scheduling:**
-   - "**Publish automatically on**" and "**Remove automatically on**", with Status set to **Published**.
-   - **Times are entered in the site's time zone, which is UTC** (shown as "+00:00" next to the field). India is UTC+5:30, so 09:00 IST is entered as 03:30.
-   - Proven on a local copy: the page appeared within seconds of its time, and was removed on time.
-7. **Hide or remove:** Status **Draft** + **Save**, or **Trash**. **Restore** in the trash brings it back as a draft. Editors and Administrators can **Delete permanently**.
+   4. Set **Status** to **Published** and click **Save**.
+2. **New page:** **Pages → Add new**, then the title, address, description and SEO, then **Save** (draft, private). Add sections, preview, then Published and **Save**.
+3. **New blog:** **Blogs → Add new**, then set **Publish To** (Main, Enrollment, or Both) and **Status**, and **Save**.
+4. **SEO:** each page and blog has an SEO title, description and **noindex**. **SEO overrides** change these for any address.
+5. **Images:** **Media library → Upload** (images up to 3 MB; the type is checked), then pick them with **Choose from the Main library**. Write alt text.
+6. **Scheduling:** "**Publish automatically on**" and "**Remove automatically on**", with Status **Published**. **Times are in UTC.** India is UTC+5:30, so 09:00 IST is entered as 03:30.
+7. **Hide or remove:** Status **Draft** + **Save**, or **Trash**. **Restore** in the trash brings it back as a draft.
 8. **Undo:** **Earlier versions → Restore** (the last 20 saves).
 
 ## 5. Who can do what
@@ -74,37 +82,63 @@ The full step-by-step guide is `ADMIN-USER-GUIDE.md`.
 | Role | Main Website screens |
 |---|---|
 | Administrator, Editor | Everything |
-| Author | **Blogs only**: their own articles, including publishing. Every other screen is refused (verified by direct request) |
-| Contributor | **Blogs only**: drafts and "submit for review". Publishing is refused, even if forced |
+| Author | **Blogs only**: their own articles, including publishing. Every other screen is refused |
+| Contributor | **Blogs only**: drafts and "submit for review". Publishing is refused |
+
+Verified locally only: production has no Author or Contributor accounts.
 
 ## 6. When something fails
 
-- **A red message names the problem**, for example an address already in use, a broken link, or the Main website not reachable. The live site keeps the previous version.
-- **Retrying is safe:** press **Save once** and wait. The admin can take about 20 seconds; a double click is not needed. A change is never applied twice.
-- **Test connection says "Not connected":** contact the administrator (see section 8).
-- **A page looks wrong after a change:** **Earlier versions → Restore**. If the whole site is affected, the owner rolls back the deployment in Vercel (`FINAL-RELEASE-AND-ROLLBACK.md` §5).
+- **A red message names the problem**, for example an address already in use, a broken link, or the Main website not reachable. Nothing was changed; the live site keeps the previous version.
+- **"Enrollment Website copy failed"** (a yellow warning from plugin 0.7.0; inside the green message on 0.6.1) means the Main Website was updated but the Enrollment copy was not. Fix the cause and click **Save** again; that creates the Enrollment copy once, without duplicates.
+- **Press Save once and wait.** The admin can take about 20 seconds. A change is never applied twice.
+- **Test connection says "Not connected":** contact the administrator.
+- **A page looks wrong:** **Earlier versions → Restore**. If the whole site is affected, the owner rolls back in Vercel (`FINAL-RELEASE-AND-ROLLBACK.md` §5).
 
 ## 7. Known limitations
 
-- **Security:** old credentials are readable in public Git history and, by the owner's decision, have not been changed (see the status at the top).
-- **The live-site checks covered pages and blogs only.** The other content types passed on a local copy; staging is not available yet (O-5).
-- **Slow screens.** The Main Website admin screens take about 20 seconds (the Enrollment server is slow when nothing is cached). The Main public pages take 1.5–3.5 s (O-4 proposes a fix).
-- **Scheduled times are in UTC** (section 4).
-- **"Delete permanently" on a blog that was also on Enrollment** moves the Enrollment copy to WordPress's trash. WordPress empties it after 30 days.
+- **Security:** old credentials remain readable in public Git history and have not been changed, by the owner's decision.
+- **Live-site checks covered pages and blogs only**, because staging is not available (O-5).
+- **Speed:**
+  - Main pages take 1.2–3 s to start loading.
+  - **Tool pages (`/tools/…`) currently take 7.5–10.5 s.**
+  - Release 11 reduces this: tool pages about 6.2 → 1.9 s in the local model.
+  - A further step (function region) needs the owner's approval (O-4).
+- **Enrollment homepage:** a section appears twice, from an Elementor edit on 12 Oct (O-3). A ready correction is documented.
+- **Scheduled times are in UTC.**
 
 ## 8. Support and recovery
 
 | Need | Who / where |
 |---|---|
-| Access, connection, rollback, credentials | The site owner (holds the Hostinger, Vercel, Supabase and GitHub accounts) |
+| Access, connection, rollback, credentials | The site owner (Hostinger, Vercel, Supabase and GitHub account holder) |
 | How to | `ADMIN-USER-GUIDE.md` |
 | What was tested | `FINAL-ACCEPTANCE-TESTS.md` |
 | Releases and rollback | `FINAL-RELEASE-AND-ROLLBACK.md` |
 | Security | `FINAL-SECURITY-REPORT.md` |
-| Open items | `FINAL-OPEN-ISSUES.md` |
+| Open items and decisions | `FINAL-OPEN-ISSUES.md` |
+| How publishing to Main, Enrollment and Both works, and what was verified | `FINAL-PUBLISHING-WORKFLOW.md`, `DESTINATION-GUIDE.md` |
+
+**The handover set:**
+
+| # | Document | For |
+|---|---|---|
+| 1 | `ADMIN-USER-GUIDE.md` | Editors: every screen, Elementor, and how approval changes publishing |
+| 2 | `HOW-TO-PUBLISH.md` | Everyone: plain, non-technical steps |
+| 3 | `REVIEWER-GUIDE.md` | Reviewers: approving, publishing, verification, rollback |
+| 4 | `DESTINATION-GUIDE.md` | Main / Enrollment / Both: what each does, verification, failures |
+| 5 | `WIDGET-COMPATIBILITY.md` | The widget classes, the rules, adding new widgets, the verified inventory |
+| 6 | `FINAL-FEATURE-INVENTORY.md` | Every feature, where it is edited, what was verified |
+| 7 | `FINAL-ACCEPTANCE-TESTS.md`, `TEST-RESULTS.md` | Test report with commands and results |
+| 8 | `DEPLOYMENT-REPORT.md` | What is live, what is prepared, what a rollout involves |
+| 9 | `FINAL-RELEASE-AND-ROLLBACK.md` | Backups and rollback, including approval-era rollback (§6) |
+| 10 | `FINAL-SECURITY-REPORT.md` | Credentials, roles, typed code, third-party widgets (§3a) |
+| 11 | `FINAL-OPEN-ISSUES.md` | Known issues and owner decisions |
+| 12 | `FINAL-MAINTENANCE-GUIDE.md` | Plugins, Elementor licensing, updates, switches, routine tasks |
+| — | `MAIN-MIGRATION-PLAN.md` | Inventory of Main addresses, architecture decision, production migration runbook |
 
 **Live versions:**
-- Main: deployment `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T` (commit `80134d4`, 12 Oct 2026);
-- Enrollment plugin: Acadvizen Master Admin 0.6.1 (12 Oct 2026). The installed public files are identical to the release package.
+- Main: `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T` (commit `80134d4`);
+- Enrollment plugin: Acadvizen Master Admin 0.6.1 (public files identical to the release package).
 
-**Prepared, not live:** release 11 (`f855e33`), committed locally and not pushed or deployed. It makes no visible change; it only lets the database key be replaced later without a code change (`FINAL-RELEASE-AND-ROLLBACK.md` §3).
+**Prepared, not live:** release 11 on local branch `headless-wordpress` (commits `f855e33` … `436a822` and the final docs commit).

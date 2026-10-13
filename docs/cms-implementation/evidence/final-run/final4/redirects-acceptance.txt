@@ -1,0 +1,16 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.waitForNavigation: Timeout 30000ms exceeded.
+=========================== logs ===========================
+waiting for navigation until "domcontentloaded"
+  navigated to "http://localhost:8088/wp-admin/"
+============================================================
+    at login (<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\tests\wordpress\acceptanceKit.mjs:110:27)
+    at async file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/wordpress/redirects-acceptance.mjs:30:15 {
+  log: [],
+  name: 'TimeoutError'
+}
+
+Node.js v24.18.1

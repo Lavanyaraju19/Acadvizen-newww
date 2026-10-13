@@ -1,0 +1,13 @@
+PASS R1 saved from WordPress, stored without the trailing slash, switched off
+PASS R1 a switched-off redirect does nothing on Main
+PASS R2 switched on: Main redirects the old address (301 to /courses) — 301 /courses
+PASS R3 redirecting a published page is refused with a clear message — A published page or blog lives at this address and would disappear behind the redirect. Unpublish it
+PASS R3 the published page still answers
+PASS R4 the admin address cannot be redirected
+PASS R4 a redirect to an address that is itself redirected is refused (no chains)
+PASS R5 a switched-on redirect cannot be deleted
+PASS R5 switched off: the old address no longer redirects
+PASS R5 then deleted (confirmed)
+PASS Z cleanup: no test redirect or page left
+
+11 passed, 0 failed [LOCAL]

@@ -1,133 +1,183 @@
 # Final open issues: Acadvizen Master Admin / headless CMS (13 October 2026)
 
-**Overall status: NOT CLIENT-READY without a recorded limitation.**
-- The CMS itself passed every production gate that can be run without staging.
-- The security gate stays open. Production credentials remain readable in public Git history, and by the owner's decision they are not being changed (`FINAL-SECURITY-REPORT.md`).
-- Owner decisions O-2 to O-6 are open.
+**Status labels:**
+- `PASS — VERIFIED` (production)
+- `PASS — VERIFIED IN STAGING ONLY`
+- `PASS — VERIFIED LOCALLY ONLY`
+- `BLOCKED — EXTERNAL ACTION REQUIRED`
+- `OWNER APPROVAL REQUIRED`
+- `FAIL — FIX REQUIRED`
+- `ACCEPTED RESIDUAL RISK`
 
-## Critical
+**Overall: NOT READY for an unconditional handover.**
+- **Live CMS:** works for pages and blogs (`PASS — VERIFIED`). Every other content type is `PASS — VERIFIED LOCALLY ONLY`, because no staging exists.
+- **Credentials:** the public-history exposure is an `ACCEPTED RESIDUAL RISK` by the owner's decision, not a fix.
+- **Release 11:** improves security readiness and performance. Code commits are local, waiting for the owner's manual push. The content-API changes (conflicts, redirects), plugin 0.7.0, the tests and these documents are uncommitted, by the owner's 13 Oct instruction.
 
-| ID | Issue | Evidence | Impact | Status / next action |
-|---|---|---|---|---|
-| O-1 | Production credentials readable in public Git history: service-role key (C1), database password (C2), Main admin password (C3) | `FINAL-SECURITY-REPORT.md` §1 (commit IDs, no values) | Anyone can read or change all Main data, including leads, and sign in to `/admin` | **Residual risk by owner decision (13 Oct): no rotation.** Code readiness for a later rotation is done (release 11, local). Closes only if the owner rotates and the old values are verified as rejected |
+## O-1 Exposed credentials (critical)
 
-## Owner decisions (nothing changed by the engineer)
+`ACCEPTED RESIDUAL RISK`.
+- The service-role key, database password and admin passwords remain valid and readable in public Git history. By the owner's decision they are not changed.
+- Code readiness for a later rotation is done and proven locally on the new key type (`FINAL-SECURITY-REPORT.md`).
 
-### O-2: Content-API switch (`WORDPRESS_CONTENT_API_ENABLED=true` in Vercel Production)
+## O-2 WordPress content connection
 
-**What it does:**
-- It lets WordPress (Acadvizen Master Admin → Main Website) save Main records through the signed endpoint `/api/wordpress/content`.
-- Without it, that endpoint answers 503 and the Main Website screens show an error.
-- It does not serve WordPress pages on Main; that is the separate Render Bridge, which is off.
+The supported scope on production is pages and blogs.
 
-**State:** switched on 12 Oct with the owner's approval (release 9). Still on, verified 12 Oct 19:41 UTC.
-
-**Proven on production:**
-- signed security (unsigned, wrong-secret, stale, replay, path validation);
-- "Test connection";
-- the page workflow, 17/17;
-- blogs Main / Enrollment / Both, 16/16, including a re-save;
-- cleanup;
-- 314 Main URLs and 60 Enrollment pages unchanged.
-
-**Proven only on a local copy:** menus, header and footer, homepage lists, courses, city and service pages, media upload, scheduling, Author and Contributor roles (no staging, O-5).
-
-**Options:**
-- **(a) Keep it on** and limit everyday editing to pages and blogs until the rest is proven on staging.
-- **(b) Switch it off** until staging exists (`FINAL-RELEASE-AND-ROLLBACK.md` §5: one variable plus a redeploy).
-
-**Recommendation: (a).**
-- The risky parts (signing, replay, address clashes, publish/unpublish, revalidation) are proven on production.
-- Every save keeps an earlier version that can be restored.
-- Switching off removes the client's ability to edit Main from WordPress, which is the purpose of the project.
-
-### O-3: Enrollment homepage duplicate
-
-"Where Our Learners Build Their Careers" appears twice:
-- WordPress revision 7941 (12 Oct 11:44:05 UTC, user ID 1, an Elementor edit) doubled it; revision 7940 had it once.
-- Not caused by the CMS: user ID 2 never edited the page.
-- Unchanged since: 60/60 Enrollment pages identical to the post-Release-10 capture (12 Oct 19:41 UTC).
-
-**Options:** restore revision 7940 (Pages → Home → Revisions), or keep it if intended. Not touched.
-
-### O-4: Main performance
-
-**Measurements** (12 Oct 19:45 UTC, 3 runs each):
-
-| Address | TTFB |
-|---|---|
-| `/` | 1.67–1.94 s |
-| `/blog` | 1.16–1.54 s |
-| `/seo-course-in-bangalore` | 1.58–1.73 s |
-| Enrollment `/` | 0.12–0.32 s (LiteSpeed hit) |
-
-**Cause:**
-- Main is always a Vercel cache MISS.
-- Requests enter at the `bom1` (Mumbai) edge, functions run in `iad1` (Washington DC), and the database is in Sydney, so each query crosses the US and Australia.
-
-**Proposal** (a deployment setting; not done):
-- Set the function region to `syd1` and redeploy.
-- Measure the same three addresses before and after.
-- Roll back by restoring `iad1`.
-
-### O-5: Staging environment
-
-**Current state:** none usable.
-- The two other Supabase projects are paused.
-- `cms.acadvizen.com` runs plugin 0.3.0, with no credentials.
-
-**Needed:** a non-production Supabase project, plus a staging WordPress with plugin 0.6.1 pointing at a staging Main. Then run AT-30/32/35 there.
-
-### O-6: WordPress updates
-
-**Pending:**
-- Core 7.0.7 → 7.1.3.
-- 12 plugin updates: Elementor 4.3.4, ElementsKit 4.0.8, GTM4WP 2.0.6, GutenKit 2.5.3, Hostinger Easy Onboarding 3.0.4, Hostinger Reach 1.8.6, Hostinger Tools 3.0.79, PopupKit 2.3.7, Rank Math 1.0.280, ShopEngine 4.9.7, WPCode 2.4.0, Yoast 28.6.
-
-**Procedure:** staging first, with a backup; then production; then rerun the Enrollment baseline comparison. Not applied.
-
-## High / medium (not blocking the CMS itself)
-
-| ID | Issue | Status |
+| Check | Result | Status |
 |---|---|---|
-| O-7 | Credentials shared in chat (WordPress, Hostinger, FTP, Vercel) | Open; not changed by owner decision (residual risk) |
-| O-8 | Integration account username is guessable | Open; owner decision |
-| O-9 | `%TEMP%\acadvizen-production-verify.env` held production secrets | **Closed** 12 Oct 19:47 UTC: confirmed redundant and unreferenced, then removed (`FINAL-SECURITY-REPORT.md` C9) |
-| O-10 | Credentials file: the SSH host is joined onto the end of the secret line | Open; owner's file, not edited |
-| O-11 | Three plugins added to Enrollment on 12 Oct by someone else (Microsoft Clarity and WPConsent active; Pixel Manager inactive) | Open; owner to confirm they are intended |
-| O-12 | Project `.env.local` also writable by a local sandbox group from another tool (no production values in it) | Low; optional `icacls` clean-up |
+| Signed API: unsigned / wrong secret / stale / wrong purpose / unknown entity → refused; signed read-only → 200; replay → 409 | As expected (12 Oct 19:41 UTC; replay 12 Oct run) | `PASS — VERIFIED` |
+| Address rules: malformed (11 forms), reserved, taken, rename onto taken | Refused, nothing overwritten (production slug check + 31 API unit tests) | `PASS — VERIFIED` |
+| Pages: draft, private 404, sections, preview, publish, private copy, update, clash refused, unpublish, Trash, Delete permanently | 17/17 (12 Oct, plugin 0.6.1) | `PASS — VERIFIED` |
+| Blogs Main only / Enrollment only / Both, re-save keeps live, cleanup | 16/16 (12 Oct) | `PASS — VERIFIED` |
+| Enrollment Elementor content never overwritten | 60/60 Enrollment pages identical to the first baseline (12 Oct 23:45 UTC) | `PASS — VERIFIED` |
+| Retries and idempotency | One POST per save; replays refused; durable replay table | `PASS — VERIFIED` |
+| Revalidation | Updates visible on the next request (AT-39) | `PASS — VERIFIED` |
+| Header, footer, menus, homepage lists, courses, city and service pages, media, SEO overrides | Full local suites pass, including on the new key type | `PASS — VERIFIED LOCALLY ONLY` |
+| Restricting the non-production-proven screens | These screens are implemented and locally proven, not "unsupported". Hiding them would need a plugin release and a production install. The owner can instead limit everyday editing to pages and blogs (`ADMIN-USER-GUIDE.md`) | `OWNER APPROVAL REQUIRED` |
+| Keep the content-API switch on | Recommended: everything risky is proven on production; every save keeps earlier versions | `OWNER APPROVAL REQUIRED` (currently on, from the earlier approval) |
+| **Owner instruction of 13 Oct vs observed state** | The latest instruction asks that the WordPress-to-Main publishing stay **disabled** until approved. **Observed:** the Render Bridge is off, but the content connection (`WORDPRESS_CONTENT_API_ENABLED=true`) has been **on** since 12 Oct. Not changed by the engineer: turning it off is also a production change. Steps to switch it off: `FINAL-PUBLISHING-WORKFLOW.md` §1 | `OWNER APPROVAL REQUIRED`: confirm "keep on" or "switch off" |
 
-## Not tested on production (passed LOCAL)
+## O-3 Enrollment homepage duplicate
 
-The reason is the same for each: a visitor-facing write without staging (O-5), or no test accounts on production.
-- AT-30: menus, header and footer, homepage lists, courses, city and service pages, media upload.
-- AT-32: scheduled publishing. LOCAL end to end 7/7 (12 Oct 19:36–19:43 UTC); the site time zone is UTC, as on production.
-- AT-35: Author and Contributor. LOCAL 9/9 by direct request, plus suite H3–H5.
-- AT-41: rollback execution. Targets are READY; not exercised.
+Status: `OWNER APPROVAL REQUIRED`. The cause is isolated precisely; a ready-to-apply correction is below.
 
-## Pre-existing (documented, not fixed here)
+**Evidence** (production, read-only, 12 Oct ~20:20 UTC; `evidence/o3-homepage/rev-7940-vs-7941.diff.txt`):
+- Homepage = page 6177 (`home1`). Revision 7941 (12 Oct 11:44:05 UTC, WordPress user ID 1) is a **pure insertion**: 80 HTML elements added, 0 removed, 0 changed, compared with revision 7940 (11:44:04).
+- The inserted block is an exact copy of the block just above it: 4 award images, "Where Our Learners Build Their Careers", its subtitle, and a 24-logo company strip. It was placed directly before "Success Stories from Acadvizen Learners".
+- Live page: the original is in Elementor container `cf4e51b`, the copy in container `0e5d41f`.
+- Revision 7946 (12:34:46) has the same content as 7941; only the gallery order differs.
+- This looks like an accidental Elementor "Duplicate". The CMS (user ID 2) never edited the page.
 
-- **Known Enrollment issues:** the sitemaps, three redirects, `/contact-us/`, and the logo link (`verify-production.mjs`: 9 known failures).
-- **Code:** 10 ESLint warnings; 2 high `npm audit` findings (`nodemailer` needs a major version; Next.js's own `sharp`).
+**Ready correction (owner applies; it changes the visible homepage):**
+1. Take a backup first: Hostinger backup, or WordPress keeps the current version as a revision automatically.
+2. Pages → Home → **Edit with Elementor** → open the **Navigator**.
+3. Find the **second** "Where Our Learners Build Their Careers" container, the one directly above "Success Stories". Right-click → **Delete** → **Update**.
+4. Alternative: Elementor → History → Revisions → the revision dated 12 Oct 11:44:04 (7940) → **Apply** → **Update**. This is the same result, because 7941 changed nothing else.
+5. Verify desktop and mobile: the heading appears once, and the block order is awards → careers → success stories.
+6. To undo: Revisions → 7941.
 
-## Final run (fresh, 12 Oct 19:33–19:47 UTC; LOCAL unless stated)
+## O-4 Main performance
 
-**Tree:** `0554e5f` + release 11 (since committed as `f855e33` and `8e27175`; the only later change is comment wording).
+`PASS — VERIFIED LOCALLY ONLY` (code changes in release 11, not deployed). The region change is `OWNER APPROVAL REQUIRED`.
 
-**Environment:** a production build of Main with production's switch settings (content API on, `WORDPRESS_CMS_API_URL` set, bridge off), plus the local WordPress with plugin 0.6.1.
+**Production measurements** (12 Oct, read-only):
 
-**Log:** `evidence/final-run/fresh-run-20261012T1933.txt`.
-
-| Suite | Result |
+| Route | TTFB |
 |---|---|
-| Unit (`node --test tests/unit/*.test.js`) | 214/214 (rerun after the comment edit: 214/214) |
-| TypeScript / ESLint | exit 0 / 0 errors, 10 pre-existing warnings |
-| PHP tests / `php -l` | 252/252 / 20 files clean |
-| Secret guard / `npm audit` | clean / 2 high, pre-existing |
-| `tests/wordpress/structured-acceptance.mjs` | 56/56 (`evidence/local-structured/results-202610121933.json`) |
-| `tests/wordpress/permissions-acceptance.mjs` | 9/9 |
-| `tests/wordpress/scheduling-acceptance.mjs` | 7/7 |
-| `tools/verify-wordpress-live.mjs` (blogs) | 16/16 |
-| `tools/verify-wordpress-pages-live.mjs` (pages) | 17/17, 0 click fallbacks |
-| `tools/verify-content-api-live.mjs` (signed API) | 16/16 |
-| Production-equivalent build | compiled, exit 0 |
+| `/` | 1.7–3.1 s |
+| `/blog` | 1.2–1.6 s |
+| Course pages | 1.3–2.1 s |
+| **Tool pages `/tools/<name>`** | **7.5–10.5 s** |
+
+Every Main response is a cache MISS through `bom1::iad1`. Enrollment `/` is 0.12–0.32 s (LiteSpeed hit).
+
+**Cause:** pages are rendered per request (`force-dynamic`, a deliberate choice for instant CMS edits and scheduling). Functions run in `iad1` (US East), but the database is in Sydney, so every sequential database query costs a round trip of roughly 200+ ms.
+
+**Measured locally:** the local production build was run behind a timing proxy that adds 200 ms per database request (`evidence/o4-performance/summary.txt`).
+
+| Route | Live code | Release 11 |
+|---|---|---|
+| `/` | 1035 ms (chain 4) | 581 ms (chain 2) |
+| Course / city pages | ~970–1020 ms (chain 4) | ~710–790 ms (chain 3) |
+| `/tools/ahrefs` | 6180 ms (chain 25) | 1916 ms (chain 8) |
+| Blog pages | ~740 ms | unchanged |
+
+**What was changed** (identical output, tested):
+- site settings and menus load concurrently (`df30076`);
+- CMS lookups stop early when a slug has no row in a table (`436a822`).
+
+**Not changed:**
+- **Caching / ISR:** a design decision, because it would delay CMS edits and scheduled publishing.
+- **Function region `syd1`:** an infrastructure change. The model predicts that the remaining 2–8 sequential database round trips would drop from ~200 ms to a few ms each, while the visitor → function distance changes from Mumbai→US East to Mumbai→Sydney (similar). That is likely a further 0.4–1.6 s saving per page, but it is **not measured on Vercel**.
+  - To prove it: deploy a Preview with `"regions": ["syd1"]` in `vercel.json`, compare TTFB on `/`, `/blog`, `/seo-course-in-bangalore` and `/tools/ahrefs`, then decide.
+  - Preview has no Supabase variables today, so this needs the owner to allow Preview to read production data (or a staging database).
+
+**Further option (not done):** fetch a page and its sections in one request. It saves about one more round trip on CMS pages, but it is a larger change to page resolution.
+
+## O-5 Staging
+
+Status: `BLOCKED — EXTERNAL ACTION REQUIRED`.
+
+**Inventory:**
+- Supabase projects `ajalqirbdokhrrsteeqv` and `uzapgcifvklkrtvglzuc` are INACTIVE (paused, in other organisations).
+- The staging WordPress `cms.acadvizen.com` runs plugin 0.3.0, with no credentials available.
+- Vercel Preview has no Supabase variables.
+- No Enrollment backup exists on this PC.
+
+**Safe alternatives used:**
+- full local copies (local WordPress 7.1.3 with plugin 0.6.1, local Supabase, local production build);
+- an isolated update-rehearsal WordPress built to production's versions (O-6).
+
+**Single external action:** the owner creates a staging copy of Enrollment (Hostinger hPanel → WordPress → **Staging**, or a full backup download) and provides a non-production Supabase project (restore a paused one or create a free one). With those, AT-30/32/35 can run in a real staging environment.
+
+## O-6 WordPress and plugin updates
+
+Status: `PASS — VERIFIED LOCALLY ONLY` (rehearsal); production updates are `OWNER APPROVAL REQUIRED`.
+
+**Current production** (read-only, 12 Oct 20:2x UTC):
+- WordPress 7.0.7 (7.1.3 available), PHP 8.3.35, MariaDB 11.8.9, Astra, 32 plugins (27 active).
+- **13** plugin updates: Elementor 4.3.3→4.3.4, **Elementor Pro 4.3.0→4.3.1**, ElementsKit Lite 4.0.7→4.0.8, GTM4WP 2.0.5→2.0.6, GutenKit 2.5.1→2.5.3, Hostinger Easy Onboarding 3.0.1→3.0.4, Hostinger Reach 1.8.4→1.8.6, Hostinger Tools 3.0.78→3.0.79, PopupKit 2.3.6→2.3.7, Rank Math 1.0.279→1.0.280, ShopEngine 4.9.6→4.9.7, WPCode Lite 2.3.9→2.4.0, Yoast 28.5→28.6.
+- Every update reports "Compatibility with WordPress 7.0.7: Yes".
+
+**Rehearsal** (`evidence/o6-update-rehearsal/`): a throwaway local WordPress at production's versions and PHP memory, with production's plugins at their exact versions and activation states. Synthetic content: an Elementor page with 6 widgets, a Contact Form 7 page and a post.
+- Updates were applied in 3 groups: core 7.1.3, then the Elementor family, then the SEO/tools group (10 plugin updates).
+- After each group: 0 PHP fatal/warning/deprecated, identical rendered content, all admin screens (including the Elementor editor and the Master Admin) 200, and "Test connection" Connected.
+- After all updates: page workflow 17/17 and blog targets 16/16.
+- Rollback rehearsal: old versions plus a database restore gave a site identical to the baseline.
+
+**Not covered:**
+- Elementor Pro 4.3.1 (premium), Hostinger Tools, Hostinger Easy Onboarding and the custom enquiry plugin (none downloadable here);
+- real Enrollment content.
+
+**Recommended production order:**
+1. Hostinger backup.
+2. Core 7.1.3.
+3. Elementor + Elementor Pro together.
+4. The rest.
+5. After each step: the Enrollment 60-page comparison and "Test connection".
+6. Rollback: restore the backup.
+
+## O-10 Credentials file formatting
+
+`PASS — VERIFIED`. Fixed 12 Oct ~21:15 UTC: `SSH_HOST` is now on its own line. Both values were verified unchanged, the file parses cleanly, permissions are unchanged (owner, SYSTEM, Administrators), and a signed production request using the file → 200.
+
+## O-11 Three plugins added on 12 Oct
+
+Status: `OWNER APPROVAL REQUIRED` (confirm they were intended). Read-only inspection: no REST routes of their own; no change to the 60 Enrollment pages' content; enquiry route still registered.
+
+| Plugin | Version / state | Source | Observed footprint | Disposition |
+|---|---|---|---|---|
+| Microsoft Clarity | 0.10.35, active | Microsoft (wordpress.org) | Adds the `clarity.ms` session-recording script to public pages (outbound requests to Microsoft) | Keep if analytics was intended. Clarity records sessions, so it should only load after consent (see WPConsent) |
+| WPConsent | 1.2.0, active | WPConsent (wordpress.org) | Adds a cookie-consent banner and assets to public pages | Keep if the consent banner was intended; configure it to gate Clarity, GTM and pixels |
+| Pixel Tag Manager for WooCommerce | 2.2.2, inactive | GrowCommerce (wordpress.org) | None (inactive) | Delete if unused; inactive code is still an update and maintenance surface |
+
+**Who installed them:** WordPress does not record this. Production has two administrator accounts: the integration account (ID 2) and one other. The CMS never installs third-party plugins. **Nothing was deactivated or changed.**
+
+## Other
+
+| ID | Item | Status |
+|---|---|---|
+| O-7 | Credentials shared in chat | `ACCEPTED RESIDUAL RISK` (owner decision) |
+| O-8 | Integration account (Administrator, guessable username) | `OWNER APPROVAL REQUIRED`: strong unique password, or an Editor account for daily use |
+| O-9 | Temporary production secret copy | `PASS — VERIFIED` removed |
+| O-12 | `.env.local` writable by a local sandbox group (no production values) | `ACCEPTED RESIDUAL RISK` (low) |
+| O-13 | Rollback rehearsal on production | Not executed (needs authorisation); targets Ready; WordPress rollback rehearsed locally |
+| O-14 | **"Both" partial failure looked like success** (plugin 0.6.1): when Main saved but the Enrollment copy failed, the accurate text appeared in a green success box; an unreachable Main showed a raw `cURL error`. Fixed in plugin **0.7.0** (yellow warning with a retry instruction; plain-language "could not be reached"), tested locally (`FINAL-PUBLISHING-WORKFLOW.md` §6–7) | `PASS — VERIFIED LOCALLY ONLY`; production install `OWNER APPROVAL REQUIRED`. Workaround on 0.6.1: read the whole message; "Enrollment Website copy failed" means only Main was updated |
+| O-16 | **Edit once, either editor**: two editors (Main's `/admin` and WordPress) could silently overwrite each other; a blog edited in Main's `/admin` or in the regular Posts editor reached only one website; native "Publish To" editors offered a destination that shows nothing. Fixed in Main release 11 (uncommitted part) + plugin 0.7.0: edit-conflict protection, two-way blog sync with conflict detection, "Also publish on the Main Website", native screens hidden while the bridge is off (`FINAL-FEATURE-INVENTORY.md`) | `PASS — VERIFIED LOCALLY ONLY`; deploy and install `OWNER APPROVAL REQUIRED` |
+| O-17 | Main redirects were editable only in Main's own admin | Main Website → Redirects with safety rules (0.7.0, release 11): `PASS — VERIFIED LOCALLY ONLY` |
+| O-18 | Main features still only in Main's `/admin`: banners, popups, companies, placements, internships, resources, reusable sections, course finder, location explorer, learner map, trust, internal links, landing SEO, sitemap/robots settings | Not in WordPress yet (`FINAL-FEATURE-INVENTORY.md` §B). Each is a separate, testable addition like redirects. `OWNER APPROVAL REQUIRED` for which ones to add next |
+| O-19 | Design parity: Enrollment's Elementor designs (templates, global colours and fonts) are not shown on Main, and Main's design is not editable in Elementor | By design while the Render Bridge is off. Main's design is its Next.js code plus the editable header, footer, menus, colours and sections. Not claimed as parity. `OWNER APPROVAL REQUIRED` (Render Bridge) |
+| O-20 | **Approval-first publishing and widget compatibility** (plugin 0.7.0): <ul><li>Publish submits the exact revision; only reviewers approve; any change cancels the approval</li><li>Live pages are edited through working copies</li><li>Each chosen website is verified, with partial-failure reporting, retry and rollback</li><li>Blocked or missing widgets and typed code are caught before approval</li></ul>Details in `REVIEWER-GUIDE.md`, `WIDGET-COMPATIBILITY.md` | `PASS — VERIFIED LOCALLY ONLY` (`approval-acceptance.mjs` 46/46, `approval-reliability-acceptance.mjs` 29/29, PHP 302/302). Production install and `ACADVIZEN_CMS_APPROVAL`: `OWNER APPROVAL REQUIRED` |
+| O-21 | **Main pages designed in Elementor** (Render Bridge plus migration of Main pages) | Built and tested LOCAL (bridge 44/44, approval 46/46, reliability 29/29, migration 13/13). Production needs plugin 0.7.0, the wp-config switches, Vercel `WORDPRESS_CONTENT_ENABLED` and a redeploy: a production traffic change. Runbook in `MAIN-MIGRATION-PLAN.md` §4: `OWNER APPROVAL REQUIRED` at each step |
+| O-22 | **Not under approval in 0.7.0.** These change a website as soon as they are saved, as today: <ul><li>Main Website screens (structured editing, already live)</li><li>Appearance → Menus</li><li>Rank Math, plugin and theme settings</li><li>WordPress widgets</li><li>PopupKit popups and WPCode snippets</li><li>Replacing a media file in place (a pending approval is cancelled, but live pages using the file change at once)</li></ul> | `KNOWN LIMITATION`: limit these to administrators. Bringing menus and popups under approval is a separate addition: `OWNER APPROVAL REQUIRED` |
+| O-23 | Destination changes of a published page under approval. Tested: Both → Main (bridge scenario C, approval off) and taking a page off Main (Draft; `migration-acceptance.mjs` M5: Main's own page back in about 10 s, no 404 window). Not tested: Both → Enrollment, Enrollment → Both, Main → Enrollment | Designed behaviour documented in `DESTINATION-GUIDE.md`. Add these tests before the Render Bridge goes live |
+| O-24 | Elementor Pro (4.3.0 on production) is not installed locally, and no browser test submits a form on a bridged Main page | Pro Form submissions, Theme Builder conditions and popups were checked by their rules and the proxy policy unit tests, not end to end. Test on staging or production after authorization |
+| O-25 | Production widget inventory not generated | It needs a WordPress admin login, which was not provided. LOCAL inventory: 189 widgets (`WIDGET-COMPATIBILITY.md`). After installing 0.7.0, open **Widget compatibility** on production: it lists production's widgets (ShopEngine, ElementsKit, PopupKit, GutenKit, WPR) with their classes |
+| O-26 | WooCommerce widgets count as "ok" on Enrollment while WooCommerce has 0 products; widgets of unknown add-ons count as "review" on Main | By design: the reviewer decides. Add rules through the `acv_cms_widget_rules` filter if needed |
+| O-27 | The approval history keeps the latest 1,000 entries (WordPress option `acv_cms_approval_log`) | Export it periodically if a longer audit trail is required (`FINAL-MAINTENANCE-GUIDE.md`) |
+| O-28 | **Converter visual fidelity.** `/soft-skills` moved LOCAL with every content line, heading, title, description and canonical identical. First-screen pixel difference is 17.9% (desktop) and 31.0% (phone):<ul><li>a wider subtitle and missing card blur, both in element custom CSS, which needs Elementor Pro (absent locally, present on production);</li><li>a slightly shorter header;</li><li>decorative glows placed differently;</li><li>the floating bar sitting higher, with "Apply Now" wrapping</li></ul> | `KNOWN LIMITATION`: each moved page is reviewed in the desktop/tablet/phone preview before approval (`MAIN-MIGRATION-PLAN.md` §4). Converter refinements can follow page by page |
+| O-29 | Scheduled publishing relies on WP-Cron. A lost job is restored when Approvals is opened or by the recurring stall check (R4). On a quiet site the job runs at the first visit after its time | Set Hostinger's server cron to call `wp-cron.php` every minute (`FINAL-MAINTENANCE-GUIDE.md`): `OWNER APPROVAL REQUIRED` |
+| O-30 | Main stopped completely while publishing **under approval** is not tested end to end. Drawing failures are simulated (A9, R2), and Main stopped was tested for structured blog publishing (both-failure suite, 3/3) | Low risk: the verification treats an unreachable Main like any other failure ("retry", then "failed") |
+| O-15 | Acceptance tooling: five suites printed FAIL but exited 0; the final-run script reported unreliable exit codes (now fixed, `rc` captured first) | Fixed in the working tree (uncommitted). Verified: passing runs of the five suites exit 0; the same `process.exitCode` pattern in the new both-failure suite exited 1 with failures and 0 without. The five suites' failing path is verified by code review only |
+| — | Known Enrollment issues (sitemaps, 3 redirects, `/contact-us/`, logo link) and 10 ESLint warnings | Pre-existing, unchanged |

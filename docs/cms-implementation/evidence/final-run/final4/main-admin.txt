@@ -1,0 +1,7 @@
+PASS admin sign-in with the publishable key reaches /admin :: /admin
+PASS GET /api/admin/notifications signed in → 200 success (server uses the secret key) :: 200
+PASS POST mark all read signed in → 200 :: 200
+PASS POST mark one read signed in → 200 :: 200
+PASS signed out → 401 :: 401
+PASS no secret key in the public home page
+6 passed, 0 failed [LOCAL, new-style keys only]

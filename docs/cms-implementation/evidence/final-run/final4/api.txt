@@ -1,0 +1,18 @@
+PASS [LOCAL] unsigned request refused — HTTP 401
+PASS [LOCAL] wrong secret refused
+PASS [LOCAL] timestamp older than 5 minutes refused
+PASS [LOCAL] correctly signed request accepted — HTTP 200 
+PASS [LOCAL] test page created as a draft — HTTP 200 
+PASS [LOCAL] a draft is not public
+PASS [LOCAL] a text section added — HTTP 200 
+PASS [LOCAL] test page published — HTTP 200 
+PASS [LOCAL] public page shows the title and the section — HTTP 200
+PASS [LOCAL] test page carries noindex — noindex, follow
+PASS [LOCAL] noindex test page is not in the sitemap (needs release 9)
+PASS [LOCAL] edit saved — HTTP 200 
+PASS [LOCAL] the same signed change sent again is refused (durable replay protection) — HTTP 409 duplicate_request
+PASS [LOCAL] test page removed (trash, then delete) — HTTP 200 / 200
+PASS [LOCAL] test address answers 404 after cleanup — HTTP 404
+PASS [LOCAL] no test rows left (live, draft or trash) — 0 rows
+
+16 passed, 0 failed [LOCAL] | test address /cms-production-test-202610131144

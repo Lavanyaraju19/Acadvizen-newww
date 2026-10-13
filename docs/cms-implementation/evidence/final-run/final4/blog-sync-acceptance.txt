@@ -1,0 +1,20 @@
+PASS S1 Both: one save creates the Main blog and the Enrollment post — main=ffeed91a-1b39-4d2c-890a-2cc944629cec copy=1701/publish
+PASS S1 the Enrollment post is marked in step with Main
+PASS S2 an edit in Main's /admin reaches the Enrollment post (title and article) — CMS TEST sync 202610131137 (edited in Main admin)
+PASS S3 an edit in the WordPress post editor reaches Main (title, article, bold kept) — 200 CMS TEST sync 202610131137 (edited in WordPress)
+PASS S3 the Main cover image did not become an extra content block
+PASS S3 the public Main blog shows the WordPress edit
+PASS S3 the post is marked in step
+PASS S4 a WordPress edit on a stale version is not sent: Main keeps its own change
+PASS S4 the post shows the conflict
+PASS S4 the next comparison does not overwrite the WordPress side either
+PASS S4 saving in Main Website → Blogs resolves it: both websites have that version
+PASS S5 trashing the Enrollment post leaves the Main blog live
+PASS S6 removed on Main: the Enrollment post is set to Draft and kept — draft
+PASS S7 a new WordPress post with "Also publish on the Main Website" is published on Main too — 201 e0637099-ae2a-480a-a933-0ba8aa7d2ecb|published
+PASS S7 that post is now linked and in step
+PASS S8 a Contributor cannot ask for Main publishing (refused) — 403
+PASS S8 nothing was created on Main for the Contributor
+PASS Z cleanup: no test blog left on either website — main=0
+
+18 passed, 0 failed [LOCAL]

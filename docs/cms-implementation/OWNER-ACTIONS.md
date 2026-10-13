@@ -4,29 +4,71 @@ These are the steps only the owner can take. Do them in this order. After step 5
 
 Never paste a password or the shared secret into chat, Git, a document or a screenshot.
 
-## Remaining, as of 13 October 2026 (current; production re-verified 12 Oct 19:33–19:50 UTC)
+## Remaining, as of 13 October 2026, 13:00 UTC (current)
 
-**Production is unchanged and healthy:**
-- Release 10 is live;
-- plugin 0.6.1 is installed;
+**Production is unchanged** (read-only, 13 Oct 11:10–11:20 UTC):
+- `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T` is live and Ready;
+- plugin 0.6.1;
+- content API on (unsigned requests refused);
+- Render Bridge off (manifest 404).
+
+Nothing was pushed, deployed, installed or committed in this phase.
+
+**New since 03:00 UTC (LOCAL, uncommitted):** one Elementor admin for both websites, with mandatory approval:
+- exact revision, reviewers only, any edit cancels the approval;
+- Main / Enrollment / Both, each verified on the public page;
+- honest partial failure and retry, replay protection, scheduled publishing, rollback;
+- the widget compatibility registry;
+- migration of real Main pages (one page proven end to end).
+
+Results: `TEST-RESULTS.md` (13 Oct, final run). Overview: `FINAL-CLIENT-HANDOVER.md`.
+
+**Your decisions and actions, in order** (each production step needs your explicit go-ahead; the engineer takes none on their own):
+1. **Review and commit** the uncommitted work (list: `DEPLOYMENT-REPORT.md` §2). Nothing is committed without your approval.
+2. **Release 11 + plugin 0.7.0 to production:** push, promote, then upload the 0.7.0 package (`DEPLOYMENT-REPORT.md` §3 steps 1–2). Rollback for each step is listed there.
+3. **Reviewer accounts:** who approves publishing? Give their WordPress accounts the role **Reviewer (approves publishing)**, or keep it to Administrators.
+4. **Approval on:** add `define( 'ACADVIZEN_CMS_APPROVAL', true );` to wp-config.php (step 3). Do this before step 5.
+5. **Elementor pages for Main:** `ACADVIZEN_CMS_RENDER_BRIDGE` in wp-config.php, then Vercel `WORDPRESS_CONTENT_ENABLED=true` and redeploy (steps 4–5). This changes production traffic only for pages later approved and published to Main.
+6. **Migrate Main pages** one group at a time (`MAIN-MIGRATION-PLAN.md` §4), starting with one low-traffic page. Review each in the desktop/tablet/phone preview; the converter is close but not pixel-identical (O-28).
+7. **Server cron:** Hostinger → Cron Jobs → call `https://enroll.acadvizen.com/wp-cron.php` every minute. This keeps scheduled publishing and verification on time (O-29).
+8. **Staging (O-5)** would let all of the above be rehearsed on a copy first. Strongly recommended.
+9. Earlier items below (O-2 to O-4, O-6, O-8, O-11) still stand.
+
+## Earlier: remaining as of 13 October 2026, 03:00 UTC
+
+**Production is unchanged and healthy** (read-only checks, 12 Oct 19:41 – 13 Oct 02:55 UTC):
+- Release 10 is live (`dpl_8C59rWUwpicv7eaqiqinsRWeKP5T`);
+- plugin 0.6.1 is installed and identical to its package;
 - "Test connection" says Connected;
-- 314 Main addresses and 60 Enrollment pages are identical to the baselines.
+- all 314 Main addresses and all 60 Enrollment pages are identical to the baselines.
 
-**Your decision, recorded:** existing passwords and keys are not changed, rotated, revoked or deleted. The exposure in public Git history therefore remains an open risk (`FINAL-SECURITY-REPORT.md`).
+**Your decision, recorded:** existing passwords and keys are not changed, rotated, revoked or deleted. The exposure in public Git history therefore remains an accepted residual risk (`FINAL-SECURITY-REPORT.md`).
 
-**Your actions, all optional unless you decide otherwise:**
-1. **Release 11** is committed locally (`f855e33`, `8e27175` + docs) but not pushed. It changes nothing visible; it only makes a later key replacement possible without code changes. To release it: `git push origin headless-wordpress`, then promote the new Preview in Vercel (`FINAL-RELEASE-AND-ROLLBACK.md` §3).
-2. **Decide O-2 to O-6** (`FINAL-OPEN-ISSUES.md`):
-   - keep the content connection on (recommended) or switch it off;
-   - the Enrollment homepage duplicate;
-   - the `syd1` function region;
-   - a staging environment;
-   - WordPress updates via staging.
-3. **Confirm the three plugins** added to Enrollment on 12 Oct (Clarity, WPConsent, Pixel Manager) are intended (O-11).
-4. **Your credentials file:** put the SSH host on its own line (O-10).
-5. **If you later decide to rotate:** follow the optional plan in `FINAL-SECURITY-REPORT.md` §1.
+**First, two decisions from your 13 Oct instruction:**
+- **WordPress → Main publishing is currently ON** (since 12 Oct; Render Bridge OFF). Say "keep on", or "switch off" (Vercel → remove `WORDPRESS_CONTENT_API_ENABLED` → Redeploy). Nothing was changed.
+- **Uncommitted work** (content-API conflicts and redirects, plugin 0.7.0, new tests, these documents) waits for your review. Commit commands: `FINAL-RELEASE-AND-ROLLBACK.md` §3, step 0. Four code commits made earlier on 13 Oct (`03d18dc`, `df30076`, `fc53a7e`, `436a822`) are local and unpushed.
 
-Done by the engineer on 12 Oct 19:47 UTC: the redundant `%TEMP%\acadvizen-production-verify.env` copy was removed. It was confirmed unreferenced, and all its settings are in Vercel.
+**Your actions, in order of value:**
+1. **Release 11** (committed locally, not pushed): `git push origin headless-wordpress`, then promote the new Preview in Vercel (`FINAL-RELEASE-AND-ROLLBACK.md` §3, with smoke tests and rollback). What it brings:
+   - faster pages: tool pages about 6.2 → 1.9 s in the local model; home and course pages one or two fewer database round trips;
+   - `npm audit` 0 (was 2 high);
+   - safer handling of Supabase keys.
+   - Nothing visible changes.
+2. **Staging (O-5), the single external action that unblocks the rest:**
+   - Hostinger hPanel → WordPress → **Staging** for enroll.acadvizen.com (or a full backup download);
+   - a non-production Supabase project.
+3. **Enrollment homepage (O-3):** delete the duplicated container, following the steps in `FINAL-OPEN-ISSUES.md` O-3, if it was not intended.
+4. **WordPress updates (O-6):** they passed a local rehearsal. On production: Hostinger backup, then core, then Elementor + Elementor Pro, then the rest, comparing after each step.
+5. **Decide:**
+   - O-2: keep the content connection on (recommended);
+   - O-4: try the `syd1` region on a Preview;
+   - O-8: the integration account's password or role;
+   - O-11: confirm Clarity, WPConsent and Pixel Manager were intended, and gate Clarity behind consent.
+6. **If you later decide to rotate credentials:** the optional plan is in `FINAL-SECURITY-REPORT.md` §5.
+
+**Done by the engineer (no production change):**
+- removed the redundant `%TEMP%acadvizen-production-verify.env` (12 Oct 19:47 UTC; do not save it again from an open editor tab);
+- put the SSH host on its own line in your credentials file (values unchanged; O-10).
 
 ## Earlier status, as of 12 October 2026, 18:40 UTC
 

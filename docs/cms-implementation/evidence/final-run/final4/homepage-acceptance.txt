@@ -1,0 +1,16 @@
+PASS 1 "Homepage" tabs: Banner, Closing call to action, Sections, Lists — Homepage: Banner Closing call to action Sections Lists
+PASS 2 precondition: no list copied yet — 0 lists
+PASS 2 the 8 homepage lists are copied — Copied 8 lists the homepage shows today. The homepage looks the same; you can now edit them.
+PASS 2 after copying, the homepage is visually identical (desktop) — 0.007% pixels differ, 1440x13120
+PASS 2 after copying, the homepage is visually identical (mobile) — 0.017% pixels differ, 390x21385
+PASS 3 the FAQ list opens with its questions
+PASS 3 FAQ saved
+PASS 3 the homepage shows the edited question
+PASS 3 restoring the earlier version brings the original question back
+PASS 4 hiding the FAQ list shows the built-in FAQ (homepage as before) — 0.006% pixels differ
+PASS 5 banner saved
+PASS 5 the homepage banner shows the new heading
+PASS 5 the closing call to action shows the new button text
+PASS Z everything put back (homepage as before) — 0.029% pixels differ
+
+14 passed, 0 failed (click fallbacks: 0)

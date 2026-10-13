@@ -1,0 +1,33 @@
+PASS R0 setup: submitted and approved — pending/approved
+PASS R1 Enrollment failing: partial failure naming Enrollment, Main verified, never "verified" — partial_failure {"enrollment":{"state":"failed","detail":"HTTP 503","at":1791897766},"main":{"state":"verified","detail":"HTTP 200, approved revision shown","at":1791897750}}
+PASS R1 "Check again" retries only the failed website
+PASS R1 after recovery: verified on both — verified {"enrollment":{"state":"verified","detail":"HTTP 200, approved revision shown","at":1791897788},"main":{"state":"verified","detail":"HTTP 200, approved revision shown","at":1791897750}}
+PASS R1 nothing left to retry once verified
+PASS R2 both failing: reported as failed, each website named — failed {"enrollment":{"state":"failed","detail":"HTTP 503","at":1791897850},"main":{"state":"failed","detail":"HTTP 404","at":1791897851}}
+PASS R2 Main shows nothing for a page that never reached it
+PASS R2 after both recover, one "Check again" verifies both, showing the approved revision — verified
+PASS R3 publishing the same approved revision again is refused
+PASS R3 a replayed publish link is refused with a clear message, the first one counts once — It is not approved yet.
+
+Dismiss this notice.
+PASS R3 exactly one page exists for it, and no archive was made by the replay
+PASS R3 a publish request with a wrong signature (nonce) is refused
+PASS R3 an Editor replaying a reviewer's approve request (the same signed link) is refused; it stays waiting — 403
+PASS R4 a dated page offers "Schedule approved revision for <time>" — Schedule approved revision for 13 Oct 2026 13:36
+PASS R4 publishing it schedules it instead
+PASS R4 not public before its time on either website — 404/404
+PASS R4 a scheduled revision cannot be published early by hand
+PASS R4 Approvals shows "Scheduled for …" with "Cancel schedule"
+PASS R4 a lost scheduled job is restored, at its time, when Approvals is opened — lost 0, restored 1791898566
+PASS R4 a revision changed after scheduling is not published when its time comes — draft
+PASS R4 "Cancel schedule" keeps the approval and removes the job
+PASS R4 scheduled again
+PASS R4 when due, exactly the approved revision is published and verified on both websites — verified
+PASS R4 the history records scheduling, the cancelled run and the scheduled publication
+PASS R5 approval is off
+PASS R5 an approved but unpublished page does not go live when approval is switched off — 404/404
+PASS R5 the Approvals screen is not offered while approval is off
+PASS R5 live pages stay live (nothing is unpublished by switching off)
+PASS Z cleanup: test content removed from both websites — 6 removed; Main answers 404
+
+29 passed, 0 failed [LOCAL]

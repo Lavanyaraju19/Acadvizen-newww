@@ -1,0 +1,9 @@
+results dir <scratch>/scratchpad/rerun5-20261013T1228
+[12:28:47Z] php tests/php/run.php rc=0 :: 302 tests, 302 passed, 0 failed
+[12:28:52Z] php -l (every plugin file) rc=0 :: 23 files, 0 with errors
+[12:28:52Z] local Main (Render Bridge build) up rc=0 :: 200
+[12:37:37Z] node tests/wordpress/scenarios.mjs (approval off) rc=0 :: 44 passed, 0 failed
+[12:46:36Z] node tests/wordpress/approval-acceptance.mjs rc=0 :: 46 passed, 0 failed [LOCAL]
+[12:50:24Z] npx next build (production-equivalent, bridge off) rc=0 :: 
+[12:52:30Z] node tests/wordpress/structured-acceptance.mjs rc=0 :: 56 passed, 0 failed
+[12:52:47Z] node tests/wordpress/redirects-acceptance.mjs rc=0 :: 11 passed, 0 failed [LOCAL]

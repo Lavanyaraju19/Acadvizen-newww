@@ -2,6 +2,112 @@
 
 The statuses used are PASS, PARTIAL, FAIL, BLOCKED and NOT TESTED. The level (Automated, LOCAL, PRODUCTION) is stated on every row.
 
+## 13 October 2026, 11:13–12:53 UTC: plugin 0.7.0 final (Elementor + approval), final ordered regression
+
+**Scope:** the complete working tree. Main release 11 includes the address fallback for just-removed pages. Plugin 0.7.0 includes approval, scheduling, retry, the registry, the importer under approval and the template fixes.
+
+**Commands:**
+- run script: `final-run4.sh`, with the exit code captured first on every line;
+- summary: `evidence/final-run/final4/final-run4-summary.txt`;
+- per-suite logs: `evidence/final-run/final4/`;
+- reruns after late changes: `evidence/final-run/rerun5/`.
+
+**LOCAL results** (local WordPress 7.0 with Elementor 4.3.3, local Main production build, local Supabase):
+
+| # | Suite | Command | Result | Exit |
+|---|---|---|---|---|
+| 1 | Unit | `node --test tests/unit/*.test.js` | 258/258 | 0 |
+| 1 | Types | `npx tsc --noEmit -p .` | 0 errors | 0 |
+| 1 | Lint | `npx next lint` | 0 errors, 10 warnings | 0 |
+| 1 | Secret guard | `node tools/check-secrets.mjs --all` | none found | 0 |
+| 1 | Dependencies | `npm audit --omit=dev` | 0 vulnerabilities | 0 |
+| 2 | PHP (plugin) | `php tests/php/run.php` | 302/302 (rerun after the last plugin change) | 0 |
+| 2 | PHP syntax | `php -l` on every plugin file | 23 files, 0 errors (rerun) | 0 |
+| 3 | Build, production-equivalent (bridge off) | `npx next build` | compiled (twice) | 0 |
+| 3 | Build, Render Bridge on | `npx next build` | compiled | 0 |
+| 4 | Main `/admin` sign-in and notifications | `newkey-admin-check.mjs` | 6/6 | 0 |
+| 5 | Structured content (pages, blogs, roles, preview, security) | `tests/wordpress/structured-acceptance.mjs` | 56/56 (rerun; first run 55/56, harness defect below) | 0 |
+| 5 | Site chrome (header, footer, menus, labels) | `site-chrome-acceptance.mjs` | 18/18 | 0 |
+| 5 | Homepage | `homepage-acceptance.mjs` | 14/14 | 0 |
+| 5 | Courses | `courses-acceptance.mjs` | 12/12 | 0 |
+| 5 | City/service pages, SEO overrides, media | `more-content-acceptance.mjs` | 15/15 | 0 |
+| 5 | Permissions (Author, Contributor) | `permissions-acceptance.mjs` | 9/9 | 0 |
+| 5 | Scheduling (structured) | `scheduling-acceptance.mjs` | 7/7 | 0 |
+| 5 | Edit conflicts | `conflict-acceptance.mjs` | 9/9 | 0 |
+| 5 | Blog sync, both directions | `blog-sync-acceptance.mjs` | 18/18 | 0 |
+| 5 | Redirects | `redirects-acceptance.mjs` | 11/11 (rerun; first run stopped at sign-in, below) | 0 |
+| 6 | Both: partial failure | `both-failure-acceptance.mjs` | 12/12, and 3/3 with Main stopped | 0 |
+| 6 | Blog targets, page workflow, signed API | `tools/verify-wordpress-live.mjs`, `verify-wordpress-pages-live.mjs`, `verify-content-api-live.mjs` (LOCAL) | 16/16, 17/17, 16/16 | 0 |
+| 7 | Render Bridge scenarios (Main only, Enrollment only, Both, rollback, city pages, failure, global redesign, lifecycle) | `scenarios.mjs` | 44/44 (rerun; first run 43/44 and wrongly exited 0, below) | 0 |
+| 8 | Approval with the real Elementor editor | `approval-acceptance.mjs` | 46/46 (rerun; first run 45/46, below) | 0 |
+| 8 | Reliability under approval (Enrollment failing, both failing, replay, scheduling, approval off) | `approval-reliability-acceptance.mjs` | 29/29 | 0 |
+| 9 | Migration of a real Main page into Elementor and back | `migration-acceptance.mjs` (bundle from `build-bundle.mjs --paths /soft-skills`) | 13/13 | 0 |
+
+**Responsive:** on both websites, layout and font sizes were checked at 1440, 820 and 390 px (A8). The migrated page had no sideways scrolling at 390 px (M4). Screenshots: `evidence/approval/`, `evidence/migration/`.
+
+**PRODUCTION (read-only, 13 Oct 11:10–11:20 UTC):**
+- `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T` Ready;
+- bridge manifest 404 (Render Bridge off);
+- content API refuses unsigned requests;
+- plugin 0.6.1.
+
+No production write, test content, deploy or install was made.
+
+**Defects found and fixed in this phase:**
+
+| Defect | Found by | Fix |
+|---|---|---|
+| Elementor kept serving the old design after a new revision was applied (stale element cache) | A8 | `apply_revision` clears the element cache and page assets |
+| Enrollment verification could not reach WordPress behind a loopback address | A8 | Same Host header as the render loopback, no off-site redirects |
+| The importer bypassed approval: it published records and overwrote live pages | Review | Under approval, new records are submitted and live ones go to working copies (A15) |
+| Working copies and archives carried the importer's source key; a re-import could trash them as duplicates | Review | Source and batch keys are no longer copied (A15) |
+| Ticking "Main homepage" on a draft or working copy took the flag from the live homepage at once | Review | The flag moves only when that page is published (A14) |
+| A page's own copies counted as "another page" using its Main address | Review | Excluded (A15) |
+| "Check again" did not retry a failed drawing | Review | It retries failed websites (A9, R1, R2) |
+| Re-importing unchanged content reset an existing approval | Review | Submit keeps an approval for the same revision (PHP) |
+| Scheduled publishing was not supported under approval | Prompt review | Implemented: scheduled, re-checked when due, Cancel schedule, lost jobs restored (R4, PHP) |
+| Element styles that need Elementor Pro were dropped without a word when Pro is absent | M2 | The report states "NOT SHOWN, Elementor Pro is not active" (PHP, M2) |
+| Header/footer templates (`elementor-hf`) were missed by archive lookups and by Undo import ("any" post type) | Migration run | Explicit type lists. Undo also removes the working copies an import made (M Z) |
+| After unpublishing a "replace" page, Main answered **404** at that address for up to 30 s | M5 | `/wp-render` sends the visitor once to Main's own page (unit tests, M5) |
+| Harness: one hung request stalled a suite for 28 min; no request deadlines | Scheduling run | 60–120 s deadlines on every request in the kit; login wait 120 s |
+| Harness: `scenarios.mjs` exited 0 with a failed check; its wait helper never re-checked after a long round of jobs | Final run | `process.exitCode`, plus a final re-check |
+| Harness: B1 read any `.notice-info` (Rank Math's notice also matched once Rank Math was set up locally) | Final run | Looks for its own notice text |
+
+**Environment notes:**
+- Local Rank Math was unregistered, so it produced no titles. Its registration was skipped locally, as the setup wizard does. Production's Rank Math was already active.
+- The local stack restarted with the PC during the phase (Docker restarted); it was brought back and re-verified.
+
+## 13 October 2026, 00:00–05:05 UTC: release 11, plugin 0.6.2 (local), final regression
+
+All results with real exit codes are in `FINAL-ACCEPTANCE-TESTS.md` §E and `evidence/final-run/final-run-20261013.txt`.
+
+**PRODUCTION (read-only):**
+- 314/314 Main URLs identical to the pre-Release-10 snapshot;
+- 60/60 Enrollment pages identical to both baselines;
+- plugin public files identical to the 0.6.1 package;
+- Test connection Connected;
+- signed API negatives correct;
+- bundle scan clean.
+
+**LOCAL:**
+
+| Area | Result |
+|---|---|
+| Unit | 243/243 |
+| PHP | 258/258 |
+| TypeScript, ESLint, `php -l`, secret guard, `npm audit` | clean (`npm audit` 0) |
+| Production-equivalent build | compiled |
+| WordPress suites on plugin 0.6.2 | structured 56, site chrome 18, homepage 14, courses 12, more-content 15, permissions 9, scheduling 7, Both-failure 12 (+3 with Main stopped), blog targets 16, page workflow 17, signed API 16 |
+| New-style Supabase keys only | every suite passes (`evidence/newkeys-local/`) |
+| Update rehearsal (WordPress 7.1.3 + 10 plugin updates) | clean, rollback identical (`evidence/o6-update-rehearsal/`) |
+| Performance model | tool pages 6.2 → 1.9 s (`evidence/o4-performance/`) |
+
+**Defects found and fixed:**
+- Supabase key picker could accept a malformed key (`03d18dc`).
+- Sequential menu queries (`df30076`) and repeated CMS lookup fallbacks (`436a822`).
+- "Both" partial failure shown as success, and raw cURL errors (plugin 0.6.2, uncommitted).
+- Five suites exiting 0 on failure, and the run script's exit codes (uncommitted).
+
 ## 13 October 2026 (IST): final regression and handover run (12 Oct 19:33–19:50 UTC)
 
 Live during the run: deployment `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T` with plugin 0.6.1. No content was created on production. The production admin acceptance from 12 Oct (R10-x below) was reused, because the deployment and plugin are unchanged since then.

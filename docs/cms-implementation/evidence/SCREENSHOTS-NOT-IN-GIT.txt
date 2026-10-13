@@ -1,0 +1,10 @@
+Screenshots are not committed to this (public) repository.
+
+The test reports refer to screenshots taken by the LOCAL acceptance runs, for example
+evidence/approval/a8-*.png (desktop/tablet/phone on both websites) and
+evidence/migration/before-*.png / after-*.png (the /soft-skills migration). They
+total about 150 MB and are kept on the engineer's machine, in the same folders, outside
+version control. They can be shared privately on request.
+
+The text evidence (run summaries, per-suite logs with real exit codes, JSON results)
+is committed. Local machine paths in it are replaced with <home> / <scratch>.

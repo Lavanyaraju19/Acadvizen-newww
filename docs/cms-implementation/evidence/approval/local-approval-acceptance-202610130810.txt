@@ -1,0 +1,48 @@
+PASS A0 an image is uploaded to the media library — 1382
+PASS A1 the Elementor editor opens for a new page
+PASS A1 nested containers, typography, responsive settings and the image are saved
+PASS A2 a draft is not public on either website
+PASS A3 "Publish" by an Editor submits the exact revision for approval — pending/pending
+PASS A3 still not public while waiting
+PASS A4 the Editor sees no approve button
+PASS A4 the Editor cannot approve, even directly
+PASS A4 roles: administrators review; Editors do not
+PASS A5 a reviewer approves exactly that revision
+PASS A5 an edit after approval invalidates it — draft/draft
+PASS A5 the invalidated revision cannot be published
+PASS A6 Main only: published and verified on the Main website (approved revision shown) — verified {"main":{"state":"verified","detail":"HTTP 200, approved revision shown","at":1791878836}}
+PASS A6 Main only: the Main page carries the design (image, button, styles)
+PASS A6 Main only: the Enrollment website does not show it
+PASS A7 opening the live page in Elementor opens its working copy — 1383 -> 1397
+PASS A7 an Elementor save of the live page is refused
+PASS A7 a block-editor (REST) save of the live page is refused
+PASS A7 an Editor cannot trash the live page — 500
+PASS A8 Both: verified on both websites only when each shows the approved revision — verified {"enrollment":{"state":"verified","detail":"HTTP 200, approved revision shown","at":1791878869},"main":{"state":"verified","detail":"HTTP 200, approved revision shown","at":1791878870}}
+PASS A8 Both: the new design is live on both, the old one gone
+PASS A8 desktop/tablet/mobile: the design keeps its layout and responsive sizes on the Main website — {"d":{"size":52,"beside":true,"below":false,"overflow":false},"m":{"size":28,"beside":false,"below":true,"overflow":false}}
+PASS A8 desktop/tablet/mobile: the same on the Enrollment website — {"d":{"size":52,"beside":true,"below":false,"overflow":false},"m":{"size":28,"beside":false,"below":true,"overflow":false}}
+PASS A8 the working copy is gone and an archive of the previous revision exists
+PASS A9 Main failing: reported as a partial failure naming the Main website (Enrollment verified) — partial_failure {"enrollment":{"state":"verified","detail":"HTTP 200, approved revision shown","at":1791878921},"main":{"state":"failed","detail":"HTTP 200 but another revision is shown","at":1791878927}}
+PASS A9 the Main website keeps showing the previous approved revision — HTTP 200 v2 for both
+PASS A9 after the cause is fixed, a retry verifies both — verified {"enrollment":{"state":"verified","detail":"HTTP 200, approved revision shown","at":1791878921},"main":{"state":"verified","detail":"HTTP 200, approved revision shown","at":1791878950}}
+PASS A10 only a reviewer can roll back
+PASS A10 rollback starts
+PASS A10 rollback: the previous revision is back and verified on both websites — verified
+PASS A11 a design using a widget that is not installed cannot be submitted, with the reason
+PASS A11 typed HTML/code can be submitted (to Enrollment)
+PASS A11 typed code is not approved without a code review
+PASS A11 a reviewer who may publish code confirms it explicitly
+PASS A12 an Editor cannot save the global styles
+PASS A12 a reviewer can (recorded in the history)
+PASS A13 the Enrollment and Main homepages still answer as before
+PASS A14 ticking "Main homepage" on a draft leaves the live homepage as it is
+PASS A14 once approved and published, it becomes the homepage and the previous one steps back
+PASS A15 an imported page is submitted for approval, not published — record page approval-import-202610130806: created (#1420 -> /cms-approval-import-202610130806); waiting for approval
+PASS A15 after approval it is published and verified on both websites — verified {"enrollment":{"state":"verified","detail":"HTTP 200, approved revision shown","at":1791879042},"main":{"state":"verified","detail":"HTTP 200, approved revision shown","at":1791879042}}
+PASS A15 re-importing a live page writes its working copy and submits it; the live page is unchanged — record page approval-import-202610130806: updated (#1422, working copy of live #1420 -> /cms-approval-import-202610130806); waiting for approval
+PASS A15 the importer still finds only the live page for its source (never its copy)
+PASS A15 a page's working copy does not count as another page using its Main address; other pages do
+PASS Z cleanup: test content removed from both websites — 9 removed; Main answers 404
+
+45 passed, 0 failed [LOCAL]
+rc=0

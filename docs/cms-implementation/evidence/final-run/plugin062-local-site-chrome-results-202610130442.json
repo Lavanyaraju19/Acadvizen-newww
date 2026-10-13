@@ -1,0 +1,97 @@
+{
+ "run": "202610130442",
+ "main": "http://localhost:3100",
+ "click_fallbacks": 0,
+ "results": [
+  {
+   "name": "1 \"Whole website\" tabs: Header, Footer, Menus, Site settings",
+   "ok": true,
+   "detail": "Banner, Closing call to action, Sections, Lists, Authors, Categories, Tags, Header, Footer, Menus, SEO overrides, Site settings"
+  },
+  {
+   "name": "2 precondition: no menu links stored yet (the site shows its built-in links)",
+   "ok": true,
+   "detail": "0 rows"
+  },
+  {
+   "name": "2 \"Copy the links shown today\" copies header, footer and legal links",
+   "ok": true,
+   "detail": "Copied the links shown today (header: 5, footer: 5, legal: 2). The website looks the same; you can now edit them."
+  },
+  {
+   "name": "2 the 12 links are listed",
+   "ok": true,
+   "detail": "12 rows"
+  },
+  {
+   "name": "2 after copying, the homepage is visually identical (desktop)",
+   "ok": true,
+   "detail": "0.016% pixels differ, 1440x13120"
+  },
+  {
+   "name": "2 after copying, the homepage is visually identical (mobile)",
+   "ok": true,
+   "detail": "0.032% pixels differ, 390x21385"
+  },
+  {
+   "name": "2 copying again changes nothing",
+   "ok": true,
+   "detail": "Nothing to copy: every menu already has its own links."
+  },
+  {
+   "name": "3 footer link saved",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "3 the footer shows the new link text",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "3 restored link text is back on the website",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "3 hiding the \"Placement\" header link removes it from the website",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "3 showing it again brings it back",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "4 header saved",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "4 the announcement bar shows on the website",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "4 colours left untouched stay empty (website defaults, not black)",
+   "ok": true,
+   "detail": "announcement_bg_color=#10b981 announcement_text_color=#ffffff header_border_color=rgba(255,255,255,0.1)"
+  },
+  {
+   "name": "5 the footer shows the new copyright line, with the year filled in",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "5 a website label (footer heading) changes on the website",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Z everything put back (menus as before, no test text on the website)",
+   "ok": true,
+   "detail": "0 menu rows"
+  }
+ ]
+}

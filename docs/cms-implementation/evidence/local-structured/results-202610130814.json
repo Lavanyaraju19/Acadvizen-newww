@@ -1,0 +1,288 @@
+{
+ "run": "202610130814",
+ "main": "http://localhost:3100",
+ "wordpress": "http://localhost:8088",
+ "click_fallbacks": 0,
+ "results": [
+  {
+   "name": "A1 \"Main Website\" is in the Acadvizen Master Admin menu",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "A1b the menu entry can be reached with the keyboard and leads to the Main Website screen",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "A2 one tab per Main content type, plus Activity",
+   "ok": true,
+   "detail": "Pages, Blogs, Tools, City pages, Service pages, Courses, Course sections, Media library, Locations, Cities, Testimonials, Activity, Banner, Closing call to action, Sections, Lists, Authors, Categories, Tags, Header, Footer, Menus, SEO overrides, Redirects, Site settings"
+  },
+  {
+   "name": "A3 the existing Main page is listed with its address and status",
+   "ok": true,
+   "detail": "SEO Course In Bangalore /seo-course-in-bangalore Published October 13, 2026 7:23 am Edit | Preview | View live | Trash"
+  },
+  {
+   "name": "B1 \"Prepare changes privately\" opens a private draft copy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "B2 section saved in the draft",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "B3 the live page stays up and unchanged while the change is a draft",
+   "ok": true,
+   "detail": "status 200"
+  },
+  {
+   "name": "B4 preview shows the draft with Main's own design",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "B5 preview at desktop width",
+   "ok": true,
+   "detail": "1280px"
+  },
+  {
+   "name": "B5 preview at tablet width",
+   "ok": true,
+   "detail": "820px"
+  },
+  {
+   "name": "B5 preview at mobile width",
+   "ok": true,
+   "detail": "390px"
+  },
+  {
+   "name": "B6 publishing the draft merges it onto the live page",
+   "ok": true,
+   "detail": "Saved on the Main Website. Your draft copy was published onto the live page."
+  },
+  {
+   "name": "B7 the public page shows the change",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "B8 restoring brings the original heading back",
+   "ok": false,
+   "detail": "draft 361aa1d7"
+  },
+  {
+   "name": "B9 restored page is visually identical to before (desktop)",
+   "ok": true,
+   "detail": "0.000% pixels differ, 1440x6182"
+  },
+  {
+   "name": "B9 restored page is visually identical to before (mobile)",
+   "ok": true,
+   "detail": "0.000% pixels differ, 390x9729"
+  },
+  {
+   "name": "B10 saving without changes leaves the public page visually identical",
+   "ok": true,
+   "detail": "0.000% pixels differ"
+  },
+  {
+   "name": "E1 blog created and published to Main",
+   "ok": true,
+   "detail": "Saved on the Main Website."
+  },
+  {
+   "name": "E2 Main page of the blog has noindex as chosen",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "D1 Main only: not on the Enrollment website",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "D2 Enrollment only: published on Enrollment, not public on Main",
+   "ok": true,
+   "detail": "Saved on the Main Website. Kept as a draft on the Main Website because Publish To is \"Enrollment Website\". Enrollment Website: updated."
+  },
+  {
+   "name": "D3 Both: on Main and on Enrollment, each in its own design",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "E3 an edit reaches both websites",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "H1 earlier versions are listed",
+   "ok": true,
+   "detail": "4 versions"
+  },
+  {
+   "name": "H2 restoring an earlier version brings its article back",
+   "ok": true,
+   "detail": "The earlier version is back. Its status was not changed."
+  },
+  {
+   "name": "E4 trash removes it from Main and Enrollment",
+   "ok": true,
+   "detail": "Moved to the trash and removed from the Main Website."
+  },
+  {
+   "name": "E5 restore brings it back as a draft (not public)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "E6 tool created and shown on Main",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "E7 hiding the tool removes its name from its page",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "E-section 3 saved",
+   "ok": true,
+   "detail": "Saved. The Main Website shows it within a minute."
+  },
+  {
+   "name": "E-section 4 saved",
+   "ok": true,
+   "detail": "Saved. The Main Website shows it within a minute."
+  },
+  {
+   "name": "E-section 5 saved",
+   "ok": true,
+   "detail": "Saved. The Main Website shows it within a minute."
+  },
+  {
+   "name": "E8 draft page not public before publishing",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "E9 new page published with its sections, in order, on Main",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "E10 design settings applied (centred hero, text hidden on phones)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "E11 on a phone the \"hidden on phones\" section is not shown",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "E12 unpublishing takes the page off Main",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "I1 an address already in use is refused with a clear message, typed text kept",
+   "ok": true,
+   "detail": "This address is already used by another record. slug \"seo-course-in-bangalore\" is already used by another pages record"
+  },
+  {
+   "name": "H3 an Author cannot open Main pages (refused with 403)",
+   "ok": true,
+   "detail": "403"
+  },
+  {
+   "name": "H3b \"Main Website\" opens on Blogs for an Author",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "H3c an Author cannot open an article someone else wrote",
+   "ok": true,
+   "detail": "403"
+  },
+  {
+   "name": "H3d an Author publishes their own article",
+   "ok": true,
+   "detail": "Saved on the Main Website."
+  },
+  {
+   "name": "H3e an Author's list shows only their own articles",
+   "ok": true,
+   "detail": "1 row(s)"
+  },
+  {
+   "name": "H4 a Contributor can only save drafts or submit for review",
+   "ok": true,
+   "detail": "Draft, In review"
+  },
+  {
+   "name": "H5 a forged \"Published\" from a Contributor is refused; the article stays private",
+   "ok": true,
+   "detail": "Saved on the Main Website. Your role cannot set that status; the content was saved without changing it."
+  },
+  {
+   "name": "H6 a preview link with a changed signature is refused",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "H7 a preview link for another record is refused",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "H8 the content API refuses unsigned requests",
+   "ok": true,
+   "detail": "401"
+  },
+  {
+   "name": "H9 a replayed signed change is applied once",
+   "ok": true,
+   "detail": "200 then 409"
+  },
+  {
+   "name": "J1 / answers",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "J1 /blog answers",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "J1 /tools answers",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "J1 /seo-course-in-bangalore answers",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "J2 the Activity log records the changes",
+   "ok": true,
+   "detail": "300 entries"
+  },
+  {
+   "name": "Z cleanup: test content removed from Main",
+   "ok": true,
+   "detail": "404,404"
+  },
+  {
+   "name": "Z cleanup: the Enrollment copy of the test blog is deleted",
+   "ok": true,
+   "detail": "0 left"
+  }
+ ]
+}

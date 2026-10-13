@@ -1,0 +1,65 @@
+
+— L. Plugin lifecycle in WordPress —
+PASS L deactivate: .htaccess unchanged
+PASS L deactivate: recurring jobs removed
+PASS L deactivate: API namespace gone
+PASS L activate: .htaccess unchanged (rules rebuilt in the database only)
+PASS L activate: both recurring jobs scheduled
+PASS L activate: API namespace registered
+PASS L activate: versions table present — table
+PASS L optional features off by default (no login, header/footer or sitemap hooks) — table
+
+— A. Main only (draft → layout/colour → preview → publish) —
+PASS A draft: not on Main
+PASS A draft: not public on Enrollment
+PASS A preview of the redesigned draft (1 column, purple) renders before publishing
+PASS A preview stored nothing
+PASS A published: served by Main with the new title — 37s, version 1
+PASS A published: Main shows the new background colour
+PASS A published: not on Enrollment (404)
+PASS A Main page is in the Main sitemap
+
+— B. Enrollment only —
+PASS B Enrollment shows it
+PASS B Main does not (404)
+PASS B nothing stored for Main
+
+— C. Both websites, then a shared change —
+PASS C Enrollment shows it at once
+PASS C Main shows it — 16s
+PASS C change on Enrollment
+PASS C change on Main — 14s
+PASS C switched to Main only: removed from Enrollment
+PASS C still on Main
+
+— F. Recovery: publish, change design, roll back —
+PASS F v1 live (green) — version 1
+PASS F v2 live (red, 1 column) — version 2
+PASS F roll back to v1
+PASS F v1 text and design (green) back on Main — 0s
+PASS F the next update replaces the rollback
+
+— E. City and area page —
+PASS E area is a child of the city
+PASS E preview of the area page before publishing
+PASS E area page served by Main at /<slug> — 37s
+PASS E Main-only location hidden on Enrollment
+PASS E address change: new address served — 28s
+PASS E address change: old address redirects to the new one — 301 → /e2e-area-mv6mcvv9-new
+
+— H. Failure: a render fails, the live version stays, retry recovers —
+PASS H first version live
+FAIL H failed render recorded, retry scheduled — publishing|1||main
+PASS H Main keeps the previous version
+PASS H retry publishes the new version — 7s
+PASS H error cleared after success
+
+— D. Global redesign: Elementor global primary colour —
+PASS D global colour reached the Main page (site-wide re-render) — 43s
+PASS D page-specific background kept
+PASS D Enrollment uses the new global colour (Elementor kit stylesheet) — 3 Elementor stylesheets checked
+
+— cleanup —
+removed 10 test items
+
+43 passed, 1 failed

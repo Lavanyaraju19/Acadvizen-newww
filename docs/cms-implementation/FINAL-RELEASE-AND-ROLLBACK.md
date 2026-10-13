@@ -1,91 +1,163 @@
 # Final release and rollback: Acadvizen Master Admin / headless CMS (13 October 2026)
 
-## 1. Verified production state (read on 12 Oct 18:49 UTC and again 19:33–19:50 UTC)
+## 1. Verified current state (read-only, 12 Oct 2026 20:07–20:25 UTC)
 
-| Component | Version / identifier |
+| Component | State |
 |---|---|
-| Main website (Vercel project `acadvizen-newww-ua9d`) | Release 10: deployment **`dpl_8C59rWUwpicv7eaqiqinsRWeKP5T`**, commit **`80134d4`**, READY since 2026-10-12 16:04:24 UTC; serves `www.acadvizen.com` and `acadvizen.com`. Function region `iad1` |
-| Previous Main deployment (rollback target) | Release 9: **`dpl_4YpH3TaN11ijr6gfzfjorRmMxQ4X`**, commit `dde1328`, READY |
-| Enrollment plugin | Acadvizen Master Admin **0.6.1** (active since 12 Oct 18:16 UTC), package `dist/acadvizen-cms-0.6.1-2cc2148/acadvizen-cms.zip`, SHA-256 `dd6fcf27dfa101eb5940e868d11673d0bc8fec67f5a7264110039cfa2295e32c` |
-| Previous plugin (rollback) | `dist/acadvizen-cms-0.6.0-45d78b9/acadvizen-cms.zip`, SHA-256 `93d5e3913c7ac1f492ab6062ec88eb7047754afc6f709778c03eceffccdcf8f3` |
-| Git | GitHub `headless-wordpress` at `0554e5f` (`main` untouched at `48d61a8`). **Local** `headless-wordpress` is ahead by the release-11 commits `f855e33` and `8e27175` plus one docs commit. None is pushed |
-| WordPress core | 7.0.7 (7.1.3 available, not installed) |
+| Main website | Vercel project **`acadvizen-newww-ua9d`**. Production = **`dpl_8C59rWUwpicv7eaqiqinsRWeKP5T`** (commit `80134d4`, Release 10), Ready, serving `www.acadvizen.com` and `acadvizen.com`. Functions in `iad1`; Node.js 20.x |
+| Rollback target for Release 10 | `dpl_4YpH3TaN11ijr6gfzfjorRmMxQ4X` (Release 9, `dde1328`), Ready |
+| Enrollment plugin | Acadvizen Master Admin **0.6.1**, package `dist/acadvizen-cms-0.6.1-2cc2148/acadvizen-cms.zip` (SHA-256 `dd6fcf27dfa101eb5940e868d11673d0bc8fec67f5a7264110039cfa2295e32c`). Public files byte-identical to the package. Plugin **0.7.0** is prepared in the working tree (uncommitted, not installed) |
+| Previous plugin (rollback) | `dist/acadvizen-cms-0.6.0-45d78b9/acadvizen-cms.zip` (SHA-256 `93d5e3913c7ac1f492ab6062ec88eb7047754afc6f709778c03eceffccdcf8f3`) |
+| Enrollment WordPress | 7.0.7 on PHP 8.3.35 / MariaDB 11.8, LiteSpeed, Astra; 32 plugins (27 active); 7.1.3 and 13 plugin updates pending (O-6) |
+| Git | GitHub `headless-wordpress` = `0554e5f`; `main` = `48d61a8` (untouched). **Local** `headless-wordpress` is ahead by the release-11 commits listed in §3. Nothing pushed |
 
 ## 2. Settings (names only; values never in Git)
 
 | Where | Name | State | Meaning |
 |---|---|---|---|
-| Vercel Production | `WORDPRESS_CONTENT_API_ENABLED` | **`true`** | **Content API on:** WordPress can edit Main's existing records through signed requests. Switched on 12 Oct with the owner's approval (release 9) |
-| Vercel Production | `WORDPRESS_CMS_WEBHOOK_SECRET` | set (Sensitive) | The shared secret; equals the WordPress side (signed request verified, HTTP 200) |
-| Vercel Production | `WORDPRESS_CMS_API_URL` | set | Allows the WordPress editor to frame Main previews. It does **not** turn on the bridge |
-| Vercel (any) | `WORDPRESS_CONTENT_ENABLED` | **not set** | **Render Bridge off.** WordPress-rendered pages and WordPress blogs are never served at Main addresses |
-| Vercel Production | `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_APP_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | set | Supabase access. `SUPABASE_SECRET_KEY` is **not** set; by the owner's decision no key is changed (`FINAL-SECURITY-REPORT.md`) |
-| `wp-config.php` (Enrollment) | `ACADVIZEN_CMS_MAIN_URL`, `ACADVIZEN_CMS_WEBHOOK_SECRET` | set | Plugin Settings: "Shared secret: Set" |
-| `wp-config.php` | `ACADVIZEN_CMS_SITEMAP_CLEANUP`, `_LOGIN_BRANDING`, `_SITE_TEMPLATES` | off | Optional Enrollment-wide features; keep off unless separately approved |
+| Vercel Production | `WORDPRESS_CONTENT_API_ENABLED` | `true` | Content API on: WordPress edits Main records through signed requests (owner approval, release 9; decision O-2) |
+| Vercel Production | `WORDPRESS_CMS_WEBHOOK_SECRET` | set (Sensitive) | Shared secret; equals the WordPress side (signed request → 200) |
+| Vercel Production | `WORDPRESS_CMS_API_URL` | set | Lets the WordPress editor frame Main previews. It does not turn on the bridge |
+| Vercel (all environments) | `WORDPRESS_CONTENT_ENABLED` | **absent** | Render Bridge **off** |
+| Vercel Production | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_APP_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | set | Supabase access. `SUPABASE_SECRET_KEY` is not set (no key change, by the owner's decision) |
+| Vercel Preview / Development | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` only | — | No production secret in Preview or Development |
+| `wp-config.php` | `ACADVIZEN_CMS_MAIN_URL`, `ACADVIZEN_CMS_WEBHOOK_SECRET` | set | Plugin Settings: "Shared secret: Set"; Test connection: Connected |
 
-**Approval rules:**
-- **Bridge activation** (`WORDPRESS_CONTENT_ENABLED=true`) needs explicit owner approval *after* its own end-to-end tests. It is **not** proposed.
-- **The content-API switch is the owner's decision.** It can be switched off at any time with the steps in section 5.
+Release 11 needs **no new or changed environment variable**.
 
 ## 3. Release 11 (committed locally; NOT pushed or deployed)
 
-| Commit | Files | Change |
+| Commit | Change | Production effect |
 |---|---|---|
-| `f855e33` | `src/middleware.js`, `app/api/admin/notifications/route.js`, `app/api/admin/notifications/[id]/read/route.js`, `tests/unit/supabase-key-rotation.test.js`, `tests/unit/wordpress-content-api.test.js` | Server reads prefer `SUPABASE_SECRET_KEY`, falling back to `SUPABASE_SERVICE_ROLE_KEY`. Plus tests: the key guard; 11 malformed addresses; rename onto a taken address |
-| `8e27175` | `tests/wordpress/scheduling-acceptance.mjs`, `tests/wordpress/permissions-acceptance.mjs` | Acceptance tests (not part of the site build) |
-| docs commit | `docs/cms-implementation/…` | These handover documents and the fresh evidence |
+| `f855e33` | Key fallback in the middleware and notification routes; slug tests | None (same key selected) |
+| `8e27175` | Scheduling and role-permission acceptance tests | None (test tools) |
+| `13eac79` | Handover documents (first version) | None |
+| `03d18dc` | Validated key picker (`lib/supabaseServiceKey.js`); notification routes answer 503 when no key is configured | None (same key selected); safer if a key is mis-set later |
+| `df30076` | Site settings and menus load concurrently (`lib/siteMenus.js`) | Same content, one to two fewer database round trips per public page (O-4) |
+| `fc53a7e` | `nodemailer` 10.1.0; Next.js's `sharp` 0.35.5 | `npm audit` 0. Mailer not active on production; Vercel serves images through its own optimiser |
+| *uncommitted (Main)* | `lib/wordpress/contentApi.js`: edit-conflict protection (`expected_updated_at`, conditional update) and the **redirects** content type with its safety rules; `tests/unit/wordpress-content-api.test.js` (+14) | Main: only after deployment. Without a version sent, saves behave exactly as before |
+| *uncommitted (plugin 0.7.0)* | `wordpress/acadvizen-cms/*`: Both partial-failure warning, plain "could not be reached" message, two-way blog sync (`includes/blog-sync.php`), conflict-aware forms, Redirects screen, native publishing screens hidden unless `ACADVIZEN_CMS_RENDER_BRIDGE`, `acv-cms-flash` class, version 0.7.0; `tests/php/run.php` (+19) | Only after the owner installs 0.7.0 (**after** Main release 11) |
+| *uncommitted (tests, docs)* | `tests/wordpress/{both-failure,conflict,blog-sync,redirects}-acceptance.mjs` (new), `acceptanceKit.mjs`, five suites exit 1 on a failed check; all `docs/cms-implementation` updates and evidence | None |
 
-**Not committed (the owner's own changes):** `.gitignore` (adds `.vercel` and `.env*.local`) and `lib/wordpress/config.js.pre-integration-fix.bak`.
+**Commit status:**
+- `03d18dc`, `df30076`, `fc53a7e` and `436a822` were committed locally on 13 Oct, before the owner's instruction of the same day not to commit. They are not pushed.
+- Everything after that instruction is **uncommitted** for the owner's review.
+- Nothing was reset, rebased or rewritten.
 
-**Behaviour on production after deployment: unchanged.** Production sets only `SUPABASE_SERVICE_ROLE_KEY`, which these lines still use. Release 11 only removes the technical obstacle to a future key rotation. Deploying it is therefore **optional and not urgent**; it can ride along with the next Main release.
+**Main application files changed since the live commit `80134d4`:**
+- `src/middleware.js`;
+- `app/api/admin/notifications/route.js`;
+- `app/api/admin/notifications/[id]/read/route.js`;
+- `lib/env.ts`;
+- `lib/supabaseServiceKey.js` (new);
+- `lib/siteCmsServer.js`;
+- `lib/siteMenus.js` (new);
+- `lib/cmsPublishing.js` (`436a822`, lookup short-circuit);
+- `lib/wordpress/contentApi.js` (uncommitted: conflicts, redirects);
+- `package.json`, `package-lock.json`.
 
-**Checks:** the fresh run (12 Oct 19:33–19:47 UTC) passed every step; see `FINAL-OPEN-ISSUES.md` "Final run".
+The rest is tests, tools and documents. **Not committed (the owner's own changes):** `.gitignore` and `lib/wordpress/config.js.pre-integration-fix.bak`.
 
-**Owner steps, when approved** (manual workflow; the engineer has no authorisation to push or deploy):
+**Checks before release:** the final local run passed every step (`FINAL-ACCEPTANCE-TESTS.md` §E). The production regression shows the live sites unchanged (§A). Feature switches are unchanged: content API on, bridge off.
+
+### Manual release steps (owner)
+
+**Step 0: review and commit the uncommitted work.** Do not stage `.gitignore` or the `.bak` file.
 ```
-git status --short                    # only .gitignore and the .bak file remain (yours)
-git log --oneline origin/headless-wordpress..HEAD   # the release-11 and docs commits
-git push origin headless-wordpress    # never main; this should create a Vercel Preview
+cd <your local copy of the repository>
+git status --short
+git diff -- wordpress/acadvizen-cms tests docs        # review
+git add lib/wordpress/contentApi.js tests/unit/wordpress-content-api.test.js
+git commit -m "Content API: edit-conflict protection; Main redirects with safety rules; tests"
+git add wordpress/acadvizen-cms tests/php/run.php tests/wordpress
+git commit -m "Plugin 0.7.0: blogs kept in step across editors, conflict-aware forms, redirects, clear failure messages, native publishing hidden while the bridge is off; tests"
+git add docs/cms-implementation
+git commit -m "Docs: final handover, publishing workflow, acceptance evidence"
 ```
-1. Vercel → Deployments → the Preview for the new commit (Ready).
-2. Check it: `/`, `/blog`, `/admin-login` = 200, and `/admin` sign-in works.
-3. ⋯ → **Promote to Production**.
-4. Run the smoke tests in §4.
 
-If the push does not create a Preview (this happened on 12 Oct), create one for the exact commit with the Vercel CLI or API, with target **preview**, never production.
+**Step 1: Main (release 11).**
+```
+git status --short                                   # expect only: M .gitignore, ?? lib/wordpress/config.js.pre-integration-fix.bak
+git log --oneline origin/headless-wordpress..HEAD    # expect the release-11 commits
+git push origin headless-wordpress                   # never main
+```
 
-**Rollback after release 11:** promote the current Release 10 deployment `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T` again (Instant Rollback).
+**Expected:** the push succeeds, and Vercel → `acadvizen-newww-ua9d` → Deployments shows a new **Preview** for the pushed commit, status Ready.
+- If no Preview appears (this happened on 12 Oct), create one for the exact commit with the Vercel CLI or API. Use target **preview**, never production.
+- Preview has no Supabase variables, so its pages may not load data. That is expected; do not add production secrets to Preview.
 
-## 4. Smoke tests after any Main deployment (expected results)
+**Promote:** Deployments → that Preview → ⋯ → **Promote to Production**. Vercel rebuilds it with the Production variables.
+
+**Verify (§4), within 10 minutes of promotion.**
+
+**Step 2: plugin 0.7.0 (after Main release 11 is live).**
+1. Build it: `node tools/build-cms-plugin.mjs`. Expected output: `dist/acadvizen-cms-0.7.0-<commit>/acadvizen-cms.zip`, with SHA-256 and file count printed and verified against the commit.
+2. Back up Enrollment (Hostinger).
+3. WordPress → Plugins → Add New → Upload Plugin → the ZIP → **Replace current with uploaded**.
+4. Verify:
+   - Plugins list shows 0.7.0;
+   - the Posts editor shows the **Main Website** box, and Main Website → **Redirects** opens;
+   - the menu no longer lists the native Main Blogs / Courses / Locations / FAQs / Testimonials / Tools screens (production has none of their posts);
+   - Settings → Test connection → Connected;
+   - the 60-page Enrollment comparison is unchanged.
+5. Rollback: upload the 0.6.1 ZIP the same way.
+
+## 4. Smoke tests after a Main deployment
 
 | Check | Expected |
 |---|---|
-| `curl -s -o /dev/null -w '%{http_code}' https://www.acadvizen.com/` (also `/blog`, `/admin-login`, `/sitemap.xml`, `/robots.txt`) | 200 |
-| Every sitemap URL | 200 (314 today) |
+| `curl -s -o /dev/null -w "%{http_code}" https://www.acadvizen.com/` (also `/blog`, `/admin-login`, `/sitemap.xml`, `/robots.txt`) | 200 |
+| `npx vercel inspect https://www.acadvizen.com` | the new deployment ID, target production, Ready |
+| Every sitemap URL | 200 (314 today); titles, descriptions, robots and canonicals unchanged |
 | `curl -sI https://www.acadvizen.com/preview/wordpress/pages/x \| grep -i frame-ancestors` | `'self' https://enroll.acadvizen.com` |
 | `curl -s -X POST -d '{}' https://www.acadvizen.com/api/wordpress/content` | 401 `missing_timestamp` |
-| `curl -s -o /dev/null -w '%{http_code}' https://www.acadvizen.com/api/wordpress/bridge-manifest` | 404 |
-| WordPress → Acadvizen Master Admin → Settings → Test connection | Connected |
-| `node tools/verify-content-api-live.mjs` | 16/16. It creates and removes one labelled noindex page; run only when a write test is approved |
+| `curl -s -o /dev/null -w "%{http_code}" https://www.acadvizen.com/api/wordpress/bridge-manifest` | 404 |
+| `/api/admin/notifications` signed out | 401 |
+| `/admin` sign-in, then the notifications bell | Loads (proves the key picker selects the working key) |
+| WordPress → Acadvizen Master Admin → Settings → **Test connection** | Connected |
+| Header menu and footer on `/` and a course page | Same items as before |
 
 ## 5. Rollback
 
 | Situation | Steps | Verify |
 |---|---|---|
-| Main misbehaves after release 11 | Vercel → Deployments → `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T` (Release 10) → ⋯ → **Promote to Production** | Smoke tests above |
-| Main misbehaves on Release 10 | Vercel → Deployments → `dpl_4YpH3TaN11ijr6gfzfjorRmMxQ4X` (Release 9) → ⋯ → **Promote to Production** (Instant Rollback, about a minute; data untouched) | Smoke tests above (Release 9: "Test connection" shows 503 and previews are blocked; content unaffected) |
-| Stop WordPress editing Main entirely (content-API switch off) | Vercel → Settings → Environment Variables → remove `WORDPRESS_CONTENT_API_ENABLED` → redeploy the current production deployment (Redeploy) | `POST /api/wordpress/content` answers 503 `content_api_disabled`; WordPress Main Website screens show an error |
-| Plugin 0.6.1 misbehaves | WordPress → Plugins → Add New → Upload the 0.6.0 ZIP → **Replace current with uploaded**; or Deactivate "Acadvizen Master Admin" | Plugins list shows the version; Enrollment pages unchanged |
+| Main misbehaves after release 11 | Vercel → Deployments → **`dpl_8C59rWUwpicv7eaqiqinsRWeKP5T`** (Release 10) → ⋯ → **Promote to Production** (Instant Rollback, about a minute; data untouched) | §4 |
+| Main misbehaves on Release 10 | Promote `dpl_4YpH3TaN11ijr6gfzfjorRmMxQ4X` (Release 9) | §4 (Release 9: Test connection shows 503) |
+| Stop WordPress editing Main (content-API switch off) | Vercel → Settings → Environment Variables → remove `WORDPRESS_CONTENT_API_ENABLED` → Redeploy production | `POST /api/wordpress/content` → 503 `content_api_disabled` |
+| Plugin misbehaves | WordPress → Plugins → Add New → Upload the 0.6.0 ZIP → **Replace current with uploaded**, or deactivate the plugin | Plugins list version; Enrollment unchanged |
 | Bad content saved from WordPress | The record → **Earlier versions → Restore** | Public page shows the earlier text |
-| Database disaster | Supabase → Database → Backups (daily physical backups; point-in-time recovery off) | Owner only; last resort |
-| Enrollment disaster | Hostinger backups (10 Oct files + database verified complete); never click Restore without a decision | Owner only |
+| After WordPress updates (O-6) | Restore the Hostinger backup taken just before; or reinstall the previous plugin versions and restore the database. This exact sequence was rehearsed locally (`evidence/o6-update-rehearsal/`) | Enrollment baseline comparison |
+| Database disaster | Supabase → Database → Backups (daily; point-in-time recovery off) | Owner only |
 
 **Rollback triggers:**
 - a 5xx on any smoke URL;
 - any change in the 314-URL comparison;
 - "Test connection" failing;
-- unexpected content on a Main page.
+- the `/admin` notifications failing;
+- unexpected content.
 
-**Owner:** the site owner (Vercel, Supabase and Hostinger account holder).
+**Rollback rehearsal on production:** not executed. It would change production, and no authorisation was given. The targets are Ready. The WordPress-update rollback was rehearsed locally.
 
-**Rollback rehearsal:** not executed. A rehearsal would change production, and no authorisation was given. The targets were confirmed READY on 12 Oct.
+## 6. Backups and rollback with approval and Elementor pages (plugin 0.7.0; prepared, not installed)
+
+**What the CMS keeps by itself**
+
+| Kept | Where | Used by |
+|---|---|---|
+| The previous live revision of each page, at every publication (latest 10 per page) | Private archive copies in WordPress (hidden from lists; meta `_acv_archive_of`) | **Approvals → Restore** (reviewers) |
+| Every drawing of a page for the Main website | Table `{prefix}acv_render_versions` | Main rollback to an earlier drawing; Main keeps the previous drawing when a new one fails |
+| Who did what, and which revision | Option `acv_cms_approval_log` (latest 1,000 entries) | Approvals → History; export it (`FINAL-MAINTENANCE-GUIDE.md` §5) |
+
+**Rollback, from smallest to largest**
+
+| Situation | Steps | Verify | Tested |
+|---|---|---|---|
+| One page's latest change is wrong | **Approvals → Recent publications → Restore** the earlier revision | Shows **Verified** on each chosen website | LOCAL (A10) |
+| A page must disappear from Main now | A reviewer sets the page to Draft, or changes Publish To to Enrollment and publishes. Main serves its own page at that address again (within about 10 seconds; during Main's 30-second address cache the visitor is sent once to Main's own page, never a 404), or Main's 404 if it has no page there | The Main address | Draft: LOCAL (`migration-acceptance.mjs` M5). Publish To change under approval: not tested (O-23) |
+| One website failed during a publication | Fix the cause, then **Check again**. The failing website kept its previous version meanwhile | Verified | LOCAL (A9) |
+| All Elementor pages on Main must stop | Vercel: remove `WORDPRESS_CONTENT_ENABLED` → Redeploy, or promote the previous deployment. Main serves its own pages again | `tools/verify-production.mjs` (314 addresses) | Switch behaviour: bridge unit tests and LOCAL scenarios |
+| Approval itself must be switched off | Remove `ACADVIZEN_CMS_APPROVAL` from wp-config.php. Publishing works as in 0.6.1; approval data stays and is ignored | Publish a test draft | LOCAL (approval tests switch it per run) |
+| Plugin 0.7.0 must go | Before downgrading, publish or **Discard** open working copies (otherwise they stay as ordinary drafts). Then upload 0.6.1 → **Replace current with uploaded**. Archives stay as private drafts; to remove them: `wp post delete $(wp post list --post_type=any --post_status=any --meta_key=_acv_archive_of --format=ids) --force` | Plugins list; Test connection | Update and rollback rehearsed with 0.6.x (O-6). The 0.7.0 → 0.6.1 downgrade with working copies present is not rehearsed |
+| Data loss | Hostinger full backup (WordPress files and database) and Supabase backups, taken before every production step (`MAIN-MIGRATION-PLAN.md` §4, step 1) | Restore to staging first | Not executed (owner-controlled) |
+
+**Rollback rehearsal of the Elementor-page switch on production: not executed** (it is a production traffic change, not authorized).

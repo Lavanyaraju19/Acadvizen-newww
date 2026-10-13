@@ -1,0 +1,11 @@
+PASS the Administrator sees every Main Website tab — 24 tabs
+PASS Author: only Blogs opens; every other Main Website screen is refused — opened [blogs] | refused 23
+PASS Author: the plugin Settings (connection, secrets status) are refused — HTTP 403
+PASS Author: a direct upload to the Main media library is refused — HTTP 403
+PASS Author: WordPress's plugin installer is refused — HTTP 403
+PASS Contributor: only Blogs opens; every other Main Website screen is refused — opened [blogs] | refused 23
+PASS Contributor: the plugin Settings (connection, secrets status) are refused — HTTP 403
+PASS Contributor: a direct upload to the Main media library is refused — HTTP 403
+PASS Contributor: WordPress's plugin installer is refused — HTTP 403
+
+9 passed, 0 failed (http://localhost:8088)

@@ -1,0 +1,19 @@
+PASS [LOCAL] administrator signed in and Main Website → Pages opened
+PASS [LOCAL] P1 page created as a draft from the admin — Saved on the Main Website.
+PASS [LOCAL] P2 two sections (hero, text) saved — Saved. The Main Website shows it within a minute in this draft. / Saved. The Main Website shows it within a minute in this draft.
+PASS [LOCAL] P3 a draft is not public on Main
+PASS [LOCAL] P4 editor preview shows the draft in Main's design — Hero 202610131143
+PASS [LOCAL] P5 published: the public Main URL shows both sections — Saved on the Main Website.
+PASS [LOCAL] P6 SEO on the public page: title, noindex, canonical to its own address — robots=noindex, follow canonical=http://localhost:3100/cms-production-test-page-202610131143
+PASS [LOCAL] P7 noindex test page is kept out of search engines and the sitemap
+PASS [LOCAL] P8 "Prepare changes privately" opens a private copy — Private draft copy ready. Your changes stay private until you publish the draft.
+PASS [LOCAL] P9 while the change is private, the live page is unchanged — Saved. The Main Website shows it within a minute in this draft.
+PASS [LOCAL] P10 publishing the private copy updates the live page (cache refreshed) — Saved on the Main Website. Your draft copy was published onto the live page.
+PASS [LOCAL] P11 a fresh request also gets the updated page
+PASS [LOCAL] P12 an address already used on Main is refused, nothing is overwritten — /seo-course-in-bangalore: This address is already used by another record. slug "seo-course-in-bangalore" is already 
+PASS [LOCAL] P13 unpublishing takes the page off Main
+PASS [LOCAL] Z1 test page removed through Trash and Delete permanently (list and trash empty) — 0 listed, 0 in trash
+PASS [LOCAL] Z2 test address answers 404 after cleanup
+PASS [LOCAL] Z3 test address is not in the sitemap
+
+17 passed, 0 failed [LOCAL] | test page /cms-production-test-page-202610131143 | click fallbacks 0

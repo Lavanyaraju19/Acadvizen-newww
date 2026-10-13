@@ -1,0 +1,170 @@
+[
+  {
+    "ms": 0,
+    "route": "/tools/ahrefs",
+    "status": 200,
+    "total": 216,
+    "requests": 27,
+    "chain": 11
+  },
+  {
+    "ms": 0,
+    "route": "/",
+    "status": 200,
+    "total": 178,
+    "requests": 20,
+    "chain": 2
+  },
+  {
+    "ms": 0,
+    "route": "/blog",
+    "status": 200,
+    "total": 140,
+    "requests": 12,
+    "chain": 3
+  },
+  {
+    "ms": 0,
+    "route": "/blog/google-ads-ai-max-explained-what-the-september-2026-auto-upgrade-changed",
+    "status": 200,
+    "total": 166,
+    "requests": 11,
+    "chain": 3
+  },
+  {
+    "ms": 0,
+    "route": "/seo-course-in-bangalore",
+    "status": 200,
+    "total": 132,
+    "requests": 13,
+    "chain": 3
+  },
+  {
+    "ms": 0,
+    "route": "/courses",
+    "status": 200,
+    "total": 108,
+    "requests": 12,
+    "chain": 3
+  },
+  {
+    "ms": 0,
+    "route": "/ai-digital-marketing-course",
+    "status": 200,
+    "total": 172,
+    "requests": 13,
+    "chain": 3
+  },
+  {
+    "ms": 100,
+    "route": "/tools/ahrefs",
+    "status": 200,
+    "total": 1092,
+    "requests": 27,
+    "chain": 8
+  },
+  {
+    "ms": 100,
+    "route": "/",
+    "status": 200,
+    "total": 387,
+    "requests": 20,
+    "chain": 2
+  },
+  {
+    "ms": 100,
+    "route": "/blog",
+    "status": 200,
+    "total": 427,
+    "requests": 12,
+    "chain": 3
+  },
+  {
+    "ms": 100,
+    "route": "/blog/google-ads-ai-max-explained-what-the-september-2026-auto-upgrade-changed",
+    "status": 200,
+    "total": 476,
+    "requests": 11,
+    "chain": 3
+  },
+  {
+    "ms": 100,
+    "route": "/seo-course-in-bangalore",
+    "status": 200,
+    "total": 445,
+    "requests": 13,
+    "chain": 3
+  },
+  {
+    "ms": 100,
+    "route": "/courses",
+    "status": 200,
+    "total": 434,
+    "requests": 12,
+    "chain": 3
+  },
+  {
+    "ms": 100,
+    "route": "/ai-digital-marketing-course",
+    "status": 200,
+    "total": 481,
+    "requests": 13,
+    "chain": 3
+  },
+  {
+    "ms": 200,
+    "route": "/tools/ahrefs",
+    "status": 200,
+    "total": 1916,
+    "requests": 27,
+    "chain": 8
+  },
+  {
+    "ms": 200,
+    "route": "/",
+    "status": 200,
+    "total": 581,
+    "requests": 20,
+    "chain": 2
+  },
+  {
+    "ms": 200,
+    "route": "/blog",
+    "status": 200,
+    "total": 736,
+    "requests": 12,
+    "chain": 3
+  },
+  {
+    "ms": 200,
+    "route": "/blog/google-ads-ai-max-explained-what-the-september-2026-auto-upgrade-changed",
+    "status": 200,
+    "total": 763,
+    "requests": 11,
+    "chain": 3
+  },
+  {
+    "ms": 200,
+    "route": "/seo-course-in-bangalore",
+    "status": 200,
+    "total": 741,
+    "requests": 13,
+    "chain": 3
+  },
+  {
+    "ms": 200,
+    "route": "/courses",
+    "status": 200,
+    "total": 713,
+    "requests": 12,
+    "chain": 3
+  },
+  {
+    "ms": 200,
+    "route": "/ai-digital-marketing-course",
+    "status": 200,
+    "total": 788,
+    "requests": 13,
+    "chain": 3
+  }
+]

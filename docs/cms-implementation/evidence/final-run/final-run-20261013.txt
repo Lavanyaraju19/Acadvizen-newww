@@ -1,0 +1,52 @@
+LOCAL runs, 13 Oct 2026 UTC. Release-11 Main build (436a822 tree; production switch settings: content API on, WORDPRESS_CMS_API_URL set, bridge off) on :3100, local WordPress 7.1.3. rc = the command's real exit code.
+
+== Full run (plugin 0.6.1 code), 02:50-03:47
+[02:50:56Z] unit rc=0 :: ℹ tests 243 ℹ pass 243 ℹ fail 0 
+[02:51:20Z] typescript rc=0 :: 0 output lines
+[02:51:28Z] eslint rc=0 :: errors 0, warnings 10
+[02:51:32Z] php-tests rc=0 :: 252 tests, 252 passed, 0 failed
+[02:51:40Z] php-l rc=0 :: 20 files, 0 with errors
+[02:51:48Z] secret-guard rc=0 :: No secrets found (all tracked files).
+[02:51:51Z] npm-audit rc=0 :: found 0 vulnerabilities 
+[02:54:07Z] production-equivalent-build rc=0 :: Compiled successfully in 36.9s (content API on, WORDPRESS_CMS_API_URL set, bridge off)
+[02:54:14Z] local-main-up rc=0 :: 200
+[02:54:15Z] image-optimizer-sharp-0.35.5 rc=0 :: /apple-icon.png -> 200 image/avif 2336 bytes, ISO Media, AVIF Image
+[02:54:21Z] main-admin-notifications rc=0 :: 6 passed, 0 failed [LOCAL, new-style keys only]
+[02:54:58Z] structured-acceptance rc=1 :: 
+[02:58:22Z] site-chrome-acceptance rc=0 :: 18 passed, 0 failed (click fallbacks: 0)
+[03:34:56Z] homepage-acceptance rc=0 :: 10 passed, 1 failed (click fallbacks: 0)
+[03:36:12Z] courses-acceptance rc=0 :: 12 passed, 0 failed (click fallbacks: 0)
+[03:37:00Z] more-content-acceptance rc=0 :: 15 passed, 0 failed (click fallbacks: 0)
+[03:37:14Z] permissions-acceptance rc=0 :: 9 passed, 0 failed (http://localhost:8088)
+[03:44:10Z] scheduling-acceptance rc=0 :: 7 passed, 0 failed | http://localhost:3100 | page /cms-test-scheduled-202610130337
+[03:45:30Z] blog-targets rc=0 :: 16 passed, 0 failed [LOCAL] | test blog /cms-production-test-blog-202610130344
+[03:46:53Z] page-workflow rc=0 :: 17 passed, 0 failed [LOCAL] | test page /cms-production-test-page-202610130345 | click fallbacks 0
+[03:46:54Z] signed-api rc=0 :: 16 passed, 0 failed [LOCAL] | test address /cms-production-test-202610130346
+[03:46:54Z] ALL DONE
+   note: main-admin label 'new-style keys only' is static text in the check; this run used the standard local keys
+   structured rc=1: crashed at login (transient 30 s stall), no checks ran; homepage 1 failed: ERR_NETWORK_IO_SUSPENDED (PC asleep 03:0x-03:34)
+
+== Individual reruns
+[03:49:43Z] node tests/wordpress/structured-acceptance.mjs rc=1 :: crashed at E12 (timeout waiting for #acv-status), 38 checks passed before the crash (flaky)
+[03:52:18Z] node tests/wordpress/homepage-acceptance.mjs rc=0 :: 14 passed, 0 failed
+[03:54:25Z] node tests/wordpress/structured-acceptance.mjs rc=0 :: 56 passed, 0 failed
+
+== Both-failure suite (new)
+[~04:05Z] on plugin 0.6.1 code: rc=1 :: C2 FAIL (partial failure shown in a success box) - the defect
+[04:2xZ] on plugin 0.6.2: rc=0 :: 12 passed, 0 failed; STEP=main-down with Main stopped: rc=0 :: 3 passed, 0 failed
+php tests/php/run.php (in the WordPress container): rc=0 :: 258 tests, 258 passed, 0 failed; php -l 20 files, 0 errors
+
+== Full WordPress browser regression on plugin 0.6.2, 04:40-05:03
+[04:40:46Z] plugin-version rc=0 :: Stable tag: 0.6.2
+[04:42:56Z] node tests/wordpress/structured-acceptance.mjs rc=0 :: 56 passed, 0 failed
+[04:46:03Z] node tests/wordpress/site-chrome-acceptance.mjs rc=0 :: 18 passed, 0 failed (click fallbacks: 0)
+[04:48:42Z] node tests/wordpress/homepage-acceptance.mjs rc=0 :: 14 passed, 0 failed (click fallbacks: 0)
+[04:49:37Z] node tests/wordpress/courses-acceptance.mjs rc=0 :: 12 passed, 0 failed (click fallbacks: 0)
+[04:50:27Z] node tests/wordpress/more-content-acceptance.mjs rc=0 :: 15 passed, 0 failed (click fallbacks: 0)
+[04:50:44Z] node tests/wordpress/permissions-acceptance.mjs rc=0 :: 9 passed, 0 failed (http://localhost:8088)
+[04:57:08Z] node tests/wordpress/scheduling-acceptance.mjs rc=0 :: 7 passed, 0 failed | http://localhost:3100 | page /cms-test-scheduled-202610130450
+[05:00:25Z] node tests/wordpress/both-failure-acceptance.mjs rc=0 :: 12 passed, 0 failed [LOCAL]
+[05:01:47Z] node tools/verify-wordpress-live.mjs rc=0 :: 16 passed, 0 failed [LOCAL] | test blog /cms-production-test-blog-202610130500
+[05:03:18Z] node tools/verify-wordpress-pages-live.mjs rc=0 :: 17 passed, 0 failed [LOCAL] | test page /cms-production-test-page-202610130501 | click fallbacks 0
+[05:03:20Z] node tools/verify-content-api-live.mjs rc=0 :: 16 passed, 0 failed [LOCAL] | test address /cms-production-test-202610130503
+[05:03:20Z] ALL DONE

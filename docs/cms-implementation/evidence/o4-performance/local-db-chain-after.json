@@ -1,0 +1,146 @@
+[
+  {
+    "ms": 0,
+    "route": "/",
+    "status": 200,
+    "total": 178,
+    "requests": 20,
+    "chain": 2
+  },
+  {
+    "ms": 0,
+    "route": "/blog",
+    "status": 200,
+    "total": 135,
+    "requests": 11,
+    "chain": 3
+  },
+  {
+    "ms": 0,
+    "route": "/blog/google-ads-ai-max-explained-what-the-september-2026-auto-upgrade-changed",
+    "status": 200,
+    "total": 152,
+    "requests": 11,
+    "chain": 3
+  },
+  {
+    "ms": 0,
+    "route": "/seo-course-in-bangalore",
+    "status": 200,
+    "total": 136,
+    "requests": 12,
+    "chain": 3
+  },
+  {
+    "ms": 0,
+    "route": "/courses",
+    "status": 200,
+    "total": 100,
+    "requests": 11,
+    "chain": 3
+  },
+  {
+    "ms": 0,
+    "route": "/ai-digital-marketing-course",
+    "status": 200,
+    "total": 151,
+    "requests": 12,
+    "chain": 3
+  },
+  {
+    "ms": 100,
+    "route": "/",
+    "status": 200,
+    "total": 354,
+    "requests": 20,
+    "chain": 2
+  },
+  {
+    "ms": 100,
+    "route": "/blog",
+    "status": 200,
+    "total": 414,
+    "requests": 11,
+    "chain": 3
+  },
+  {
+    "ms": 100,
+    "route": "/blog/google-ads-ai-max-explained-what-the-september-2026-auto-upgrade-changed",
+    "status": 200,
+    "total": 468,
+    "requests": 11,
+    "chain": 3
+  },
+  {
+    "ms": 100,
+    "route": "/seo-course-in-bangalore",
+    "status": 200,
+    "total": 458,
+    "requests": 12,
+    "chain": 3
+  },
+  {
+    "ms": 100,
+    "route": "/courses",
+    "status": 200,
+    "total": 403,
+    "requests": 11,
+    "chain": 3
+  },
+  {
+    "ms": 100,
+    "route": "/ai-digital-marketing-course",
+    "status": 200,
+    "total": 478,
+    "requests": 12,
+    "chain": 3
+  },
+  {
+    "ms": 200,
+    "route": "/",
+    "status": 200,
+    "total": 568,
+    "requests": 20,
+    "chain": 2
+  },
+  {
+    "ms": 200,
+    "route": "/blog",
+    "status": 200,
+    "total": 727,
+    "requests": 11,
+    "chain": 3
+  },
+  {
+    "ms": 200,
+    "route": "/blog/google-ads-ai-max-explained-what-the-september-2026-auto-upgrade-changed",
+    "status": 200,
+    "total": 747,
+    "requests": 11,
+    "chain": 3
+  },
+  {
+    "ms": 200,
+    "route": "/seo-course-in-bangalore",
+    "status": 200,
+    "total": 740,
+    "requests": 12,
+    "chain": 3
+  },
+  {
+    "ms": 200,
+    "route": "/courses",
+    "status": 200,
+    "total": 722,
+    "requests": 11,
+    "chain": 3
+  },
+  {
+    "ms": 200,
+    "route": "/ai-digital-marketing-course",
+    "status": 200,
+    "total": 731,
+    "requests": 12,
+    "chain": 3
+  }
+]
