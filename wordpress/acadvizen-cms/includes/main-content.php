@@ -462,6 +462,21 @@ function main_entities(): array {
 				'og_image'         => array( __( 'Social sharing image', 'acadvizen-cms' ), 'image', '' ),
 			),
 		),
+		'redirects'       => array(
+			'label'       => __( 'Redirects', 'acadvizen-cms' ),
+			'singular'    => __( 'Redirect', 'acadvizen-cms' ),
+			'title'       => 'from_path',
+			'workflow'    => 'active',
+			'trash'       => false,
+			'group'       => 'site',
+			'path'        => '',
+			'delete_note' => __( 'Delete this redirect permanently? Visitors to the old address will see "page not found" unless a page exists there.', 'acadvizen-cms' ),
+			'fields'      => array(
+				'from_path'   => array( __( 'Old address', 'acadvizen-cms' ), 'link', __( 'The address visitors should no longer land on, e.g. /old-seo-course. A new redirect starts switched off: check it, then tick "Show on the Main Website" and save.', 'acadvizen-cms' ), true ),
+				'to_path'     => array( __( 'Send visitors to', 'acadvizen-cms' ), 'link', __( 'An address on www.acadvizen.com (e.g. /seo-course-in-bangalore) or a full web address.', 'acadvizen-cms' ), true ),
+				'status_code' => array( __( 'Kind of redirect', 'acadvizen-cms' ), 'choice', __( 'Permanent tells search engines the page has moved for good.', 'acadvizen-cms' ), false, array( 'options' => array( '301' => __( 'Permanent (301)', 'acadvizen-cms' ), '302' => __( 'Temporary (302)', 'acadvizen-cms' ) ) ) ),
+			),
+		),
 		'site_settings'   => array(
 			'label'     => __( 'Site settings', 'acadvizen-cms' ),
 			'singular'  => __( 'Site settings', 'acadvizen-cms' ),
@@ -674,10 +689,30 @@ function main_error_text( array $result ): string {
 		'not_in_trash'         => __( 'Move the record to the trash before deleting it permanently.', 'acadvizen-cms' ),
 		'still_active'         => __( 'Hide the record from the Main Website before deleting it permanently.', 'acadvizen-cms' ),
 		'duplicate_request'    => __( 'This change was already received.', 'acadvizen-cms' ),
+		'redirect_not_allowed' => __( 'This address belongs to the website itself (for example the admin) and cannot be redirected.', 'acadvizen-cms' ),
+		'redirect_loop'        => __( 'This redirect would send visitors in a circle.', 'acadvizen-cms' ),
+		'redirect_exists'      => __( 'There is already a redirect from this address. Edit that one instead.', 'acadvizen-cms' ),
+		'redirect_chain'       => __( 'This would create a chain of redirects. Point straight to the final address, or change the other redirect.', 'acadvizen-cms' ),
+		'redirect_hides_page'  => __( 'A published page or blog lives at this address and would disappear behind the redirect. Unpublish it first if that is intended.', 'acadvizen-cms' ),
+		'edit_conflict'        => __( 'Not saved: someone changed this on the Main Website (for example in its own admin) after you opened it. What you typed is kept below. Check the live version first; clicking Save again will replace their change with yours.', 'acadvizen-cms' ),
 		'unsupported_section_type' => __( 'This kind of section cannot be added here.', 'acadvizen-cms' ),
 	);
-	$code    = (string) ( $result['body']['error'] ?? '' );
-	$text    = $messages[ $code ] ?? ( '' !== $code ? $code : (string) $result['error'] );
+	$code  = (string) ( $result['body']['error'] ?? '' );
+	$local = (string) ( $result['error'] ?? '' );
+	// Codes raised on this side (not configured, ...) arrive without a response body.
+	if ( '' === $code && isset( $messages[ $local ] ) ) {
+		$code = $local;
+	}
+	if ( isset( $messages[ $code ] ) ) {
+		$text = $messages[ $code ];
+	} elseif ( '' !== $code ) {
+		$text = $code;
+	} elseif ( 0 === (int) ( $result['status'] ?? 0 ) && '' !== $local ) {
+		// No answer at all (network error, timeout): say what it means for the editor, keep the detail.
+		$text = __( 'The Main Website could not be reached, so nothing was changed there. Check the internet connection and click Save again in a minute.', 'acadvizen-cms' ) . ' (' . $local . ')';
+	} else {
+		$text = $local;
+	}
 	$details = $result['body']['details'] ?? array();
 	if ( is_array( $details ) && $details ) {
 		$text .= ' ' . implode( '; ', array_map( static fn( $d ) => is_string( $d ) ? $d : (string) wp_json_encode( $d ), array_slice( $details, 0, 8 ) ) );
@@ -838,7 +873,9 @@ function sync_enrollment_blog_copy( string $main_id, array $record, string $targ
 	$copy_id = find_enrollment_blog_copy( $main_id );
 	if ( ! targets_enrollment( $target ) ) {
 		if ( $copy_id ) {
+			blog_sync_writing( true );
 			wp_update_post( array( 'ID' => $copy_id, 'post_status' => 'draft' ) );
+			blog_sync_writing( false );
 		}
 		return '';
 	}
@@ -853,11 +890,15 @@ function sync_enrollment_blog_copy( string $main_id, array $record, string $targ
 	if ( $copy_id ) {
 		$post['ID'] = $copy_id;
 	}
+	// Written by this plugin, not typed by an editor: the push to Main must not run for it.
+	blog_sync_writing( true );
 	$result = $copy_id ? wp_update_post( wp_slash( $post ), true ) : wp_insert_post( wp_slash( $post ), true );
+	blog_sync_writing( false );
 	if ( is_wp_error( $result ) ) {
 		return $result->get_error_message();
 	}
 	update_post_meta( (int) $result, MAIN_BLOG_MIRROR_META, $main_id );
+	mark_copy_aligned( (int) $result, (string) ( $record['updated_at'] ?? '' ) );
 	return '';
 }
 
@@ -995,7 +1036,11 @@ function handle_main_save(): void {
 		}
 	}
 
-	$saved = main_content_request( array( 'op' => 'save', 'entity' => $entity, 'id' => '' !== $id ? $id : null, 'record' => $record ) );
+	$request = array( 'op' => 'save', 'entity' => $entity, 'id' => '' !== $id ? $id : null, 'record' => $record );
+	if ( '' !== $id && isset( $_POST['acv_expected_updated_at'] ) ) {
+		$request['expected_updated_at'] = sanitize_text_field( wp_unslash( $_POST['acv_expected_updated_at'] ) );
+	}
+	$saved = main_content_request( $request );
 	if ( ! $saved['ok'] ) {
 		main_flash( 'error', main_error_text( $saved ) );
 		set_transient( 'acv_cms_main_unsaved_' . get_current_user_id(), $record, 300 );
@@ -1009,6 +1054,8 @@ function handle_main_save(): void {
 	$id     = (string) $row['id'];
 	$status = (string) ( $row['status'] ?? '' );
 	$notes  = array();
+	// Set when one destination failed after Main saved, so the notice is a warning, never plain success.
+	$partial = false;
 
 	// Status / visibility, limited by this user's role.
 	if ( 'status' === $definition['workflow'] && isset( $_POST['acv_status'] ) ) {
@@ -1060,7 +1107,8 @@ function handle_main_save(): void {
 		$error             = sync_enrollment_blog_copy( $id, array_merge( $record, $row ), $target, $enrollment_status );
 		$notes[]           = '' === $error
 			? ( targets_enrollment( $target ) ? __( 'Enrollment Website: updated.', 'acadvizen-cms' ) : '' )
-			: __( 'Enrollment Website copy failed: ', 'acadvizen-cms' ) . $error;
+			: __( 'Enrollment Website copy failed: ', 'acadvizen-cms' ) . $error . ' ' . __( 'Fix the problem and click Save again; the Main Website already has this version.', 'acadvizen-cms' );
+		$partial           = '' !== $error;
 	}
 
 	// The whole saved record (not only the fields sent), so restoring a version brings everything back.
@@ -1070,7 +1118,7 @@ function handle_main_save(): void {
 	if ( isset( $revalidated['ok'] ) && ! $revalidated['ok'] ) {
 		$message .= ' ' . __( 'The page cache could not be refreshed; the change shows within 5 minutes.', 'acadvizen-cms' );
 	}
-	main_flash( 'success', trim( $message . ' ' . implode( ' ', array_filter( $notes ) ) ) );
+	main_flash( $partial ? 'warning' : 'success', trim( $message . ' ' . implode( ' ', array_filter( $notes ) ) ) );
 	wp_safe_redirect( $back( $id ) );
 	exit;
 }
@@ -1281,7 +1329,8 @@ function render_main_notice(): void {
 	$notice = get_transient( $key );
 	if ( is_array( $notice ) ) {
 		delete_transient( $key );
-		printf( '<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>', 'error' === $notice[0] ? 'error' : 'success', esc_html( (string) $notice[1] ) );
+		$type = in_array( $notice[0], array( 'error', 'warning' ), true ) ? $notice[0] : 'success';
+		printf( '<div class="notice notice-%1$s is-dismissible acv-cms-flash"><p>%2$s</p></div>', esc_attr( $type ), esc_html( (string) $notice[1] ) );
 	}
 }
 
@@ -1387,6 +1436,10 @@ function render_main_list( string $entity, array $definition ): void {
 	render_main_tabs( $entity );
 	if ( ! render_main_connection_notice() ) {
 		return;
+	}
+	if ( 'blogs' === $entity ) {
+		maybe_pull_on_blogs_screen(); // Blogs changed in Main's own admin reach their Enrollment copies.
+		render_blog_pull_line();
 	}
 
 	$args = array( 'op' => 'list', 'entity' => $entity, 'search' => $search, 'limit' => MAIN_PER_PAGE, 'offset' => ( $paged - 1 ) * MAIN_PER_PAGE );
@@ -1737,6 +1790,10 @@ function render_main_edit( string $entity, array $definition, string $id ): void
 		<input type="hidden" name="action" value="acv_cms_main_save" />
 		<input type="hidden" name="entity" value="<?php echo esc_attr( $entity ); ?>" />
 		<input type="hidden" name="id" value="<?php echo esc_attr( $id ); ?>" />
+		<?php if ( ! $creating && array_key_exists( 'updated_at', $row ) ) : ?>
+			<?php // The version opened here: a save is refused if the record changed elsewhere meanwhile. ?>
+			<input type="hidden" name="acv_expected_updated_at" value="<?php echo esc_attr( (string) ( $row['updated_at'] ?? '' ) ); ?>" />
+		<?php endif; ?>
 		<?php wp_nonce_field( 'acv_cms_main_save_' . $entity ); ?>
 		<div class="acv-main-fields">
 			<?php

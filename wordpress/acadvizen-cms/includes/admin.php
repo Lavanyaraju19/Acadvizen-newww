@@ -43,17 +43,23 @@ function register_admin_menu(): void {
 	}
 	// Blogs, Courses, Locations, FAQs, Testimonials and Tools are added here automatically by
 	// their post types (show_in_menu). Taxonomies need explicit links:
-	add_submenu_page( MENU_SLUG, __( 'Cities & Areas', 'acadvizen-cms' ), __( 'Cities & Areas', 'acadvizen-cms' ), 'manage_categories', 'edit-tags.php?taxonomy=acv_city&post_type=acv_location' );
-	add_submenu_page( MENU_SLUG, __( 'Blog Categories', 'acadvizen-cms' ), __( 'Blog Categories', 'acadvizen-cms' ), 'manage_categories', 'edit-tags.php?taxonomy=acv_blog_category&post_type=' . POST_TYPE );
+	// The native publishing model's screens (config.php, native_publishing_ui): only while it is on.
+	$native = native_publishing_ui();
+	if ( $native ) {
+		add_submenu_page( MENU_SLUG, __( 'Cities & Areas', 'acadvizen-cms' ), __( 'Cities & Areas', 'acadvizen-cms' ), 'manage_categories', 'edit-tags.php?taxonomy=acv_city&post_type=acv_location' );
+		add_submenu_page( MENU_SLUG, __( 'Blog Categories', 'acadvizen-cms' ), __( 'Blog Categories', 'acadvizen-cms' ), 'manage_categories', 'edit-tags.php?taxonomy=acv_blog_category&post_type=' . POST_TYPE );
+	}
 	add_submenu_page( MENU_SLUG, __( 'Media', 'acadvizen-cms' ), __( 'Media', 'acadvizen-cms' ), 'upload_files', 'upload.php' );
 	if ( defined( 'RANK_MATH_VERSION' ) ) {
 		add_submenu_page( MENU_SLUG, __( 'SEO', 'acadvizen-cms' ), __( 'SEO', 'acadvizen-cms' ), 'manage_options', 'admin.php?page=rank-math' );
 		add_submenu_page( MENU_SLUG, __( 'Redirects', 'acadvizen-cms' ), __( 'Redirects', 'acadvizen-cms' ), 'manage_options', 'admin.php?page=rank-math-redirections' );
 	}
-	add_submenu_page( MENU_SLUG, __( 'Import Main Website', 'acadvizen-cms' ), __( 'Import Main Website', 'acadvizen-cms' ), 'manage_options', MENU_SLUG . '-import', __NAMESPACE__ . '\render_import_page' );
-	add_submenu_page( MENU_SLUG, __( 'Website Design', 'acadvizen-cms' ), __( 'Website Design', 'acadvizen-cms' ), 'manage_options', MENU_SLUG . '-design', __NAMESPACE__ . '\render_design_page' );
-	add_submenu_page( MENU_SLUG, __( 'Publishing', 'acadvizen-cms' ), __( 'Publishing', 'acadvizen-cms' ), 'edit_pages', MENU_SLUG . '-publishing', __NAMESPACE__ . '\\render_publishing_page' );
-	add_submenu_page( MENU_SLUG, __( 'Versions & Rollback', 'acadvizen-cms' ), __( 'Versions & Rollback', 'acadvizen-cms' ), 'edit_pages', MENU_SLUG . '-versions', __NAMESPACE__ . '\\render_versions_page' );
+	if ( $native ) {
+		add_submenu_page( MENU_SLUG, __( 'Import Main Website', 'acadvizen-cms' ), __( 'Import Main Website', 'acadvizen-cms' ), 'manage_options', MENU_SLUG . '-import', __NAMESPACE__ . '\render_import_page' );
+		add_submenu_page( MENU_SLUG, __( 'Website Design', 'acadvizen-cms' ), __( 'Website Design', 'acadvizen-cms' ), 'manage_options', MENU_SLUG . '-design', __NAMESPACE__ . '\render_design_page' );
+		add_submenu_page( MENU_SLUG, __( 'Publishing', 'acadvizen-cms' ), __( 'Publishing', 'acadvizen-cms' ), 'edit_pages', MENU_SLUG . '-publishing', __NAMESPACE__ . '\\render_publishing_page' );
+		add_submenu_page( MENU_SLUG, __( 'Versions & Rollback', 'acadvizen-cms' ), __( 'Versions & Rollback', 'acadvizen-cms' ), 'edit_pages', MENU_SLUG . '-versions', __NAMESPACE__ . '\\render_versions_page' );
+	}
 	add_submenu_page( MENU_SLUG, __( 'Settings', 'acadvizen-cms' ), __( 'Settings', 'acadvizen-cms' ), 'manage_options', MENU_SLUG . '-settings', __NAMESPACE__ . '\\render_settings_page' );
 }
 

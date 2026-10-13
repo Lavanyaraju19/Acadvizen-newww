@@ -304,6 +304,9 @@ function import_kit_item( array $item, array &$state ): string {
 	}
 	update_post_meta( $kit_id, '_elementor_page_settings', $settings );
 	delete_post_meta( $kit_id, '_elementor_css' );
+	if ( approval_enabled() ) {
+		approval_log( 'global_styles', (int) $kit_id, 'imported', "{$added} Main Website colours/fonts added" ); // Global styles change both websites.
+	}
 	return "kit: {$added} Main Website colours/fonts added";
 }
 
@@ -323,28 +326,67 @@ function save_elementor_document( int $post_id, array $item, array $map ): void 
 	delete_post_meta( $post_id, '_elementor_element_cache' );
 }
 
+/**
+ * Where an import writes while publishing needs approval (approval.php): into the working copy of
+ * a live document (the live one changes only once a reviewer approves), otherwise into the
+ * document itself as a draft. Returns array( gated, write-to id or 0, live id or 0 ).
+ */
+function import_write_target( int $existing, string $post_type, string $batch = '' ): array {
+	if ( ! approval_enabled() || ( ! is_site_post_type( $post_type ) && ! is_template_post_type( $post_type ) ) ) {
+		return array( false, $existing, 0 );
+	}
+	$post = $existing ? get_post( $existing ) : null;
+	if ( $post instanceof \WP_Post && in_approval_scope( $post ) && is_live_document( $post ) ) {
+		$had  = working_copy_for( $post, false );
+		$copy = working_copy_for( $post );
+		if ( ! $had && $copy && '' !== $batch ) {
+			update_post_meta( $copy, META_IMPORT_BATCH, $batch ); // Created by this import: Undo import removes it.
+		}
+		return array( true, $copy, $existing );
+	}
+	return array( true, $existing, 0 );
+}
+
+/** After a gated import: a record meant to be published is submitted for approval. */
+function import_submit( int $id, bool $publish ): string {
+	if ( ! $publish ) {
+		return 'draft, not submitted';
+	}
+	$outcome = submit_candidate( get_post( $id ) );
+	return 'pending' === $outcome ? 'waiting for approval' : 'not submitted: ' . $outcome;
+}
+
 function import_template_item( array $item, array &$state ): string {
 	$key       = sanitize_key( (string) ( $item['key'] ?? '' ) );
 	$post_type = in_array( $item['post_type'] ?? '', array( 'elementor_library', 'elementor-hf' ), true ) ? $item['post_type'] : 'elementor_library';
 	$existing  = post_by_source( 'template:' . $key, $post_type );
+	list( $gated, $write_id, $live_id ) = import_write_target( $existing, $post_type, (string) ( $state['batch'] ?? '' ) );
 	$postarr   = array(
 		'post_type'   => $post_type,
 		'post_title'  => sanitize_text_field( (string) ( $item['title'] ?? $key ) ),
-		'post_status' => 'publish',
+		'post_status' => $gated ? 'draft' : 'publish',
 	);
-	if ( $existing ) {
-		$postarr['ID'] = $existing;
+	if ( $write_id ) {
+		$postarr['ID'] = $write_id;
 	}
-	$id = $existing ? wp_update_post( $postarr, true ) : wp_insert_post( $postarr, true );
+	if ( $gated ) {
+		approval_bypass( true ); // The importer itself decides the status; approval comes after.
+	}
+	$id = $write_id ? wp_update_post( $postarr, true ) : wp_insert_post( $postarr, true );
+	if ( $gated ) {
+		approval_bypass( false );
+	}
 	if ( is_wp_error( $id ) ) {
 		return "template {$key}: " . $id->get_error_message();
 	}
 	$id = (int) $id;
-	update_post_meta( $id, META_SOURCE, 'template:' . $key );
+	if ( ! $live_id ) {
+		update_post_meta( $id, META_SOURCE, 'template:' . $key );
+	}
 	if ( ! $existing ) {
 		update_post_meta( $id, META_IMPORT_BATCH, $state['batch'] );
 	}
-	$state['map']['templates'][ $key ] = $id;
+	$state['map']['templates'][ $key ] = $live_id ?: $id;
 	if ( 'elementor_library' === $post_type ) {
 		$type = sanitize_key( (string) ( $item['elementor_template_type'] ?? 'section' ) );
 		wp_set_object_terms( $id, $type, 'elementor_library_type' );
@@ -365,7 +407,8 @@ function import_template_item( array $item, array &$state ): string {
 		// Display conditions may name records imported later in this bundle: applied when it finishes.
 		$state['pending_conditions'][ $id ] = array_values( array_map( 'strval', $item['conditions'] ) );
 	}
-	return "template {$key}: " . ( $existing ? 'updated' : 'created' ) . " (#{$id})";
+	return "template {$key}: " . ( $existing ? 'updated' : 'created' ) . " (#{$id}" . ( $live_id ? ", working copy of live #{$live_id}" : '' ) . ')'
+		. ( $gated ? '; ' . import_submit( $id, true ) : '' );
 }
 
 /**
@@ -447,11 +490,13 @@ function import_record_item( array $item, array &$state ): string {
 	foreach ( $copies as $copy ) {
 		wp_trash_post( $copy );
 	}
+	$wanted   = in_array( $item['status'] ?? '', array( 'publish', 'draft' ), true ) ? $item['status'] : 'publish';
+	list( $gated, $write_id, $live_id ) = import_write_target( $existing, $post_type, (string) ( $state['batch'] ?? '' ) );
 	$postarr  = array(
 		'post_type'    => $post_type,
 		'post_title'   => wp_strip_all_tags( (string) ( $item['title'] ?? $key ) ),
 		'post_name'    => sanitize_title( (string) ( $item['slug'] ?? $key ) ),
-		'post_status'  => in_array( $item['status'] ?? '', array( 'publish', 'draft' ), true ) ? $item['status'] : 'publish',
+		'post_status'  => $gated ? 'draft' : $wanted,
 		'post_content' => (string) resolve_placeholders( (string) ( $item['content'] ?? '' ), $state['map'] ),
 		'post_excerpt' => sanitize_textarea_field( (string) ( $item['excerpt'] ?? '' ) ),
 		'menu_order'   => (int) ( $item['order'] ?? 0 ),
@@ -460,16 +505,27 @@ function import_record_item( array $item, array &$state ): string {
 		$postarr['post_date']     = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', (int) strtotime( (string) $item['date'] ) ) );
 		$postarr['post_date_gmt'] = gmdate( 'Y-m-d H:i:s', (int) strtotime( (string) $item['date'] ) );
 	}
-	if ( $existing ) {
-		$postarr['ID'] = $existing;
+	if ( $write_id ) {
+		$postarr['ID'] = $write_id;
+	}
+	if ( $live_id ) {
+		unset( $postarr['post_name'], $postarr['post_date'], $postarr['post_date_gmt'] ); // A working copy keeps no address of its own.
+	}
+	if ( $gated ) {
+		approval_bypass( true ); // The importer itself decides the status; approval comes after.
 	}
 	// Set the address and target before the first save, so the very first render uses them.
-	$id = $existing ? wp_update_post( wp_slash( $postarr ), true ) : wp_insert_post( wp_slash( $postarr ), true );
+	$id = $write_id ? wp_update_post( wp_slash( $postarr ), true ) : wp_insert_post( wp_slash( $postarr ), true );
+	if ( $gated ) {
+		approval_bypass( false );
+	}
 	if ( is_wp_error( $id ) ) {
 		return "record {$key}: " . $id->get_error_message();
 	}
 	$id = (int) $id;
-	update_post_meta( $id, META_SOURCE, 'record:' . $key );
+	if ( ! $live_id ) {
+		update_post_meta( $id, META_SOURCE, 'record:' . $key );
+	}
 	if ( ! $existing ) {
 		update_post_meta( $id, META_IMPORT_BATCH, $state['batch'] );
 	}
@@ -511,10 +567,16 @@ function import_record_item( array $item, array &$state ): string {
 	if ( isset( $item['meta']['_acv_reading_minutes'] ) ) {
 		update_post_meta( $id, '_acv_reading_minutes_for', md5( (string) get_post_field( 'post_content', $id, 'raw' ) ) );
 	}
-	// One more save so the Render Bridge publishes the final state (with design, address, SEO).
-	wp_update_post( array( 'ID' => $id ) );
-	return "record {$post_type} {$key}: " . ( $existing ? 'updated' : 'created' ) . " (#{$id}" . ( isset( $state['map']['paths'][ $key ] ) ? ' -> ' . $state['map']['paths'][ $key ] : '' ) . ')'
-		. ( $copies ? '; duplicate moved to the Trash: #' . implode( ', #', $copies ) : '' );
+	// One more save so the Render Bridge publishes the final state (with design, address, SEO). With
+	// approval on, nothing goes live here: a record meant to be published is submitted for approval.
+	$approval = '';
+	if ( $gated ) {
+		$approval = '; ' . import_submit( $id, 'publish' === $wanted );
+	} else {
+		wp_update_post( array( 'ID' => $id ) );
+	}
+	return "record {$post_type} {$key}: " . ( $existing ? 'updated' : 'created' ) . " (#{$id}" . ( $live_id ? ", working copy of live #{$live_id}" : '' ) . ( isset( $state['map']['paths'][ $key ] ) ? ' -> ' . $state['map']['paths'][ $key ] : '' ) . ')'
+		. ( $copies ? '; duplicate moved to the Trash: #' . implode( ', #', $copies ) : '' ) . $approval;
 }
 
 /**
@@ -646,7 +708,7 @@ function run_import_batch(): array {
 					$conditions = apply_pending_conditions( $state );
 					flush_target_caches();
 					queue_site_rerender( 'global' );
-					$line = 'finished: every imported Main Website page is being published' . ( $conditions ? "; {$conditions}" : '' );
+					$line = ( approval_enabled() ? 'finished: imported pages are waiting in Approvals; nothing is published until a reviewer approves it' : 'finished: every imported Main Website page is being published' ) . ( $conditions ? "; {$conditions}" : '' );
 			}
 		} catch ( \Throwable $e ) {
 			$line = "{$step} #{$index}: error " . $e->getMessage();
@@ -679,7 +741,8 @@ function undo_import( string $batch ): int {
 	$deleted = 0;
 	$ids     = get_posts(
 		array(
-			'post_type'        => 'any',
+			// Every type: 'any' leaves out types hidden from search, such as Elementor header/footer templates.
+			'post_type'        => array_values( array_diff( get_post_types(), array( 'attachment', 'revision', 'nav_menu_item' ) ) ),
 			'post_status'      => 'any',
 			'fields'           => 'ids',
 			'posts_per_page'   => -1,
@@ -690,6 +753,13 @@ function undo_import( string $batch ): int {
 	);
 	$attachments = get_posts( array( 'post_type' => 'attachment', 'post_status' => 'inherit', 'fields' => 'ids', 'posts_per_page' => -1, 'meta_key' => META_IMPORT_BATCH, 'meta_value' => $batch ) ); // phpcs:ignore WordPress.DB.SlowDBQuery
 	foreach ( array_unique( array_merge( $ids, $attachments ) ) as $id ) {
+		if ( 'attachment' !== get_post_type( $id ) ) {
+			// Its working copy and archived revisions (approval.php) go with it.
+			$copy = (int) get_post_meta( (int) $id, WORKING_COPY_META, true );
+			foreach ( array_merge( archives_of( (int) $id ), $copy ? array( $copy ) : array() ) as $revision ) {
+				$deleted += wp_delete_post( (int) $revision, true ) ? 1 : 0;
+			}
+		}
 		$deleted += ( 'attachment' === get_post_type( $id ) ? wp_delete_attachment( (int) $id, true ) : wp_delete_post( (int) $id, true ) ) ? 1 : 0;
 	}
 	foreach ( get_terms( array( 'hide_empty' => false, 'meta_key' => META_IMPORT_BATCH, 'meta_value' => $batch, 'taxonomy' => array( 'nav_menu', 'acv_city', 'acv_blog_category' ) ) ) as $term ) { // phpcs:ignore WordPress.DB.SlowDBQuery

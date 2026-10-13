@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 const ELEMENTOR_TARGET_SETTING = 'acv_publish_target';
 
 function register_elementor_controls( $document ): void {
-	if ( ! class_exists( '\\Elementor\\Controls_Manager' ) || ! is_object( $document ) || ! method_exists( $document, 'get_main_id' ) ) {
+	if ( ! native_publishing_ui() || ! class_exists( '\\Elementor\\Controls_Manager' ) || ! is_object( $document ) || ! method_exists( $document, 'get_main_id' ) ) {
 		return;
 	}
 	$post = get_post( (int) $document->get_main_id() );

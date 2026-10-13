@@ -16,6 +16,9 @@ const SITE_NONCE_ACTION = 'acv_cms_site_target';
 const SITE_NONCE_FIELD  = 'acv_cms_site_nonce';
 
 function register_site_meta_boxes( string $post_type ): void {
+	if ( ! native_publishing_ui() ) {
+		return; // The Main Website does not read WordPress pages: no "Publish To" choice that does nothing.
+	}
 	if ( is_site_post_type( $post_type ) || is_template_post_type( $post_type ) ) {
 		add_meta_box( 'acv-cms-website', __( 'Publish To', 'acadvizen-cms' ), __NAMESPACE__ . '\\render_site_publish_box', $post_type, 'side', 'high' );
 	}
@@ -183,14 +186,12 @@ function save_site_publish_box( int $post_id, \WP_Post $post ): void {
 	}
 	if ( 'page' === $post->post_type ) {
 		$make_home = ! empty( $_POST['acv_cms_main_homepage'] );
-		if ( $make_home ) {
-			// Only one page can be the Main homepage; the previous one goes back to its own address.
-			foreach ( get_posts( array( 'post_type' => 'page', 'post_status' => 'any', 'fields' => 'ids', 'posts_per_page' => -1, 'meta_key' => META_MAIN_HOMEPAGE, 'meta_value' => '1', 'exclude' => array( $post_id ) ) ) as $other ) { // phpcs:ignore WordPress.DB.SlowDBQuery
-				delete_post_meta( (int) $other, META_MAIN_HOMEPAGE );
-				queue_main_render( (int) $other, 'publish' );
-			}
-		}
 		update_post_meta( $post_id, META_MAIN_HOMEPAGE, $make_home ? '1' : '' );
+		// Only one page can be the Main homepage; the previous one goes back to its own address. With
+		// approval on, that happens when this page goes live (claim_main_homepage() on publishing).
+		if ( $make_home && ! ( approval_enabled() && awaits_approval( $post ) ) ) {
+			claim_main_homepage( $post_id );
+		}
 	}
 	flush_target_caches();
 }
@@ -358,6 +359,9 @@ function site_row_actions( array $actions, \WP_Post $post ): array {
 }
 
 function site_list_columns( array $columns ): array {
+	if ( ! native_publishing_ui() ) {
+		return $columns;
+	}
 	$date = $columns['date'] ?? null;
 	unset( $columns['date'] );
 	$columns['acv_site_target'] = __( 'Publish To', 'acadvizen-cms' );

@@ -170,6 +170,18 @@ namespace {
 		class WP_REST_Request { private $headers; public function __construct( array $headers = array() ) { $this->headers = $headers; } public function get_header( $key ) { return $this->headers[ $key ] ?? null; } public function get_param( $key ) { return null; } }
 		require PLUGIN . 'rest.php';
 		require PLUGIN . 'main-content.php';
+		if ( ! function_exists( 'strip_shortcodes' ) ) {
+			function strip_shortcodes( $s ) { return preg_replace( '/\[\/?[a-z0-9_\-]+[^\]]*\]/i', '', (string) $s ); }
+		}
+		require PLUGIN . 'blog-sync.php';
+		if ( ! function_exists( 'apply_filters' ) ) {
+			function apply_filters( $hook, $value ) { return $value; }
+		}
+		if ( ! defined( 'AcadvizenCMSMETA_SLUG_STATUS' ) ) {
+			require_once PLUGIN . 'sync.php';
+		}
+		require PLUGIN . 'registry.php';
+		require PLUGIN . 'approval.php';
 	}
 }
 
@@ -404,6 +416,7 @@ namespace Acadvizen\CMS {
 	register_optional_features();
 	check( 'optional features: none registered by default', array(), $GLOBALS['acv_hooks'] );
 	check( 'optional features: unknown name is off', false, feature_enabled( 'WEBHOOK_SECRET' ) );
+	check( 'native publishing (Publish To boxes, native post types) is hidden unless wp-config.php turns it on', array( false, true ), array( native_publishing_ui(), in_array( 'RENDER_BRIDGE', OPTIONAL_FEATURES, true ) ) );
 	check( 'sitemap (default): builder internals stay in Rank Math', false, exclude_main_only_types_from_rank_math( false, 'elementor-hf' ) );
 	check( 'sitemap (default): Main-only tools still left out', true, exclude_main_only_types_from_rank_math( false, 'acv_tool' ) );
 	check( 'sitemap (default): core sitemap keeps internals, drops Main-only types', array( 'page', 'elementor-hf' ), array_keys( exclude_main_only_types_from_core_sitemap( array( 'page' => 1, 'elementor-hf' => 1, 'acv_blog' => 1 ) ) ) );
@@ -669,6 +682,151 @@ namespace Acadvizen\CMS {
 	check( 'enrollment only: a save without a status keeps the copy as it is (the regression)', 'published', enrollment_status_for_save( TARGET_ENROLLMENT, '', true, $editor, 'draft', 'published' ) );
 	check( 'enrollment only: choosing Draft explicitly takes it off Enrollment', 'draft', enrollment_status_for_save( TARGET_ENROLLMENT, 'draft', true, $editor, 'draft', 'published' ) );
 	check( 'enrollment only: an author cannot publish; the copy stays as it is', array( 'draft', 'published' ), array( enrollment_status_for_save( TARGET_ENROLLMENT, 'published', false, $author, 'draft', 'draft' ), enrollment_status_for_save( TARGET_ENROLLMENT, 'archived', false, $author, 'draft', 'published' ) ) );
+
+	// Error messages shown to the editor (main_error_text).
+	check( 'error text: a code from Main is translated', 'This address is already used by another record.', main_error_text( array( 'ok' => false, 'status' => 409, 'body' => array( 'error' => 'slug_taken' ), 'error' => '' ) ) );
+	check( 'error text: a local code (no response body) is translated too', 'The connection to the Main Website is not set up (shared secret or address missing).', main_error_text( array( 'ok' => false, 'status' => 0, 'body' => array(), 'error' => 'not_configured' ) ) );
+	$unreachable = main_error_text( array( 'ok' => false, 'status' => 0, 'body' => array(), 'error' => 'http_request_failed: cURL error 7: Failed to connect' ) );
+	check( 'error text: Main unreachable says nothing changed and to try again, keeping the detail', true, 0 === strpos( $unreachable, 'The Main Website could not be reached, so nothing was changed there.' ) && false !== strpos( $unreachable, '(http_request_failed: cURL error 7' ) );
+	check( 'error text: an unknown code from Main is shown as it is', 'some_new_code', main_error_text( array( 'ok' => false, 'status' => 400, 'body' => array( 'error' => 'some_new_code' ), 'error' => '' ) ) );
+	check( 'error text: an HTTP failure without a code keeps the detail', 'HTTP 502', main_error_text( array( 'ok' => false, 'status' => 502, 'body' => array(), 'error' => 'HTTP 502' ) ) );
+	check( 'error text: nothing at all', 'The Main Website did not answer.', main_error_text( array( 'ok' => false, 'status' => 0, 'body' => array(), 'error' => '' ) ) );
+	check( 'error text: edit conflict says nothing was overwritten and what to do', true, 0 === strpos( main_error_text( array( 'ok' => false, 'status' => 409, 'body' => array( 'error' => 'edit_conflict' ), 'error' => '' ) ), 'Not saved: someone changed this on the Main Website' ) );
+
+	// One blog on both websites (blog-sync.php).
+	check( 'sync: same instant across offsets and fractions', array( true, true, false, true, false ), array(
+		same_instant( '2026-10-13T05:36:13.229+00:00', '2026-10-13T05:36:13.229Z' ),
+		same_instant( '2026-10-13T11:06:13.229+05:30', '2026-10-13 05:36:13.229+00' ),
+		same_instant( '2026-10-13T05:36:13.229Z', '2026-10-13T05:36:13.230Z' ),
+		same_instant( '', '' ),
+		same_instant( '', '2026-10-13T05:36:13Z' ),
+	) );
+	check( 'sync: fingerprint ignores whitespace differences, not content', array( true, false ), array(
+		copy_fingerprint( 'T', 'E', "<p>a  b</p>\n" ) === copy_fingerprint( 'T', 'E', '<p>a b</p>' ),
+		copy_fingerprint( 'T', 'E', '<p>a b</p>' ) === copy_fingerprint( 'T', 'E', '<p>a c</p>' ),
+	) );
+	$aligned = array( 'version' => '2026-10-13T05:00:00Z', 'hash' => 'h1', 'current' => 'h1', 'status' => 'publish' );
+	check( 'sync: Main unchanged -> nothing to do', 'none', blog_pull_action( array( 'updated_at' => '2026-10-13T05:00:00.000+00:00' ), $aligned ) );
+	check( 'sync: Main changed, copy untouched -> update the copy', 'update', blog_pull_action( array( 'updated_at' => '2026-10-13T06:00:00Z' ), $aligned ) );
+	check( 'sync: Main changed and the copy changed here too -> conflict (nothing overwritten)', 'conflict', blog_pull_action( array( 'updated_at' => '2026-10-13T06:00:00Z' ), array_merge( $aligned, array( 'current' => 'h2' ) ) ) );
+	check( 'sync: a copy never aligned (no fingerprint) is not overwritten', 'conflict', blog_pull_action( array( 'updated_at' => '2026-10-13T06:00:00Z' ), array_merge( $aligned, array( 'hash' => '' ) ) ) );
+	check( 'sync: removed or trashed on Main -> live copy set to draft, never deleted', array( 'unpublish_copy', 'unpublish_copy', 'none' ), array(
+		blog_pull_action( array(), $aligned ),
+		blog_pull_action( array( 'updated_at' => '2026-10-13T06:00:00Z', 'deleted_at' => '2026-10-13T06:00:00Z' ), $aligned ),
+		blog_pull_action( array(), array_merge( $aligned, array( 'status' => 'draft' ) ) ),
+	) );
+	$converted = post_html_to_main_blocks( '<figure class="wp-block-image"><img src="https://example.com/cover.jpg" alt="" /></figure><!-- wp:heading --><h2>Intro</h2><!-- /wp:heading --><p>Bold <strong>text</strong> and a <a href="https://example.com">link</a>.</p><ul><li>One</li><li><em>Two</em></li></ul><figure><img src="https://example.com/a.jpg" alt="Alt"><figcaption>Cap</figcaption></figure><h1>Top</h1><h6>Small</h6>', 'https://example.com/cover.jpg' );
+	check( 'sync: editor HTML -> Main blocks keeps inline formatting, drops the leading cover', array(
+		array( 'block_type' => 'heading', 'content_json' => array( 'text' => 'Intro', 'level' => 2 ) ),
+		array( 'block_type' => 'paragraph', 'content_json' => array( 'text' => 'Bold <strong>text</strong> and a <a href="https://example.com">link</a>.' ) ),
+		array( 'block_type' => 'list', 'content_json' => array( 'items' => array( 'One', '<em>Two</em>' ) ) ),
+		array( 'block_type' => 'image', 'content_json' => array( 'src' => 'https://example.com/a.jpg', 'alt' => 'Alt', 'caption' => 'Cap' ) ),
+		array( 'block_type' => 'heading', 'content_json' => array( 'text' => 'Top', 'level' => 2 ) ),
+		array( 'block_type' => 'heading', 'content_json' => array( 'text' => 'Small', 'level' => 4 ) ),
+	), $converted['blocks'] );
+	check( 'sync: nothing unsupported in that article', array(), $converted['skipped'] );
+	$odd = post_html_to_main_blocks( '<p>Text</p>[gallery ids="1,2"]<table><tr><td>x</td></tr></table><iframe src="https://www.youtube.com/embed/x"></iframe><blockquote>Said</blockquote><div class="wp-block-group"><p>Inside</p></div>' );
+	check( 'sync: unsupported content is reported, groups are opened, quotes become paragraphs', array(
+		array( 'Text', '<em>Said</em>', 'Inside' ),
+		array( 'shortcode [gallery]', 'table', 'iframe', 'quote shown as a paragraph' ),
+	), array( array_map( static fn( $b ) => $b['content_json']['text'], $odd['blocks'] ), $odd['skipped'] ) );
+	check( 'sync: a cover image that is not first stays in the article', 2, count( post_html_to_main_blocks( '<p>x</p><figure><img src="https://example.com/cover.jpg"></figure>', 'https://example.com/cover.jpg' )['blocks'] ) );
+
+	// Approval: exact revision fingerprints (approval.php).
+	$parts = array( 'title' => 'T', 'meta' => array( '_elementor_data' => '[1]', '_thumbnail_id' => '5' ), 'media' => array( 5 => 'a.jpg:10:1' ) );
+	check( 'approval: the fingerprint ignores key order', revision_fingerprint( $parts ), revision_fingerprint( array( 'media' => array( 5 => 'a.jpg:10:1' ), 'meta' => array( '_thumbnail_id' => '5', '_elementor_data' => '[1]' ), 'title' => 'T' ) ) );
+	check( 'approval: any change (design, media file, title) changes the fingerprint', array( false, false, false ), array(
+		revision_fingerprint( $parts ) === revision_fingerprint( array_replace_recursive( $parts, array( 'meta' => array( '_elementor_data' => '[2]' ) ) ) ),
+		revision_fingerprint( $parts ) === revision_fingerprint( array_replace_recursive( $parts, array( 'media' => array( 5 => 'a.jpg:11:1' ) ) ) ),
+		revision_fingerprint( $parts ) === revision_fingerprint( array_replace( $parts, array( 'title' => 'T2' ) ) ),
+	) );
+	check( 'approval: referenced media are found anywhere in the design, plus the featured image', array( 3, 7, 9, 12 ), referenced_attachment_ids( array( array( 'settings' => array( 'image' => array( 'id' => 7, 'url' => 'x.jpg' ), 'background_image' => array( 'id' => '3', 'url' => 'b.jpg' ) ), 'elements' => array( array( 'settings' => array( 'gallery' => array( array( 'id' => 9, 'url' => 'g.jpg' ), array( 'id' => 7, 'url' => 'x.jpg' ) ), 'link' => array( 'id' => 'abc', 'url' => '/' ) ) ) ) ) ), 12 ) );
+
+	// Approval state machine.
+	$ctx  = static fn( array $extra = array() ) => array_merge( array( 'hash' => 'h1', 'user' => 2, 'time' => 100, 'can_review' => false, 'compat' => 'ok' ), $extra );
+	$sub  = approval_transition( array(), 'submit', $ctx() );
+	check( 'approval: submit makes it pending for exactly that revision', array( 'pending', 'h1', 2 ), array( $sub['state'], $sub['hash'], $sub['submitted_by'] ) );
+	check( 'approval: only a reviewer approves', 'not_reviewer', approval_transition( $sub, 'approve', $ctx() ) );
+	check( 'approval: a revision changed after submitting cannot be approved', 'changed_since_submitted', approval_transition( $sub, 'approve', $ctx( array( 'can_review' => true, 'hash' => 'h2' ) ) ) );
+	$app  = approval_transition( $sub, 'approve', $ctx( array( 'can_review' => true, 'user' => 3 ) ) );
+	check( 'approval: a reviewer approves exactly the submitted revision', array( 'approved', 'h1', 3, false ), array( $app['state'], $app['hash'], $app['reviewed_by'], $app['self_approved'] ) );
+	check( 'approval: self-approval is recorded as such', true, approval_transition( $sub, 'approve', $ctx( array( 'can_review' => true, 'user' => 2 ) ) )['self_approved'] );
+	$inv  = approval_transition( $app, 'edited', $ctx( array( 'hash' => 'h2' ) ) );
+	check( 'approval: any edit after approval invalidates it', array( 'draft', true ), array( $inv['state'], $inv['invalidated'] ) );
+	check( 'approval: saving without a change keeps the approval', 'approved', approval_transition( $app, 'edited', $ctx() )['state'] );
+	$sch = approval_transition( $app, 'schedule', $ctx( array( 'at' => 5000 ) ) );
+	check( 'approval: only an approved, unchanged revision can be scheduled', array( 'scheduled', 5000, 'not_approved', 'changed_since_approved' ), array( $sch['state'], $sch['scheduled_for'], approval_transition( $sub, 'schedule', $ctx( array( 'at' => 5000 ) ) ), approval_transition( $app, 'schedule', $ctx( array( 'hash' => 'h9', 'at' => 5000 ) ) ) ) );
+	check( 'approval: a scheduled revision is not published early, only by its due job', array( 'already_scheduled', 'publishing' ), array( approval_transition( $sch, 'publish', $ctx() ), approval_transition( $sch, 'publish', $ctx( array( 'due' => true ) ) )['state'] ) );
+	check( 'approval: an edit cancels a schedule; an unchanged save keeps it; cancelling returns to approved', array( 'draft', 'scheduled', 'approved', 'not_scheduled' ), array( approval_transition( $sch, 'edited', $ctx( array( 'hash' => 'h2' ) ) )['state'], approval_transition( $sch, 'edited', $ctx() )['state'], approval_transition( $sch, 'unschedule', $ctx() )['state'], approval_transition( $app, 'unschedule', $ctx() ) ) );
+	check( 'approval: a due job still refuses a revision that changed', 'changed_since_approved', approval_transition( $sch, 'publish', $ctx( array( 'due' => true, 'hash' => 'h2' ) ) ) );
+	check( 'approval: submitting the approved revision again (e.g. a re-import) keeps the approval; a changed one needs a new one', array( 'approved', 'pending' ), array( approval_transition( $app, 'submit', $ctx() )['state'], approval_transition( $app, 'submit', $ctx( array( 'hash' => 'h2' ) ) )['state'] ) );
+	check( 'approval: an invalidated revision cannot be published', 'not_approved', approval_transition( $inv, 'publish', $ctx( array( 'hash' => 'h2' ) ) ) );
+	check( 'approval: publishing checks the revision once more', 'changed_since_approved', approval_transition( $app, 'publish', $ctx( array( 'hash' => 'h3' ) ) ) );
+	check( 'approval: the approved revision publishes', 'publishing', approval_transition( $app, 'publish', $ctx() )['state'] );
+	check( 'approval: a design that cannot be reproduced is refused at every step', array( 'blocked_widgets', 'blocked_widgets', 'blocked_widgets' ), array(
+		approval_transition( array(), 'submit', $ctx( array( 'compat' => 'blocked' ) ) ),
+		approval_transition( $sub, 'approve', $ctx( array( 'can_review' => true, 'compat' => 'blocked' ) ) ),
+		approval_transition( $app, 'publish', $ctx( array( 'compat' => 'blocked' ) ) ),
+	) );
+	check( 'approval: typed code needs a reviewer who confirms it', array( 'code_needs_review', 'approved' ), array(
+		approval_transition( $sub, 'approve', $ctx( array( 'can_review' => true, 'compat' => 'code' ) ) ),
+		approval_transition( $sub, 'approve', $ctx( array( 'can_review' => true, 'compat' => 'code', 'code_ok' => true ) ) )['state'],
+	) );
+	check( 'approval: rejection goes back to the editor with a note', array( 'rejected', 'Fix the hero' ), array( approval_transition( $sub, 'reject', $ctx( array( 'can_review' => true, 'note' => 'Fix the hero' ) ) )['state'], approval_transition( $sub, 'reject', $ctx( array( 'can_review' => true, 'note' => 'Fix the hero' ) ) )['note'] ) );
+	check( 'approval: history keeps every step', array( 'submitted', 'approved', 'approval_invalidated_by_edit' ), array_column( $inv['history'], 'what' ) );
+
+	// Publication outcome per website.
+	check( 'publication: success only when every chosen website shows the revision', array( 'verified', 'publishing', 'partial_failure', 'failed', 'partial_failure' ), array(
+		publication_outcome( array( 'main' => array( 'state' => 'verified' ), 'enrollment' => array( 'state' => 'verified' ) ), false ),
+		publication_outcome( array( 'main' => array( 'state' => 'pending' ), 'enrollment' => array( 'state' => 'verified' ) ), false ),
+		publication_outcome( array( 'main' => array( 'state' => 'failed' ), 'enrollment' => array( 'state' => 'verified' ) ), false ),
+		publication_outcome( array( 'main' => array( 'state' => 'failed' ) ), true ),
+		publication_outcome( array( 'main' => array( 'state' => 'pending' ), 'enrollment' => array( 'state' => 'verified' ) ), true ),
+	) );
+	check( 'publication: the public mark is a short, stable form of the revision', 'acv-revision:0123456789abcdef', revision_mark( '0123456789abcdef0123' ) );
+
+	// Widget compatibility (registry.php).
+	$design    = array( array( 'elType' => 'container', 'settings' => array( '__dynamic__' => array( 'title' => 'x' ) ), 'elements' => array(
+		array( 'elType' => 'widget', 'widgetType' => 'heading', 'settings' => array(), 'elements' => array() ),
+		array( 'elType' => 'container', 'settings' => array( 'custom_css' => 'selector{color:red}' ), 'elements' => array( array( 'elType' => 'widget', 'widgetType' => 'heading', 'settings' => array( '_animation' => 'fadeIn' ) ), array( 'elType' => 'widget', 'widgetType' => 'html', 'settings' => array() ) ) ),
+	) ) );
+	$usage     = document_widget_usage( $design );
+	check( 'registry: widget usage is counted through nested containers', array( 'heading' => 2, 'html' => 1 ), $usage['widgets'] );
+	check( 'registry: page features worth a look are listed', array( 'attributes' => false, 'custom_css' => true, 'dynamic' => true, 'motion' => true ), array( 'attributes' => isset( $usage['features']['attributes'] ), 'custom_css' => isset( $usage['features']['custom_css'] ), 'dynamic' => isset( $usage['features']['dynamic'] ), 'motion' => isset( $usage['features']['motion'] ) ) );
+	$installed = array( 'heading' => array( 'provider' => 'elementor', 'version' => '4.3.4' ), 'html' => array( 'provider' => 'elementor', 'version' => '4.3.4' ), 'woocommerce-products' => array( 'provider' => 'elementor-pro', 'version' => '4.3.1' ), 'login' => array( 'provider' => 'elementor-pro', 'version' => '4.3.1' ), 'form' => array( 'provider' => 'elementor-pro', 'version' => '4.3.1' ), 'mf-text' => array( 'provider' => 'metform', 'version' => '4.3.2' ), 'odd-widget' => array( 'provider' => 'some-addon', 'version' => '1.0' ) );
+	check( 'registry: per widget and website', array(
+		'missing'        => 'blocked',
+		'heading main'   => 'ok',
+		'html'           => 'code',
+		'shop on main'   => 'blocked',
+		'shop on enroll' => 'ok',
+		'login on main'  => 'blocked',
+		'form on main'   => 'ok',
+		'metform main'   => 'ok',
+		'addon on main'  => 'review',
+		'addon enroll'   => 'ok',
+	), array(
+		'missing'        => classify_widget( 'pro-only', null, 'enrollment' )['status'],
+		'heading main'   => classify_widget( 'heading', $installed['heading'], 'main' )['status'],
+		'html'           => classify_widget( 'html', $installed['html'], 'enrollment' )['status'],
+		'shop on main'   => classify_widget( 'woocommerce-products', $installed['woocommerce-products'], 'main' )['status'],
+		'shop on enroll' => classify_widget( 'woocommerce-products', $installed['woocommerce-products'], 'enrollment' )['status'],
+		'login on main'  => classify_widget( 'login', $installed['login'], 'main' )['status'],
+		'form on main'   => classify_widget( 'form', $installed['form'], 'main' )['status'],
+		'metform main'   => classify_widget( 'mf-text', $installed['mf-text'], 'main' )['status'],
+		'addon on main'  => classify_widget( 'odd-widget', $installed['odd-widget'], 'main' )['status'],
+		'addon enroll'   => classify_widget( 'odd-widget', $installed['odd-widget'], 'enrollment' )['status'],
+	) );
+	check( 'registry: a missing widget explains the fix', true, false !== strpos( classify_widget( 'pro-only', null, 'main' )['fix'], 'activate the plugin' ) );
+	check( 'registry: report takes the worst class over widgets, websites and features', array( 'code', 'blocked' ), array(
+		compatibility_report( $design, array( 'enrollment', 'main' ), $installed )['status'],
+		compatibility_report( array( array( 'elType' => 'widget', 'widgetType' => 'woocommerce-products' ) ), array( 'enrollment', 'main' ), $installed )['status'],
+	) );
+	$styled = array( array( 'elType' => 'widget', 'widgetType' => 'heading', 'settings' => array( 'custom_css' => 'selector{max-width:768px}', 'motion_fx_motion_fx_scrolling' => 'yes' ) ) );
+	$with_pro    = compatibility_report( $styled, array( 'main' ), $installed, true );
+	$without_pro = compatibility_report( $styled, array( 'main' ), $installed, false );
+	check( 'registry: Pro-only element settings are flagged, and said plainly NOT SHOWN when Pro is not active (never silently dropped)', array( 'review', 0, 2 ), array( $without_pro['status'], count( preg_grep( '/NOT SHOWN/', $with_pro['features'] ) ), count( preg_grep( '/NOT SHOWN, Elementor Pro is not active/', $without_pro['features'] ) ) ) );
+	check( 'registry: a plain design for Both is ok', 'ok', compatibility_report( array( array( 'elType' => 'container', 'elements' => array( array( 'elType' => 'widget', 'widgetType' => 'heading' ) ) ) ), array( 'enrollment', 'main' ), $installed )['status'] );
 	check( 'enrollment only: first publish of a new blog', 'published', enrollment_status_for_save( TARGET_ENROLLMENT, 'published', true, $editor, 'draft', '' ) );
 	check( 'main / both: the copy follows the Main record', array( 'published', 'draft' ), array( enrollment_status_for_save( TARGET_BOTH, '', true, $editor, 'published', 'draft' ), enrollment_status_for_save( TARGET_MAIN, 'published', true, $editor, 'draft', 'published' ) ) );
 	check( 'restoring a version keeps an Enrollment-only copy published', 'published', enrollment_status_for_save( TARGET_ENROLLMENT, '', false, array(), 'draft', 'published' ) );

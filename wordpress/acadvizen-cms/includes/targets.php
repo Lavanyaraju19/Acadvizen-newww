@@ -138,21 +138,31 @@ function replaces_main_page( int $post_id, string $main_path ): bool {
 		|| in_array( (string) get_post_type( $post_id ), MAIN_OWNED_TYPES, true );
 }
 
-/** True when another published document already uses this Main Website address. */
+/**
+ * True when another document already uses this Main Website address. A document's own working
+ * copy and archives (approval.php) are revisions of it, not other documents.
+ */
 function is_main_path_taken( string $path, int $except_id ): bool {
-	$ids = get_posts(
+	$ids  = get_posts(
 		array(
 			'post_type'        => SITE_POST_TYPES,
 			'post_status'      => array( 'publish', 'draft', 'pending', 'future', 'private' ),
 			'fields'           => 'ids',
-			'posts_per_page'   => 1,
+			'posts_per_page'   => 20,
 			'no_found_rows'    => true,
 			'suppress_filters' => true,
 			'exclude'          => array( $except_id ),
 			'meta_query'       => array( array( 'key' => META_MAIN_PATH, 'value' => $path ) ), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		)
 	);
-	return (bool) $ids;
+	$self = function_exists( __NAMESPACE__ . '\revision_copy_of' ) ? ( revision_copy_of( $except_id ) ?: $except_id ) : $except_id;
+	foreach ( $ids as $id ) {
+		$of = function_exists( __NAMESPACE__ . '\revision_copy_of' ) ? revision_copy_of( (int) $id ) : 0;
+		if ( (int) $id !== $self && ! $of ) {
+			return true;
+		}
+	}
+	return false;
 }
 
 /** True when every prefix has at least one rewrite rule (rules are keyed by their regex). */

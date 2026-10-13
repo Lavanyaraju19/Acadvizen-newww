@@ -60,7 +60,7 @@ function register_post_type_and_meta(): void {
 			'has_archive'         => false,
 			'rewrite'             => array( 'slug' => 'main-blog', 'with_front' => false ),
 			'query_var'           => true,
-			'show_ui'             => true,
+			'show_ui'             => native_publishing_ui(),
 			'show_in_menu'        => MENU_SLUG,
 			'show_in_nav_menus'   => false,
 			'show_in_admin_bar'   => false,

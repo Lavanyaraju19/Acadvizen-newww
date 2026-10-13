@@ -25,11 +25,24 @@ const MIN_SECRET_LENGTH = 32;
  *   SITE_TEMPLATES  - headers, footers and Theme Builder templates follow their "Publish To"
  *                     (a Main-only header is skipped on Enrollment, an Enrollment-only one on Main).
  */
-const OPTIONAL_FEATURES = array( 'SITEMAP_CLEANUP', 'LOGIN_BRANDING', 'SITE_TEMPLATES' );
+const OPTIONAL_FEATURES = array( 'SITEMAP_CLEANUP', 'LOGIN_BRANDING', 'SITE_TEMPLATES', 'RENDER_BRIDGE', 'APPROVAL' );
 
 function feature_enabled( string $feature ): bool {
 	$feature = strtoupper( $feature );
 	return in_array( $feature, OPTIONAL_FEATURES, true ) && defined( 'ACADVIZEN_CMS_' . $feature ) && true === constant( 'ACADVIZEN_CMS_' . $feature );
+}
+
+/**
+ * The native publishing model (WordPress post types and Elementor pages with "Publish To", read or
+ * rendered by the Main Website) only works while the Main Website reads WordPress
+ * (WORDPRESS_CONTENT_ENABLED, the Render Bridge). Off by default: its editors, "Publish To" boxes
+ * and screens are hidden so nobody publishes where nothing appears. Main Website content is edited
+ * in Acadvizen Master Admin → Main Website, and blogs also in the regular Posts editor
+ * (blog-sync.php). Nothing is deleted while hidden; define ACADVIZEN_CMS_RENDER_BRIDGE as true in
+ * wp-config.php (together with the Main Website switch) to bring it back.
+ */
+function native_publishing_ui(): bool {
+	return feature_enabled( 'RENDER_BRIDGE' );
 }
 
 /** Hooks of the optional features that wp-config.php turned on (called once while the plugin loads). */

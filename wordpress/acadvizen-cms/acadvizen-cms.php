@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Acadvizen Master Admin
  * Description:       One WordPress admin for both Acadvizen websites. Design with Elementor, choose "Publish To" (Enrollment, Main or Both) and publish. Pages for www.acadvizen.com are rendered by WordPress/Elementor and published through the Acadvizen Render Bridge.
- * Version:           0.6.1
+ * Version:           0.7.0
  * Requires at least: 6.5
  * Requires PHP:      8.0
  * Author:            Acadvizen
@@ -21,12 +21,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const VERSION        = '0.6.1';
+const VERSION        = '0.7.0';
 const POST_TYPE      = 'acv_blog';
 const REST_NAMESPACE = 'acadvizen-cms/v1';
 const MENU_SLUG      = 'acadvizen-cms';
 
-foreach ( array( 'config', 'post-type', 'targets', 'blocks', 'fields', 'main-site', 'sync', 'versions', 'render-bridge', 'publisher', 'elementor', 'content-types', 'design', 'migration', 'rest', 'main-content', 'admin', 'admin-site' ) as $module ) {
+foreach ( array( 'config', 'post-type', 'targets', 'blocks', 'fields', 'main-site', 'sync', 'versions', 'render-bridge', 'publisher', 'elementor', 'content-types', 'design', 'migration', 'rest', 'main-content', 'blog-sync', 'registry', 'approval', 'admin', 'admin-site' ) as $module ) {
 	require_once __DIR__ . '/includes/' . $module . '.php';
 }
 
@@ -55,6 +55,28 @@ add_action(
 	99
 );
 add_action( 'rest_api_init', __NAMESPACE__ . '\\register_rest_routes' );
+
+/* One blog on both websites, edited in either editor (blog-sync.php) ---------------------------- */
+add_action( 'init', __NAMESPACE__ . '\\register_blog_sync_meta' );
+add_action( 'save_post_post', __NAMESPACE__ . '\\save_blog_sync_box', 5, 1 );
+add_action( 'wp_after_insert_post', __NAMESPACE__ . '\\after_regular_post_saved', 30, 2 );
+add_filter( 'cron_schedules', __NAMESPACE__ . '\\add_five_minute_schedule' );
+add_action( BLOG_PULL_HOOK, __NAMESPACE__ . '\\pull_main_blog_changes' );
+
+/* Approval before publishing (approval.php; on with ACADVIZEN_CMS_APPROVAL) ----------------------- */
+add_action( 'load-post.php', __NAMESPACE__ . '\\redirect_live_to_working_copy', 1 );
+add_action( 'elementor/document/before_save', __NAMESPACE__ . '\\guard_elementor_save', 1, 2 );
+add_filter( 'wp_insert_post_data', __NAMESPACE__ . '\\guard_post_data', 20, 2 );
+foreach ( array_merge( SITE_POST_TYPES, TEMPLATE_POST_TYPES ) as $acv_scope_type ) {
+	add_filter( "rest_pre_insert_{$acv_scope_type}", __NAMESPACE__ . '\\guard_rest_insert', 10, 2 );
+}
+add_filter( 'pre_trash_post', __NAMESPACE__ . '\\guard_trash', 10, 2 );
+add_filter( 'pre_delete_post', __NAMESPACE__ . '\\guard_trash', 10, 2 );
+add_action( 'wp_after_insert_post', __NAMESPACE__ . '\\after_candidate_saved', 40, 2 );
+add_action( 'elementor/document/after_save', __NAMESPACE__ . '\\after_candidate_design_saved', 30, 2 );
+add_action( VERIFY_HOOK, __NAMESPACE__ . '\\verify_publication', 10, 3 );
+add_action( SCHEDULE_HOOK, __NAMESPACE__ . '\\publish_scheduled' );
+add_action( 'wp_footer', __NAMESPACE__ . '\\print_revision_mark', 999 );
 
 /* Render Bridge (front end of this WordPress) ------------------------------------------------- */
 add_action( 'template_redirect', __NAMESPACE__ . '\\handle_template_redirect', 0 );
@@ -114,6 +136,7 @@ foreach ( array( 'pre_unschedule_event', 'pre_reschedule_event' ) as $acv_cron_f
 }
 add_action( DAILY_REFRESH_HOOK, __NAMESPACE__ . '\\run_daily_refresh' );
 add_action( STALL_CHECK_HOOK, __NAMESPACE__ . '\\requeue_stalled_renders' );
+add_action( STALL_CHECK_HOOK, __NAMESPACE__ . '\\ensure_scheduled_jobs' );
 
 /* Admin -------------------------------------------------------------------------------------- */
 if ( is_admin() ) {
@@ -135,6 +158,31 @@ if ( is_admin() ) {
 	add_filter( 'wp_insert_post_data', __NAMESPACE__ . '\\keep_global_styles_canvas_private', 10, 2 );
 	add_action( 'load-post.php', __NAMESPACE__ . '\\forget_global_styles_canvas_autosave' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\ensure_recurring_jobs' );
+	add_action( 'admin_init', __NAMESPACE__ . '\\ensure_blog_pull_job' );
+	add_action( 'add_meta_boxes_post', __NAMESPACE__ . '\\add_blog_sync_box' );
+	add_filter( 'manage_post_posts_columns', __NAMESPACE__ . '\\add_blog_sync_column' );
+	add_action( 'manage_post_posts_custom_column', __NAMESPACE__ . '\\render_blog_sync_column', 10, 2 );
+	add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\\enqueue_blog_sync_notice' );
+	add_action( 'wp_ajax_acv_cms_blog_sync_state', __NAMESPACE__ . '\\ajax_blog_sync_state' );
+	add_action( 'admin_post_acv_cms_blog_pull', __NAMESPACE__ . '\\handle_blog_pull_now' );
+	add_action( 'admin_post_acv_cms_approval', __NAMESPACE__ . '\\handle_approval_action' );
+	add_action( 'admin_init', __NAMESPACE__ . '\\ensure_review_roles' );
+	add_action( 'add_meta_boxes', __NAMESPACE__ . '\\add_approval_box' );
+	add_action( 'admin_notices', __NAMESPACE__ . '\\render_approval_notice' );
+	add_action( 'pre_get_posts', __NAMESPACE__ . '\\hide_archives_from_lists' );
+	add_filter( 'display_post_states', __NAMESPACE__ . '\\label_working_copies', 10, 2 );
+	add_action(
+		'admin_menu',
+		static function () {
+			if ( approval_enabled() ) {
+				add_submenu_page( MENU_SLUG, __( 'Approvals', 'acadvizen-cms' ), __( 'Approvals', 'acadvizen-cms' ), 'edit_pages', APPROVALS_PAGE, __NAMESPACE__ . '\\render_approvals_screen' );
+			}
+			if ( native_publishing_ui() ) {
+				add_submenu_page( MENU_SLUG, __( 'Widget compatibility', 'acadvizen-cms' ), __( 'Widget compatibility', 'acadvizen-cms' ), 'edit_pages', COMPAT_PAGE, __NAMESPACE__ . '\\render_compatibility_page' );
+			}
+		},
+		11
+	);
 	// Screens that show publishing status also repair a stalled publish (at most once a minute).
 	foreach ( array( 'load-edit.php', 'load-post.php', 'load-toplevel_page_' . MENU_SLUG, 'load-acadvizen-master-admin_page_' . MENU_SLUG . '-publishing' ) as $screen_hook ) {
 		add_action(
@@ -191,6 +239,7 @@ register_deactivation_hook(
 	static function () {
 		wp_clear_scheduled_hook( DAILY_REFRESH_HOOK );
 		wp_clear_scheduled_hook( STALL_CHECK_HOOK );
+		wp_clear_scheduled_hook( BLOG_PULL_HOOK );
 		flush_rewrite_rules( false );
 	}
 );
