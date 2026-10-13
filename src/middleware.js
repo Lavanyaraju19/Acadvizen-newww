@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getWordPressConfig } from '../lib/wordpress/config.js'
-import { decideBridgeRoute, normalizeBridgePath } from '../lib/wordpress/bridgeRouting.js'
+import { decideBridgeRoute, normalizeBridgePath, wantsMainFallback } from '../lib/wordpress/bridgeRouting.js'
 import { INTERNAL_HEADER, PATH_HEADER, deriveInternalToken } from '../lib/wordpress/internalToken.js'
 import { OWNED_CONTENT_MESSAGE, isWordPressOwnedWrite, isWordPressOwnershipEnabled } from '../lib/wordpress/contentOwnership.js'
 import { fetchCmsPagePrivacy as fetchPageStatusAtAddress, shouldHidePage } from '../lib/cmsPagePrivacy.js'
@@ -183,7 +183,8 @@ export default async function middleware(request) {
 
     const bridgeDecision = decideBridgeRoute({
       pathname,
-      manifest: bridgeManifest,
+      // A page WordPress no longer has (just unpublished): Main's own page (see app/wp-render).
+      manifest: wantsMainFallback(request.nextUrl.searchParams) ? null : bridgeManifest,
       mainPageExists: Boolean(cmsPrivacy?.exists),
     })
     // An administrator explicitly chose to replace the existing Main page at this address.

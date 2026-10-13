@@ -1,7 +1,7 @@
 import { getWordPressConfig } from '../../lib/wordpress/config'
 import { fetchBridgeDocument } from '../../lib/wordpress/bridge'
 import { PATH_HEADER, isInternalRequest } from '../../lib/wordpress/internalToken'
-import { isValidBridgePath, normalizeBridgePath } from '../../lib/wordpress/bridgeRouting'
+import { isValidBridgePath, mainFallbackUrl, normalizeBridgePath, wantsMainFallback } from '../../lib/wordpress/bridgeRouting'
 import { prepareBridgedDocument } from '../../lib/wordpress/document'
 import { GA_ID, GTM_ID, isAnalyticsEnabled, isMetaPixelEnabled } from '../../lib/analyticsConfig'
 import { META_PIXEL_ID } from '../../lib/metaPixel'
@@ -29,7 +29,13 @@ async function serve(request, { head = false } = {}) {
   if (!isValidBridgePath(path)) return textResponse(404, 'Not found')
 
   const result = await fetchBridgeDocument(path)
-  if (result.status === 'missing') return textResponse(404, 'Page not found', { 'X-Robots-Tag': 'noindex' })
+  if (result.status === 'missing') {
+    // Taken off the Main Website moments ago (the address list is cached up to 30 s): Main's own
+    // page at this address, once, instead of a "Page not found".
+    const fallback = wantsMainFallback(new URL(request.url).searchParams) ? null : mainFallbackUrl(path, request.url)
+    if (fallback) return new Response(null, { status: 307, headers: { Location: fallback, 'Cache-Control': NO_STORE } })
+    return textResponse(404, 'Page not found', { 'X-Robots-Tag': 'noindex' })
+  }
   if (result.status !== 'ok') {
     // Listed as published, but WordPress could not be reached and nothing is cached yet.
     return textResponse(503, 'This page is temporarily unavailable. Please try again in a minute.', { 'Retry-After': '60' })

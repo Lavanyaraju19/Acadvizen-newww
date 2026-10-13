@@ -4,8 +4,11 @@ import { readdirSync, statSync } from 'node:fs'
 import path from 'node:path'
 
 import {
+  MAIN_FALLBACK_PARAM,
   MAIN_ROUTE_SEGMENTS,
   decideBridgeRoute,
+  mainFallbackUrl,
+  wantsMainFallback,
   isValidBridgePath,
   mainOwnedReason,
   normalizeBridgePath,
@@ -80,4 +83,18 @@ test('unknown manifest or malformed paths change nothing', () => {
   assert.equal(mainOwnedReason('/'), 'homepage')
   assert.equal(mainOwnedReason('/courses/x'), 'reserved')
   assert.equal(mainOwnedReason('/course/x'), null)
+})
+
+test("a page just taken off Main falls back to Main's own page once, never in a loop", () => {
+  assert.equal(MAIN_FALLBACK_PARAM, 'acv-main')
+  assert.equal(mainFallbackUrl('/soft-skills', 'http://localhost:3100/wp-render'), '/soft-skills?acv-main=1')
+  assert.equal(mainFallbackUrl('/', 'https://www.acadvizen.com/wp-render'), '/?acv-main=1')
+  assert.equal(mainFallbackUrl('/../admin', 'https://www.acadvizen.com/wp-render'), null)
+  assert.equal(wantsMainFallback(new URLSearchParams('acv-main=1')), true)
+  assert.equal(wantsMainFallback(new URLSearchParams('acv-main=0')), false)
+  assert.equal(wantsMainFallback(new URLSearchParams('')), false)
+  // With the marker the middleware routes as if WordPress listed nothing: Main's own page.
+  const manifest = { pages: [{ path: '/soft-skills', replace: true }], redirects: [] }
+  assert.equal(decideBridgeRoute({ pathname: '/soft-skills', manifest }).action, 'bridge')
+  assert.equal(decideBridgeRoute({ pathname: '/soft-skills', manifest: null }).action, 'none')
 })

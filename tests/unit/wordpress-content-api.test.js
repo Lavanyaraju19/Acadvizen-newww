@@ -670,3 +670,156 @@ test('addresses: renaming a record onto an address in use is refused and leaves 
   // A rename to a free address is accepted.
   assert.equal((await call({ op: 'save', entity: 'pages', id: b, record: { title: 'B', slug: 'second-renamed' } }, { db })).status, 200)
 })
+
+/* Edit conflicts (expected_updated_at): two editors, Main's /admin and WordPress, edit the same records. */
+
+test('sameInstant compares timestamps across formats and treats empty as equal only to empty', async () => {
+  const { sameInstant } = await import('../../lib/wordpress/contentApi.js')
+  assert.equal(sameInstant('2026-10-10T12:00:00.000Z', '2026-10-10T12:00:00+00:00'), true)
+  assert.equal(sameInstant('2026-10-10T17:30:00+05:30', '2026-10-10T12:00:00Z'), true)
+  assert.equal(sameInstant('2026-10-10T12:00:00Z', '2026-10-10T12:00:01Z'), false)
+  assert.equal(sameInstant(null, ''), true)
+  assert.equal(sameInstant(null, '2026-10-10T12:00:00Z'), false)
+  assert.equal(sameInstant('2026-10-10T12:00:00Z', undefined), false)
+})
+
+test('a save carrying the version it opened succeeds when nothing changed meanwhile', async () => {
+  const db = fakeDb()
+  await call({ op: 'save', entity: 'blogs', record: { title: 'First', slug: 'conflict-a' } }, { db })
+  const row = db.tables.blogs[0]
+  const opened = row.updated_at
+  clock += 60_000
+  const saved = await call({ op: 'save', entity: 'blogs', id: row.id, expected_updated_at: opened, record: { title: 'Second', slug: 'conflict-a' } }, { db })
+  assert.equal(saved.status, 200)
+  assert.equal(db.tables.blogs[0].title, 'Second')
+  assert.notEqual(saved.body.data.updated_at, opened, 'the new version is returned for the next save')
+})
+
+test('a save on a stale version is refused (edit_conflict) and the other editor\'s change is kept', async () => {
+  const db = fakeDb()
+  await call({ op: 'save', entity: 'blogs', record: { title: 'Original', slug: 'conflict-b' } }, { db })
+  const row = db.tables.blogs[0]
+  const opened = row.updated_at
+  // Meanwhile someone saves in Main's /admin (the database trigger bumps updated_at).
+  Object.assign(row, { title: 'Changed in /admin', updated_at: new Date(clock + 30_000).toISOString() })
+  clock += 60_000
+  const stale = await call({ op: 'save', entity: 'blogs', id: row.id, expected_updated_at: opened, record: { title: 'Changed in WordPress', slug: 'conflict-b' } }, { db })
+  assert.equal(stale.status, 409)
+  assert.equal(stale.body.error, 'edit_conflict')
+  assert.equal(stale.body.current_updated_at, row.updated_at)
+  assert.equal(db.tables.blogs[0].title, 'Changed in /admin', 'nothing overwritten')
+  assert.equal(stale.revalidated.length, 0)
+  assert.equal(stale.audited.length, 0)
+})
+
+test('a change landing between the check and the write is caught by the conditional update', async () => {
+  const db = fakeDb()
+  await call({ op: 'save', entity: 'pages', record: { title: 'Race', slug: 'race-page' } }, { db })
+  const row = db.tables.pages[0]
+  const opened = row.updated_at
+  // A database whose first update finds the row already changed by another writer.
+  const racing = { ...db, from(table) {
+    const api = db.from(table)
+    const update = api.update.bind(api)
+    api.update = (values) => { if (table === 'pages' && !racing.raced) { racing.raced = true; Object.assign(row, { title: 'Other writer', updated_at: new Date(clock + 1).toISOString() }) } return update(values) }
+    return api
+  } }
+  clock += 60_000
+  const result = await call({ op: 'save', entity: 'pages', id: row.id, expected_updated_at: opened, record: { title: 'Mine', slug: 'race-page' } }, { db: racing })
+  assert.equal(result.body.error, 'edit_conflict')
+  assert.equal(db.tables.pages[0].title, 'Other writer')
+})
+
+test('without expected_updated_at the save behaves exactly as before (Main /admin, older plugins)', async () => {
+  const db = fakeDb()
+  await call({ op: 'save', entity: 'blogs', record: { title: 'Old style', slug: 'conflict-c' } }, { db })
+  const row = db.tables.blogs[0]
+  Object.assign(row, { updated_at: new Date(clock + 5_000).toISOString() })
+  clock += 60_000
+  assert.equal((await call({ op: 'save', entity: 'blogs', id: row.id, record: { title: 'Last write', slug: 'conflict-c' } }, { db })).status, 200)
+  assert.equal(db.tables.blogs[0].title, 'Last write')
+})
+
+test('records without timestamps (testimonials) ignore expected_updated_at', async () => {
+  const db = fakeDb({ testimonials: [{ id: randomUUID(), name: 'A', is_active: true }] })
+  const id = db.tables.testimonials[0].id
+  assert.equal((await call({ op: 'save', entity: 'testimonials', id, expected_updated_at: '2020-01-01T00:00:00Z', record: { name: 'B' } }, { db })).status, 200)
+})
+
+/* Redirects edited from WordPress: Main's rules (lib/redirects.js) plus extra safeguards. */
+
+const redirect = (db, record, id) => call({ op: 'save', entity: 'redirects', ...(id ? { id } : {}), record }, { db })
+
+test('a new redirect is stored without a trailing slash and starts switched off', async () => {
+  const db = fakeDb({ redirects: [], pages: [], blogs: [] })
+  const r = await redirect(db, { from_path: '/old-course/', to_path: '/courses', status_code: '301' })
+  assert.equal(r.status, 200, JSON.stringify(r.body))
+  assert.equal(db.tables.redirects[0].from_path, '/old-course')
+  assert.equal(db.tables.redirects[0].status_code, 301)
+  assert.equal(db.tables.redirects[0].is_active, false)
+  assert.equal(r.revalidated.length, 0, 'the middleware reads redirects live: nothing to refresh')
+})
+
+test('redirects: malformed addresses and codes are refused', async () => {
+  const db = fakeDb({ redirects: [], pages: [], blogs: [] })
+  for (const record of [
+    { from_path: 'no-slash', to_path: '/x' }, { from_path: '/has space', to_path: '/x' }, { from_path: '/q?x=1', to_path: '/x' },
+    { from_path: '//evil.com', to_path: '/x' }, { from_path: '/a', to_path: 'javascript:alert(1)' }, { from_path: '/a', to_path: '/x', status_code: 303 },
+    { from_path: '/a' },
+  ]) assert.equal((await redirect(db, record)).body.error, 'validation_failed', JSON.stringify(record))
+  assert.equal(db.tables.redirects.length, 0)
+})
+
+test('redirects: the website\'s own system addresses cannot be redirected', async () => {
+  const db = fakeDb({ redirects: [], pages: [], blogs: [] })
+  for (const from of ['/', '/admin', '/admin/leads', '/admin-login', '/api/wordpress/content', '/login', '/sitemap.xml']) {
+    assert.equal((await redirect(db, { from_path: from, to_path: '/courses' })).body.error, 'redirect_not_allowed', from)
+  }
+})
+
+test('redirects: no redirect to itself, one redirect per address, no chains or loops (either direction)', async () => {
+  const db = fakeDb({ redirects: [{ id: randomUUID(), from_path: '/b', to_path: '/c', is_active: true }, { id: randomUUID(), from_path: '/x', to_path: '/y', is_active: true }], pages: [], blogs: [] })
+  assert.equal((await redirect(db, { from_path: '/self', to_path: '/self/' })).body.error, 'redirect_loop')
+  assert.equal((await redirect(db, { from_path: '/b', to_path: '/z' })).body.error, 'redirect_exists')
+  assert.equal((await redirect(db, { from_path: '/a', to_path: '/b' })).body.error, 'redirect_chain', '/a -> /b -> /c')
+  assert.equal((await redirect(db, { from_path: '/c', to_path: '/b' })).body.error, 'redirect_loop', '/c -> /b -> /c')
+  assert.equal((await redirect(db, { from_path: '/y', to_path: '/w' })).body.error, 'redirect_chain', '/x -> /y -> /w')
+  assert.equal((await redirect(db, { from_path: '/a', to_path: 'https://example.com/landing' })).status, 200)
+})
+
+test('redirects: a live page or blog is never hidden; a draft one does not count', async () => {
+  const db = fakeDb({ redirects: [], pages: [{ id: randomUUID(), slug: 'live-page', status: 'published', deleted_at: null }, { id: randomUUID(), slug: 'draft-page', status: 'draft', deleted_at: null }], blogs: [{ id: randomUUID(), slug: 'live-post', status: 'published', deleted_at: null }] })
+  assert.equal((await redirect(db, { from_path: '/live-page', to_path: '/courses' })).body.error, 'redirect_hides_page')
+  assert.equal((await redirect(db, { from_path: '/blog/live-post', to_path: '/blog' })).body.error, 'redirect_hides_page')
+  assert.equal((await redirect(db, { from_path: '/draft-page', to_path: '/courses' })).status, 200)
+})
+
+test('redirects: switching on runs the checks again (a page published meanwhile is protected)', async () => {
+  const db = fakeDb({ redirects: [], pages: [], blogs: [] })
+  await redirect(db, { from_path: '/new-offer', to_path: '/courses' })
+  const id = db.tables.redirects[0].id
+  db.tables.pages.push({ id: randomUUID(), slug: 'new-offer', status: 'published', deleted_at: null })
+  const on = await call({ op: 'set_status', entity: 'redirects', id, active: true }, { db })
+  assert.equal(on.body.error, 'redirect_hides_page')
+  assert.equal(db.tables.redirects[0].is_active, false)
+  db.tables.pages[0].status = 'draft'
+  assert.equal((await call({ op: 'set_status', entity: 'redirects', id, active: true }, { db })).status, 200)
+  assert.equal(db.tables.redirects[0].is_active, true)
+})
+
+test('redirects: deleting needs the redirect switched off and an explicit confirmation', async () => {
+  const db = fakeDb({ redirects: [{ id: randomUUID(), from_path: '/gone', to_path: '/courses', is_active: true }], pages: [], blogs: [] })
+  const id = db.tables.redirects[0].id
+  assert.equal((await call({ op: 'delete', entity: 'redirects', id }, { db })).body.error, 'confirmation_required')
+  assert.equal((await call({ op: 'delete', entity: 'redirects', id, confirm: true }, { db })).body.error, 'still_active')
+  await call({ op: 'set_status', entity: 'redirects', id, active: false }, { db })
+  assert.equal((await call({ op: 'delete', entity: 'redirects', id, confirm: true }, { db })).status, 200)
+  assert.equal(db.tables.redirects.length, 0)
+})
+
+test('redirects: an empty "kind of redirect" uses the database default (301) instead of sending null', async () => {
+  const db = fakeDb({ redirects: [], pages: [], blogs: [] })
+  const r = await redirect(db, { from_path: '/no-code', to_path: '/courses', status_code: '' })
+  assert.equal(r.status, 200)
+  assert.equal('status_code' in db.tables.redirects[0], false, 'not sent, so the column default applies')
+})
