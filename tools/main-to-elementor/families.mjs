@@ -367,7 +367,7 @@ const firstHeading = (html) => ((html.match(/<h([12])[^>]*>([\s\S]*?)<\/h\1>/) |
 
 export async function routeFamilies(ctx, browser) {
   const { MAIN, bundle, log, ONLY } = ctx
-  const paths = (await sitemapPaths(ctx)).filter((p) => !p.startsWith('/blog') && !p.startsWith('/tools/'))
+  const paths = (await sitemapPaths(ctx)).filter((p) => !p.startsWith('/blog') && !p.startsWith('/tools/') && (!ctx.PATHS || ctx.PATHS.includes(p)))
   const cmsPages = await ctx.supabase('pages', 'select=slug,title,content,status')
   const services = []
   const statics = []

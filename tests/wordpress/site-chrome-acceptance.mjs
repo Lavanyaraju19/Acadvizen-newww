@@ -109,4 +109,6 @@ try {
   fs.writeFileSync(path.join(OUT, `results-${T}.json`), JSON.stringify({ run: T, main: MAIN, click_fallbacks: counter.fallbacks, results }, null, 1))
   await browser.close()
   console.log(`\n${results.filter((r) => r.ok).length} passed, ${results.filter((r) => !r.ok).length} failed (click fallbacks: ${counter.fallbacks})`)
+  // A failed check must fail the run, not only print FAIL.
+  process.exitCode = results.some((r) => !r.ok) ? 1 : 0
 }

@@ -9,7 +9,8 @@ It only reads: it opens public pages in a headless browser and reads published r
 node tools/main-to-elementor/build-bundle.mjs --only shell,tools --out bundle-tools.json
 node tools/main-to-elementor/build-bundle.mjs --only blogs --out bundle-blogs.json
 node tools/main-to-elementor/build-bundle.mjs --only services,pages --out bundle-pages.json
-# options: --main https://www.acadvizen.com (default), --limit N (first N records of each family)
+# options: --main https://www.acadvizen.com (default), --limit N (first N records of each family),
+#          --paths /soft-skills,/about (only these Main addresses, for the pages and services families)
 ```
 
 Import `shell,tools` first: it brings the header, footer, menu and Main Website CSS the other bundles use.

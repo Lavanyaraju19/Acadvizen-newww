@@ -26,6 +26,8 @@ const MAIN = String(args.main || 'https://www.acadvizen.com').replace(/\/$/, '')
 const OUT = String(args.out || 'acadvizen-main-bundle.json')
 const ONLY = args.only ? String(args.only).split(',') : ['shell', 'tools', 'blogs', 'services', 'pages']
 const LIMIT = args.limit ? Number(args.limit) : Infinity
+// --paths /a,/b : only these Main addresses (pages and services families), e.g. to move one page first.
+const PATHS = args.paths ? String(args.paths).split(',').map((p) => p.trim()).filter(Boolean) : null
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SB_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a)
@@ -255,7 +257,7 @@ async function main() {
         tasks.push(() => toolRecords(tools))
       }
     }
-    const ctx = { MAIN, LIMIT, ONLY, bundle, queue, media, link, log, supabase, captureRoute, seoFrom, headSeo }
+    const ctx = { MAIN, LIMIT, PATHS, ONLY, bundle, queue, media, link, log, supabase, captureRoute, seoFrom, headSeo }
     if (ONLY.includes('blogs')) tasks.push(() => families.blogFamily(ctx, browser))
     if (ONLY.includes('services') || ONLY.includes('pages')) tasks.push(() => families.routeFamilies(ctx, browser))
     for (const t of tasks) await t()

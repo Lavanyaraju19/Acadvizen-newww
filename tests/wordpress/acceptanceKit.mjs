@@ -10,6 +10,11 @@ const require = createRequire(import.meta.url)
 const { chromium } = require('playwright')
 const sharp = require('sharp')
 
+// Every request in the suites using this kit has a deadline (2 minutes unless a call sets its own),
+// so a request that hangs fails its step instead of stalling the whole run.
+const plainFetch = globalThis.fetch
+globalThis.fetch = (input, init = {}) => plainFetch(input, init.signal ? init : { ...init, signal: AbortSignal.timeout(120000) })
+
 export const WP = process.env.WP_URL || 'http://localhost:8088'
 export const MAIN = process.env.MAIN_URL || 'http://localhost:3100'
 export const T = new Date().toISOString().replace(/\D/g, '').slice(0, 12)
@@ -22,16 +27,21 @@ export function createRecorder(out) {
   return { results, check, out }
 }
 
+/** A public Main page. Status 0 when it does not answer within 60 s (a hung request fails the step, never the run). */
 export async function get(p) {
-  const r = await fetch(`${MAIN}${p}${p.includes('?') ? '&' : '?'}t=${Date.now()}`, { redirect: 'manual' })
-  return { status: r.status, html: r.status === 200 ? await r.text() : '' }
+  try {
+    const r = await fetch(`${MAIN}${p}${p.includes('?') ? '&' : '?'}t=${Date.now()}`, { redirect: 'manual', signal: AbortSignal.timeout(60000) })
+    return { status: r.status, html: r.status === 200 ? await r.text() : '' }
+  } catch {
+    return { status: 0, html: '' }
+  }
 }
 
 /** Signed call to Main's content API (as the WordPress plugin makes it). */
 export async function api(body, secret = process.env.WORDPRESS_CMS_WEBHOOK_SECRET) {
   const raw = JSON.stringify({ purpose: 'content', request_id: randomUUID(), actor: { login: 'acceptance-test' }, ...body })
   const ts = Math.floor(Date.now() / 1000)
-  const r = await fetch(`${MAIN}/api/wordpress/content`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Acadvizen-Timestamp': String(ts), 'X-Acadvizen-Signature': signPayload(raw, ts, secret) }, body: raw })
+  const r = await fetch(`${MAIN}/api/wordpress/content`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Acadvizen-Timestamp': String(ts), 'X-Acadvizen-Signature': signPayload(raw, ts, secret) }, body: raw, signal: AbortSignal.timeout(120000) })
   return { status: r.status, body: await r.json().catch(() => ({})) }
 }
 
@@ -97,7 +107,7 @@ export async function login(browser, user, pass, viewport = { width: 1440, heigh
   await page.goto(`${WP}/wp-login.php`)
   await page.fill('#user_login', user)
   await page.fill('#user_pass', pass)
-  await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('#wp-submit').click()])
+  await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 120000 }), page.locator('#wp-submit').click()])
   return page
 }
 
@@ -143,7 +153,12 @@ export async function enrollmentCopiesLeft(page, title) {
   return left
 }
 
-export const notice = async (page) => (await page.locator('.notice-success p, .notice-error p').first().innerText().catch(() => '')).trim()
+// The plugin's own result notice (.acv-cms-flash, plugin 0.7.0+) first; older plugins: success/error boxes.
+export const notice = async (page) => {
+  const own = page.locator('.acv-cms-flash p')
+  if (await own.count().catch(() => 0)) return (await own.first().innerText().catch(() => '')).trim()
+  return (await page.locator('.notice-success p, .notice-error p').first().innerText().catch(() => '')).trim()
+}
 // Submits the form exactly once (a retried click could submit the reloaded form a second time on a
 // slow server) and allows for slow production responses.
 export async function saveForm(page) { await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 180000 }), page.locator('#acv-main-form input[type=submit]').dispatchEvent('click')]); return notice(page) }

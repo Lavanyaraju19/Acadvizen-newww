@@ -35,7 +35,10 @@ async function get(base, path) {
 async function until(fn, pred, timeoutMs = 180000) {
   const t0 = Date.now(); let last
   while (Date.now() - t0 < timeoutMs) { last = await fn(); if (pred(last)) return { ok: true, s: Math.round((Date.now() - t0) / 1000), last }; await cron(); await sleep(3000) }
-  return { ok: false, s: Math.round((Date.now() - t0) / 1000), last }
+  // One last look after the final round of jobs: a long round (a site-wide re-render queued ahead)
+  // can use up the time while doing exactly what was awaited.
+  last = await fn()
+  return { ok: pred(last), s: Math.round((Date.now() - t0) / 1000), last }
 }
 const has = (r, text) => r.status === 200 && r.html.includes(text)
 const created = []
@@ -191,4 +194,5 @@ try {
   }
   console.log(`removed ${created.length} test items`)
   console.log(`\n${pass} passed, ${fail} failed`)
+  process.exitCode = fail ? 1 : 0 // a failed check fails the run (the regression scripts read the exit code)
 }

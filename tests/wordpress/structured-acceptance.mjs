@@ -164,7 +164,7 @@ try {
   if (process.env.DEBUG_STEPS) console.log('… navigation 3 from', admin.url())
   await Promise.all([admin.waitForNavigation({ waitUntil: 'domcontentloaded' }), admin.locator('a', { hasText: 'Prepare changes privately' }).click()])
   const draftId = idFromUrl(admin)
-  check('B1 "Prepare changes privately" opens a private draft copy', draftId && draftId !== liveId && /private draft copy/i.test(await admin.locator('.notice-info').innerText().catch(() => '')))
+  check('B1 "Prepare changes privately" opens a private draft copy', draftId && draftId !== liveId && (await admin.locator('.notice-info', { hasText: /private draft copy/i }).count()) === 1)
   // If the run stops before publishing, the cleanup discards this private copy (never the live page);
   // once published it is merged into the live page and no longer exists, so the cleanup skips it.
   if (draftId && draftId !== liveId) created.push(['pages', draftId])
@@ -406,5 +406,7 @@ try {
   check('Z cleanup: the Enrollment copy of the test blog is deleted', copiesLeft === 0, `${copiesLeft} left`)
   fs.writeFileSync(path.join(OUT, `results-${T}.json`), JSON.stringify({ run: T, main: MAIN, wordpress: WP, click_fallbacks: clickFallbacks, results }, null, 1))
   console.log(`\n${results.filter((r) => r.ok).length} passed, ${results.filter((r) => !r.ok).length} failed`)
+  // A failed check must fail the run, not only print FAIL.
+  process.exitCode = results.some((r) => !r.ok) ? 1 : 0
   await browser.close()
 }
