@@ -1,0 +1,23 @@
+Plugin upgrade and rollback rehearsal, 14 Oct 2026 (LOCAL throwaway stack, removed afterwards).
+Platform as production: WordPress 7.0.7, PHP 8.3.35, Elementor 4.3.3, Rank Math. Render Bridge off (as production).
+Packages: live dist/acadvizen-cms-0.6.1-2cc2148 (SHA-256 dd6fcf27...), release dist/acadvizen-cms-0.7.0-62a13a4 (SHA-256 7f0d354b...).
+Steps: install 0.6.1, create a page targeted at Main and a Main blog, replace with 0.7.0, check, replace back with 0.6.1, check.
+"links on Master Admin screens" = every admin link found on the plugin's screens, opened; dead = "Sorry, you are not allowed", "Invalid post type" or a PHP error.
+
+Run against the release package (output lines as printed):
+[08:20:16Z] platform :: WordPress 7.0.7, PHP 8.3.35
+[08:27:38Z] 0.6.1 baseline :: links on Master Admin screens: 15 opened, 3 dead post-new.php?post_type=acv_blog post-new.php?post_type=acv_course post-new.php?post_type=acv_location
+[08:27:38Z] 0.6.1 baseline :: plugin acadvizen-cms active 0.6.1; admin screens 7 loaded [acadvizen-cms acadvizen-cms-design acadvizen-cms-import acadvizen-cms-main acadvizen-cms-publishing acadvizen-cms-settings acadvizen-cms-versions], 0 failing; page #5 target main; blog #6 draft; acv_ options 3; home 200
+[08:27:56Z] upgrade rc=0 (replace with uploaded 0.7.0)
+[08:28:00Z] after upgrade to 0.7.0 :: links on Master Admin screens: 7 opened, 0 dead
+[08:28:00Z] after upgrade to 0.7.0 :: plugin acadvizen-cms active 0.7.0; admin screens 3 loaded [acadvizen-cms acadvizen-cms-main acadvizen-cms-settings], 0 failing; page #5 target main; blog #6 draft; acv_ options 3; home 200
+[08:28:15Z] rollback rc=0 (replace with uploaded 0.6.1)
+[08:28:23Z] after rollback to 0.6.1 :: links on Master Admin screens: 15 opened, 3 dead post-new.php?post_type=acv_blog post-new.php?post_type=acv_course post-new.php?post_type=acv_location
+[08:28:23Z] after rollback to 0.6.1 :: plugin acadvizen-cms active 0.6.1; admin screens 7 loaded [acadvizen-cms acadvizen-cms-design acadvizen-cms-import acadvizen-cms-main acadvizen-cms-publishing acadvizen-cms-settings acadvizen-cms-versions], 0 failing; page #5 target main; blog #6 draft; acv_ options 3; home 200
+debug.log absent: no PHP notices, warnings or errors
+[08:28:35Z] throwaway stack removed
+
+Earlier run against the previous package 0.7.0-ecbb188 (before the dashboard fix, O-44):
+[08:18:21Z] after upgrade to 0.7.0 :: links on Master Admin screens: 12 opened, 7 dead admin.php?page=acadvizen-cms-publishing edit.php?post_type=acv_blog edit.php?post_type=acv_course edit.php?post_type=acv_location post-new.php?post_type=acv_blog post-new.php?post_type=acv_course post-new.php?post_type=acv_location
+
+Fresh install of the release package on WordPress 7.0.7 / PHP 8.3 (no other plugins): installed and activated; / 200; /wp-json/acadvizen-cms/v1/ 200; no PHP notices, warnings or errors (run against 0.7.0-ecbb188; the later change touches only the bridge-off dashboard, covered above).

@@ -90,6 +90,21 @@ After rehearsal #7's verification, the designed site-wide redraw ran (a new head
 
 All LOCAL. Staging and production runs of these suites wait for OWNER-ACTIONS P2–P5.
 
+**Release package and upgrade rehearsal** (14 Oct 07:13–08:28 UTC, `evidence/plugin-upgrade-rehearsal-20261014/run-log.txt`):
+- **Package:** `dist/acadvizen-cms-0.7.0-62a13a4/acadvizen-cms.zip`, SHA-256 `7f0d354b…`, 27 files byte-identical to the commit.
+- **Platform as production:** WordPress 7.0.7, PHP 8.3.35 (production reports both), Elementor 4.3.3, Rank Math, bridge off.
+
+| Step | Result |
+|---|---|
+| Fresh install and activate | Clean, no PHP notices, `acadvizen-cms/v1` answers |
+| Upgrade from the live 0.6.1 package (replace with uploaded) | Active 0.7.0; content and settings kept; every Master Admin link opens (7/7) |
+| Rollback to 0.6.1 (replace with uploaded) | Active 0.6.1; content and settings kept |
+| PHP log over the whole run | Empty |
+
+**Defect found here and fixed:** O-44, the dashboard linked to screens 0.7.0 hides when the bridge is off (7 dead links). The live 0.6.1 already has 3 dead "Add new" links (O-45).
+
+**Coverage of the fix:** commit `62a13a4` changes only that dashboard branch and a retry fallback. The local suites run with the bridge on and never reach it; it is covered by this rehearsal, and PHP stays 319/319.
+
 ## 13 October 2026, 14:00–18:10 UTC: unified WordPress + Elementor (Option B): gaps closed, site-wide migration, final regression
 
 **Final ordered run** (`evidence/final-run/final5/summary.txt`, exit codes captured first) plus individual reruns of three suites (`evidence/final-run/rerun6/`). All LOCAL; all exit 0.
