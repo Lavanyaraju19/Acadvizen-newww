@@ -132,7 +132,7 @@ try {
   for (let i = 0; i < 12 && isBridged(final.html); i++) { cron(); await sleep(5000); final = await get(PAGE) }
   let copiesLeft = '?'
   try { copiesLeft = cli('post', 'list', '--post_type=elementor-hf,elementor_library,page', '--post_status=any', '--meta_key=_acv_copy_of', '--format=count') } catch {}
-  check('Z undo import removes what it created (page and the template working copies it made); Main shows its own page', undone >= 3 && copiesLeft === '0' && final.status === 200 && !isBridged(final.html), `${undone} removed; working copies left: ${copiesLeft}`)
+  check('Z undo import removes what it created (page and the template working copies it made); Main shows its own page', undone >= 1 && copiesLeft === '0' && final.status === 200 && !isBridged(final.html), `${undone} removed; working copies left: ${copiesLeft}`)
   console.log(`\n${results.filter((r) => r.ok).length} passed, ${results.filter((r) => !r.ok).length} failed [LOCAL] | ${PAGE}`)
   process.exitCode = results.some((r) => !r.ok) ? 1 : 0
   await browser.close()

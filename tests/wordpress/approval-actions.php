@@ -55,9 +55,10 @@ switch ( $action ) {
 	case 'compat': // compat <id>
 		$out( document_compatibility( get_post( (int) $a[0] ) ) );
 		break;
-	case 'review': // review <login> <id> <approve|reject> [code_ok]
+	case 'review': // review <login> <id> <approve|reject> [code_ok] [none] : previews of the chosen websites confirmed, unless "none"
 		$as( $a[0] );
-		$out( review_candidate( (int) $a[1], $a[2], ! empty( $a[3] ), 'from test' ) );
+		$checked = 'none' === ( $a[4] ?? '' ) ? array() : Acadvizen\CMS\chosen_destinations( get_post( (int) $a[1] ) );
+		$out( review_candidate( (int) $a[1], $a[2], ! empty( $a[3] ), 'from test', $checked ) );
 		break;
 	case 'publish': // publish <login> <id>
 		$as( $a[0] );
@@ -199,6 +200,112 @@ switch ( $action ) {
 		$as( $a[0] );
 		$result = wp_update_post( array( 'ID' => (int) $a[1], 'post_status' => 'draft' ), true );
 		$out( is_wp_error( $result ) ? $result->get_error_message() : get_post_status( (int) $a[1] ) );
+		break;
+	case 'user-cap': // user-cap <login> <capability> <1|0> : grant or remove one capability for a test user
+		$user = get_user_by( 'login', $a[0] );
+		if ( $user ) {
+			'1' === $a[2] ? $user->add_cap( $a[1] ) : $user->remove_cap( $a[1] );
+		}
+		$out( $user && user_can( $user, $a[1] ) ? 'yes' : 'no' );
+		break;
+	case 'set-meta': // set-meta <id> <key> <value> : a field changed directly (e.g. an SEO title)
+		update_post_meta( (int) $a[0], $a[1], $a[2] );
+		$out( 'ok' );
+		break;
+	case 'touch-save': // touch-save <login> <id> : a plain save of the document (as the editor's Update does)
+		$as( $a[0] );
+		wp_update_post( array( 'ID' => (int) $a[1] ) );
+		$out( (string) ( Acadvizen\CMS\approval_state( (int) $a[1] )['state'] ?? '' ) );
+		break;
+	case 'make-menu': // make-menu <name> <main 1|0> -> menu id (a Main menu as Import Main Website marks it)
+		$menu = (int) wp_create_nav_menu( $a[0] );
+		wp_update_nav_menu_item( $menu, 0, array( 'menu-item-title' => 'Home', 'menu-item-url' => home_url( '/' ), 'menu-item-status' => 'publish', 'menu-item-type' => 'custom' ) );
+		if ( '1' === $a[1] ) {
+			update_term_meta( $menu, 'acv_main_menu', '1' );
+		}
+		$out( (string) $menu );
+		break;
+	case 'menu-items': // menu-items <menu id> -> titles
+		$out( wp_list_pluck( (array) wp_get_nav_menu_items( (int) $a[0] ), 'title' ) );
+		break;
+	case 'delete-menu': // delete-menu <menu id>
+		$out( wp_delete_nav_menu( (int) $a[0] ) ? 'deleted' : 'not deleted' );
+		break;
+	case 'log-has': // log-has <action> <outcome> -> how many history entries match
+		$out( (string) count( array_filter( (array) get_option( 'acv_cms_approval_log', array() ), static fn( $e ) => ( $e['action'] ?? '' ) === $a[0] && ( $e['outcome'] ?? '' ) === $a[1] ) ) );
+		break;
+	case 'main-versions': // main-versions <id> -> the page's stored Main Website versions (ids, newest first)
+		$out( array_map( 'intval', wp_list_pluck( Acadvizen\CMS\list_versions( (int) $a[0] ), 'id' ) ) );
+		break;
+	case 'main-rollback': // main-rollback <login> <id> <version> : "Make live" through its real handler -> refused:<message> | done:<notice>
+		$as( $a[0] );
+		$_REQUEST = array( 'post_id' => (int) $a[1], 'version_id' => (int) $a[2], '_wpnonce' => wp_create_nonce( 'acv_cms_rollback_' . (int) $a[1] ) );
+		add_filter( 'wp_die_handler', static fn() => static function ( $message ) { throw new \RuntimeException( 'refused:' . wp_strip_all_tags( is_string( $message ) ? $message : '' ) ); } );
+		add_filter( 'wp_redirect', static function ( $location ) { throw new \RuntimeException( 'done:' . ( (string) wp_parse_url( $location, PHP_URL_QUERY ) ) ); } );
+		try {
+			Acadvizen\CMS\handle_rollback();
+			$out( 'no outcome' );
+		} catch ( \RuntimeException $e ) {
+			$out( $e->getMessage() );
+		}
+		break;
+	case 'approve-publish-batch': // approve-publish-batch <login> <batch> : as a reviewer, for every item an import submitted:
+		// confirm each website's preview, approve, publish. Reports what was refused (never forced).
+		$as( $a[0] );
+		$types = array_values( array_diff( get_post_types(), array( 'attachment', 'revision', 'nav_menu_item' ) ) );
+		$ids   = get_posts( array( 'post_type' => $types, 'post_status' => array( 'pending', 'draft' ), 'posts_per_page' => -1, 'fields' => 'ids', 'meta_key' => '_acv_import_batch', 'meta_value' => $a[1] ) ); // phpcs:ignore WordPress.DB.SlowDBQuery
+		$done  = array( 'published' => array(), 'refused' => array() );
+		foreach ( $ids as $id ) {
+			if ( 'pending' !== ( Acadvizen\CMS\approval_state( (int) $id )['state'] ?? '' ) ) {
+				continue;
+			}
+			$post    = get_post( (int) $id );
+			$code_ok = 'code-ok' === ( $a[2] ?? '' ); // the reviewer read the converter's HTML/shortcodes and confirms them
+			$reviewed = review_candidate( (int) $id, 'approve', $code_ok, 'site-wide migration test', Acadvizen\CMS\chosen_destinations( $post ) );
+			if ( 'changed_since_submitted' === $reviewed ) { // what an editor does: submit the current revision again
+				Acadvizen\CMS\submit_candidate( get_post( (int) $id ) );
+				$reviewed = review_candidate( (int) $id, 'approve', $code_ok, 'site-wide migration test (resubmitted)', Acadvizen\CMS\chosen_destinations( $post ) );
+			}
+			$result   = 'approved' === $reviewed ? publish_approved( (int) $id ) : $reviewed;
+			if ( is_int( $result ) ) {
+				$done['published'][] = $result;
+			} else {
+				$done['refused'][] = $post->post_type . ' ' . $post->post_title . ': ' . $result;
+			}
+		}
+		$out( array( 'published' => count( $done['published'] ), 'live_ids' => $done['published'], 'refused' => $done['refused'] ) );
+		break;
+	case 'queue-size': // queue-size -> render jobs and verification checks still waiting
+		$n = 0;
+		foreach ( (array) _get_cron_array() as $hooks ) {
+			$n += count( (array) ( $hooks['acv_cms_render_page'] ?? array() ) ) + count( (array) ( $hooks['acv_cms_verify_publication'] ?? array() ) );
+		}
+		$out( (string) $n );
+		break;
+	case 'verify-ids': // verify-ids <comma ids> <attempt> : runs each publication's verification now -> counts per outcome, and the failures
+		$counts   = array();
+		$failures = array();
+		foreach ( array_filter( array_map( 'intval', explode( ',', $a[0] ) ) ) as $id ) {
+			$pub = get_post_meta( $id, '_acv_publication', true );
+			if ( is_array( $pub ) && 'publishing' === ( $pub['outcome'] ?? '' ) ) {
+				$pub = Acadvizen\CMS\verify_publication( $id, (string) $pub['hash'], (int) ( $a[1] ?? 1 ) );
+			}
+			$key            = is_array( $pub ) ? (string) ( $pub['outcome'] ?? 'none' ) : 'none';
+			$counts[ $key ] = ( $counts[ $key ] ?? 0 ) + 1;
+			if ( ! in_array( $key, array( 'verified', 'publishing' ), true ) ) {
+				$failures[] = get_the_title( $id ) . ' (' . $id . '): ' . wp_json_encode( $pub['destinations'] ?? array() );
+			}
+		}
+		$out( array( 'counts' => $counts, 'failures' => $failures ) );
+		break;
+	case 'publication-outcomes': // publication-outcomes <comma ids> -> counts per outcome
+		$counts = array();
+		foreach ( array_filter( array_map( 'intval', explode( ',', $a[0] ) ) ) as $id ) {
+			$pub                = get_post_meta( $id, '_acv_publication', true );
+			$key                = is_array( $pub ) ? (string) $pub['outcome'] : 'none';
+			$counts[ $key ]     = ( $counts[ $key ] ?? 0 ) + 1;
+		}
+		$out( $counts );
 		break;
 	case 'cleanup': // cleanup <title-marker>
 		Acadvizen\CMS\approval_bypass( true );

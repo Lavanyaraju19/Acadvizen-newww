@@ -5,6 +5,7 @@
  */
 import fs from 'node:fs'
 import { elementId } from './convert.mjs'
+import { mainOwn } from './capture.mjs'
 import { walk, widgetText, textsOf, replaceText, findContainer, findDeepestContainer, replaceElement, shortcodeWidget } from './elementor-json.mjs'
 
 /* Blogs ------------------------------------------------------------------------------------------ */
@@ -115,9 +116,37 @@ function cardGrid(elements) {
   return findContainer(elements, (el) => el.settings.container_type === 'grid' && (el.elements || []).length >= 6)
 }
 
+/** The blog posts (/blog/<slug>) a piece of design links to. */
+const blogLinks = (el) => new Set([...JSON.stringify(el).matchAll(/\/blog\/([a-z0-9-]+)(?=[\\"'#?/])/g)].map((m) => m[1]).filter((s) => !['author', 'category', 'tag'].includes(s)))
+
+/**
+ * The row or grid of blog post cards, however many posts the website has: a container whose items
+ * are each a card for one post, all different. Counting items instead picks the wrong box on a
+ * website with few posts (e.g. one card's own text block: date, title, summary, link).
+ */
+export function blogCardGrid(elements) {
+  // Main draws each post card as one link: the grid is the box whose items are all such cards. With
+  // one post this is still exact (a wrapper around the row is not itself a link to a post).
+  const isLinkedCard = (el) => el.elType === 'container' && el.settings && el.settings.html_tag === 'a' && /\/blog\/(?!author\/|category\/|tag\/)[a-z0-9-]+\/?$/.test((el.settings.link && el.settings.link.url) || '')
+  const linked = findContainer(elements, (el) => (el.elements || []).length > 0 && el.elements.every(isLinkedCard))
+  if (linked) return linked
+  const isGrid = (el) => {
+    const items = el.elements || []
+    const posts = items.map((c) => (c.elType === 'container' ? [...blogLinks(c)] : []))
+    return items.length > 0 && posts.every((p) => p.length === 1) && new Set(posts.map((p) => p[0])).size === items.length
+  }
+  let found = findContainer(elements, isGrid)
+  // A wrapper around a one-card row matches too: the row itself is the grid.
+  while (found && found.el.elements.length === 1 && isGrid(found.el.elements[0])) found = { el: found.el.elements[0], parent: found.el }
+  return found
+}
+
+/** A loop of blog cards needs the card design; without it the captured cards are kept (never empty). */
+const hasBlogCard = (ctx) => ctx.bundle.templates.some((t) => t.key === 'card-blog')
+
 export async function blogFamily(ctx, browser) {
   const { MAIN, bundle, log } = ctx
-  const listHtml = await (await fetch(`${MAIN}/blog`)).text()
+  const listHtml = await (await fetch(mainOwn(`${MAIN}/blog`))).text()
   const liveSlugs = [...new Set([...listHtml.matchAll(/href="\/blog\/([a-z0-9-]+)"/g)].map((m) => m[1]))]
   const rows = (await ctx.supabase('blogs', 'select=*&order=created_at.desc')).filter((b) => !b.deleted_at)
   log(`blogs: ${liveSlugs.length} live on /blog, ${rows.length} in the database`)
@@ -131,7 +160,8 @@ export async function blogFamily(ctx, browser) {
   const listing = await ctx.captureRoute(browser, `${MAIN}/blog`, ['main'])
   ctx.queue('card-blog', listing.parts.main, (els) => blogCard(ctx, els))
   ctx.queue('page-blog', listing.parts.main, (els) => {
-    const grid = cardGrid(els)
+    const grid = hasBlogCard(ctx) ? blogCardGrid(els) || cardGrid(els) : null
+    if (!grid) ctx.bundle.notes.push('/blog: the post cards were kept as captured (no blog card design or grid found); new posts will not appear there until a loop is added')
     if (grid) replaceElement(els, grid.el, shortcodeWidget('blog-list-loop', '[acv_loop type="acv_blog" template="acv-template://card-blog" limit="100" columns="3" columns_tablet="2" columns_mobile="1" gap="24" orderby="date" order="DESC"]'))
     pageRecord(ctx, '/blog', els, listing, 'Blog')
   })
@@ -146,7 +176,7 @@ export async function blogFamily(ctx, browser) {
       let minutes = 0
       if (live) {
         article = await readArticle(ctx, browser, path).catch(() => ({ html: r.content || '' }))
-        const html = await (await fetch(`${MAIN}${path}`)).text()
+        const html = await (await fetch(mainOwn(`${MAIN}${path}`))).text()
         seo = ctx.headSeo(html, path)
         minutes = Number((html.match(/>(\d+)(?:<!-- -->)?\s*(?:<!-- -->)?min read</i) || [])[1] || 0)
       }
@@ -228,16 +258,30 @@ export function blogTemplate(ctx, elements, sample, article) {
   ctx.bundle.settings.design_templates.acv_blog = 'design-blog'
 }
 
+/** The PHP date format that writes a date the way a captured card does ("Oct 8, 2026", "8 OCT 2026"). */
+export function dateFormatOf(text = '') {
+  const t = String(text).trim()
+  if (/^[A-Za-z]{3} \d{1,2}, \d{4}$/.test(t)) return 'M j, Y'
+  if (/^[A-Za-z]{4,} \d{1,2}, \d{4}$/.test(t)) return 'F j, Y'
+  if (/^\d{1,2} [A-Za-z]{4,} \d{4}$/.test(t)) return 'j F Y'
+  return 'j M Y'
+}
+
 function blogCard(ctx, elements) {
-  const grid = cardGrid(elements)
+  const grid = blogCardGrid(elements) || cardGrid(elements)
   const card = grid && grid.el.elements[0]
   if (!card) {
     ctx.bundle.notes.push('blog card: listing grid not found')
     return
   }
+  blogCardTemplate(ctx, card, 'card-blog', 'Main — Blog card')
+}
+
+/** A captured post card made into a loop card design (date, title, summary, picture, link as fields). */
+function blogCardTemplate(ctx, card, key, title) {
   const texts = textsOf(card)
   const dateText = texts.find((t) => /\d{4}$/.test(t) && t.length < 20)
-  if (dateText) replaceText([card], dateText, '[acv_field name="date" format="j M Y"]')
+  if (dateText) replaceText([card], dateText, `[acv_field name="date" format="${dateFormatOf(dateText)}"]`)
   const rest = texts.filter((t) => t !== dateText && t.length > 12).sort((a, b) => b.length - a.length)
   if (rest[0]) replaceText([card], rest[0], '[acv_field name="excerpt"]')
   if (rest[1]) replaceText([card], rest[1], '[acv_field name="title"]')
@@ -249,12 +293,26 @@ function blogCard(ctx, elements) {
   if (card.settings.link) card.settings.link = { ...card.settings.link, url: '#acv-field-url' }
   delete card.settings.width
   card.isInner = false
-  ctx.bundle.templates.push({ key: 'card-blog', post_type: 'elementor_library', elementor_template_type: 'section', title: 'Main — Blog card', target: 'main', elementor_data: [card] })
+  ctx.bundle.templates.push({ key, post_type: 'elementor_library', elementor_template_type: 'section', title, target: 'main', elementor_data: [card] })
 }
 
 /* Pages, service/location pages and courses -------------------------------------------------- */
 
+/** Blocks hidden on the page (tabs, collapsed panels) whose text is not in the converted design. */
+export function lostBlocks(hidden = [], elements = []) {
+  const json = JSON.stringify(elements)
+  return hidden.filter((text) => !json.includes(JSON.stringify(text.slice(0, 40)).slice(1, -1)))
+}
+
 export function pageRecord(ctx, path, elements, captured, title) {
+  const lost = lostBlocks(captured.hidden, elements)
+  // Never silent. Blocks hidden at every width are switched off on the Main page itself (visitors do
+  // not see them), so leaving them out matches the live page. Blocks shown at some widths or after a
+  // click are a real gap, listed for a person to rebuild.
+  const off = lost.filter((text) => (captured.hiddenEverywhere || []).includes(text))
+  const gaps = lost.filter((text) => !off.includes(text))
+  if (off.length) ctx.bundle.notes.push(`${path}: ${off.length} block(s) switched off on the Main page (hidden at every width) were not converted, matching what visitors see (e.g. "${off[0]}"); add them in Elementor only if they should be shown`)
+  if (gaps.length) ctx.bundle.notes.push(`${path}: ${gaps.length} block(s) shown only at some widths or after a click were NOT converted; rebuild them in Elementor (e.g. "${gaps[0]}")`)
   const slug = path === '/' ? 'main-home' : `main-${path.replace(/^\//, '').replace(/\//g, '-')}`
   ctx.bundle.records.push({
     key: `page-${slug}`,
@@ -365,16 +423,29 @@ function isServiceLayout(html) {
 
 const firstHeading = (html) => ((html.match(/<h([12])[^>]*>([\s\S]*?)<\/h\1>/) || [])[2] || '').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').trim()
 
+/**
+ * Routes the migration plan keeps on the Main Website: application lists and detail pages drawn from
+ * Main's data (courses, tools and blog lists, placement, resources, companies, internships) and the
+ * programmatic city pages. See docs/cms-implementation/MAIN-MIGRATION-PLAN.md section 2.
+ */
+export const APP_ROUTE = /^\/(courses|tools|blog|placement|resources|companies|internships)(\/|$)|^\/digital-marketing-courses?-[a-z0-9-]+$/
+
 export async function routeFamilies(ctx, browser) {
   const { MAIN, bundle, log, ONLY } = ctx
   const paths = (await sitemapPaths(ctx)).filter((p) => !p.startsWith('/blog') && !p.startsWith('/tools/') && (!ctx.PATHS || ctx.PATHS.includes(p)))
   const cmsPages = await ctx.supabase('pages', 'select=slug,title,content,status')
   const services = []
   const statics = []
+  const keptOnMain = []
   for (const p of paths) {
-    const r = await fetch(`${MAIN}${p}`, { redirect: 'manual' })
+    const r = await fetch(mainOwn(`${MAIN}${p}`), { redirect: 'manual' })
     if (r.status >= 300 && r.status < 400) {
       bundle.notes.push(`route ${p} redirects to ${r.headers.get('location')} (kept as a Main Website redirect)`)
+      continue
+    }
+    if (r.status !== 200) {
+      // Listed in the sitemap but Main has no page of its own there: a WordPress-only page.
+      bundle.notes.push(`route ${p}: Main has no page of its own (status ${r.status}); a WordPress page, left as it is`)
       continue
     }
     const html = await r.text()
@@ -382,9 +453,11 @@ export async function routeFamilies(ctx, browser) {
     // Application routes (e.g. /companies, /resources) can look as sparse before their data loads,
     // so the layout alone does not decide: they keep their own design.
     const isCmsRow = cmsPages.some((x) => `/${x.slug}` === p)
-    if (p !== '/' && !p.startsWith('/courses/') && isCmsRow && isServiceLayout(html)) services.push({ path: p, html })
+    if (!ctx.INCLUDE_APP_ROUTES && APP_ROUTE.test(p)) keptOnMain.push(p)
+    else if (p !== '/' && !p.startsWith('/courses/') && isCmsRow && isServiceLayout(html)) services.push({ path: p, html })
     else statics.push(p)
   }
+  if (keptOnMain.length) bundle.notes.push(`kept on the Main Website (application and data-driven routes; --include-app-routes converts them): ${keptOnMain.join(' ')}`)
   log(`routes: ${services.length} service/location pages, ${statics.length} individual pages`)
   bundle.notes.push(`individual pages: ${statics.join(' ')}`)
   if (ONLY.includes('services') && services.length) {
@@ -417,6 +490,10 @@ export async function routeFamilies(ctx, browser) {
     for (const p of statics.slice(0, ctx.LIMIT)) {
       log(`page ${p}`)
       const captured = await ctx.captureRoute(browser, `${MAIN}${p}`, ['main'])
+      if (captured.status !== 200) {
+        bundle.notes.push(`page ${p}: Main answered ${captured.status}; not converted`)
+        continue
+      }
       if (p.startsWith('/courses/')) {
         const slug = p.split('/').pop()
         ctx.queue(`course-${slug}`, captured.parts.main, (els) => bundle.records.push({ key: `course-${slug}`, post_type: 'acv_course', title: (captured.seo.title || slug).split('|')[0].trim(), slug, target: 'main', main_path: p, replace: true, elementor_data: els, elementor_template_type: 'wp-post', page_template: 'elementor_header_footer', seo: ctx.seoFrom(captured, p) }), { formType: 'course_enquiry' })
@@ -427,8 +504,13 @@ export async function routeFamilies(ctx, browser) {
         if (p === '/tools') toolsListing(ctx, els)
         if (p === '/') {
           const fromBlog = findContainer(els, (el) => el.settings.html_tag === 'section' && textsOf(el).some((t) => /^From the Blog$/i.test(t)))
-          const grid = fromBlog && findContainer(fromBlog.el.elements, (el) => el.settings.container_type === 'grid' || (el.elements || []).length >= 3)
-          if (grid) replaceElement(els, grid.el, shortcodeWidget('home-blog-loop', '[acv_loop type="acv_blog" template="acv-template://card-blog" limit="4" columns="4" columns_tablet="2" columns_mobile="1" gap="16" orderby="date" order="DESC"]'))
+          // The homepage card has its own look ("Oct 8, 2026", "Read article"): its own card design.
+          const grid = fromBlog ? blogCardGrid(fromBlog.el.elements) : null
+          if (fromBlog && !grid) ctx.bundle.notes.push('/: the "From the Blog" cards were kept as captured (no card grid found); new posts will not appear there until a loop is added')
+          if (grid) {
+            blogCardTemplate(ctx, structuredClone(grid.el.elements[0]), 'card-blog-home', 'Main — Homepage blog card')
+            replaceElement(els, grid.el, shortcodeWidget('home-blog-loop', '[acv_loop type="acv_blog" template="acv-template://card-blog-home" limit="4" columns="4" columns_tablet="2" columns_mobile="1" gap="16" orderby="date" order="DESC"]'))
+          }
         }
         pageRecord(ctx, p, els, captured, (captured.seo.title || p).split('|')[0].trim())
       }, { formType: leadForms.get(p.slice(1)) || formTypeFor(p) })

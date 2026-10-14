@@ -15,7 +15,7 @@ import crypto from 'node:crypto'
 import { createRequire } from 'node:module'
 import { Converter, DesignSystem, elementId } from './convert.mjs'
 import { keepMargins } from './elementor-json.mjs'
-import { captureRoute, MAIN_SHELL } from './capture.mjs'
+import { captureRoute, mainOwn, MAIN_SHELL } from './capture.mjs'
 import * as families from './families.mjs'
 
 const require = createRequire(import.meta.url)
@@ -218,6 +218,7 @@ function seoFrom(captured, path) {
     twitter_title: oneSiteName(s.twitter_title),
     twitter_description: s.twitter_description,
     noindex: /noindex/i.test(s.robots || ''),
+    robots: s.robots || '',
     json_ld: s.json_ld && s.json_ld.length ? (s.json_ld.length === 1 ? s.json_ld[0] : `[${s.json_ld.join(',')}]`) : '',
     source_path: path,
   }
@@ -257,7 +258,7 @@ async function main() {
         tasks.push(() => toolRecords(tools))
       }
     }
-    const ctx = { MAIN, LIMIT, PATHS, ONLY, bundle, queue, media, link, log, supabase, captureRoute, seoFrom, headSeo }
+    const ctx = { MAIN, LIMIT, PATHS, INCLUDE_APP_ROUTES: Boolean(args['include-app-routes']), ONLY, bundle, queue, media, link, log, supabase, captureRoute, seoFrom, headSeo }
     if (ONLY.includes('blogs')) tasks.push(() => families.blogFamily(ctx, browser))
     if (ONLY.includes('services') || ONLY.includes('pages')) tasks.push(() => families.routeFamilies(ctx, browser))
     for (const t of tasks) await t()
@@ -292,6 +293,12 @@ async function main() {
   })
   for (const item of [...bundle.records, ...bundle.templates]) if (item.elementor_data && mentions(item.elementor_data)) item.elementor_data = prune(item.elementor_data)
   if (bundle.records.length !== before) bundle.notes.push(`left out ${before - bundle.records.length} end-to-end test record(s) (local-e2e-…); remove them from the Main Website`)
+  // A design that captured nothing (its part of the page was not found) is never written: importing
+  // it would replace a working design with an empty one.
+  const emptyDesign = (item) => Array.isArray(item.elementor_data) && item.elementor_data.length === 0
+  for (const item of [...bundle.templates, ...bundle.records].filter(emptyDesign)) bundle.notes.push(`${item.key}: nothing was captured for it; left out, so any existing design is kept`)
+  bundle.templates = bundle.templates.filter((t) => !emptyDesign(t))
+  bundle.records = bundle.records.filter((r) => !emptyDesign(r))
   fs.writeFileSync(OUT, JSON.stringify(bundle))
   log(`bundle written: ${OUT} (${(fs.statSync(OUT).size / 1e6).toFixed(1)} MB) — media ${bundle.media.length}, menus ${bundle.menus.length}, templates ${bundle.templates.length}, records ${bundle.records.length}, kit colours ${bundle.kit.colors.length}, kit fonts ${bundle.kit.typography.length}`)
   for (const n of [...new Set(bundle.notes)].slice(0, 30)) log('note:', n)
@@ -517,7 +524,7 @@ async function toolRecords(tools) {
   const rank = new Map(ordered.map((t, i) => [t.slug, i]))
   for (const t of tools) {
     const path = `/tools/${t.slug}`
-    const html = await (await fetch(`${MAIN}${path}`)).text()
+    const html = await (await fetch(mainOwn(`${MAIN}${path}`))).text()
     const seo = headSeo(html, path)
     bundle.records.push({
       key: `tool-${t.slug}`,
@@ -554,6 +561,7 @@ function headSeo(html, path) {
     twitter_title: oneSiteName(meta(/<meta name="twitter:title" content="([^"]*)"/)),
     twitter_description: meta(/<meta name="twitter:description" content="([^"]*)"/),
     noindex: /<meta name="robots" content="[^"]*noindex/i.test(html),
+    robots: meta(/<meta name="robots" content="([^"]*)"/),
     json_ld: ld.length ? (ld.length === 1 ? ld[0] : `[${ld.join(',')}]`) : '',
     source_path: path,
   }

@@ -90,8 +90,10 @@ async function approvalsRow(page, id) {
   const row = page.locator(`#acv-candidate-${id}`)
   return (await row.count()) ? { state: await row.getAttribute('data-state'), approve: await row.locator('.acv-approve').count(), publish: await row.locator('.acv-publish').count(), compat: await row.locator('.acv-compat').getAttribute('data-status') } : null
 }
-async function clickInRow(page, id, selector) {
+async function clickInRow(page, id, selector, { tickPreviews = true } = {}) {
   await page.goto(`${WP}/wp-admin/admin.php?page=acadvizen-cms-approvals`)
+  // A reviewer confirms the preview of each chosen website before approving (as on the screen).
+  if (selector === '.acv-approve' && tickPreviews) for (const box of await page.locator(`#acv-candidate-${id} .acv-preview-check`).all()) await box.check()
   await Promise.all([page.waitForNavigation({ timeout: 180000 }), page.locator(`#acv-candidate-${id} ${selector}`).first().dispatchEvent('click')])
 }
 
@@ -127,6 +129,9 @@ try {
   check('A4 roles: administrators review; Editors do not', JSON.stringify(json(act('caps', process.env.WP_ADMIN_USER))) === '{"review":true,"code":true}' && json(act('caps', EDITOR)).review === false)
 
   // 5. Approval, then an edit: the approval no longer applies.
+  await clickInRow(admin, pageId, '.acv-approve', { tickPreviews: false })
+  const unchecked = await admin.locator('.acv-cms-approval-flash').first().innerText().catch(() => '')
+  check("A5 approving without confirming each chosen website's preview is refused", json(act('state', pageId)).state === 'pending' && /preview/i.test(unchecked), unchecked.slice(0, 90))
   await clickInRow(admin, pageId, '.acv-approve')
   st = json(act('state', pageId))
   check('A5 a reviewer approves exactly that revision', st.state === 'approved' && st.hash === st.fingerprint)
@@ -251,6 +256,8 @@ try {
   const ADMIN = process.env.WP_ADMIN_USER
   act('set-homepage-flag', pageId)
   const home2 = Number(act('new-draft', ADMIN, `${MARKER} homepage candidate`, `cms-approval-home-${T}`))
+  // A page needs a design to be approved (an empty Elementor design is blocked).
+  act('design', home2, JSON.stringify([{ id: 'h1', elType: 'container', settings: {}, elements: [{ id: 'h2', elType: 'widget', widgetType: 'heading', settings: { title: `${MARKER} new homepage` }, elements: [] }] }]))
   act('target', home2, 'enrollment')
   act('site-box-save', ADMIN, home2, '1')
   check('A14 ticking "Main homepage" on a draft leaves the live homepage as it is', act('homepage-flag', pageId) === '1' && act('homepage-flag', home2) === '1')

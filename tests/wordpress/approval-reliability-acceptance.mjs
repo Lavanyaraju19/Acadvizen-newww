@@ -65,6 +65,7 @@ const { browser } = await launch()
 const admin = await login(browser, ADMIN, process.env.WP_ADMIN_PASS)
 const editor = await login(browser, EDITOR, fs.readFileSync(EDITOR_PASS_FILE, 'utf8').trim())
 const MARKER = `CMS RELIABILITY TEST ${T}`
+const menus = []
 
 try {
   // R1. Enrollment failing during Both: reported as a partial failure naming Enrollment; Main verified.
@@ -157,6 +158,41 @@ try {
   const history = cli('option', 'get', 'acv_cms_approval_log', '--format=json')
   check('R4 the history records scheduling, the cancelled run and the scheduled publication', /"action":"schedule"/.test(history) && /"action":"schedule_cancelled"/.test(history) && /"action":"scheduled_publish","post":\d+,"title":"[^"]*","outcome":"refused"/.test(history) && /"action":"scheduled_publish","post":\d+,"title":"[^"]*","outcome":"publishing"/.test(history))
 
+  // R6. SEO is part of the approved revision: a changed SEO title needs a new approval.
+  const s6 = `cms-reliability-f-${T}`
+  const p6 = approvedPage(`${MARKER} seo`, s6, 'both', `${MARKER} F1`)
+  act('set-meta', p6.id, 'rank_math_title', `${MARKER} changed SEO title`)
+  check('R6 an SEO title changed after approval: publishing is refused', act('publish', ADMIN, p6.id) === 'changed_since_approved')
+  check('R6 and the next save cancels the approval (back to draft for a new approval)', act('touch-save', EDITOR, p6.id) === 'draft')
+
+  // R7. Navigation shown on Main: reviewer-only; Enrollment-only menus keep their usual workflow.
+  // Editors cannot edit menus by default; sites often let them. Grant it for this step only.
+  check('R7 setup: the Editor may edit menus (as on sites that allow it)', act('user-cap', EDITOR, 'edit_theme_options', '1') === 'yes')
+  const mainMenu = Number(act('make-menu', `${MARKER} main menu`, '1')); menus.push(mainMenu)
+  const enrollMenu = Number(act('make-menu', `${MARKER} enrollment menu`, '0')); menus.push(enrollMenu)
+  const saveMenu = async (page, id) => {
+    await page.goto(`${WP}/wp-admin/nav-menus.php?action=edit&menu=${id}`)
+    const [response] = await Promise.all([page.waitForNavigation({ timeout: 120000 }), page.locator('#save_menu_footer, #save_menu_header').first().dispatchEvent('click')])
+    return { status: response ? response.status() : 0, text: await page.locator('body').innerText().catch(() => '') }
+  }
+  const byEditor = await saveMenu(editor, mainMenu)
+  check('R7 an Editor cannot save a menu shown on the Main website (Appearance > Menus)', byEditor.status === 403 && /only a reviewer can save it/i.test(byEditor.text), `HTTP ${byEditor.status}`)
+  const restNonce7 = (await (await editor.request.get(`${WP}/wp-admin/admin-ajax.php?action=rest-nonce`)).text()).trim()
+  const restItem = await editor.request.post(`${WP}/wp-json/wp/v2/menu-items`, { headers: { 'X-WP-Nonce': restNonce7, 'Content-Type': 'application/json' }, data: JSON.stringify({ title: 'Injected', url: 'https://example.invalid/', menus: mainMenu, status: 'publish' }) })
+  check('R7 nor through the REST menu routes', restItem.status() === 403 && (await restItem.json().catch(() => ({}))).code === 'acv_main_menu_needs_reviewer' && !JSON.stringify(json(act('menu-items', mainMenu))).includes('Injected'), String(restItem.status()))
+  const byReviewer = await saveMenu(admin, mainMenu)
+  check('R7 a reviewer can, and it is recorded in the history', byReviewer.status === 200 && Number(act('log-has', 'navigation', 'saved_by_reviewer')) >= 1, `HTTP ${byReviewer.status}`)
+  const enrollSave = await saveMenu(editor, enrollMenu)
+  check('R7 an Editor still saves an Enrollment-only menu as before', enrollSave.status === 200 && !/only a reviewer/i.test(enrollSave.text), `HTTP ${enrollSave.status}`)
+
+  // R8. Main-only rollback ("Make live" of an earlier Main version): reviewers only, recorded.
+  const versions8 = json(act('main-versions', p1.id))
+  const oldest8 = Array.isArray(versions8) ? versions8[versions8.length - 1] : 0
+  const editorRollback = act('main-rollback', EDITOR, p1.id, oldest8)
+  check('R8 an Editor cannot put an earlier version back on the Main website ("Make live")', /^refused:.*Only a reviewer/.test(editorRollback), editorRollback.slice(0, 90))
+  const reviewerRollback = act('main-rollback', ADMIN, p1.id, oldest8)
+  check('R8 a reviewer can (Main-only rollback), and it is recorded', /^done:.*acv_notice=rolled_back/.test(reviewerRollback) && Number(act('log-has', 'main_rollback', 'by_reviewer')) >= 1, reviewerRollback.slice(0, 90))
+
   // R5. Approval switched off: nothing waiting is published by it, and the approval screens go away.
   const s5 = `cms-reliability-e-${T}`
   const p5 = approvedPage(`${MARKER} waiting when switched off`, s5, 'both', `${MARKER} E1`)
@@ -173,6 +209,8 @@ try {
   check('run finished without an unexpected error', false, String(error.message || error).split('\n')[0])
 } finally {
   act('render-fail', '0'); act('enroll-fail', '0')
+  for (const id of menus) act('delete-menu', id)
+  act('user-cap', EDITOR, 'edit_theme_options', '0')
   const removed = act('cleanup', MARKER)
   cli('option', 'delete', 'local_approval_on')
   for (let i = 0; i < 2; i++) cron()
