@@ -770,7 +770,7 @@ export default function HomePage({ cmsData = {}, initialBlogPosts = [] }) {
         </Container>
       </Section>
 
-      <Section className="py-10 md:py-12" id="course-modules">
+      <Section className="hidden py-10 md:py-12" id="course-modules">
         <Container>
           <div className="text-center max-w-4xl mx-auto">
             <h2 className="text-3xl md:text-5xl font-bold text-slate-50">Course Modules Built for Modern Marketing Execution</h2>
