@@ -1,0 +1,16 @@
+[01:22:40Z] main build rc=0 :: Compiled successfully in 46s
+[01:22:49Z] main up :: 200
+[01:26:28Z] baseline (Main's own pages) :: 103 addresses, 9 not 200 (WordPress-only pages answer 404 there)
+[01:30:57Z] baseline (as served) :: 103 addresses, 0 not 200
+[02:17:28Z] bundle rc=0 :: templates 9, records 84
+[02:18:26Z] import :: problems 1; waiting 92; into existing pages 72 :: 02:18:15  template popup-home-registration: created (#2091); not submitted: blocked_widgets
+[02:25:46Z] while waiting :: 103 addresses compared; 102 identical on every check, 1 with differences   text: 1 
+[02:26:42Z] approve+publish :: published 92; refused 0 
+[03:03:50Z] verification :: {"verified":92} 
+[03:03:53Z] ledger :: 93 items {"verified":92,"draft":1}
+[03:03:56Z] loop card references ::       1        5 template=\\"0\\"       2 template=\\"2096\\"       1 template=\\"2099\\"       1 template=\\"87\\" 
+[04:52:57Z] after vs Main's own pages :: 103 addresses compared; 86 identical on every check, 17 with differences   text: 7   robots: 12   status: 10   title: 11   description: 10   canonical: 11   h1: 10   extra: 10   json_ld: 1 
+[04:52:58Z] after vs as served before :: 103 addresses compared; 20 identical on every check, 83 with differences   text: 83   title: 71   extra: 1   canonical: 67   robots: 67   status: 1   description: 1   h1: 1   json_ld: 1 
+[04:53:04Z] restore rc=0
+[05:55:37Z] after restore (attempt 6) :: 103 addresses compared; 25 identical on every check, 78 with differences
+[05:55:37Z] DONE

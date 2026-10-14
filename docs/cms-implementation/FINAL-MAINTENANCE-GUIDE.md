@@ -22,6 +22,23 @@ For the site owner and the technical maintainer of the central CMS (WordPress at
   - **If Pro is deactivated:** every Pro widget becomes "not available". With approval on, any page using one can no longer be submitted or approved, and the registry shows **blocked** with the fix "activate the plugin". Live pages are not changed.
 - **Update Elementor and Elementor Pro together.** Their versions must match closely; the rehearsal applied them in the same group (O-6).
 
+### Dependencies of the Elementor-based Main website (Option B)
+
+| Dependency | Needed for | Licence | Production state |
+|---|---|---|---|
+| Elementor (free) | Every page and template | GPL | 4.3.3 active |
+| **Elementor Pro** | The converter's element custom CSS (exact widths, blur and similar details on migrated Main pages), popups (e.g. Quick Registration), Pro forms, display conditions | **Paid, active licence required** | 4.3.0 installed; licence status not visible to the engineer |
+| Ultimate Addons / Header Footer Elementor | Main and Enrollment headers and footers | Free | Active |
+| Rank Math SEO | Titles, descriptions, canonical, robots and schema of migrated pages | Free (Pro optional) | Active |
+| MetForm, Contact Form 7 | Forms forwarded by Main | Free | Active |
+| Acadvizen Master Admin 0.7.0 | Approval, publishing, bridge, import | Project code | 0.6.1 installed; 0.7.0 prepared |
+| Vercel (Main), Supabase | Main application and data | Existing plans | Unchanged |
+
+**Without an active Elementor Pro:**
+- Approvals blocks popups.
+- The compatibility report says "NOT SHOWN" for custom-CSS details.
+- Migrated pages then look less like Main (LOCAL measurement without Pro: 18–31% of first-screen pixels differ on `/soft-skills`).
+
 ## 3. Updating safely
 
 **Order** (rehearsed locally, `evidence/o6-update-rehearsal/`):

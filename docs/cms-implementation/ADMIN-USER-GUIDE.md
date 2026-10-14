@@ -13,6 +13,41 @@
 >   - Their changes show to every visitor at once.
 >   - Preview first, change one thing at a time, and use **Earlier versions → Restore** if something looks wrong.
 
+## The ten everyday tasks, and where each is explained
+
+| # | Task | Where |
+|---|---|---|
+| 1 | Sign in | **Signing in**, below |
+| 2 | Create or edit content | **Editing the Main website's existing content** and **Everyday tasks** |
+| 3 | Choose Main, Enrollment or Both | **The one choice that matters: Publish To**; `DESTINATION-GUIDE.md` |
+| 4 | Preview, review, approve, publish | **When approval is switched on**; `HOW-TO-PUBLISH.md`; reviewers: `REVIEWER-GUIDE.md` |
+| 5 | Check the public page | **Checking that a change is live** |
+| 6 | A partial failure, and retrying only the failed website | **When a publish fails**; `REVIEWER-GUIDE.md` (statuses, "Check again") |
+| 7 | Earlier versions and rollback | **Earlier versions → Restore**; under approval: **Approvals → Restore** (reviewers) |
+| 8 | Media, SEO, FAQs, courses, Course Modules, popups | **Images**, **SEO overrides**, **Courses**, **Course Modules** and **Popups** below |
+| 9 | What still needs a developer | **What still needs a developer** |
+| 10 | Escalation and recovery | **If something looks wrong**; recovery steps for the technical team: `FINAL-RELEASE-AND-ROLLBACK.md` |
+
+## Signing in
+
+1. Open `https://enroll.acadvizen.com/wp-admin/` (the Enrollment website's WordPress). This is the one Master Admin for both websites.
+2. Sign in with your own WordPress account. Never share an account: the approval history records who did what.
+3. The **Acadvizen Master Admin** menu on the left holds everything for the Main website. Enrollment pages are edited as before under **Pages** with Elementor.
+4. If you cannot sign in, ask an Administrator to reset your password from **Users**. Passwords are never sent by email or chat.
+
+## Course Modules (homepage)
+
+The "Course Modules Built for Modern Marketing Execution" section on the homepage lists the course modules (title, duration, focus and the key points). Edit the modules under **Acadvizen Master Admin → Main Website → Homepage → Lists → Course modules**, or in Main's own `/admin` → Homepage → Course modules. The same list feeds the "Course Program" section higher on the homepage.
+
+> 14 October: the section was hidden on the live homepage since 23 March. It is shown again in the prepared release (not yet live). The five course landing pages on the live site are Page Builder pages without this section; adding it there is a content decision for the owner (`FINAL-OPEN-ISSUES.md` O-41).
+
+## Popups
+
+- Popups (for example the homepage **Quick Registration** popup) are an **Elementor Pro** feature. The live Enrollment website has Elementor Pro 4.3.0 active.
+- A popup is published like a page: submit, a reviewer checks the preview and approves, then it is published and checked.
+- If Elementor Pro is not active, or its popups did not load, the submit is refused with the exact reason ("popups need Elementor Pro, which is not active on this WordPress"). This cannot be overridden: a popup that cannot be drawn would never appear.
+- **Not yet verified end to end with Elementor Pro** (there is no staging site with Pro yet: `OWNER-ACTIONS.md` P2, P6). Until then, ask the technical team before publishing a popup.
+
 ## Where to work
 
 | To change | Use |
@@ -236,7 +271,7 @@ Drafts are never sent to the Main website.
 
 ## When approval is switched on (plugin 0.7.0)
 
-> Prepared and tested on a local copy (`approval-acceptance.mjs` 46 checks, `approval-reliability-acceptance.mjs` 29 checks). **Not switched on on production yet**: it needs plugin 0.7.0 and `ACADVIZEN_CMS_APPROVAL` in wp-config.php (`DEPLOYMENT-REPORT.md`).
+> Prepared and tested on a local copy (`approval-acceptance.mjs` 47 checks, `approval-reliability-acceptance.mjs` 38 checks). **Not switched on on production yet**: it needs plugin 0.7.0 and `ACADVIZEN_CMS_APPROVAL` in wp-config.php (`DEPLOYMENT-REPORT.md`).
 
 Approval changes how Elementor pages, WordPress pages, site documents and templates reach the websites. The Main Website screens (forms) are not affected.
 

@@ -1,0 +1,2 @@
+db.sql: OK
+wp-content.tgz: OK

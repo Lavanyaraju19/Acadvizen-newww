@@ -1,0 +1,17 @@
+PASS 1 city page created and shown
+PASS 1 the city page shows its heading and feature — HTTP 200
+PASS 1 the section shows at the top of the city page
+PASS 2 an address already used by a page is refused
+PASS 2 service page created
+PASS 2 the service page answers at its address
+PASS 3 precondition: an override is in use on the page
+PASS 3 the page editor says an SEO override is in use
+PASS 3 an edited override changes the page title
+PASS 3 removing it brings back the page's own title
+PASS 4 an image is added to the Main Website library — Image added to the Main Website library.
+PASS 4 it is listed with a thumbnail
+PASS 4 the stored image is publicly reachable — HTTP 200
+PASS 4 "Main library" fills an image field with the library image
+PASS Z test pages are gone
+
+15 passed, 0 failed (click fallbacks: 0)

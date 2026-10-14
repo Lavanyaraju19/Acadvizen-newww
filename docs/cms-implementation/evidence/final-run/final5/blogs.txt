@@ -1,0 +1,18 @@
+PASS [LOCAL] plugin 0.7.0 (this repository) is installed on the WordPress site — found 0.7.0
+PASS [LOCAL] administrator signed in
+PASS [LOCAL] Main Website screen lists the live Main pages — 16 rows (no error)
+PASS [LOCAL] Main only: public on the Main website — Saved on the Main Website.
+PASS [LOCAL] Main only: not on the Enrollment website
+PASS [LOCAL] Main only: the test blog carries noindex
+PASS [LOCAL] Enrollment only: public on the Enrollment website — form [target=enrollment status=published] | POSTs 1: 16:39:44Z target=enrollment status=published | copy status publish | Saved on the Main Website. Kept as a draft on the Main Website because Publish To is "Enrollment Website". Enrollment Website: updated. | after 1s | 16:39:44Z 404 ; 16:39:50Z 200
+PASS [LOCAL] Enrollment only: no longer public on Main
+PASS [LOCAL] Enrollment only: the editor shows the live article as Published, and saving again keeps it live (with the edit) — shown status published | Saved on the Main Website. Kept as a draft on the Main Website because Publish To is "Enrollment Website". Enrollment Website: updated. | copy status publish
+PASS [LOCAL] Both: public on Main and on Enrollment — Saved on the Main Website. Enrollment Website: updated.
+PASS [LOCAL] Both: an edit reaches both websites
+PASS [LOCAL] cleanup: the Enrollment copy is deleted for good (not left in the WordPress trash) — 1 removed, 0 left
+PASS [LOCAL] cleanup: gone from Main
+PASS [LOCAL] cleanup: gone from Enrollment
+PASS [LOCAL] cleanup: no test blog left in the admin (list or trash) — 0 listed, 0 in trash
+PASS [LOCAL] the Elementor home page still answers 200 with its Elementor layout — HTTP 200
+
+16 passed, 0 failed [LOCAL] | test blog /cms-production-test-blog-202610131639

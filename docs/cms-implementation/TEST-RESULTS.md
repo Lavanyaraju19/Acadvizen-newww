@@ -1,6 +1,161 @@
-# Test results — 10 October 2026, updated 13 October 2026
+# Test results — 10 October 2026, updated 14 October 2026
 
 The statuses used are PASS, PARTIAL, FAIL, BLOCKED and NOT TESTED. The level (Automated, LOCAL, PRODUCTION) is stated on every row.
+
+## 14 October 2026: popup investigation, converter and importer defects, production audits, rehearsals #5–#7
+
+All LOCAL unless marked PRODUCTION (read-only). Nothing was deployed, published or changed on production.
+
+**Production, read-only:**
+
+| Check | Result | Evidence |
+|---|---|---|
+| Main addresses (sitemap) | 314/314: status 200, canonical, not noindex, visible text. 6 needed a second read after a connection error or browser timeout | `evidence/route-audit/prod-visible-*.json` |
+| Main internal links | 314 pages, 138 distinct targets, **0 broken**, 0 redirects | `evidence/route-audit/prod-links-20261013.json` |
+| Enrollment internal links | 59 pages, 44 distinct targets: **1 broken** (`/?page_id=6342`, an unpublished page linked from a carousel on 4 pages including the homepage: O-42) | `evidence/route-audit/enroll-links-20261014.json` |
+| Doubled "\| Acadvizen" titles | 0 of 314 | same as above |
+| Elementor Pro on Enrollment | Active: the public homepage loads Pro 4.3.0 files, `hasPopUps: true`; owner confirmed on the Plugins screen | O-31 |
+| `acadvizen/v1/enquiry` | Registered (POST) on production; nothing was submitted | `GET /wp-json/acadvizen/v1` |
+
+**Popup `blocked_widgets` (O-31):** the tests use the local WordPress, which has no Elementor Pro, so the refusal was correct there. Detection hardened (Pro loaded and its popup type registered). With Pro: **not verified** (no staging; P2/P6).
+
+**Defects found and fixed today:**
+
+| Defect | Found by | Fix | Verified |
+|---|---|---|---|
+| Popup check trusted the Pro constant only | Investigation | `popup_blocker()` | PHP +3 |
+| Robots from Main not copied (Rank Math defaults added) | Rehearsal #4 comparison | `robots_meta_from()` | PHP +3; rehearsal #7 |
+| Homepage blog cards lost their text | Rehearsal #4 | Grid found by its link-wrapped post cards; homepage has its own card design and date format | Unit +6; rehearsal #7 (loop → homepage card #2099) |
+| FAQ answers (`<details>`) shown open | Rehearsal #4 | Converted to a collapsed accordion | `/seo-course-in-bangalore`: 5 items, all closed |
+| Header/footer captured from a page already served by WordPress | Rehearsal #4 | Captures read Main's own page (`?acv-main=1`); WordPress-only addresses skipped | Rehearsal #6/#7: header, footer and 6 other designs captured |
+| A card used inside another design could never be verified | Rehearsal #5 | Verified on a page that draws it | Rehearsal #6/#7: 91/91 and 92/92 verified, tool card included |
+| Importer wrote unresolvable card references as `template="0"` | Rehearsal #5 | Dependency order; existing designs resolved; `PROBLEM` reported | PHP +4; rehearsal #6/#7 references all resolved |
+| Script-rewritten description captured instead of the server's | Rehearsal #6 | Server HTML preferred | Unit +1; rehearsal #7 descriptions identical |
+| WordPress content on Main titled and indexed with Enrollment's pattern | Rehearsal #6 | Main defaults "Title \| Acadvizen" and "index, follow" when the page has no SEO settings of its own | PHP +3; `/elementor-bridge-proof` on local Main, before/after |
+| Comparison tooling: browser timeouts recorded as empty pages; baseline not Main's own; line breaks and browser-only H1s counted as differences | Rehearsals #5/#6 | `text_unread` + "readable" check; `--main-own`; layout-tolerant text; H1 rule | Unit +5 |
+
+**Course Modules (O-41):** the homepage section, hidden since 23 March, is shown again in code. Desktop and phone screenshots are kept locally: 5 modules, one column on phone. The five course landing pages on production have no such section (owner decision).
+
+**Site-wide rehearsals (local copy, 103 addresses):**
+
+| Run | Imported / waiting | Published | Verified | After publishing vs Main's own pages | Recovery (database restore) |
+|---|---|---|---|---|---|
+| #5 | 91 waiting, popup refused | 91 | 90 + 1 never verifiable (tool card: defect O-38) | baseline was not Main's own (O-40) | 102/103 (animated counter) |
+| #6 | 91 waiting, popup refused | 91 | **91/91** | 87/103 identical (rules final); differences classified | **102/103** (measured by #7's baseline; #6's own after-restore read was cut off when my chain script restarted Main) |
+| #7 | **92 waiting** (84 records + 8 designs), popup refused | **92** | **92/92** | **86/103** identical; 17 classified in `MAIN-ROUTE-CHECKLIST.md`: 9 WordPress-only pages, 5 "Play Video" (accepted), 1 fixed after the run, 1 unread after standby, 1 local test record | content identical on all 103 addresses; robots/title changed only by a plugin fix applied mid-run. Isolated restore: see below |
+
+After rehearsal #7's verification, the designed site-wide redraw ran (a new header or footer redraws every Main page): 50 draws and 50 Main notifications, no failures, stalls or re-queues.
+
+**Isolated backup and restore (14 Oct 05:55–06:02 UTC, `evidence/restore-rehearsal-20261014/`):**
+- **Backup** of the local WordPress: database, 35.8 MB; all of `wp-content`, 432 MB, 8,940 files. SHA-256 verified before and after the restore.
+- **Restored** into a separate stack (port 8089, its own volumes, Main address pointing nowhere):
+
+  | Check | Result |
+  |---|---|
+  | Table row counts | Identical in 21/21 tables (6,966 rows) |
+  | WordPress core | Verifies against its checksums |
+  | Plugins | Identical (17) |
+  | Users | 6/6 |
+  | Administrator sign-in | Dashboard opens |
+  | Media | 36/36 answer 200 |
+  | Public pages | **87/87 identical** (status, title, canonical, robots, visible text) |
+  | Plugin REST namespaces | Present |
+
+  The isolated stack was removed afterwards; the backup is kept.
+
+**Full suite on the final working tree** (14 Oct 06:02–06:59 UTC, `evidence/final-run/final-20261014/summary.txt`). Every step exited 0; nothing was skipped.
+
+| Suite | Result |
+|---|---|
+| Unit (`node --test tests/unit/*.test.js`) | 273/273 |
+| Types (`npx tsc --noEmit`) | 0 errors |
+| Lint (`npx next lint`) | 0 errors, 10 warnings (existing) |
+| PHP (`php tests/php/run.php`) | 319/319 |
+| `php -l` | 23 files clean |
+| Secret scan | Tracked files clean. Untracked and modified files: 0 matches (separate scan) |
+| `npm audit --omit=dev` | 0 vulnerabilities |
+| Production-equivalent build | Compiled (content API on, bridge off) |
+| Image optimiser | 200, AVIF |
+| Main `/admin` sign-in and notifications | 6/6 |
+| Structured / site chrome / homepage / courses / more content | 56 / 18 / 14 / 12 / 15 |
+| Permissions / scheduling | 9 / 7 |
+| Both-failure / with Main stopped | 12 / 3 |
+| Conflicts / blog sync / redirects | 9 / 18 / 11 |
+| Blogs / pages / signed content API (live-workflow tools against the local stack) | 16 / 17 / 16 |
+| Render Bridge build | Compiled |
+| Bridge scenarios (Main, Enrollment, Both, destination changes, fallback) | 44/44 |
+| Approval (exact revision, previews per website, verification, blocked widgets and popups, rollback, audit) | 47/47 |
+| Reliability (Enrollment or both failing, retry of the failed website only, replay without duplicates, scheduling recovery) | 38/38 |
+| Migration (`/soft-skills` moved to Elementor and back) | 13/13 |
+
+All LOCAL. Staging and production runs of these suites wait for OWNER-ACTIONS P2–P5.
+
+## 13 October 2026, 14:00–18:10 UTC: unified WordPress + Elementor (Option B): gaps closed, site-wide migration, final regression
+
+**Final ordered run** (`evidence/final-run/final5/summary.txt`, exit codes captured first) plus individual reruns of three suites (`evidence/final-run/rerun6/`). All LOCAL; all exit 0.
+
+| Suite | Result |
+|---|---|
+| Unit | 261/261 |
+| Types | 0 errors |
+| Lint | 0 errors, 10 warnings |
+| PHP | 306/306 |
+| `php -l` | 23 files clean |
+| Secret scan | clean |
+| `npm audit` | 0 vulnerabilities |
+| Both builds | compiled |
+| Main `/admin` | 6/6 |
+| Structured | 56/56 |
+| Site chrome | 18 |
+| Homepage | 14 |
+| Courses | 12 |
+| More content | 15 |
+| Permissions | 9 |
+| Scheduling | 7 |
+| Both-failure | 12, and 3 with Main stopped |
+| Conflicts | 9 |
+| Blog sync | 18 |
+| Redirects | 11 |
+| Blogs / pages / signed API | 16 / 17 / 16 |
+| Bridge scenarios | 44/44 |
+| **Approval** | **47/47** (rerun) |
+| **Reliability** | **38/38** (rerun) |
+| **Migration** | **13/13** (rerun) |
+
+**Why three suites were rerun:**
+- The first approval run failed A14: its test page had no design, and the new empty-design rule correctly refused it. Test fixed.
+- The reliability run was disrupted: my concurrent reproduction switched approval off mid-run (7/11). Invalid; rerun alone.
+- Migration Z expected the import to create templates that are now correctly left out. Test fixed.
+
+**Site-wide migration of the local Main copy** (`evidence/sitewide-migration/`):
+- **The run:** all 103 local Main addresses were converted with `tools/main-to-elementor`, imported under approval and approved by a reviewer with each website's preview confirmed. 87 items were published, and 86 verified.
+- **The one item not verified:** a popup. It needs Elementor Pro, which isn't installed locally; that is now blocked at approval.
+- **Compared address by address** with `tools/main-migration-compare.mjs`:
+  - while waiting for approval: 103/103 identical;
+  - after publishing: stays-Main addresses identical;
+  - differences on migrated pages listed in `MAIN-ROUTE-CHECKLIST.md`: titles, robots, and sections shown only after a click.
+- **Recovery:** the local database was restored three times from a checksummed backup; each time all 103 addresses came back identical. Main's 300-second cache delays this; see the release document.
+
+**Production (read-only):** 314 Main addresses inventoried (`evidence/route-inventory/`), all 200, all with a canonical address and JSON-LD; 22 with forms. Nothing was deployed or changed.
+
+**Defects found and fixed in this phase:**
+
+| Defect | Found by | Fix |
+|---|---|---|
+| SEO edits after approval did not cancel it | Review against the brief | SEO fields are part of the revision fingerprint (R6, PHP) |
+| Main navigation (menus) could be changed without a reviewer | Review | Main menus reviewer-only on every route (R7) |
+| "Make live" of an earlier Main version needed only edit rights | Review | Reviewer-only under approval (R8) |
+| Approval did not require checking each website's preview | Brief (Both) | Required per chosen website (A5, PHP) |
+| "Check again" waited out automatic retry delays | R2 | Redraws immediately unless already published |
+| Importer created a second page at an address an earlier page already served | Site-wide run | Adopts that page; plus the `main_address_in_use` rule |
+| Converter emitted empty designs, and the importer published them over the working header and footer | Site-wide run | Converter leaves them out; importer refuses them; approval blocks empty designs |
+| Converter migrated application routes the plan keeps on Main | Site-wide run | Kept unless `--include-app-routes` is given |
+| Sections shown only after a click were dropped silently | Site-wide run | Listed in the converter notes (exactly the missing ones) |
+| Templates could never verify (they have no page of their own) | Site-wide run | Revision marks printed where they are drawn; checked on a page that uses them |
+| A popup submitted before its display conditions were set | Site-wide run | Resubmitted when the conditions are set |
+| Popups approvable without Elementor Pro | Site-wide run | Blocked with the reason |
+| Undo import left the working copies it created | Earlier run | Tagged and removed |
+| Comparison tool: streamed `<title>` and `&#039;` | Its own self-checks | Fixed; unit tests |
 
 ## 13 October 2026, 11:13–12:53 UTC: plugin 0.7.0 final (Elementor + approval), final ordered regression
 

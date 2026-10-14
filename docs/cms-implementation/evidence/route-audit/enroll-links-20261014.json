@@ -1,0 +1,464 @@
+{
+ "read_at": "2026-10-13T20:10:56.830Z",
+ "main": "https://enroll.acadvizen.com",
+ "method": "GET only, sequential, read-only",
+ "pages": 59,
+ "targets": 44,
+ "broken": 1,
+ "redirects": 1,
+ "rows": [
+  {
+   "target": "/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/courses/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/digital-marketing-course/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/learn-digital-marketing/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/performance-marketing-course/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/diploma-in-ai-digital-marketing-strategies/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/diploma-in-ai-marketing-advertising-pr-branding/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/advanced-diploma-ai-marketing-business-analytics/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/mastery-in-ai-digital-leadership-program/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/mastery-in-digital-marketing-and-analytics/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/pg-diploma-ai-digital-marketing-ecommerce/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/branches/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/partnership/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/placement/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/mentors/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/digital-marketing-course-enquiry/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/projects-2/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/about-us-digital-marketing-institute-jayanagar/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/digital-marketing-jobs/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/blogs/",
+   "status": 200,
+   "location": "",
+   "linked_from": 59,
+   "examples": [
+    "/ai-powered-digital-marketing-training-in-kengeri/",
+    "/best-ai-digital-marketing-institute-in-sarjapur-road/",
+    "/ai-powered-digital-marketing-training-in-yeshwanthpur/"
+   ]
+  },
+  {
+   "target": "/wp-admin/post.php?post=6177&",
+   "status": 302,
+   "location": "https://enroll.acadvizen.com/wp-login.php?redirect_to=https%3A%2F%2Fenroll.acadvizen.com%2Fwp-admin%2Fpost.php%3Fpost%3D6177%26&reauth=1",
+   "linked_from": 1,
+   "examples": [
+    "/projects-2/"
+   ]
+  },
+  {
+   "target": "/?page_id=6342",
+   "status": 404,
+   "location": "",
+   "linked_from": 4,
+   "examples": [
+    "/projects-2/",
+    "/",
+    "/diploma-in-ai-digital-marketing-strategies/"
+   ]
+  },
+  {
+   "target": "/category/affiliate-marketing/",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blogs/"
+   ]
+  },
+  {
+   "target": "/category/digital-marketing-fundamentals/",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blogs/"
+   ]
+  },
+  {
+   "target": "/category/digital-marketing-projects/",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blogs/"
+   ]
+  },
+  {
+   "target": "/category/dropshipping/",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blogs/"
+   ]
+  },
+  {
+   "target": "/category/google-ads-projects/",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blogs/"
+   ]
+  },
+  {
+   "target": "/category/linkedin-marketing/",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blogs/"
+   ]
+  },
+  {
+   "target": "/category/meta-ads/",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blogs/"
+   ]
+  },
+  {
+   "target": "/category/seo-projects/",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blogs/"
+   ]
+  },
+  {
+   "target": "/digital-marketing-fundamentals-45-day-career-program/",
+   "status": 200,
+   "location": "",
+   "linked_from": 3,
+   "examples": [
+    "/blogs/",
+    "/digital-marketing-fundamentals-45-day-career-program/",
+    "/affiliate-marketing-case-study-how-seo-content-marketing-generated-320-affiliate-sales/"
+   ]
+  },
+  {
+   "target": "/affiliate-marketing-case-study-how-seo-content-marketing-generated-320-affiliate-sales/",
+   "status": 200,
+   "location": "",
+   "linked_from": 4,
+   "examples": [
+    "/blogs/",
+    "/digital-marketing-fundamentals-45-day-career-program/",
+    "/affiliate-marketing-case-study-how-seo-content-marketing-generated-320-affiliate-sales/"
+   ]
+  },
+  {
+   "target": "/data-driven-facebook-instagram-advertising-campaign-for-lead-acquisition/",
+   "status": 200,
+   "location": "",
+   "linked_from": 4,
+   "examples": [
+    "/blogs/",
+    "/affiliate-marketing-case-study-how-seo-content-marketing-generated-320-affiliate-sales/",
+    "/data-driven-facebook-instagram-advertising-campaign-for-lead-acquisition/"
+   ]
+  },
+  {
+   "target": "/generating-%e2%82%b950-lakhs-in-pipeline-for-a-saas-startup-via-thought-leadership/",
+   "status": 200,
+   "location": "",
+   "linked_from": 4,
+   "examples": [
+    "/blogs/",
+    "/data-driven-facebook-instagram-advertising-campaign-for-lead-acquisition/",
+    "/generating-%e2%82%b950-lakhs-in-pipeline-for-a-saas-startup-via-thought-leadership/"
+   ]
+  },
+  {
+   "target": "/achieving-6-5x-roas-for-a-beauty-brand-using-meta-ads/",
+   "status": 200,
+   "location": "",
+   "linked_from": 4,
+   "examples": [
+    "/blogs/",
+    "/generating-%e2%82%b950-lakhs-in-pipeline-for-a-saas-startup-via-thought-leadership/",
+    "/achieving-6-5x-roas-for-a-beauty-brand-using-meta-ads/"
+   ]
+  },
+  {
+   "target": "/how-acadvizen-students-got-a-d2c-brand-cited-by-perplexity-gemini/",
+   "status": 200,
+   "location": "",
+   "linked_from": 4,
+   "examples": [
+    "/blogs/",
+    "/achieving-6-5x-roas-for-a-beauty-brand-using-meta-ads/",
+    "/how-acadvizen-students-got-a-d2c-brand-cited-by-perplexity-gemini/"
+   ]
+  },
+  {
+   "target": "/blogs/page/2/",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blogs/"
+   ]
+  },
+  {
+   "target": "/ai-integrated-digital-marketing-course-in-mangalore/",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/branches/"
+   ]
+  },
+  {
+   "target": "/career-focused-digital-marketing-course-in-mysore/",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/branches/"
+   ]
+  },
+  {
+   "target": "/digital-marketing-certification-course-in-chennai/",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/branches/"
+   ]
+  },
+  {
+   "target": "/digital-marketing-institute-in-tirupati/",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/branches/"
+   ]
+  },
+  {
+   "target": "/best-ai-digital-marketing-course-in-visakhapatnam/",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/branches/"
+   ]
+  },
+  {
+   "target": "/author/tharikar98gmail-com/",
+   "status": 200,
+   "location": "",
+   "linked_from": 7,
+   "examples": [
+    "/digital-marketing-fundamentals-45-day-career-program/",
+    "/affiliate-marketing-case-study-how-seo-content-marketing-generated-320-affiliate-sales/",
+    "/data-driven-facebook-instagram-advertising-campaign-for-lead-acquisition/"
+   ]
+  },
+  {
+   "target": "/google-ads-lead-generation-project/",
+   "status": 200,
+   "location": "",
+   "linked_from": 2,
+   "examples": [
+    "/how-acadvizen-students-got-a-d2c-brand-cited-by-perplexity-gemini/",
+    "/google-ads-lead-generation-project/"
+   ]
+  }
+ ]
+}

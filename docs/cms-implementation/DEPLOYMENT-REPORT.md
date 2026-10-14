@@ -1,4 +1,4 @@
-# Deployment report: unified Elementor CMS (13 October 2026)
+# Deployment report: unified Elementor CMS (13 October 2026, gates updated 14 October)
 
 **Summary: nothing was deployed in this phase.** Production is exactly as it was. Everything new is prepared and tested LOCAL, and waits for the owner's authorization.
 
@@ -70,3 +70,51 @@ Every row in §3 is owner-only, plus:
 - a staging environment, or acceptance of production-only checks with labelled test content removed afterwards (O-5);
 - reviewer accounts (names and emails);
 - which Main pages move first (`MAIN-MIGRATION-PLAN.md` §2).
+
+## 6. Exact release commands (each step only after its own approval)
+
+```sh
+# 0. Local commits of the reviewed work (local only; no push)
+git status --short                      # review; the .bak and screenshots stay out
+# 1. Plugin package from the committed tree (local)
+node tools/build-cms-plugin.mjs         # -> dist/acadvizen-cms-0.7.0-<commit>/acadvizen-cms.zip, verified against the commit; record its SHA-256
+# 2. Before any production change: a snapshot of every Main address (read-only)
+node tools/main-route-inventory.mjs --main https://www.acadvizen.com --out before-release.json --text
+# 3. Main release (APPROVAL): push the branch, then promote the Preview
+git push origin headless-wordpress
+npx vercel promote <preview-url> --scope lavanyaraju581-6438s-projects
+# 4. After the promote: the same snapshot, compared (the bridge is still off: all 314 must be identical)
+node tools/main-route-inventory.mjs --main https://www.acadvizen.com --out after-release.json --text
+node tools/main-migration-compare.mjs before-release.json after-release.json --md release-compare.md
+# 5. Hostinger full backup of enroll.acadvizen.com (owner, hPanel), downloaded off-site
+# 6. Plugin 0.7.0 (APPROVAL): Plugins > Add New > Upload > Replace current with uploaded; then Test connection
+# 7. Approval (APPROVAL): define( 'ACADVIZEN_CMS_APPROVAL', true ); in wp-config.php; assign reviewers
+# 8. Elementor pages for Main (APPROVAL, separately): MAIN-MIGRATION-PLAN.md section 4
+```
+
+**Rollback per step:**
+
+| Step | Rollback |
+|---|---|
+| 3 | `npx vercel promote` the previous deployment `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T` |
+| 6 | Upload `dist/acadvizen-cms-0.6.1-2cc2148/acadvizen-cms.zip` (SHA-256 `dd6fcf27…`) |
+| 7 | Remove the line |
+| 8 | Unset `WORDPRESS_CONTENT_ENABLED` and redeploy |
+| Data | The step 5 backup, then **Publishing → Republish all Main Website pages now** (Main caches drawn pages for up to 5 minutes; `FINAL-RELEASE-AND-ROLLBACK.md` §6) |
+
+## 7. Release gates of the brief, and their status
+
+| Gate | Status | Evidence |
+|---|---|---|
+| Every inventoried Main route works at its intended public URL | **Production today: 314/314** pass the live check; 0 broken internal links (read-only, 13–14 Oct). **After migration: LOCAL only.** Rehearsal #7: 92/92 verified; 86/103 identical to Main's own pages; every difference classified; kept-on-Main addresses identical | `MAIN-ROUTE-CHECKLIST.md`, `evidence/route-audit/`, `evidence/sitewide-migration/rehearsal7/` |
+| Main content, layouts, media, forms, enquiries and SEO verified | LOCAL. 14 Oct defects fixed: blog cards, FAQ accordions, header/footer source, robots and titles, card verification, importer references, server descriptions (O-31 to O-41). Remaining differences are accepted or environmental | Same |
+| Enrollment pages and the enquiry/API intact | LOCAL suites pass. Production (read-only, 14 Oct): `acadvizen/v1/enquiry` registered; 59 pages read for links, 1 existing broken link (O-42). Nothing deployed | `TEST-RESULTS.md` |
+| Elementor edits saved, previewed, approved, published, verified | LOCAL | `approval-acceptance.mjs` |
+| Main publication blocked without approval; edits after approval invalidate it | LOCAL (including SEO fields and Main menus) | approval and reliability suites |
+| Main / Enrollment / Both, and partial failure with retry of the failed website only | LOCAL | A6–A9, R1–R2 |
+| Rollback restores the prior content and routes | LOCAL: Restore, Main-only Make live, Draft, Undo import, migration suite 13/13. Database restore after rehearsals #4–#7: content identical | A10, R8, M5, `evidence/sitewide-migration/` |
+| No secrets exposed | Tracked-file scan and untracked-text scan clean | `TEST-RESULTS.md` |
+| Backups and tested recovery | LOCAL: isolated backup restored into a separate stack. 21/21 tables, sign-in, media 36/36, **87/87 pages identical**. **Production: a fresh Hostinger backup and its restore rehearsal are still required (P1, P4)** | `evidence/restore-rehearsal-20261014/` |
+| Production smoke tests and visual comparisons | **Not run**: no deployment has been authorized | — |
+| Staging | **Blocked**: no staging exists (O-5) | — |
+| Popup with Elementor Pro | **Not verified**. Without Pro the refusal is verified (exact reason, no partial import; approval 47/47). With Pro it needs staging with a licensed Pro | O-31; P2, P6 |

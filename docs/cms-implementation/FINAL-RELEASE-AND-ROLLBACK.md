@@ -160,4 +160,13 @@ git push origin headless-wordpress                   # never main
 | Plugin 0.7.0 must go | Before downgrading, publish or **Discard** open working copies (otherwise they stay as ordinary drafts). Then upload 0.6.1 → **Replace current with uploaded**. Archives stay as private drafts; to remove them: `wp post delete $(wp post list --post_type=any --post_status=any --meta_key=_acv_archive_of --format=ids) --force` | Plugins list; Test connection | Update and rollback rehearsed with 0.6.x (O-6). The 0.7.0 → 0.6.1 downgrade with working copies present is not rehearsed |
 | Data loss | Hostinger full backup (WordPress files and database) and Supabase backups, taken before every production step (`MAIN-MIGRATION-PLAN.md` §4, step 1) | Restore to staging first | Not executed (owner-controlled) |
 
+**Recovery rehearsed LOCAL (13 Oct):**
+- The local WordPress database was backed up (`wp db export`, checksum recorded) before a site-wide migration test, then restored three times (`wp db import`).
+- Each time, all 103 local Main addresses came back identical to the snapshot taken before the test, and the post count matched.
+
+**Lesson for a real restore:** restoring the WordPress database does not tell Main anything. Main keeps serving its cached drawings of WordPress pages for up to 300 seconds (`lib/wordpress/bridge.js`). After restoring WordPress:
+- run **Acadvizen Master Admin → Publishing → Republish all Main Website pages now**, which redraws them and notifies Main;
+- or wait at least 5 minutes before comparing;
+- then run `node tools/main-route-inventory.mjs` and compare with the pre-change snapshot (`tools/main-migration-compare.mjs`).
+
 **Rollback rehearsal of the Elementor-page switch on production: not executed** (it is a production traffic change, not authorized).

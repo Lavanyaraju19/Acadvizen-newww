@@ -1,0 +1,38 @@
+results dir <scratch>/scratchpad/final4-20261013T1610
+[16:10:31Z] node --test tests/unit/*.test.js rc=0 :: ℹ tests 261 ℹ pass 261 ℹ fail 0 
+[16:10:58Z] npx tsc --noEmit -p . rc=0 :: 0 output lines
+[16:11:24Z] npx next lint rc=0 :: errors 0, warnings 10
+[16:11:26Z] php tests/php/run.php rc=0 :: 306 tests, 306 passed, 0 failed
+[16:11:35Z] php -l (every plugin file) rc=0 :: 23 files, 0 with errors
+[16:11:40Z] node tools/check-secrets.mjs --all rc=0 :: No secrets found (all tracked files).
+[16:11:43Z] npm audit --omit=dev rc=0 :: found 0 vulnerabilities 
+[16:15:32Z] npx next build (production-equivalent) rc=0 :: Compiled successfully in 111s (content API on, WORDPRESS_CMS_API_URL set, bridge off)
+[16:15:39Z] local Main up rc=0 :: 200
+[16:15:40Z] image optimiser (sharp 0.35.5) rc=0 :: 200 image/avif 2336 bytes
+[16:15:41Z] plugin version (local WordPress) rc=0 :: Stable tag: 0.7.0
+[16:15:46Z] main /admin sign-in + notifications rc=0 :: 6 passed, 0 failed [LOCAL]
+[16:18:25Z] node tests/wordpress/structured-acceptance.mjs rc=0 :: 56 passed, 0 failed
+[16:21:49Z] node tests/wordpress/site-chrome-acceptance.mjs rc=0 :: 18 passed, 0 failed (click fallbacks: 0)
+[16:25:06Z] node tests/wordpress/homepage-acceptance.mjs rc=0 :: 14 passed, 0 failed (click fallbacks: 0)
+[16:26:02Z] node tests/wordpress/courses-acceptance.mjs rc=0 :: 12 passed, 0 failed (click fallbacks: 0)
+[16:26:55Z] node tests/wordpress/more-content-acceptance.mjs rc=0 :: 15 passed, 0 failed (click fallbacks: 0)
+[16:27:16Z] node tests/wordpress/permissions-acceptance.mjs rc=0 :: 9 passed, 0 failed (http://localhost:8088)
+[16:34:11Z] node tests/wordpress/scheduling-acceptance.mjs rc=0 :: 7 passed, 0 failed | http://localhost:3100 | page /cms-test-scheduled-202610131627
+[16:37:48Z] node tests/wordpress/both-failure-acceptance.mjs rc=0 :: 12 passed, 0 failed [LOCAL]
+[16:38:01Z] node tests/wordpress/conflict-acceptance.mjs rc=0 :: 9 passed, 0 failed [LOCAL]
+[16:38:42Z] node tests/wordpress/blog-sync-acceptance.mjs rc=0 :: 18 passed, 0 failed [LOCAL]
+[16:39:03Z] node tests/wordpress/redirects-acceptance.mjs rc=0 :: 11 passed, 0 failed [LOCAL]
+[16:40:51Z] node tools/verify-wordpress-live.mjs rc=0 :: 16 passed, 0 failed [LOCAL] | test blog /cms-production-test-blog-202610131639
+[16:42:31Z] node tools/verify-wordpress-pages-live.mjs rc=0 :: 17 passed, 0 failed [LOCAL] | test page /cms-production-test-page-202610131640 | click fallbacks 0
+[16:42:32Z] node tools/verify-content-api-live.mjs rc=0 :: 16 passed, 0 failed [LOCAL] | test address /cms-production-test-202610131642
+[16:46:52Z] STEP=main-down node tests/wordpress/both-failure-acceptance.mjs (Main stopped) rc=0 :: 3 passed, 0 failed [LOCAL]
+[16:46:58Z] local Main restarted rc=0 :: 200
+[16:50:14Z] npx next build (Render Bridge on, LOCAL) rc=0 :: Compiled successfully in 99s
+[17:37:02Z] node tests/wordpress/scenarios.mjs (approval off) rc=0 :: 44 passed, 0 failed
+[17:48:16Z] node tests/wordpress/approval-acceptance.mjs (approval on for the run) rc=1 :: 46 passed, 1 failed [LOCAL]
+[17:52:28Z] node tests/wordpress/approval-reliability-acceptance.mjs (Enrollment/both failing, replay, scheduling, approval off) rc=1 :: 7 passed, 4 failed [LOCAL]
+[17:52:47Z] node tools/main-to-elementor/build-bundle.mjs --paths /soft-skills (local Main) rc=0 :: records 1 individual pages: /soft-skills 
+[17:54:10Z] node tests/wordpress/migration-acceptance.mjs (/soft-skills moved to Elementor and back) rc=1 :: 12 passed, 1 failed [LOCAL] | /soft-skills
+[17:54:10Z] ALL DONE
+
+[exited with code 0]

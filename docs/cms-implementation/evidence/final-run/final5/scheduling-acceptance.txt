@@ -1,0 +1,9 @@
+PASS S1 saved as Published with both schedule times — Saved on the Main Website. | site time zone "+00:00" | appear 2026-10-13T16:31:00.000Z | remove 2026-10-13T16:34:00.000Z
+PASS S2 the editor shows back the same local time (no time-zone shift) — 2026-10-13T16:31
+PASS S3 the list shows "Scheduled for …" — CMS TEST scheduled page 202610131627 /cms-test-scheduled-202610131627 Scheduled for October 13, 2026 4:31 pm October 13,
+PASS S4 before its time the page is not public — 16:27:23Z
+PASS S5 the page appears on Main at its time (within 2 minutes) — public at 2026-10-13T16:32:01.666Z (62s after the scheduled time)
+PASS S6 the page is removed from Main at its "remove" time (within 2 minutes) — 404 at 2026-10-13T16:34:03.142Z (3s after)
+PASS Z cleanup: test page removed (list and trash empty, 404) — 0 listed, 0 in trash
+
+7 passed, 0 failed | http://localhost:3100 | page /cms-test-scheduled-202610131627

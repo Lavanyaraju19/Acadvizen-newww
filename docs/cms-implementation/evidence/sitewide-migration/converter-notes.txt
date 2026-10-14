@@ -1,0 +1,18 @@
+kept on the Main Website (application and data-driven routes; --include-app-routes converts them): /courses /tools /placement /companies /internships /resources /digital-marketing-course-bangalore /digital-marketing-course-mysore
+individual pages: / /about /achievements /testimonials /projects /soft-skills /hire-from-us /privacy-policy /terms-of-service /seo-course-in-bangalore /social-media-marketing-course-in-bangalore /google-ads-course-in-bangalore /ai-digital-marketing-course /digital-marketing-internship-in-bangalore /elementor-bridge-proof /jayanagar /neet-coaching /perf-full /perf-new /perf-nocss /perf-nocssglob /perf-noglob /perf-noresp
+header: navigation links not found; kept as converted links
+tool card: related tools grid not found
+blog card: listing grid not found
+service design: description text not found
+main-header: nothing was captured for it; left out, so any existing design is kept
+main-footer: nothing was captured for it; left out, so any existing design is kept
+design-tool: nothing was captured for it; left out, so any existing design is kept
+page-main-elementor-bridge-proof: nothing was captured for it; left out, so any existing design is kept
+page-main-jayanagar: nothing was captured for it; left out, so any existing design is kept
+page-main-neet-coaching: nothing was captured for it; left out, so any existing design is kept
+page-main-perf-full: nothing was captured for it; left out, so any existing design is kept
+page-main-perf-new: nothing was captured for it; left out, so any existing design is kept
+page-main-perf-nocss: nothing was captured for it; left out, so any existing design is kept
+page-main-perf-nocssglob: nothing was captured for it; left out, so any existing design is kept
+page-main-perf-noglob: nothing was captured for it; left out, so any existing design is kept
+page-main-perf-noresp: nothing was captured for it; left out, so any existing design is kept

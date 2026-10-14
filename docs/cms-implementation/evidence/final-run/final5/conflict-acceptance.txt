@@ -1,0 +1,11 @@
+PASS setup: a test page exists on Main — {"ok":true,"data":{"id":"a355d8f6-ba39-4a63-9162-13e5d16c8e54","title":"CMS TEST conflict 202610131637","slug":"cms-test
+PASS the edit form carries the version it opened
+PASS the other editor's save changed the version — 2026-10-13T16:37:49.187+00:00 -> 2026-10-13 16:37:53.921164+00
+PASS C-1 the stale save is refused with a red message explaining what happened — error: Not saved: someone changed this on the Main Website (for example in its own admin) after you opened it. What you typed i
+PASS C-2 the other editor's change is kept on Main
+PASS C-3 what was typed in WordPress is kept in the form
+PASS C-4 saving again (informed) replaces the other change — success: Saved on the Main Website.Dismiss this notice.
+PASS C-5 an edit with no conflict saves normally — success
+PASS Z cleanup: the test page is gone
+
+9 passed, 0 failed [LOCAL]

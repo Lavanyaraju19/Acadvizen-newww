@@ -1,8 +1,42 @@
-# Acadvizen central CMS: client handover (13 October 2026)
+# Acadvizen central CMS: client handover (updated 14 October 2026)
 
-## Status
+## Status on 14 October 2026 (current)
 
-**BLOCKED for a full handover, by production authorization only. No engineering defect is open.**
+**Verdict: NOT CLIENT READY.** Option B (Main pages in Elementor, mandatory approval) works end to end on a local copy, and production is unchanged. Client-ready needs proof on a real staging site and then production, and that needs the owner's steps in `OWNER-ACTIONS.md`. The approval gate for Main is `MAIN-ACCEPTANCE-CHECKLIST.md`.
+
+**Production today (read-only checks, nothing changed):**
+- Main release 10: `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T`, commit `80134d4`.
+- Enrollment plugin 0.6.1. Render Bridge **off**.
+- 314/314 Main addresses pass the live check; 0 broken internal links.
+
+**Verified complete:**
+- Production (12 Oct): editing Main pages and blogs from the Master Admin, published to Main, Enrollment or Both.
+- LOCAL only:
+  - one Elementor admin for both websites with mandatory approval: preview per website, exact-revision approval, verification, partial failure, "Check again", rollback, audit log;
+  - site-wide migration of the local copy: 92 items approved, published and **92/92 verified**; every difference against Main's own pages classified;
+  - recovery: database restore after each migration; an isolated backup restored into a separate stack (87/87 pages identical, row counts identical in 21/21 tables, sign-in, media 36/36);
+  - today's converter, importer and SEO fixes (`FINAL-OPEN-ISSUES.md` O-31 to O-43).
+
+**Not complete or blocked:**
+- No staging site: Main, Enrollment and Both, failures, retry and rollback are proven on the local copy only.
+- **Popups with Elementor Pro:** not verified. The local copy has no Pro; a popup is refused there, correctly. Needs staging with Pro.
+- Migration of production's 109 Page Builder pages: unproven. The local copy has none drawn by Main itself.
+- Fresh production backup and restore rehearsal: not done (owner access).
+- Credentials exposed in Git history: not rotated (O-1, owner decision).
+
+**Needs owner approval or action:** P1 to P11 in `OWNER-ACTIONS.md`, plus:
+- O-41: Course Modules on the five course landing pages;
+- O-42: the broken carousel link on the Enrollment homepage.
+
+**Accepted limitations:**
+- The video label "▶ Play Video" becomes Elementor's play button (O-36).
+- Theme "Skip to content" link, keyboard only (O-35).
+- Animated visitor counter differs on every load.
+- After a header or footer change, other Main pages update within about 5–10 minutes (designed redraw).
+
+## Status on 13 October 2026 (superseded where the section above differs)
+
+**(13 Oct wording, superseded:) BLOCKED for a full handover, by production authorization only.** On 14 Oct further defects were found and fixed locally: see the section above.
 
 - **Live and verified:** editing Main pages and blogs from WordPress, and publishing to Main, Enrollment or Both.
 - **Built and tested LOCAL, every suite passing:** the Elementor admin for both websites with mandatory approval.
@@ -21,7 +55,7 @@
 | Does **Both** update both? | **Yes**, verified on production 12 Oct (publish and an edit reach both). Failure handling for Both verified locally only; the clearer partial-failure warning needs plugin 0.6.2 (O-14) |
 | Production switches (observed 12 Oct) | WordPress → Main content connection **ON** (since 12 Oct, earlier approval); Render Bridge **OFF**. Your 13 Oct instruction asks for it off until you approve: see `FINAL-PUBLISHING-WORKFLOW.md` §1. Nothing changed by the engineer |
 | Plugin | 0.6.1 live; **0.7.0** prepared locally, not installed: blogs editable in any editor and kept in step, edit-conflict protection, Redirects, clearer failure messages, **approval-first Elementor publishing** and the **widget compatibility registry** (`FINAL-FEATURE-INVENTORY.md` §F) |
-| **One Elementor admin for both websites, with mandatory approval** | `PASS — VERIFIED LOCALLY ONLY` (final ordered run, 13 Oct 11:13–12:53 UTC). Covered by `approval-acceptance.mjs` 46/46, `approval-reliability-acceptance.mjs` 29/29, `migration-acceptance.mjs` 13/13 and the bridge scenarios 44/44:<ul><li>the real Elementor editor;</li><li>Main / Enrollment / Both, each verified on the public page;</li><li>approval tied to the exact revision; any edit cancels it; reviewers only;</li><li>audit history;</li><li>partial failure, retry and rollback;</li><li>blocked widgets and typed code;</li><li>desktop/tablet/phone layout on both websites.</li></ul>**Not on production:** it needs plugin 0.7.0, two wp-config switches and the Main switch (a production traffic change). Runbook in `MAIN-MIGRATION-PLAN.md`; state in `DEPLOYMENT-REPORT.md` |
+| **One Elementor admin for both websites, with mandatory approval** | `PASS — VERIFIED LOCALLY ONLY` (final ordered run, 13 Oct 11:13–12:53 UTC). Covered by `approval-acceptance.mjs` 47/47, `approval-reliability-acceptance.mjs` 38/38, `migration-acceptance.mjs` 13/13 and the bridge scenarios 44/44:<ul><li>the real Elementor editor;</li><li>Main / Enrollment / Both, each verified on the public page;</li><li>approval tied to the exact revision; any edit cancels it; reviewers only;</li><li>audit history;</li><li>partial failure, retry and rollback;</li><li>blocked widgets and typed code;</li><li>desktop/tablet/phone layout on both websites.</li></ul>**Not on production:** it needs plugin 0.7.0, two wp-config switches and the Main switch (a production traffic change). Runbook in `MAIN-MIGRATION-PLAN.md`; state in `DEPLOYMENT-REPORT.md` |
 | Moving Main's existing pages into Elementor | Tool and runbook ready. One real page (`/soft-skills`) moved end to end LOCAL: content, SEO and canonical identical; visually close, not identical (O-28). Production migration not started: `OWNER APPROVAL REQUIRED` at each step (`MAIN-MIGRATION-PLAN.md`) |
 
 ## 1. How it fits together
@@ -136,6 +170,8 @@ Verified locally only: production has no Author or Contributor accounts.
 | 11 | `FINAL-OPEN-ISSUES.md` | Known issues and owner decisions |
 | 12 | `FINAL-MAINTENANCE-GUIDE.md` | Plugins, Elementor licensing, updates, switches, routine tasks |
 | — | `MAIN-MIGRATION-PLAN.md` | Inventory of Main addresses, architecture decision, production migration runbook |
+| — | `MAIN-ROUTE-CHECKLIST.md` | All 314 production Main addresses with their migration target, live SEO facts and local evidence (site-wide migration run) |
+| — | `MAIN-ACCEPTANCE-CHECKLIST.md` | The Main Website approval gate: each criterion, its evidence (PRODUCTION / STAGING / LOCAL) and what is still missing. Current verdict: not ready for approval |
 
 **Live versions:**
 - Main: `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T` (commit `80134d4`);

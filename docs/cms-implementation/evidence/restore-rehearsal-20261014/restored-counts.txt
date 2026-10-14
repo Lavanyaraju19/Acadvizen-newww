@@ -1,0 +1,21 @@
+
+wp_actionscheduler_actions	11
+wp_actionscheduler_claims	0
+wp_actionscheduler_groups	2
+wp_actionscheduler_logs	31
+wp_acv_render_versions	400
+wp_commentmeta	0
+wp_comments	1
+wp_e_events	0
+wp_links	0
+wp_options	251
+wp_postmeta	5171
+wp_posts	810
+wp_rank_math_internal_links	4
+wp_rank_math_internal_meta	89
+wp_term_relationships	20
+wp_term_taxonomy	9
+wp_termmeta	1
+wp_terms	9
+wp_usermeta	151
+wp_users	6

@@ -52,6 +52,17 @@ You design. A reviewer checks. Only then does it go live, on exactly the website
 - **Design freely:** sections, columns, text, images, buttons, colours, and sizes for phone and tablet.
 - **Click "Save Draft"** whenever you like. Nothing goes live.
 
+### The four choices
+
+| Choice | What happens | Live websites change? |
+|---|---|---|
+| **Save Draft** (Elementor's own button) | Your work is saved privately | No |
+| **Publish To = Main** | After approval: www.acadvizen.com only | Yes, after approval |
+| **Publish To = Enrollment** | After approval: enroll.acadvizen.com only | Yes, after approval |
+| **Publish To = Both** | After approval: the same page on both, each checked separately | Yes, after approval |
+
+**Both is coordinated, not all-or-nothing.** The page is published to each website and each is checked. If one fails, you see which one, the other keeps the new version, and **Check again** retries only the failed website.
+
 ### 2. Choose where it appears
 
 In the page's **Publish To** box:

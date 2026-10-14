@@ -14,6 +14,8 @@ Applies to plugin 0.7.0 with approval turned on (`ACADVIZEN_CMS_APPROVAL`). **Te
 
 - **Self-approval is allowed but recorded.** The history marks it "approved by the person who submitted it". For important pages, ask a second person.
 - **Global styles are reviewer-only.** The Elementor kit (Site Settings: colours, fonts, buttons) changes both websites at once, so only a reviewer can save it. Each save is recorded in the history.
+- **Main navigation is reviewer-only.** A menu shown on the Main website changes every Main page at once. Only a reviewer can save it: in Appearance → Menus, through the REST menu routes, and (for non-reviewers) not at all in the Customizer. Each save is recorded. Menus used only on Enrollment keep their usual workflow.
+- **Putting an earlier version back on Main** ("Make live" in a page's Versions box) is reviewer-only and recorded.
 
 ## Where to review
 
@@ -43,10 +45,20 @@ Applies to plugin 0.7.0 with approval turned on (`ACADVIZEN_CMS_APPROVAL`). **Te
    | code | Contains typed HTML or a shortcode | Read the code, then tick **I checked the code**; approval is refused without it |
    | blocked | Cannot be reproduced on a chosen website (widget not installed, shop or login on Main) | Cannot be approved. The message says which widget, which website, why, and the fix |
 3. **Decide.**
-   - **Approve this revision** approves exactly what you previewed.
+   - **Tick "I checked the … preview"** for every chosen website (for **Both**: Main and Enrollment). Approval is refused until each is ticked.
+   - **Approve this revision** approves exactly what you previewed. The approval records the websites, the previews you confirmed, you, and the time.
    - **Reject** asks "What should change?" and sends it back to the editor as a draft with your note.
 
-**An approval belongs to one exact revision.** If anyone changes anything afterwards (text, design, image file, Publish To, address, global styles), the approval is cancelled automatically and the page must be submitted again. Saving without a change keeps the approval.
+**An approval belongs to one exact revision.** These are all part of it:
+- text and design;
+- image files;
+- Publish To and the address;
+- **SEO fields** (title, description, canonical, robots, social and schema fields);
+- the global styles.
+
+If anyone changes any of them afterwards, the approval is cancelled automatically and the page must be submitted again. Publishing also re-checks the revision, and refuses if it changed. Saving without a change keeps the approval.
+
+**Status of each website after publishing:** **Pending** (not published yet), **Publishing** (published, being checked), **Published (verified)**, **Failed**.
 
 ## Publishing and verification
 
@@ -65,6 +77,11 @@ Applies to plugin 0.7.0 with approval turned on (`ACADVIZEN_CMS_APPROVAL`). **Te
    | **Failed** | No chosen website shows it after about 20 minutes of checks |
 
    Success is never reported unless every chosen website was verified.
+
+**Shared parts (header, footer, cards, the tool or blog design): checked on one page, then redrawn everywhere.**
+- A shared part is verified on one page that shows it. For a card, that is a page whose list draws it, for example the tool card on a tool page.
+- Every other Main page that uses it is then redrawn automatically, one after another. In the 14 October rehearsal that was 50 pages in about a minute, with no failures. Until a page is redrawn it still shows the previous version, and Main may keep a drawn page for up to 5 minutes.
+- So after publishing a new header or footer, allow about 5–10 minutes before checking other pages. If one page still shows the old version after that, open **Acadvizen Master Admin → Publishing**: every redraw is listed with its result.
 
 ## Scheduled publishing
 

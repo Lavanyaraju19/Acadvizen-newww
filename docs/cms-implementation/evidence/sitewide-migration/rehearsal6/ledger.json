@@ -1,0 +1,1656 @@
+[
+    {
+        "id": 2182,
+        "type": "page",
+        "template": "wp-page",
+        "title": "Digital Marketing Internship In Bangalore (Main)",
+        "slug": "main-digital-marketing-internship-in-bangalore",
+        "status": "publish",
+        "target": "main",
+        "source": "record:page-main-digital-marketing-internship-in-bangalore",
+        "batch": "main-20261014",
+        "approval": "published",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/digital-marketing-internship-in-bangalore",
+        "enroll_url": "http://localhost:8088/main-digital-marketing-internship-in-bangalore/"
+    },
+    {
+        "id": 2177,
+        "type": "page",
+        "template": "wp-page",
+        "title": "Terms of Service (Main)",
+        "slug": "main-terms-of-service",
+        "status": "publish",
+        "target": "main",
+        "source": "record:page-main-terms-of-service",
+        "batch": "main-20261014",
+        "approval": "published",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/terms-of-service",
+        "enroll_url": "http://localhost:8088/main-terms-of-service/"
+    },
+    {
+        "id": 2178,
+        "type": "page",
+        "template": "wp-page",
+        "title": "SEO Course In Bangalore (Main)",
+        "slug": "main-seo-course-in-bangalore",
+        "status": "publish",
+        "target": "main",
+        "source": "record:page-main-seo-course-in-bangalore",
+        "batch": "main-20261014",
+        "approval": "published",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/seo-course-in-bangalore",
+        "enroll_url": "http://localhost:8088/main-seo-course-in-bangalore/"
+    },
+    {
+        "id": 2179,
+        "type": "page",
+        "template": "wp-page",
+        "title": "Social Media Marketing Course In Bangalore (Main)",
+        "slug": "main-social-media-marketing-course-in-bangalore",
+        "status": "publish",
+        "target": "main",
+        "source": "record:page-main-social-media-marketing-course-in-bangalore",
+        "batch": "main-20261014",
+        "approval": "published",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/social-media-marketing-course-in-bangalore",
+        "enroll_url": "http://localhost:8088/main-social-media-marketing-course-in-bangalore/"
+    },
+    {
+        "id": 2180,
+        "type": "page",
+        "template": "wp-page",
+        "title": "Google Ads Course In Bangalore (Main)",
+        "slug": "main-google-ads-course-in-bangalore",
+        "status": "publish",
+        "target": "main",
+        "source": "record:page-main-google-ads-course-in-bangalore",
+        "batch": "main-20261014",
+        "approval": "published",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/google-ads-course-in-bangalore",
+        "enroll_url": "http://localhost:8088/main-google-ads-course-in-bangalore/"
+    },
+    {
+        "id": 2181,
+        "type": "page",
+        "template": "wp-page",
+        "title": "AI Digital Marketing Course (Main)",
+        "slug": "main-ai-digital-marketing-course",
+        "status": "publish",
+        "target": "main",
+        "source": "record:page-main-ai-digital-marketing-course",
+        "batch": "main-20261014",
+        "approval": "published",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/ai-digital-marketing-course",
+        "enroll_url": "http://localhost:8088/main-ai-digital-marketing-course/"
+    },
+    {
+        "id": 2172,
+        "type": "page",
+        "template": "wp-page",
+        "title": "Testimonials (Main)",
+        "slug": "main-testimonials",
+        "status": "publish",
+        "target": "main",
+        "source": "record:page-main-testimonials",
+        "batch": "main-20261014",
+        "approval": "published",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/testimonials",
+        "enroll_url": "http://localhost:8088/main-testimonials/"
+    },
+    {
+        "id": 2173,
+        "type": "page",
+        "template": "wp-page",
+        "title": "Projects (Main)",
+        "slug": "main-projects",
+        "status": "publish",
+        "target": "main",
+        "source": "record:page-main-projects",
+        "batch": "main-20261014",
+        "approval": "published",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/projects",
+        "enroll_url": "http://localhost:8088/main-projects/"
+    },
+    {
+        "id": 2174,
+        "type": "page",
+        "template": "wp-page",
+        "title": "Soft Skills (Main)",
+        "slug": "main-soft-skills",
+        "status": "publish",
+        "target": "main",
+        "source": "record:page-main-soft-skills",
+        "batch": "main-20261014",
+        "approval": "published",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/soft-skills",
+        "enroll_url": "http://localhost:8088/main-soft-skills/"
+    },
+    {
+        "id": 2175,
+        "type": "page",
+        "template": "wp-page",
+        "title": "Hire From Us (Main)",
+        "slug": "main-hire-from-us",
+        "status": "publish",
+        "target": "main",
+        "source": "record:page-main-hire-from-us",
+        "batch": "main-20261014",
+        "approval": "published",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/hire-from-us",
+        "enroll_url": "http://localhost:8088/main-hire-from-us/"
+    },
+    {
+        "id": 2176,
+        "type": "page",
+        "template": "wp-page",
+        "title": "Privacy Policy (Main)",
+        "slug": "main-privacy-policy",
+        "status": "publish",
+        "target": "main",
+        "source": "record:page-main-privacy-policy",
+        "batch": "main-20261014",
+        "approval": "published",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/privacy-policy",
+        "enroll_url": "http://localhost:8088/main-privacy-policy/"
+    },
+    {
+        "id": 2168,
+        "type": "page",
+        "template": "wp-page",
+        "title": "Blog (Main)",
+        "slug": "main-blog",
+        "status": "publish",
+        "target": "main",
+        "source": "record:page-main-blog",
+        "batch": "main-20261014",
+        "approval": "published",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/blog",
+        "enroll_url": "http://localhost:8088/main-blog/"
+    },
+    {
+        "id": 2169,
+        "type": "page",
+        "template": "wp-page",
+        "title": "Acadvizen: Digital Marketing Course in Bangalore with AI Training (Main)",
+        "slug": "main-home",
+        "status": "publish",
+        "target": "main",
+        "source": "record:page-main-home",
+        "batch": "main-20261014",
+        "approval": "published",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "",
+        "enroll_url": "http://localhost:8088/main-home/"
+    },
+    {
+        "id": 40,
+        "type": "page",
+        "template": "wp-page",
+        "title": "About (Main)",
+        "slug": "about",
+        "status": "publish",
+        "target": "main",
+        "source": "record:page-main-about",
+        "batch": "",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/about",
+        "enroll_url": "http://localhost:8088/about/"
+    },
+    {
+        "id": 151,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Wix",
+        "slug": "wix",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-wix",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/wix",
+        "enroll_url": "http://localhost:8088/tool/wix/"
+    },
+    {
+        "id": 2171,
+        "type": "page",
+        "template": "wp-page",
+        "title": "Award-Winning Digital Marketing Training Institute in Karnataka \u2013 Empowering Future Marketers (Main)",
+        "slug": "main-achievements",
+        "status": "publish",
+        "target": "main",
+        "source": "record:page-main-achievements",
+        "batch": "main-20261014",
+        "approval": "published",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/achievements",
+        "enroll_url": "http://localhost:8088/main-achievements/"
+    },
+    {
+        "id": 2167,
+        "type": "acv_location",
+        "template": "",
+        "title": "Contact Us",
+        "slug": "contact",
+        "status": "publish",
+        "target": "main",
+        "source": "record:location-contact",
+        "batch": "main-20261014",
+        "approval": "published",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/contact",
+        "enroll_url": "http://localhost:8088/location/contact/"
+    },
+    {
+        "id": 152,
+        "type": "acv_tool",
+        "template": "",
+        "title": "WordPress",
+        "slug": "wordpress",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-wordpress",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/wordpress",
+        "enroll_url": "http://localhost:8088/tool/wordpress/"
+    },
+    {
+        "id": 153,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Writesonic",
+        "slug": "writesonic",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-writesonic",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/writesonic",
+        "enroll_url": "http://localhost:8088/tool/writesonic/"
+    },
+    {
+        "id": 154,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Zapier",
+        "slug": "zapier",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-zapier",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/zapier",
+        "enroll_url": "http://localhost:8088/tool/zapier/"
+    },
+    {
+        "id": 155,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Zoho",
+        "slug": "zoho",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-zoho",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/zoho",
+        "enroll_url": "http://localhost:8088/tool/zoho/"
+    },
+    {
+        "id": 141,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Shopify",
+        "slug": "shopify",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-shopify",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/shopify",
+        "enroll_url": "http://localhost:8088/tool/shopify/"
+    },
+    {
+        "id": 142,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Squarespace",
+        "slug": "squarespace",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-squarespace",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/squarespace",
+        "enroll_url": "http://localhost:8088/tool/squarespace/"
+    },
+    {
+        "id": 143,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Surfer SEO",
+        "slug": "surfer-seo",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-surfer-seo",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/surfer-seo",
+        "enroll_url": "http://localhost:8088/tool/surfer-seo/"
+    },
+    {
+        "id": 144,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Taboola",
+        "slug": "taboola",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-taboola",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/taboola",
+        "enroll_url": "http://localhost:8088/tool/taboola/"
+    },
+    {
+        "id": 145,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Tag Manager",
+        "slug": "tag-manager",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-tag-manager",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/tag-manager",
+        "enroll_url": "http://localhost:8088/tool/tag-manager/"
+    },
+    {
+        "id": 146,
+        "type": "acv_tool",
+        "template": "",
+        "title": "TikTok Ads",
+        "slug": "tiktok-ads",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-tiktok-ads",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/tiktok-ads",
+        "enroll_url": "http://localhost:8088/tool/tiktok-ads/"
+    },
+    {
+        "id": 147,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Ubersuggest",
+        "slug": "ubersuggest",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-ubersuggest",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/ubersuggest",
+        "enroll_url": "http://localhost:8088/tool/ubersuggest/"
+    },
+    {
+        "id": 148,
+        "type": "acv_tool",
+        "template": "",
+        "title": "VEED",
+        "slug": "veed",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-veed",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/veed",
+        "enroll_url": "http://localhost:8088/tool/veed/"
+    },
+    {
+        "id": 149,
+        "type": "acv_tool",
+        "template": "",
+        "title": "VistaCreate",
+        "slug": "vistacreate",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-vistacreate",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/vistacreate",
+        "enroll_url": "http://localhost:8088/tool/vistacreate/"
+    },
+    {
+        "id": 150,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Webflow",
+        "slug": "webflow",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-webflow",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/webflow",
+        "enroll_url": "http://localhost:8088/tool/webflow/"
+    },
+    {
+        "id": 140,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Serpstat",
+        "slug": "serpstat",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-serpstat",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/serpstat",
+        "enroll_url": "http://localhost:8088/tool/serpstat/"
+    },
+    {
+        "id": 128,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Moz",
+        "slug": "moz",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-moz",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/moz",
+        "enroll_url": "http://localhost:8088/tool/moz/"
+    },
+    {
+        "id": 129,
+        "type": "acv_tool",
+        "template": "",
+        "title": "n8n",
+        "slug": "n8n",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-n8n",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/n8n",
+        "enroll_url": "http://localhost:8088/tool/n8n/"
+    },
+    {
+        "id": 130,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Notion AI",
+        "slug": "notion-ai",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-notion-ai",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/notion-ai",
+        "enroll_url": "http://localhost:8088/tool/notion-ai/"
+    },
+    {
+        "id": 131,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Outbrain",
+        "slug": "outbrain",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-outbrain",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/outbrain",
+        "enroll_url": "http://localhost:8088/tool/outbrain/"
+    },
+    {
+        "id": 132,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Photoshop",
+        "slug": "photoshop",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-photoshop",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/photoshop",
+        "enroll_url": "http://localhost:8088/tool/photoshop/"
+    },
+    {
+        "id": 133,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Pipedrive",
+        "slug": "pipedrive",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-pipedrive",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/pipedrive",
+        "enroll_url": "http://localhost:8088/tool/pipedrive/"
+    },
+    {
+        "id": 134,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Pixlr",
+        "slug": "pixlr",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-pixlr",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/pixlr",
+        "enroll_url": "http://localhost:8088/tool/pixlr/"
+    },
+    {
+        "id": 135,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Quillbot",
+        "slug": "quillbot",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-quillbot",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/quillbot",
+        "enroll_url": "http://localhost:8088/tool/quillbot/"
+    },
+    {
+        "id": 136,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Rytr",
+        "slug": "rytr",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-rytr",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/rytr",
+        "enroll_url": "http://localhost:8088/tool/rytr/"
+    },
+    {
+        "id": 137,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Salesforce",
+        "slug": "salesforce",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-salesforce",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/salesforce",
+        "enroll_url": "http://localhost:8088/tool/salesforce/"
+    },
+    {
+        "id": 138,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Screaming Frog",
+        "slug": "screaming-frog",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-screaming-frog",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/screaming-frog",
+        "enroll_url": "http://localhost:8088/tool/screaming-frog/"
+    },
+    {
+        "id": 139,
+        "type": "acv_tool",
+        "template": "",
+        "title": "SEMrush",
+        "slug": "semrush",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-semrush",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/semrush",
+        "enroll_url": "http://localhost:8088/tool/semrush/"
+    },
+    {
+        "id": 125,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Microsoft Ads",
+        "slug": "microsoft-ads",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-microsoft-ads",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/microsoft-ads",
+        "enroll_url": "http://localhost:8088/tool/microsoft-ads/"
+    },
+    {
+        "id": 126,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Midjourney",
+        "slug": "midjourney",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-midjourney",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/midjourney",
+        "enroll_url": "http://localhost:8088/tool/midjourney/"
+    },
+    {
+        "id": 127,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Mixpanel",
+        "slug": "mixpanel",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-mixpanel",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/mixpanel",
+        "enroll_url": "http://localhost:8088/tool/mixpanel/"
+    },
+    {
+        "id": 115,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Illustrator",
+        "slug": "illustrator",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-illustrator",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/illustrator",
+        "enroll_url": "http://localhost:8088/tool/illustrator/"
+    },
+    {
+        "id": 116,
+        "type": "acv_tool",
+        "template": "",
+        "title": "InVideo",
+        "slug": "invideo",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-invideo",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/invideo",
+        "enroll_url": "http://localhost:8088/tool/invideo/"
+    },
+    {
+        "id": 117,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Jasper",
+        "slug": "jasper",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-jasper",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/jasper",
+        "enroll_url": "http://localhost:8088/tool/jasper/"
+    },
+    {
+        "id": 118,
+        "type": "acv_tool",
+        "template": "",
+        "title": "LinkedIn Ads",
+        "slug": "linkedin-ads",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-linkedin-ads",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/linkedin-ads",
+        "enroll_url": "http://localhost:8088/tool/linkedin-ads/"
+    },
+    {
+        "id": 120,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Loom",
+        "slug": "loom",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-loom",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/loom",
+        "enroll_url": "http://localhost:8088/tool/loom/"
+    },
+    {
+        "id": 121,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Mailchimp",
+        "slug": "mailchimp",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-mailchimp",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/mailchimp",
+        "enroll_url": "http://localhost:8088/tool/mailchimp/"
+    },
+    {
+        "id": 122,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Make",
+        "slug": "make",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-make",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/make",
+        "enroll_url": "http://localhost:8088/tool/make/"
+    },
+    {
+        "id": 123,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Mangools",
+        "slug": "mangools",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-mangools",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/mangools",
+        "enroll_url": "http://localhost:8088/tool/mangools/"
+    },
+    {
+        "id": 124,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Meta Ads",
+        "slug": "meta-ads",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-meta-ads",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/meta-ads",
+        "enroll_url": "http://localhost:8088/tool/meta-ads/"
+    },
+    {
+        "id": 108,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Freshsales",
+        "slug": "freshsales",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-freshsales",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/freshsales",
+        "enroll_url": "http://localhost:8088/tool/freshsales/"
+    },
+    {
+        "id": 109,
+        "type": "acv_tool",
+        "template": "",
+        "title": "GA4",
+        "slug": "ga4",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-ga4",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/ga4",
+        "enroll_url": "http://localhost:8088/tool/ga4/"
+    },
+    {
+        "id": 110,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Google Ads",
+        "slug": "google-ads",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-google-ads",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/google-ads",
+        "enroll_url": "http://localhost:8088/tool/google-ads/"
+    },
+    {
+        "id": 111,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Google Analytics",
+        "slug": "google-analytics",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-google-analytics",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/google-analytics",
+        "enroll_url": "http://localhost:8088/tool/google-analytics/"
+    },
+    {
+        "id": 112,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Google Search Console",
+        "slug": "google-search-console",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-google-search-console",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/google-search-console",
+        "enroll_url": "http://localhost:8088/tool/google-search-console/"
+    },
+    {
+        "id": 113,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Hotjar",
+        "slug": "hotjar",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-hotjar",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/hotjar",
+        "enroll_url": "http://localhost:8088/tool/hotjar/"
+    },
+    {
+        "id": 114,
+        "type": "acv_tool",
+        "template": "",
+        "title": "HubSpot",
+        "slug": "hubspot",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-hubspot",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/hubspot",
+        "enroll_url": "http://localhost:8088/tool/hubspot/"
+    },
+    {
+        "id": 103,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Criteo",
+        "slug": "criteo",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-criteo",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/criteo",
+        "enroll_url": "http://localhost:8088/tool/criteo/"
+    },
+    {
+        "id": 104,
+        "type": "acv_tool",
+        "template": "",
+        "title": "DALL\u00b7E",
+        "slug": "dalle",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-dalle",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/dalle",
+        "enroll_url": "http://localhost:8088/tool/dalle/"
+    },
+    {
+        "id": 105,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Descript",
+        "slug": "descript",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-descript",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/descript",
+        "enroll_url": "http://localhost:8088/tool/descript/"
+    },
+    {
+        "id": 106,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Figma",
+        "slug": "figma",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-figma",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/figma",
+        "enroll_url": "http://localhost:8088/tool/figma/"
+    },
+    {
+        "id": 107,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Framer",
+        "slug": "framer",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-framer",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/framer",
+        "enroll_url": "http://localhost:8088/tool/framer/"
+    },
+    {
+        "id": 92,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Amplitude",
+        "slug": "amplitude",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-amplitude",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/amplitude",
+        "enroll_url": "http://localhost:8088/tool/amplitude/"
+    },
+    {
+        "id": 93,
+        "type": "acv_tool",
+        "template": "",
+        "title": "AnswerThePublic",
+        "slug": "answer-the-public",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-answer-the-public",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/answer-the-public",
+        "enroll_url": "http://localhost:8088/tool/answer-the-public/"
+    },
+    {
+        "id": 94,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Brevo",
+        "slug": "brevo",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-brevo",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/brevo",
+        "enroll_url": "http://localhost:8088/tool/brevo/"
+    },
+    {
+        "id": 95,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Canva",
+        "slug": "canva",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-canva",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/canva",
+        "enroll_url": "http://localhost:8088/tool/canva/"
+    },
+    {
+        "id": 96,
+        "type": "acv_tool",
+        "template": "",
+        "title": "CapCut",
+        "slug": "capcut",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-capcut",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/capcut",
+        "enroll_url": "http://localhost:8088/tool/capcut/"
+    },
+    {
+        "id": 97,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Carrd",
+        "slug": "carrd",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-carrd",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/carrd",
+        "enroll_url": "http://localhost:8088/tool/carrd/"
+    },
+    {
+        "id": 98,
+        "type": "acv_tool",
+        "template": "",
+        "title": "ChatGPT",
+        "slug": "chatgpt",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-chatgpt",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/chatgpt",
+        "enroll_url": "http://localhost:8088/tool/chatgpt/"
+    },
+    {
+        "id": 99,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Clarity",
+        "slug": "clarity",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-clarity",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/clarity",
+        "enroll_url": "http://localhost:8088/tool/clarity/"
+    },
+    {
+        "id": 100,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Claude",
+        "slug": "claude",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-claude",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/claude",
+        "enroll_url": "http://localhost:8088/tool/claude/"
+    },
+    {
+        "id": 101,
+        "type": "acv_tool",
+        "template": "",
+        "title": "ConvertKit",
+        "slug": "convertkit",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-convertkit",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/convertkit",
+        "enroll_url": "http://localhost:8088/tool/convertkit/"
+    },
+    {
+        "id": 102,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Copy.ai",
+        "slug": "copy-ai",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-copy-ai",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/copy-ai",
+        "enroll_url": "http://localhost:8088/tool/copy-ai/"
+    },
+    {
+        "id": 87,
+        "type": "elementor_library",
+        "template": "section",
+        "title": "Main \u2014 Tool card",
+        "slug": "main-tool-card",
+        "status": "publish",
+        "target": "main",
+        "source": "template:card-tool",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "",
+        "enroll_url": ""
+    },
+    {
+        "id": 86,
+        "type": "elementor_library",
+        "template": "page",
+        "title": "Main \u2014 Tool page design",
+        "slug": "main-tool-page-design",
+        "status": "publish",
+        "target": "main",
+        "source": "template:design-tool",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "",
+        "enroll_url": ""
+    },
+    {
+        "id": 2096,
+        "type": "elementor_library",
+        "template": "section",
+        "title": "Main \u2014 Blog card",
+        "slug": "main-blog-card",
+        "status": "publish",
+        "target": "main",
+        "source": "template:card-blog",
+        "batch": "main-20261014",
+        "approval": "published",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "",
+        "enroll_url": ""
+    },
+    {
+        "id": 2097,
+        "type": "elementor_library",
+        "template": "page",
+        "title": "Main \u2014 Blog post design",
+        "slug": "main-blog-post-design",
+        "status": "publish",
+        "target": "main",
+        "source": "template:design-blog",
+        "batch": "main-20261014",
+        "approval": "published",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "",
+        "enroll_url": ""
+    },
+    {
+        "id": 2098,
+        "type": "elementor_library",
+        "template": "page",
+        "title": "Main \u2014 Location &#038; service page design",
+        "slug": "main-location-service-page-design",
+        "status": "publish",
+        "target": "main",
+        "source": "template:design-location",
+        "batch": "main-20261014",
+        "approval": "published",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "",
+        "enroll_url": ""
+    },
+    {
+        "id": 84,
+        "type": "elementor-hf",
+        "template": "wp-post",
+        "title": "Main Website Header",
+        "slug": "main-website-header",
+        "status": "publish",
+        "target": "main",
+        "source": "template:main-header",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "",
+        "enroll_url": ""
+    },
+    {
+        "id": 85,
+        "type": "elementor-hf",
+        "template": "wp-post",
+        "title": "Main Website Footer",
+        "slug": "main-website-footer",
+        "status": "publish",
+        "target": "main",
+        "source": "template:main-footer",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "",
+        "enroll_url": ""
+    },
+    {
+        "id": 88,
+        "type": "acv_tool",
+        "template": "",
+        "title": "ActiveCampaign",
+        "slug": "activecampaign",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-activecampaign",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/activecampaign",
+        "enroll_url": "http://localhost:8088/tool/activecampaign/"
+    },
+    {
+        "id": 89,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Adobe XD",
+        "slug": "adobe-xd",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-adobe-xd",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/adobe-xd",
+        "enroll_url": "http://localhost:8088/tool/adobe-xd/"
+    },
+    {
+        "id": 90,
+        "type": "acv_tool",
+        "template": "",
+        "title": "AdRoll",
+        "slug": "adroll",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-adroll",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/adroll",
+        "enroll_url": "http://localhost:8088/tool/adroll/"
+    },
+    {
+        "id": 91,
+        "type": "acv_tool",
+        "template": "",
+        "title": "Ahrefs",
+        "slug": "ahrefs",
+        "status": "publish",
+        "target": "main",
+        "source": "record:tool-ahrefs",
+        "batch": "main-20261004",
+        "approval": "",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/tools/ahrefs",
+        "enroll_url": "http://localhost:8088/tool/ahrefs/"
+    },
+    {
+        "id": 2166,
+        "type": "acv_blog",
+        "template": "",
+        "title": "Google Ads AI Max Explained: What the September 2026 Auto-Upgrade Changed",
+        "slug": "google-ads-ai-max-explained-what-the-september-2026-auto-upgrade-changed",
+        "status": "publish",
+        "target": "main",
+        "source": "record:blog-google-ads-ai-max-explained-what-the-september-2026-auto-upgrade-changed",
+        "batch": "main-20261014",
+        "approval": "published",
+        "outcome": "verified",
+        "destinations": {
+            "main": ""
+        },
+        "main_path": "/blog/google-ads-ai-max-explained-what-the-september-2026-auto-upgrade-changed",
+        "enroll_url": "http://localhost:8088/main-blog/google-ads-ai-max-explained-what-the-september-2026-auto-upgrade-changed/"
+    },
+    {
+        "id": 2091,
+        "type": "elementor_library",
+        "template": "popup",
+        "title": "Quick Registration popup (Main homepage)",
+        "slug": "",
+        "status": "draft",
+        "target": "main",
+        "source": "template:popup-home-registration",
+        "batch": "main-20261014",
+        "approval": "",
+        "outcome": "",
+        "destinations": [],
+        "main_path": "",
+        "enroll_url": ""
+    }
+]

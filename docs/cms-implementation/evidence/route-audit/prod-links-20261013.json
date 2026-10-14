@@ -1,0 +1,1314 @@
+{
+ "read_at": "2026-10-13T20:12:20.615Z",
+ "main": "https://www.acadvizen.com",
+ "method": "GET only, sequential, read-only",
+ "pages": 314,
+ "targets": 138,
+ "broken": 0,
+ "redirects": 0,
+ "rows": [
+  {
+   "target": "/",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/placement",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/achievements",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/blog",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/contact",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/courses",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/tools/ahrefs",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/semrush",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/screaming-frog",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/google-ads",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/meta-ads",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/youtube-ads",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/chatgpt",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/midjourney",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/jasper",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/google-analytics",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/clarity",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/hotjar",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/hubspot",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/mailchimp",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/activecampaign",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/later",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/metricool",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/google-tag-manager",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/webflow",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/canva",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/buffer",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/hootsuite",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/elevenlabs",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/tools/synthesia",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/"
+   ]
+  },
+  {
+   "target": "/projects",
+   "status": 200,
+   "location": "",
+   "linked_from": 2,
+   "examples": [
+    "/",
+    "/about"
+   ]
+  },
+  {
+   "target": "/blog/google-ads-ai-max-explained-what-the-september-2026-auto-upgrade-changed",
+   "status": 200,
+   "location": "",
+   "linked_from": 2,
+   "examples": [
+    "/",
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/digital-marketing-course-in-bangalore-fees-placements",
+   "status": 200,
+   "location": "",
+   "linked_from": 18,
+   "examples": [
+    "/",
+    "/blog",
+    "/courses/ai-integrated-digital-marketing-program"
+   ]
+  },
+  {
+   "target": "/blog/how-to-use-claude-ai-for-digital-marketing-practical-guide",
+   "status": 200,
+   "location": "",
+   "linked_from": 18,
+   "examples": [
+    "/",
+    "/blog",
+    "/courses/ai-integrated-digital-marketing-program"
+   ]
+  },
+  {
+   "target": "/blog/digital-marketing-course-in-bangalore-your-big-opportunity",
+   "status": 200,
+   "location": "",
+   "linked_from": 18,
+   "examples": [
+    "/",
+    "/blog",
+    "/courses/ai-integrated-digital-marketing-program"
+   ]
+  },
+  {
+   "target": "/blog/24-digital-marketing-tools-you-actually-need-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 17,
+   "examples": [
+    "/",
+    "/blog",
+    "/digital-marketing-course-bangalore"
+   ]
+  },
+  {
+   "target": "/blog/how-to-get-leads-on-meta-business-suite-using-claude",
+   "status": 200,
+   "location": "",
+   "linked_from": 2,
+   "examples": [
+    "/",
+    "/blog"
+   ]
+  },
+  {
+   "target": "/about",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/register",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/terms-of-service",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/privacy-policy",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/digital-marketing-courses-bangalore",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/digital-marketing-courses-hsr-layout",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/digital-marketing-courses-india",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/digital-marketing-courses-indiranagar",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/digital-marketing-courses-jayanagar",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/digital-marketing-courses-jp-nagar",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/digital-marketing-courses-koramangala",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/digital-marketing-courses-marathahalli",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/digital-marketing-courses-mg-road",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/digital-marketing-courses-mysore",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/digital-marketing-courses-rajajinagar",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/digital-marketing-courses-rr-nagar",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/digital-marketing-courses-whitefield",
+   "status": 200,
+   "location": "",
+   "linked_from": 314,
+   "examples": [
+    "/",
+    "/about",
+    "/achievements"
+   ]
+  },
+  {
+   "target": "/soft-skills",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/about"
+   ]
+  },
+  {
+   "target": "/tools",
+   "status": 200,
+   "location": "",
+   "linked_from": 68,
+   "examples": [
+    "/about",
+    "/tools/canva",
+    "/tools/figma"
+   ]
+  },
+  {
+   "target": "/blog/how-to-create-a-landing-page-website-in-wordpress",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/ready-for-your-digital-marketing-plans-to-generate-results",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/same-marketing-different-results-why-seo-isn-t-working",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/running-ads-without-digital-strategy-you-re-burning-money",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/doctor-of-digital-marketing-skills-beat-tools-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/meta-ads-ai-stack-andromeda-claude-performance-ads",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/ai-powered-lead-generation-smarter-leads-higher-roi-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/meta-andromeda-ai-smarter-facebook-instagram-ads-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/10-powerful-use-cases-every-marketer-should-know-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/claude-ai-meta-integration-guide-for-marketers-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/claude-ai-for-digital-marketers-2026-guide-acadvizen",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/keyword-research-vs-prompt-research-the-future-of-seo",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/google-ads-bidding-update-2026-what-marketers-must-know",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/digital-marketing-trends-2026-complete-guide-for-marketers",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/top-seo-mistakes-costing-you-traffic-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/zero-click-seo-google-ai-overviews-snippets",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/dummy-dm-course",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/how-to-choose-the-right-affiliate-marketing-program-as-a-beginner",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/complete-roadmap-to-become-a-digital-marketer-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/local-seo-guide-how-small-businesses-can-rank-on-google-maps",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/why-brands-are-shifting-budgets-from-tv-ads-to-digital-campaigns",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/the-role-of-marketing-automation-tools-in-modern-businesses",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/how-to-negotiate-your-first-digital-marketing-salary",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/e-commerce-marketing-trends-to-watch-this-festive-season-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/paid-ads-vs-affiliate-marketing-which-has-better-roi-for-beginners",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/best-affiliate-marketing-niches-2026-high-commission-low-competition-opportunities-for-beginners",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/digital-marketing-for-non-it-graduates-is-it-a-good-career-switch",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/remote-digital-marketing-jobs-how-to-get-hired-by-global-companies-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/programmatic-seo-how-brands-rank-for-thousands-of-keywords-at-once",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/internship-to-full-time-job-how-acadvizen-students-convert-opportunities",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/voice-search-optimization-is-your-brand-ready-for-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/short-form-video-marketing-why-15-seconds-can-make-or-break-your-brand",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/chatgpt-gemini-claude-which-ai-tool-will-marketers-utilize-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/how-ai-search-sge-is-changing-the-way-people-find-information-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/email-marketing-automation-in-2026-sequences-that-actually-sell",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/lead-generation-ads-that-convert-7-templates-that-work-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/why-you-should-still-invest-in-a-website-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/why-should-every-marketer-care-about-aeo-and-geo-in-2026-rather-than-just-seo",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/best-digital-marketing-tools-every-beginner-should-know-in-2026-free-paid",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/how-to-get-your-first-freelance-digital-marketing-client-in-2026-complete-beginner-s-guide",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/email-marketing-in-2026-the-complete-strategy-guide-to-higher-opens-clicks-and-revenue",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/why-instagram-marketing-matters-for-businesses-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/on-page-seo-the-complete-beginner-s-guide-to-higher-google-rankings-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/how-will-ai-impact-digital-marketing-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/the-ultimate-seo-strategy-guide-how-to-rank-higher-on-google-and-grow-your-business-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/the-complete-acadvizen-guide-to-launching-a-digital-marketing-career-in-2025",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/why-learn-digital-marketing-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/how-artificial-intelligence-is-transforming-digital-marketing-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/how-search-engines-work-complete-seo-basics-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/growth-hacking-techniques-for-digital-marketers-in-2026-ai-marketing-trends",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/keyword-research-strategies-for-better-google-rankings",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/ai-and-automation-in-digital-marketing-future-trends-explained",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/seo-vs-performance-marketing-which-career-is-better-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/top-5-mistakes-freshers-make-in-their-first-digital-marketing-job",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/from-campus-to-career-how-acadvizen-inspired-future-digital-marketers-at-the-c2c-expo-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/top-10-digital-marketing-agencies-in-india-hiring-right-now-2026-edition",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/mastering-global-meta-ads-running-campaigns-for-international-brands-2026-guide",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/the-german-job-seeker-visa-a-complete-guide-for-digital-marketers-2026-edition",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/digital-marketing-in-the-uk-vs-india-salary-and-growth-comparison-2026-edition",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/how-to-land-a-high-paying-remote-job-for-a-us-based-company-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/placement-faq-everything-you-need-to-know-about-our-100-support",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/why-bangalore-hyderabad-are-the-hubs-for-performance-marketers-in-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/behind-the-scenes-a-day-in-the-life-of-our-performance-marketing-student",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/how-to-crack-the-google-and-accenture-digital-marketing-interview",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/highest-paying-digital-marketing-roles-in-india-2026-edition",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/why-our-students-are-2-steps-ahead-of-the-industry",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/video-seo-tiktok-youtube-shorts-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/optimized-local-brand-for-voice-search",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/death-of-keyword-understanding-user-intent-entities",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/ai-tools-every-digital-marketer-must-master-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/death-of-the-link-birth-of-the-answer-geo-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/digital-marketing-skills-next-generation-ai-era",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/digital-skills-education-6th-standard",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/grow-your-brand-social-media-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/seo-vs-paid-ads-career-growth",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/performance-marketing-skills-demand-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/new-age-seo-2026-marketing-strategy",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/mba-vs-digital-marketing-course-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/career-in-digital-marketing-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/blog/ai-digital-marketing-career-2026",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/blog"
+   ]
+  },
+  {
+   "target": "/courses/ai-integrated-digital-marketing-program",
+   "status": 200,
+   "location": "",
+   "linked_from": 16,
+   "examples": [
+    "/courses",
+    "/digital-marketing-course-bangalore",
+    "/digital-marketing-course-mysore"
+   ]
+  },
+  {
+   "target": "/testimonials",
+   "status": 200,
+   "location": "",
+   "linked_from": 1,
+   "examples": [
+    "/placement"
+   ]
+  }
+ ]
+}

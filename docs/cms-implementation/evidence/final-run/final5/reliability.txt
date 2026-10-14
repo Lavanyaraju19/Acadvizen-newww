@@ -1,0 +1,13 @@
+PASS R0 setup: submitted and approved — pending/approved
+PASS R1 Enrollment failing: partial failure naming Enrollment, Main verified, never "verified" — partial_failure {"enrollment":{"state":"failed","detail":"HTTP 503","at":1791913762},"main":{"state":"verified","detail":"HTTP 200, approved revision shown","at":1791913750}}
+PASS R1 "Check again" retries only the failed website
+PASS R1 after recovery: verified on both — verified {"enrollment":{"state":"verified","detail":"HTTP 200, approved revision shown","at":1791913775},"main":{"state":"verified","detail":"HTTP 200, approved revision shown","at":1791913750}}
+PASS R1 nothing left to retry once verified
+FAIL R2 both failing: reported as failed, each website named — undefined {}
+PASS R2 Main shows nothing for a page that never reached it
+FAIL R2 after both recover, one "Check again" verifies both, showing the approved revision — undefined
+FAIL R3 publishing the same approved revision again is refused
+FAIL run finished without an unexpected error — locator.getAttribute: Timeout 30000ms exceeded.
+PASS Z cleanup: test content removed from both websites — 3 removed; Main answers 404
+
+7 passed, 4 failed [LOCAL]

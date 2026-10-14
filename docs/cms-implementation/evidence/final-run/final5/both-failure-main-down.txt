@@ -1,0 +1,5 @@
+PASS C0 Main unreachable: a red message in plain language (nothing changed, try again) — error: The Main Website could not be reached, so nothing was changed there. Check the internet connection and click Save again in a minute. (http_request_failed: cURL error 7: Failed to connect to host.docker.internal port 3100 after 4 ms: Could not connect to server)Dismiss this notice.
+PASS C0 the typed title is kept for a retry
+PASS C0 no Enrollment copy was created
+
+3 passed, 0 failed [LOCAL]

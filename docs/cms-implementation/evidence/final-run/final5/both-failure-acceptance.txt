@@ -1,0 +1,14 @@
+PASS C1 Main refuses (address in use): red message, not success — error: This address is already used by another record. slug "google-ads-ai-max-explained-what-the-september-2026-auto-upgrade-changed" is already used by another blogs recordDismiss this notice.
+PASS C1 no Enrollment copy was created
+PASS C1 the existing blog on Main is unchanged — google-ads-ai-max-explained-what-the-september-2026-auto-upgrade-changed
+PASS C2 partial failure is shown as a warning, not as success — warning: Saved on the Main Website. Enrollment Website copy failed: Content, title, and excerpt are empty. Fix the problem and click Save again; the Main Website already has this version.Dismiss this notice.
+PASS C2 the message names the failed destination
+PASS C2 Main did publish (reported accurately)
+PASS C2 no Enrollment copy exists
+PASS C3 retry succeeds on both: success notice naming Enrollment — success: Saved on the Main Website. Enrollment Website: updated.Dismiss this notice.
+PASS C3 exactly one Enrollment copy
+PASS C3 saving again does not duplicate the Enrollment copy
+PASS C3 Main still serves the blog once
+PASS Z cleanup: the test blog is gone from Main
+
+12 passed, 0 failed [LOCAL]

@@ -1,0 +1,14 @@
+PASS 1 "Courses" and "Course sections" tabs — Pages, Blogs, Tools, City pages, Service pages, Courses, Course sections, Media library, Locations, Cities, Testimonials, Activity, Banner, Closing call to action, Sections, Lists, Authors, Categories, Tags, Header, Footer, Menus, SEO overrides, Redirects, Site settings
+PASS 1 course created and shown — Saved on the Main Website.
+PASS 1 the course page shows the title, a module, its topics and a skill — HTTP 200
+PASS 1 a "Live list: courses" section lists the new course
+PASS 2 the edit shows on the course page
+PASS 2 restoring the earlier version brings the first description back
+PASS 3 course sections ask for a course first
+PASS 3 a new section starts with the chosen course
+PASS 3 section saved
+PASS 3 the section is listed under its course
+PASS 4 hiding the course removes it from its page and from course lists
+PASS Z the test course and list page are gone
+
+12 passed, 0 failed (click fallbacks: 0)

@@ -1,0 +1,20 @@
+PASS 1 "Whole website" tabs: Header, Footer, Menus, Site settings — Banner, Closing call to action, Sections, Lists, Authors, Categories, Tags, Header, Footer, Menus, SEO overrides, Redirects, Site settings
+PASS 2 precondition: no menu links stored yet (the site shows its built-in links) — 0 rows
+PASS 2 "Copy the links shown today" copies header, footer and legal links — Copied the links shown today (header: 5, footer: 5, legal: 2). The website looks the same; you can now edit them.
+PASS 2 the 12 links are listed — 12 rows
+PASS 2 after copying, the homepage is visually identical (desktop) — 0.017% pixels differ, 1440x13120
+PASS 2 after copying, the homepage is visually identical (mobile) — 0.036% pixels differ, 390x21385
+PASS 2 copying again changes nothing — Nothing to copy: every menu already has its own links.
+PASS 3 footer link saved
+PASS 3 the footer shows the new link text
+PASS 3 restored link text is back on the website
+PASS 3 hiding the "Placement" header link removes it from the website
+PASS 3 showing it again brings it back
+PASS 4 header saved
+PASS 4 the announcement bar shows on the website
+PASS 4 colours left untouched stay empty (website defaults, not black) — announcement_bg_color=#10b981 announcement_text_color=#ffffff header_border_color=rgba(255,255,255,0.1)
+PASS 5 the footer shows the new copyright line, with the year filled in
+PASS 5 a website label (footer heading) changes on the website
+PASS Z everything put back (menus as before, no test text on the website) — 0 menu rows
+
+18 passed, 0 failed (click fallbacks: 0)

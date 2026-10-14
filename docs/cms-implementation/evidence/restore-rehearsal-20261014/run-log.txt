@@ -1,0 +1,23 @@
+== isolated backup/restore
+[05:55:45Z] database export rc=0 :: 35756173 bytes
+
+[05:56:24Z] wp-content archive rc=0 :: 432019589 bytes, 0 files
+[05:56:33Z] checksums :: 1f8c57a1ef26343b e91011b6a793a73d 
+[05:56:50Z] source :: 21 tables, 6966 rows
+[05:57:10Z] source inventory :: 87 public pages, 36 media files, 6 users
+[05:57:46Z] backup integrity before restore :: db.sql: OK wp-content.tgz: OK 
+[05:58:27Z] files restored rc=0
+[05:58:34Z] database restored rc=0
+[05:58:34Z] address change :: Success: Made 148 replacements.
+[05:58:51Z] row counts :: identical in all 21 tables
+[05:58:51Z] core files :: Success: WordPress installation verifies against checksums.
+[05:59:02Z] plugins :: identical (17 plugins incl. must-use)
+[05:59:02Z] users :: source 6, restored 6
+[05:59:12Z] administrator sign-in :: login answered 302 http://localhost:8089/wp-admin/; wp-admin title: Dashboard &lsaquo; Acadvizen Enroll (LOCAL) &#8212; WordPress
+[05:59:20Z] media files :: 36 of 36 answer 200 on the restored copy
+[05:59:20Z] public pages :: 87 public pages compared: 87 identical, 0 different
+[06:01:55Z] plugin REST namespace on restored copy :: "acadvizen-cms\/v1" "acadvizen\/v1" 
+[06:02:00Z] backup integrity after restore :: db.sql: OK wp-content.tgz: OK 
+[06:02:04Z] isolated target removed :: backup kept in backup-20261014T0555Z
+[06:02:04Z] DONE
+archive check (tar --force-local -tzf, after the run): rc=0, 8940 files, 1905 uploads, 7 plugin folders. The run log's '0 files' was a listing error of Git Bash tar (it read 'C:' as a remote host), not an archive error.

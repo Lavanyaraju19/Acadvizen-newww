@@ -4,7 +4,32 @@ These are the steps only the owner can take. Do them in this order. After step 5
 
 Never paste a password or the shared secret into chat, Git, a document or a screenshot.
 
-## Remaining, as of 13 October 2026, 13:00 UTC (current)
+## Approval requests for production (updated 14 October 2026: current)
+
+Each request names the exact operation, what it touches, the risk, the backup it relies on and the rollback. **Nothing below has been done.** Approve them one at a time ("approve P1", and so on). The engineer then does that step only and reports evidence.
+
+| # | Operation | Who | Touches | Risk | Backup / rollback |
+|---|---|---|---|---|---|
+| **P1** | **Fresh production backup:** Hostinger hPanel → Websites → enroll.acadvizen.com → Backups → *Create backup* (files + database), then download both archives off-site. Record time, sizes and SHA-256 (`certutil -hashfile <file> SHA256`) | Owner (hPanel login) | Read-only for the site | None | — (this is the backup) |
+| **P2** | **Staging for WordPress:** hPanel → WordPress → *Staging* → create a staging copy of enroll.acadvizen.com. Set it to "Discourage search engines". Keep its wp-config without the production Main secret | Owner | A new subdomain; production is not changed | A staging copy that still holds production keys could call production. The plugin refuses to talk to production Main from a non-production host (`production_isolation_error`) | Delete the staging site |
+| **P3** | **Staging for Main:** a non-production Supabase project (Supabase → New project) with the schema migrated. A Vercel **Preview** environment pointing at it (`NEXT_PUBLIC_SUPABASE_*`, `SUPABASE_SECRET_KEY`, `WORDPRESS_CMS_WEBHOOK_SECRET` for staging only, `WORDPRESS_CONTENT_ENABLED=true`) | Owner (Supabase and Vercel accounts) | New resources only | Preview variables must never be the production ones | Delete the project and the variables |
+| **P4** | **Restore rehearsal:** restore the P1 backup onto the P2 staging site and run the comparison tools against it | Engineer, after P1–P2 | Staging only | None | — |
+| **P5** | **Staging rehearsal of everything:** install plugin 0.7.0 on staging, switch on approval and the bridge there, run every suite against staging, migrate the 277 planned addresses of a staging copy of production content, and compare them address by address. This also covers what the local copy cannot prove: the 109 Page Builder pages, the popup with Elementor Pro (staging needs a licensed Pro), and Main, Enrollment and Both on real hosts | Engineer, after P2–P4 | Staging only | None | Restore P1 onto staging |
+| **P6** | **Elementor Pro licence.** Done 14 Oct: the owner confirmed Pro 4.3.0 is installed and active (Plugins screen), and the public site loads Pro 4.3.0 files with popups enabled. **Still open:** wp-admin → Elementor → License shows *Active* (licence, not just the plugin), and staging (P2) needs Pro too, or popups cannot be tested there | Owner | Read-only | — | — |
+| **P7** | **Commit and push** the reviewed work (`DEPLOYMENT-REPORT.md` §6, steps 0–3), then **promote** the Preview to production | Engineer, after explicit approval | Main production deployment | A new Main release; the bridge stays off, so no Main address should change. Verified by `main-route-inventory` before and after | Promote `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T` |
+| **P8** | **Install plugin 0.7.0** on production (Replace current with uploaded) | Owner or engineer, after P1 | Enrollment WordPress | The admin screens change (see `DEPLOYMENT-REPORT.md` §2), and the blog two-way sync starts | Upload the 0.6.1 package (SHA-256 `dd6fcf27…`); P1 backup |
+| **P9** | **Switch on approval:** `define( 'ACADVIZEN_CMS_APPROVAL', true );` in wp-config.php; assign reviewers | Owner (file access) | How editors publish | Editors can no longer publish directly; that is the intent | Remove the line |
+| **P10** | **Bridge and migration, in batches** (`MAIN-MIGRATION-PLAN.md` §4): the RENDER_BRIDGE constant, Vercel `WORDPRESS_CONTENT_ENABLED=true` and redeploy, then the approved batches one at a time, each compared before continuing | Engineer, per batch approval | Main production traffic for migrated addresses only | Visible content changes on each migrated address | Per page: Restore or Draft. All: unset the variable and redeploy. Data: P1 |
+| **P11** | **Credential rotation** (`FINAL-SECURITY-REPORT.md` §6). **Your earlier decision was not to rotate.** The latest brief asks for rotation; please confirm explicitly which applies | Owner (provider dashboards) | Supabase keys, the database password, admin and hosting passwords | A dependent service could break if updated in the wrong order; the order and checks are in §6 | Re-enable the old key until the new one is confirmed |
+| **P12** | **Course Modules: decide** (O-41). (a) The homepage section, hidden since 23 March, is shown again in the prepared release: confirm you want it back (it repeats the modules of the "Course Program" section above it). (b) The five course landing pages on the live site have never had this section. Adding it there is new content: say which pages and confirm the content | Owner (decision) | (a) Main homepage at the next release; (b) five production Page Builder pages | (a) longer homepage; (b) a production content change | (a) put `hidden` back in `HomePage.jsx`; (b) Page Builder history |
+| **P13** | **Enrollment carousel link** (O-42): a slide in the image carousel on the Enrollment homepage, `/projects-2/` and one diploma page links to `/?page_id=6342`. That page is not published, so visitors get 404. Publish page #6342, or change the slide's link in Elementor | Owner | Enrollment content | None | Elementor revision history |
+
+**Why the engineer cannot do P1–P3, P6 and P11:**
+- The production WordPress password was refused earlier, and hPanel sits behind a Cloudflare check.
+- The Supabase and Vercel account actions need the account owner.
+- Licence status is only visible inside wp-admin.
+
+## Remaining, as of 13 October 2026, 13:00 UTC
 
 **Production is unchanged** (read-only, 13 Oct 11:10–11:20 UTC):
 - `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T` is live and Ready;

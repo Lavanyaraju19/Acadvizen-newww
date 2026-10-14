@@ -1,0 +1,443 @@
+{
+ "source": "http://localhost:8088",
+ "restored": "http://localhost:8089",
+ "pages": 87,
+ "identical": 87,
+ "rows": [
+  {
+   "path": "/",
+   "status": 200,
+   "diff": []
+  },
+  {
+   "path": "/about/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/contact/",
+   "status": 200,
+   "diff": []
+  },
+  {
+   "path": "/course/seo-mastery/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/elementor-bridge-proof/",
+   "status": 200,
+   "diff": []
+  },
+  {
+   "path": "/elementor-hf/main-website-footer/",
+   "status": 301,
+   "diff": []
+  },
+  {
+   "path": "/elementor-hf/main-website-header/",
+   "status": 301,
+   "diff": []
+  },
+  {
+   "path": "/elementor-hf/site-footer/",
+   "status": 301,
+   "diff": []
+  },
+  {
+   "path": "/elementor-hf/site-header/",
+   "status": 301,
+   "diff": []
+  },
+  {
+   "path": "/hello-world/",
+   "status": 200,
+   "diff": []
+  },
+  {
+   "path": "/location/jayanagar/",
+   "status": 200,
+   "diff": []
+  },
+  {
+   "path": "/neet-coaching/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/perf-full/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/perf-new/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/perf-nocss/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/perf-nocssglob/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/perf-noglob/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/perf-noresp/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/sample-page/",
+   "status": 200,
+   "diff": []
+  },
+  {
+   "path": "/tool/activecampaign/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/adobe-xd/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/adroll/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/ahrefs/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/amplitude/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/answer-the-public/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/brevo/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/canva/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/capcut/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/carrd/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/chatgpt/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/clarity/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/claude/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/convertkit/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/copy-ai/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/criteo/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/dalle/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/descript/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/figma/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/framer/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/freshsales/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/ga4/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/google-ads/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/google-analytics/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/google-search-console/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/hotjar/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/hubspot/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/illustrator/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/invideo/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/jasper/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/linkedin-ads/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/local-e2e-tool-1779297401/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/loom/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/mailchimp/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/make/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/mangools/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/meta-ads/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/microsoft-ads/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/midjourney/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/mixpanel/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/moz/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/n8n/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/notion-ai/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/outbrain/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/photoshop/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/pipedrive/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/pixlr/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/quillbot/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/rytr/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/salesforce/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/screaming-frog/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/semrush/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/serpstat/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/shopify/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/squarespace/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/surfer-seo/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/taboola/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/tag-manager/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/tiktok-ads/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/ubersuggest/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/veed/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/vistacreate/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/webflow/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/wix/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/wordpress/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/writesonic/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/zapier/",
+   "status": 404,
+   "diff": []
+  },
+  {
+   "path": "/tool/zoho/",
+   "status": 404,
+   "diff": []
+  }
+ ]
+}

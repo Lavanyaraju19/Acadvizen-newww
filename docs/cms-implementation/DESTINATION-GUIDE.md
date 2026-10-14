@@ -29,6 +29,23 @@ The rest of this guide is about **Publish To** on Elementor pages, blogs and tem
 - **The Main homepage** (`/`) is taken over only by the page marked **Main homepage**. With approval on, that takes effect when the page is published, not when the box is ticked.
 - **Application addresses can never be replaced:** admin, login, register, api, dashboard and the others listed in `lib/wordpress/bridgeRouting.js`.
 
+## The four choices
+
+1. **Save Draft:** nothing changes on either website.
+2. **Main:** www.acadvizen.com only.
+3. **Enrollment:** enroll.acadvizen.com only.
+4. **Both:** one coordinated publication to both, tracked separately.
+
+**Both is not one atomic transaction across two websites.**
+- Each website is published and verified on its own.
+- Each shows **Pending → Publishing → Published (verified)** or **Failed**.
+- The result is "verified" only when both are.
+- A partial failure names the failed website, and **Check again** retries only that one.
+
+**Rollback per website:**
+- **Approvals → Restore** puts an earlier approved revision back on every website of the page.
+- **Main only:** a reviewer can put an earlier Main version back with **Make live** in the page's Versions box, without touching Enrollment.
+
 ## Publishing with approval
 
 1. **Submit.** Clicking **Publish** in Elementor or WordPress does not publish: it submits that exact revision for approval.

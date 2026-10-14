@@ -1,0 +1,592 @@
+(node:21908) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/admin-permissions.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ extractRoleSlugs merges legacy and relational roles without duplicates (8.3191ms)
+✔ canAccessAdminProfile allows CMS roles and rejects non-CMS roles (0.4646ms)
+✔ hasProfilePermission respects merged relational permissions and legacy fallbacks (1.6452ms)
+✔ inferCmsPermissionFromPath maps high-risk admin routes to resource actions (0.5971ms)
+(node:19200) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/analytics-pixel.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Meta pixel: on for the live site, off on Vercel preview deployments (staging) (3.8146ms)
+✔ WordPress-rendered Main pages carry the Meta pixel independently of GA/GTM (1.0667ms)
+(node:11564) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/blog-slug-resolver.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[blogSlugResolver] Skipping malformed local blog entry. undefined
+[blogSlugResolver] Skipping malformed local blog entry. null
+[blogSlugResolver] Skipping malformed local blog entry. undefined
+[blogSlugResolver] Skipping malformed local blog entry. not-an-object
+[blogSlugResolver] Skipping malformed local blog entry. 42
+[blogSlugResolver] Skipping malformed local blog entry. { id: 'no-slug' }
+[blogSlugResolver] Skipping malformed local blog entry. { id: 'blank-slug', slug: '   ' }
+[blogSlugResolver] Skipping duplicate local blog slug. dup
+✔ data/blogs.js is never a sparse array (regression: stray comma created an elided hole) (1.6378ms)
+✔ data/blogs.js entries are all well-formed objects with a non-empty slug (0.4163ms)
+✔ getSafeLocalBlogs drops a sparse-array hole instead of returning undefined entries (1.6753ms)
+✔ getSafeLocalBlogs drops null entries and non-object entries (0.6054ms)
+✔ getSafeLocalBlogs drops entries with a missing or blank slug (0.8881ms)
+✔ getSafeLocalBlogs deduplicates repeated slugs, keeping the first occurrence (0.4094ms)
+✔ getSafeLocalBlogs returns an empty array for non-array input (0.219ms)
+✔ getSafeLocalBlogs() with no argument defaults to the real local blog registry (0.2605ms)
+✔ findLocalBlogBySlug / resolveBlogSlug tolerate a sparse array without throwing (0.7381ms)
+(node:25284) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/blog-visibility.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ normalizeBlogStatus maps live aliases to published (6.8507ms)
+✔ isPublicBlogVisible hides drafts, future posts, deleted posts, and local E2E fixtures (1.0392ms)
+✔ sortPublicBlogs orders posts by newest public timestamp first (1.6283ms)
+(node:24172) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/check-secrets.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+warning: in the working copy of '.env.production', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'a.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.env.example', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'b.js', LF will be replaced by CRLF the next time Git touches it
+✔ real-looking secrets and environment files are refused, without printing them (1290.4058ms)
+✔ environment references, placeholders and made-up test values pass (574.859ms)
+(node:26004) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/cms-entity-ordering.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a missing order column is recognised (production tools_extended has no order_index) (1.4506ms)
+✔ other errors are not treated as a missing order column (0.6537ms)
+(node:26168) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/cms-page-privacy.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a published page without a draft is served (6.0667ms)
+✔ a published page stays served while a private draft copy shares its address (the live 404 defect) (0.8903ms)
+✔ editing, submitting and discarding the draft copy never hides the live page (1.1065ms)
+✔ a new page that was never published stays hidden (0.7007ms)
+✔ an unpublished (archived) live page with a draft copy stays hidden (0.4628ms)
+✔ reserved application routes, nested paths and files are never looked up (0.512ms)
+✔ unknown addresses and alias addresses with no stored page are left to the page route (0.4434ms)
+✔ a database without the staged-editing column falls back to the plain lookup (0.5655ms)
+✔ a failed lookup or missing configuration hides nothing (the page route still checks publication) (0.4243ms)
+(node:3448) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/cms-public-lookup.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a published record is found on the first strategy, as before (9.4376ms)
+[cms-public] No public CMS record matched the requested route. {
+  content_type: 'page',
+  table: 'pages',
+  record_id: undefined,
+  slug: 'tool-ahrefs',
+  requested_route: '',
+  publish_status: undefined,
+  supabase_error_code: undefined,
+  reason: 'no_matching_published_slug_or_blocked_by_rls',
+  environment: 'development'
+}
+✔ a slug with no row ends after one round trip instead of trying every fallback (3.0796ms)
+[cms-public] No public CMS record matched the requested route. {
+  content_type: 'page',
+  table: 'pages',
+  record_id: undefined,
+  slug: 'draft-page',
+  requested_route: '',
+  publish_status: undefined,
+  supabase_error_code: undefined,
+  reason: 'no_matching_published_slug_or_blocked_by_rls',
+  environment: 'development'
+}
+✔ an existing but unpublished record still goes through every fallback and stays hidden (21.3851ms)
+[cms-public] No public CMS record matched the requested route. {
+  content_type: 'page',
+  table: 'pages',
+  record_id: undefined,
+  slug: 'missing',
+  requested_route: '',
+  publish_status: undefined,
+  supabase_error_code: undefined,
+  reason: 'no_matching_published_slug_or_blocked_by_rls',
+  environment: 'development'
+}
+[cms-public] No public CMS record matched the requested route. {
+  content_type: 'page',
+  table: 'pages',
+  record_id: undefined,
+  slug: 'missing',
+  requested_route: '',
+  publish_status: undefined,
+  supabase_error_code: undefined,
+  reason: 'no_matching_published_slug_or_blocked_by_rls',
+  environment: 'development'
+}
+✔ if the existence check fails, the original fallbacks run unchanged (61.9042ms)
+✔ preview lookups are unchanged (single query, no existence check) (15.5548ms)
+[cms-public] No public CMS record matched the requested route. {
+  content_type: 'page',
+  table: 'pages',
+  record_id: undefined,
+  slug: 'tool-ahrefs',
+  requested_route: '',
+  publish_status: undefined,
+  supabase_error_code: undefined,
+  reason: 'no_matching_published_slug_or_blocked_by_rls',
+  environment: 'development'
+}
+[cms-public] No public CMS record matched the requested route. {
+  content_type: 'location_page',
+  table: 'location_pages',
+  record_id: undefined,
+  slug: 'tool-ahrefs',
+  requested_route: '',
+  publish_status: undefined,
+  supabase_error_code: undefined,
+  reason: 'no_matching_published_slug_or_blocked_by_rls',
+  environment: 'development'
+}
+[cms-public] No public CMS record matched the requested route. {
+  content_type: 'service_page',
+  table: 'service_pages',
+  record_id: undefined,
+  slug: 'tool-ahrefs',
+  requested_route: '',
+  publish_status: undefined,
+  supabase_error_code: undefined,
+  reason: 'no_matching_published_slug_or_blocked_by_rls',
+  environment: 'development'
+}
+✔ a miss across several content types costs one round trip per table (208.2621ms)
+[cms-public] No public CMS record matched the requested route. {
+  content_type: 'page',
+  table: 'pages',
+  record_id: undefined,
+  slug: 'jayanagar',
+  requested_route: '',
+  publish_status: undefined,
+  supabase_error_code: undefined,
+  reason: 'no_matching_published_slug_or_blocked_by_rls',
+  environment: 'development'
+}
+✔ the first matching content type still wins (33.7465ms)
+[cms-public] No public CMS record matched the requested route. {
+  content_type: 'service_page',
+  table: 'service_pages',
+  record_id: undefined,
+  slug: 'tool-ahrefs',
+  requested_route: '',
+  publish_status: undefined,
+  supabase_error_code: undefined,
+  reason: 'no_matching_published_slug_or_blocked_by_rls',
+  environment: 'development'
+}
+✔ missing-column retries also stop early when the slug has no row (61.7681ms)
+[cms-public] No public CMS record matched the requested route. {
+  content_type: 'page',
+  table: 'pages',
+  record_id: undefined,
+  slug: 'tool-ahrefs',
+  requested_route: '',
+  publish_status: undefined,
+  supabase_error_code: undefined,
+  reason: 'no_matching_published_slug_or_blocked_by_rls',
+  environment: 'development'
+}
+[cms-public] No public CMS record matched the requested route. {
+  content_type: 'page',
+  table: 'pages',
+  record_id: undefined,
+  slug: 'tool-ahrefs',
+  requested_route: '',
+  publish_status: undefined,
+  supabase_error_code: undefined,
+  reason: 'no_matching_published_slug_or_blocked_by_rls',
+  environment: 'development'
+}
+✔ a custom select list keeps the original fallbacks (no existence check) (47.2895ms)
+(node:18004) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/cms-publishing.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[cms-public] No public CMS record matched the requested route. {
+  content_type: 'page',
+  table: 'pages',
+  record_id: undefined,
+  slug: 'fallback-location',
+  requested_route: '/fallback-location',
+  publish_status: undefined,
+  supabase_error_code: undefined,
+  reason: 'no_matching_published_slug_or_blocked_by_rls',
+  environment: 'development'
+}
+[cms-public] No public CMS record matched the requested route. {
+  content_type: 'page',
+  table: 'pages',
+  record_id: undefined,
+  slug: 'fallback-location',
+  requested_route: '/fallback-location',
+  publish_status: undefined,
+  supabase_error_code: undefined,
+  reason: 'no_matching_published_slug_or_blocked_by_rls',
+  environment: 'development'
+}
+✔ normalizeCmsSlug trims slashes, lowercases, and removes unsafe characters (3.6734ms)
+✔ validateCmsSlug rejects empty and reserved slugs after normalization (1.757ms)
+✔ canonical public paths match route namespaces (0.9536ms)
+✔ resolveCmsPublicRoute supports custom overrides and legacy location patterns safely (0.5622ms)
+✔ route map separates public standalone and assigned-content modules (0.5696ms)
+✔ publish fields preserve existing timestamps and clear them for drafts (1.6842ms)
+✔ cache targets include detail, previous slug, listing, sitemap, and tags (0.6303ms)
+✔ assertSlugAvailable rejects duplicate normalized slugs (1.2314ms)
+✔ assertSlugAvailable returns the normalized slug when available (0.363ms)
+✔ resolvePublicCmsRecordBySlug falls back to alternate CMS tables when the first lookup misses (3.7504ms)
+✔ fetchPublishedRecordBySlug falls back to a simpler query when the initial public lookup fails (1.0195ms)
+(node:2372) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/converter-settings.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ converter: a badge keeps its global typography next to its global colours (3.5686ms)
+✔ converter: parts without global styles merge as before (0.3935ms)
+(node:25516) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/draft-address-change.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ the live address is read from the live page, not from the draft copy (1.8547ms)
+✔ a draft copy that renamed the address moves the live page only when published (12.8492ms)
+✔ no redirect when the address is unchanged or the page was never live (0.4563ms)
+✔ a failed redirect is reported, the SEO settings still move and the publish stands (0.9281ms)
+(node:21308) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/e2e-safety.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ isValidTestPrefix accepts only safe e2e prefixes (3.4941ms)
+✔ getDestructiveCmsTestConfig blocks missing or unsafe destructive-test configuration (2.1292ms)
+✔ getDestructiveCmsTestConfig blocks mismatched Supabase project references (0.4809ms)
+✔ createScopedCmsValue produces prefixed disposable identifiers (2.3226ms)
+✔ getDestructiveCmsTestConfig blocks production NEXT_PUBLIC_APP_URL and requires exact opt-in (0.7722ms)
+✔ getDestructiveCmsTestConfig allows explicit disposable localhost targets (0.5317ms)
+(node:26192) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/form-conditional.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ evaluateFieldCondition returns true when the condition is disabled or unset (1.4513ms)
+✔ evaluateFieldCondition supports equals / not_equals (0.3113ms)
+✔ evaluateFieldCondition supports contains (case-insensitive) (0.4771ms)
+✔ evaluateFieldCondition supports is_empty / is_not_empty (0.6133ms)
+✔ HONEYPOT_FIELD is a stable reserved key shared by the client renderer and the submit route (0.2524ms)
+(node:18404) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/geo.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ hasValidCoordinate rejects null, undefined, and blank/whitespace values (2.0933ms)
+✔ hasValidCoordinate rejects non-numeric strings (2.2949ms)
+✔ hasValidCoordinate accepts real numbers and numeric strings, including 0 (2.2646ms)
+✔ hasValidCoordinatePair requires both coordinates, not just one (0.3244ms)
+(node:19640) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/lead-schema-fallback.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ an older leads table without full_name keeps the name in "name" (4.3411ms)
+✔ other missing columns move into payload (0.3279ms)
+✔ a missing payload column is dropped, the rest kept (1.4636ms)
+✔ when "name" is also missing, the name is still kept (moved into payload) (0.5273ms)
+(node:11380) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/location-map-validation.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ validateCoordinate treats blank/null/undefined as valid (field is optional) (2.0272ms)
+✔ validateCoordinate rejects non-numeric input (0.5717ms)
+✔ validateCoordinate rejects out-of-range latitude/longitude (0.3366ms)
+✔ validateCoordinate accepts real in-range values including 0 and trims accidental spaces (0.261ms)
+✔ validateEntity("locations") requires latitude and longitude together, not one alone (1.7102ms)
+✔ validateEntity("locations") rejects out-of-range coordinates end-to-end (0.3129ms)
+(node:26292) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/mailer.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ isSmtpConfigured requires all four SMTP env vars (2.5993ms)
+✔ sendMail reports a clear reason when SMTP is not configured, never throws (0.8343ms)
+✔ sendMail reports a reason when no recipient is given (0.2575ms)
+✔ isRecaptchaConfigured reflects RECAPTCHA_SECRET_KEY presence (0.4076ms)
+✔ verifyRecaptcha skips verification entirely when unconfigured (never blocks submissions) (1.5021ms)
+✔ verifyRecaptcha rejects a missing token when configured (0.3522ms)
+✔ verifyRecaptcha calls Google siteverify and honors the mocked response (mocked integration test - no real secret available in this environment) (0.7805ms)
+✔ verifyRecaptcha surfaces a failed Google verification (0.5004ms)
+✔ deliverWebhook posts JSON and reports delivered:true on a 2xx (mocked - no live endpoint in this environment) (0.4906ms)
+✔ deliverWebhook reports delivered:false without throwing when the endpoint errors (0.4958ms)
+✔ deliverWebhook reports a reason when no URL is configured (0.2251ms)
+(node:6268) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/main-route-inventory.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ route inventory: each Main address gets its family and migration target (1.6592ms)
+✔ route inventory: visible text leaves out scripts, styles, metadata and a streamed <title> (2.4416ms)
+✔ migration comparison: text kept, and every check per address (1.0287ms)
+(node:23164) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/menu-grouping.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ menu rows are grouped by location, with header, footer and bottom_dock always present (4.655ms)
+✔ every call starts from new lists: earlier requests never leak into later ones (0.462ms)
+(node:24808) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/menu-tree.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ buildMenuTree nests children under their parent and sorts by order_index (5.8609ms)
+✔ buildMenuTree does not render the same id twice if it appears more than once in the input (0.4184ms)
+✔ buildMenuTree treats a row whose parent_id does not resolve as top-level, not dropped (0.5658ms)
+✔ buildMenuTree is safe against multiple items with no id at all (static fallback link arrays) (0.4007ms)
+✔ pruneMenuTree removes a hidden node and its whole subtree, not just the node itself (0.3939ms)
+✔ pruneMenuTree keeps a node whose visibility field is simply absent (treated as visible) (0.2194ms)
+✔ wouldCreateMenuCycle rejects a menu item being assigned as its own parent (0.3226ms)
+✔ wouldCreateMenuCycle rejects a genuine cycle (A -> parent B, B -> parent A) (0.2441ms)
+✔ wouldCreateMenuCycle allows a normal, non-cyclic re-parent (0.3626ms)
+✔ wouldCreateMenuCycle rejects nesting deeper than MAX_MENU_DEPTH (0.5119ms)
+✔ wouldCreateMenuCycle allows a menu item with no parent_id (top-level) unconditionally (0.4447ms)
+(node:20724) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/navigation-defaults.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ menus without rows show the ui_copy lists, else the built-in lists (11.8865ms)
+✔ the built-in lists are the ones the live site shows today (0.3948ms)
+(node:4896) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/public-config-route.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ public-config route returns only allow-listed public fields (13.9737ms)
+✔ public-config route reports missing public config without exposing secrets (2.5359ms)
+(node:4756) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/public-sitemap.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ the fixed sitemap routes do not list addresses that permanently redirect (1.9292ms)
+✔ entries from any source (e.g. a published pages row) are dropped when the address redirects (5.5606ms)
+✔ both redirecting route files really redirect where the comment says (72.4197ms)
+✔ rows marked noindex, or with a noindex SEO override, are left out of the sitemap (0.5173ms)
+✔ the sitemap builder applies the noindex rules to pages, page SEO overrides and blogs (75.9488ms)
+(node:7960) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/public-tool-query.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a tool page only reads an active tool (an unpublished tool keeps no title or schema) (11.1208ms)
+(node:2616) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/rich-text-editor-wrappers.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ no admin screen puts a RichTextEditor inside a <label> (5291.6287ms)
+(node:23960) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/schema-contract.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ every CMS entity allowedFields column genuinely exists on its table (schema contract) (565.1163ms)
+✔ blogs.created_by exists with a type compatible with profiles.id (regression for the reported production incident) (61.102ms)
+(node:18860) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/seo-title.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ page titles carry the site name once (the root layout template is not applied again) (33.1035ms)
+✔ social titles stay plain strings (0.3501ms)
+(node:8344) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/site-menus.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ same result as the sequential version: menus present (47.7649ms)
+✔ same result as the sequential version: menus empty, navigation fallback (44.4825ms)
+✔ same result as the sequential version: menus null, navigation fallback (47.3319ms)
+✔ same result as the sequential version: settings missing (null row) (66.5392ms)
+✔ same result as the sequential version: settings error (26.4718ms)
+✔ same result as the sequential version: settings query throws (15.155ms)
+✔ same result as the sequential version: menus error (30.8167ms)
+✔ same result as the sequential version: menus query throws (31.4696ms)
+✔ same result as the sequential version: navigation error, menus empty (44.5343ms)
+✔ same result as the sequential version: navigation throws, menus present (61.3651ms)
+✔ same result as the sequential version: navigation throws, menus empty (44.9017ms)
+✔ same result as the sequential version: navigation not an array (46.6384ms)
+✔ menus from the menus table are grouped by location, missing location = header (15.5867ms)
+✔ a client whose from() throws degrades to the safe default (0.4123ms)
+✔ the three reads run concurrently: one round trip instead of three (76.3868ms)
+(node:23692) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/slug-utils.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ generateSlug normalizes mixed text into a clean URL slug (8.6375ms)
+✔ generateSlugLive preserves a hyphen typed as the last character (unlike generateSlug) (1.1766ms)
+✔ validateSlug rejects malformed slugs and accepts valid ones (2.3989ms)
+✔ generateCanonicalUrl avoids double slashes when given a prefixed slug (0.4745ms)
+(node:7356) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/supabase-key-rotation.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ the new secret key is used when it is a valid server key (1.9294ms)
+✔ production today (legacy key only) keeps using the legacy key (0.333ms)
+✔ an empty, malformed or non-server new key never displaces the legacy key (2.0324ms)
+✔ nothing configured gives an empty key (callers then refuse safely), never a wrong one (2.4042ms)
+✔ every server read of the service key goes through the validated picker (7921.6313ms)
+✔ the admin notification routes refuse with 503 instead of calling Supabase without a key (2.1637ms)
+✔ every read of the anon key prefers the publishable key (240.5847ms)
+(node:23932) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/wordpress-blog-mapper.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ maps an API blog into the Supabase blog shape used by the existing pages (5.2365ms)
+✔ rejects items that are not targeted at the Main Website or are incomplete (0.744ms)
+✔ only trusts images from the configured WordPress host (0.4218ms)
+✔ sanitizeBlocks keeps only known block types with plain-text fields (1.0389ms)
+(node:10528) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/wordpress-blog-precedence.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ an existing Main (Supabase) blog always wins over a WordPress blog with the same slug (4.0786ms)
+✔ Supabase rows are passed through unchanged and the list is newest first (0.5432ms)
+✔ aliases and reserved sub-routes can never be taken by WordPress (0.473ms)
+✔ WordPress blogs whose slug is owned by any Main blog (including unpublished) are dropped (0.5765ms)
+(node:9588) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/wordpress-bridge-routing.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ every top-level Next.js route folder is protected from WordPress pages (18.6907ms)
+✔ a new WordPress page at a free address is served by the bridge (1.4446ms)
+✔ existing Main routes win unless an administrator chose "replace" (0.9178ms)
+✔ application, auth and proxy routes can never be replaced (0.488ms)
+✔ moved pages redirect, but never away from a Main-owned address (0.7325ms)
+✔ unknown manifest or malformed paths change nothing (0.3306ms)
+✔ a page just taken off Main falls back to Main's own page once, never in a loop (0.4991ms)
+(node:22640) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/wordpress-bridge-support.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ render/manifest request signatures match the WordPress plugin (PHP fixtures) (2.9909ms)
+✔ the WordPress document is served unchanged apart from Main analytics (1.3893ms)
+✔ analytics ids are validated before being written into scripts (0.3424ms)
+✔ internal rewrite token: derived from the secret, compared in constant time (57.5667ms)
+✔ form proxy forwards only known form endpoints (1.4551ms)
+✔ extra proxy routes/actions can be allowed by configuration only (1.0437ms)
+✔ proxy never forwards cookies or authorization (1.8093ms)
+✔ the visitor IP is forwarded with a signature WordPress can verify (PHP fixture) (0.5096ms)
+✔ manifest from WordPress is validated (0.7111ms)
+(node:3096) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/wordpress-client-config.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ integration is off unless explicitly enabled with a valid https API URL (5.0055ms)
+✔ short secrets are treated as not configured (0.4146ms)
+✔ client returns data, and returns (not throws) 404 (60.3441ms)
+✔ client throws on server errors, invalid JSON, network errors and timeouts so failures are never cached (32.3727ms)
+(node:17448) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/wordpress-content-api.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ refuses requests that are not correctly signed, current and meant for this endpoint (10.6231ms)
+✔ a retried mutation with the same request id is not applied twice (3.7655ms)
+✔ pages: validated, created as drafts, published and unpublished through the workflow (6.8824ms)
+✔ pages: a live page is changed through a private draft copy that the list never shows (1.7136ms)
+✔ trash, restore and permanent delete need the right order and a confirmation (2.3048ms)
+✔ blogs: only the four block types, sanitised, with the plain text kept in step (2.5829ms)
+✔ active-flag types (tools): publishing sets is_active and its public mirror (1.4795ms)
+✔ sections: Main section types only; rich text sanitised; style limited to known keys; reorder (2.997ms)
+✔ rich text keeps formatting and safe links only (0.6786ms)
+✔ preview links: valid only for their record, unexpired, at most an hour ahead (1.2959ms)
+✔ replay protection is shared by every server instance (durable store, not process memory) (6.8544ms)
+✔ if the replay store is unavailable, changes are refused rather than accepted unprotected (2.3448ms)
+✔ old request ids are pruned now and then, well outside the 5-minute signature window (0.3573ms)
+✔ settings rows (site, header, footer): only drawn fields are editable; never created, deleted or hidden (2.6866ms)
+✔ menus: links validated; showing a row also publishes it (the site needs is_active and status) (2.1925ms)
+✔ importing the links shown today: same titles, addresses and order; existing menus never touched (1.9796ms)
+✔ homepage lists: importing saves exactly what the homepage shows; existing lists are never touched (2.464ms)
+✔ homepage lists: edits keep the shape the homepage draws (2.512ms)
+✔ homepage hero and closing call-to-action: only the drawn fields (0.7908ms)
+✔ courses: drawn fields validated; showing a course keeps every visibility column in step (2.0139ms)
+✔ course sections: listed for one course; deleting needs a confirmation (1.0627ms)
+✔ city pages: drawn fields only; item lists keep their fields (1.1395ms)
+✔ pages and service pages share the /<address> space; fixed website routes are refused (1.3716ms)
+✔ sections of city, service and location pages: same section types, with a position on the page (2.4876ms)
+✔ a database refusal is generic for WordPress and logged (code and message, no content) for the developer (0.8709ms)
+✔ empty values of required columns are left out (database default), not sent as null (0.6006ms)
+✔ SEO overrides: shown on their page, editable, removable (then the page's own SEO applies) (2.5058ms)
+✔ media: an image is stored in Main's library; other types, wrong contents and large files are refused (64.2528ms)
+✔ blog authors and categories: editable; one still used by a blog cannot be deleted (1.4933ms)
+✔ addresses: malformed ones are refused, never normalised onto another record (1.4522ms)
+✔ addresses: renaming a record onto an address in use is refused and leaves both records unchanged (0.762ms)
+✔ sameInstant compares timestamps across formats and treats empty as equal only to empty (0.4519ms)
+✔ a save carrying the version it opened succeeds when nothing changed meanwhile (0.7548ms)
+✔ a save on a stale version is refused (edit_conflict) and the other editor's change is kept (0.5704ms)
+✔ a change landing between the check and the write is caught by the conditional update (0.7055ms)
+✔ without expected_updated_at the save behaves exactly as before (Main /admin, older plugins) (0.507ms)
+✔ records without timestamps (testimonials) ignore expected_updated_at (0.3546ms)
+✔ a new redirect is stored without a trailing slash and starts switched off (1.238ms)
+✔ redirects: malformed addresses and codes are refused (0.7998ms)
+✔ redirects: the website's own system addresses cannot be redirected (0.8265ms)
+✔ redirects: no redirect to itself, one redirect per address, no chains or loops (either direction) (1.0781ms)
+✔ redirects: a live page or blog is never hidden; a draft one does not count (0.6679ms)
+✔ redirects: switching on runs the checks again (a page published meanwhile is protected) (0.7328ms)
+✔ redirects: deleting needs the redirect switched off and an explicit confirmation (0.8499ms)
+✔ redirects: an empty "kind of redirect" uses the database default (301) instead of sending null (0.4322ms)
+(node:20576) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/wordpress-content-ownership.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ switched off by default: nothing is refused (2.5346ms)
+✔ content writes are refused once WordPress owns the content (0.4982ms)
+✔ reading content stays allowed (0.2533ms)
+✔ application data is never refused (0.3556ms)
+✔ every owned area is a real /api/cms route folder (6.9618ms)
+(node:11700) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/wordpress-integration-switches.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ both integrations are off by default and for any value other than "true" (2.0728ms)
+✔ the content API switch never turns on WordPress reading or the Render Bridge (0.3376ms)
+✔ the WordPress reading switch never turns on the content API (0.2455ms)
+✔ WordPress reading stays off with a missing or invalid API URL (0.3088ms)
+✔ a missing or short secret is treated as not configured by every integration (0.4044ms)
+✔ the slug check (also the plugin's "Test connection") answers when either integration is on (40.8829ms)
+✔ the content API refuses requests when only WordPress reading is on (2.3061ms)
+✔ routes use the switch of their own integration (155.54ms)
+(node:21168) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/wordpress-preview-framing.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ with WORDPRESS_CMS_API_URL set, only the preview route may be framed, and only by WordPress (9.5396ms)
+✔ without WORDPRESS_CMS_API_URL nothing may be framed (previews in WordPress are refused) (2.9064ms)
+✔ an invalid WORDPRESS_CMS_API_URL fails closed (2.1026ms)
+(node:20180) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/wordpress-signature.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ matches the signature produced by the WordPress plugin (PHP sign_payload fixture) (4.3865ms)
+✔ rejects a tampered body (0.43ms)
+✔ rejects a signature made with a different secret (0.2604ms)
+✔ rejects requests outside the 5 minute window (replay protection) (0.2433ms)
+✔ rejects missing or malformed headers and a missing secret (0.4611ms)
+(node:25160) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/wordpress-static-assets.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ maps /_acv/c and /_acv/i static files to wp-content and wp-includes (2.0962ms)
+✔ refuses anything that is not a static file in wp-content or wp-includes (0.4021ms)
+✔ static responses are CDN-cacheable (1.562ms)
+(node:1800) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<home>/Downloads/Acadvizen-newww-main/Acadvizen-newww-main/tests/unit/wordpress-webhook.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<home>\Downloads\Acadvizen-newww-main\Acadvizen-newww-main\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a valid signed upsert revalidates exactly the affected blog tags and paths (35.6581ms)
+✔ reports a slug conflict back to WordPress (1.7673ms)
+✔ a slug-check failure does not fail the revalidation (0.5826ms)
+✔ remove revalidates without a slug check (0.3443ms)
+✔ duplicate deliveries of the same event are acknowledged without revalidating again (0.6777ms)
+✔ rejects unsigned, wrongly signed and stale requests without side effects (0.5203ms)
+✔ rejects malformed payloads (1.3625ms)
+✔ is closed when the integration is disabled or the secret is missing (0.3325ms)
+✔ rejects oversized bodies (0.454ms)
+✔ slug-check endpoint returns the Main Website slug status for a signed request (1.8231ms)
+✔ event deduper forgets events after its TTL (0.5224ms)
+✔ page publish revalidates the manifest and exactly the affected page addresses (1.4586ms)
+✔ page events with invalid addresses are rejected (0.8196ms)
+✔ slug-check for pages uses the page address checker (0.4954ms)
+ℹ tests 261
+ℹ suites 0
+ℹ pass 261
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11047.5888

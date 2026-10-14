@@ -1,0 +1,9 @@
+results dir <scratch>/scratchpad/rerun6-20261013T1754
+[17:54:34Z] local Main (Render Bridge build) up rc=0 :: 200
+[18:00:16Z] node tests/wordpress/approval-acceptance.mjs rc=0 :: 47 passed, 0 failed [LOCAL]
+[18:07:27Z] node tests/wordpress/approval-reliability-acceptance.mjs rc=0 :: 38 passed, 0 failed [LOCAL]
+[18:07:49Z] build-bundle --paths /soft-skills rc=0 :: records 1
+[18:09:34Z] node tests/wordpress/migration-acceptance.mjs rc=0 :: 13 passed, 0 failed [LOCAL] | /soft-skills
+[18:09:34Z] ALL DONE
+
+[exited with code 0]

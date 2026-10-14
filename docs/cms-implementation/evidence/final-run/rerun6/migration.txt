@@ -1,0 +1,18 @@
+PASS M0 the original Main page answers and is Main's own (not drawn by WordPress) — 200
+PASS M1 the import finishes; the page and the header/footer templates wait for approval — record page page-main-soft-skills: created (#2251 -> /soft-skills); waiting for approval
+PASS M2 while waiting for approval, Main still shows its own page
+PASS M2 the converted design uses only widgets both websites can show (nothing blocked, no typed code) — review; widgets heading, text-editor; flagged for review: custom CSS on an element: NOT SHOWN, Elementor Pro is not active (the page appears without these styles)
+PASS M3 a reviewer approves exactly the imported revision
+PASS M3 published and verified: Main now serves the Elementor page at the same address — verified {"main":{"state":"verified","detail":"HTTP 200, approved revision shown","at":1791914926}}
+PASS M4 every line of the original page's content is on the migrated page — 8/8 lines
+PASS M4 same main heading — Soft Skills Training for Career-Ready Digital Marketers | Soft Skills Training for Career-Ready Digital Marketers
+PASS M4 same title, description and canonical address — {"title":["Soft Skills | Acadvizen","Soft Skills | Acadvizen"],"canonical":["http://localhost:3100/soft-skills","http://localhost:3100/soft-skills"]}
+PASS M4 no sideways scrolling on a phone
+INFO M4 visual difference (desktop): 17.91% of pixels; screenshots in <scratch>/scratchpad/rerun6-20261013T1754/migration
+INFO M4 visual difference (phone): 31.04% of pixels; screenshots in <scratch>/scratchpad/rerun6-20261013T1754/migration
+PASS M5 a reviewer takes the page off line
+INFO M5 Main showed its own page again after 14 s (removal job, then Main's 30 s address cache)
+PASS M5 Main serves its own original page again — Main state of the page: removed
+PASS Z undo import removes what it created (page and the template working copies it made); Main shows its own page — 1 removed; working copies left: 0
+
+13 passed, 0 failed [LOCAL] | /soft-skills
