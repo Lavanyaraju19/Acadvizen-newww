@@ -76,7 +76,12 @@ add_action( 'wp_after_insert_post', __NAMESPACE__ . '\\after_candidate_saved', 4
 add_action( 'elementor/document/after_save', __NAMESPACE__ . '\\after_candidate_design_saved', 30, 2 );
 add_action( VERIFY_HOOK, __NAMESPACE__ . '\\verify_publication', 10, 3 );
 add_action( SCHEDULE_HOOK, __NAMESPACE__ . '\\publish_scheduled' );
+// Menus shown on the Main website: reviewer-only under approval (Menus screen, REST, Customizer).
+add_action( 'load-nav-menus.php', __NAMESPACE__ . '\\guard_main_menu_screen', 1 );
+add_filter( 'rest_pre_dispatch', __NAMESPACE__ . '\\guard_main_menu_rest', 10, 3 );
+add_filter( 'customize_loaded_components', __NAMESPACE__ . '\\limit_customizer_menus' );
 add_action( 'wp_footer', __NAMESPACE__ . '\\print_revision_mark', 999 );
+add_filter( 'elementor/frontend/builder_content_data', __NAMESPACE__ . '\\note_rendered_document', 10, 2 );
 
 /* Render Bridge (front end of this WordPress) ------------------------------------------------- */
 add_action( 'template_redirect', __NAMESPACE__ . '\\handle_template_redirect', 0 );
@@ -97,6 +102,9 @@ add_filter( 'elementor/element/is_dynamic_content', __NAMESPACE__ . '\mark_recor
 add_action( 'wp_head', __NAMESPACE__ . '\print_main_css', 100 );
 add_action( 'wp_head', __NAMESPACE__ . '\print_imported_json_ld', 101 );
 add_filter( 'rank_math/json_ld', __NAMESPACE__ . '\main_json_ld_replaces_rank_math', 999 );
+add_filter( 'pre_get_document_title', __NAMESPACE__ . '\main_title_pattern', 99 );
+add_filter( 'rank_math/frontend/title', __NAMESPACE__ . '\main_title_pattern', 99 );
+add_filter( 'rank_math/frontend/advanced_robots', __NAMESPACE__ . '\main_robots_pattern', 99 );
 add_filter( 'rank_math/sitemap/exclude_post_type', __NAMESPACE__ . '\exclude_main_only_types_from_rank_math', 10, 2 );
 add_filter( 'wp_sitemaps_post_types', __NAMESPACE__ . '\exclude_main_only_types_from_core_sitemap' );
 

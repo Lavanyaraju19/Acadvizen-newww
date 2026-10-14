@@ -742,6 +742,10 @@ namespace Acadvizen\CMS {
 	) );
 	check( 'approval: referenced media are found anywhere in the design, plus the featured image', array( 3, 7, 9, 12 ), referenced_attachment_ids( array( array( 'settings' => array( 'image' => array( 'id' => 7, 'url' => 'x.jpg' ), 'background_image' => array( 'id' => '3', 'url' => 'b.jpg' ) ), 'elements' => array( array( 'settings' => array( 'gallery' => array( array( 'id' => 9, 'url' => 'g.jpg' ), array( 'id' => 7, 'url' => 'x.jpg' ) ), 'link' => array( 'id' => 'abc', 'url' => '/' ) ) ) ) ) ), 12 ) );
 
+	check( 'approval: SEO fields are part of a revision; scores and analytics the SEO plugin recalculates are not', array( true, true, true, true, true, true, false, false, false ), array_map( 'Acadvizen\CMS\is_revision_seo_key', array( 'rank_math_title', 'rank_math_description', 'rank_math_canonical_url', 'rank_math_robots', 'rank_math_facebook_title', '_acv_json_ld', 'rank_math_seo_score', 'rank_math_internal_links_processed', '_edit_lock' ) ) );
+
+	check( 'import: a bundle item with an empty design is never imported over an existing one; items without a design are content-only', array( true, false, false ), array( bundle_design_is_empty( array( 'elementor_data' => array() ) ), bundle_design_is_empty( array( 'elementor_data' => array( array( 'elType' => 'container' ) ) ) ), bundle_design_is_empty( array( 'content' => 'x' ) ) ) );
+
 	// Approval state machine.
 	$ctx  = static fn( array $extra = array() ) => array_merge( array( 'hash' => 'h1', 'user' => 2, 'time' => 100, 'can_review' => false, 'compat' => 'ok' ), $extra );
 	$sub  = approval_transition( array(), 'submit', $ctx() );
@@ -772,6 +776,13 @@ namespace Acadvizen\CMS {
 		approval_transition( $sub, 'approve', $ctx( array( 'can_review' => true, 'compat' => 'code' ) ) ),
 		approval_transition( $sub, 'approve', $ctx( array( 'can_review' => true, 'compat' => 'code', 'code_ok' => true ) ) )['state'],
 	) );
+	$both = $ctx( array( 'can_review' => true, 'user' => 3, 'destinations' => array( 'main', 'enrollment' ) ) );
+	check( 'approval: for Both, the reviewer must confirm the preview of each website', array( 'previews_not_checked', 'previews_not_checked', 'approved' ), array(
+		approval_transition( $sub, 'approve', $both ),
+		approval_transition( $sub, 'approve', array_merge( $both, array( 'previews' => array( 'main' ) ) ) ),
+		approval_transition( $sub, 'approve', array_merge( $both, array( 'previews' => array( 'enrollment', 'main' ) ) ) )['state'],
+	) );
+	check( 'approval: the approval records the websites and the previews checked', array( array( 'main', 'enrollment' ), array( 'enrollment', 'main' ) ), array_values( array_intersect_key( approval_transition( $sub, 'approve', array_merge( $both, array( 'previews' => array( 'enrollment', 'main' ) ) ) ), array_flip( array( 'destinations', 'previews_checked' ) ) ) ) );
 	check( 'approval: rejection goes back to the editor with a note', array( 'rejected', 'Fix the hero' ), array( approval_transition( $sub, 'reject', $ctx( array( 'can_review' => true, 'note' => 'Fix the hero' ) ) )['state'], approval_transition( $sub, 'reject', $ctx( array( 'can_review' => true, 'note' => 'Fix the hero' ) ) )['note'] ) );
 	check( 'approval: history keeps every step', array( 'submitted', 'approved', 'approval_invalidated_by_edit' ), array_column( $inv['history'], 'what' ) );
 
@@ -826,6 +837,27 @@ namespace Acadvizen\CMS {
 	$with_pro    = compatibility_report( $styled, array( 'main' ), $installed, true );
 	$without_pro = compatibility_report( $styled, array( 'main' ), $installed, false );
 	check( 'registry: Pro-only element settings are flagged, and said plainly NOT SHOWN when Pro is not active (never silently dropped)', array( 'review', 0, 2 ), array( $without_pro['status'], count( preg_grep( '/NOT SHOWN/', $with_pro['features'] ) ), count( preg_grep( '/NOT SHOWN, Elementor Pro is not active/', $without_pro['features'] ) ) ) );
+	// Main's title pattern for pages drawn for Main without their own SEO title.
+	check( 'main title: "Title | Acadvizen", as Main titles its pages', 'Master Admin Blog Check | Acadvizen', main_document_title( 'Master Admin Blog Check' ) );
+	check( 'main title: already Main-style titles are kept once (never doubled)', 'Adobe XD | Acadvizen', main_document_title( 'Adobe XD | Acadvizen' ) );
+	check( 'main title: entities decoded before the suffix', 'SEO & Ads | Acadvizen', main_document_title( 'SEO &amp; Ads' ) );
+	// Designs referring to designs (a page design's loop draws a card): the card is imported first.
+	$loop = array( array( 'elType' => 'widget', 'widgetType' => 'shortcode', 'settings' => array( 'shortcode' => '[acv_loop type="acv_blog" template="acv-template://card-blog" limit="3"]' ) ) );
+	check( 'import: design references are read from loops', array( 'card-blog' ), template_refs( $loop ) );
+	$ordered = templates_in_dependency_order( array( array( 'key' => 'main-header', 'elementor_data' => array() ), array( 'key' => 'design-blog', 'elementor_data' => $loop ), array( 'key' => 'card-blog', 'elementor_data' => array() ), array( 'key' => 'design-location', 'elementor_data' => array() ) ) );
+	check( 'import: a card comes before the design whose loop draws it; otherwise bundle order', array( 'main-header', 'card-blog', 'design-blog', 'design-location' ), array_column( $ordered, 'key' ) );
+	$cycle = templates_in_dependency_order( array( array( 'key' => 'a', 'elementor_data' => array( 'acv-template://b' ) ), array( 'key' => 'b', 'elementor_data' => array( 'acv-template://a' ) ) ) );
+	check( 'import: designs referring to each other are each imported once (no endless loop)', 2, count( $cycle ) );
+	check( 'import: a design found nowhere is reported, never silent', true, false !== strpos( missing_refs_note( array( 'card-blog' ) ), 'PROBLEM: refers to design(s) card-blog' ) );
+	// Robots: a migrated page publishes exactly the Main page's robots tag.
+	$empty_adv = array( 'max-snippet' => '', 'max-video-preview' => '', 'max-image-preview' => '' );
+	check( 'robots: "index, follow" from Main prints no Rank Math max-snippet… defaults', array( 'robots' => array( 'index', 'follow' ), 'advanced' => $empty_adv ), robots_meta_from( 'index, follow' ) );
+	check( 'robots: noindex and max directives kept', array( 'robots' => array( 'noindex', 'nofollow' ), 'advanced' => array( 'max-snippet' => '-1', 'max-video-preview' => '', 'max-image-preview' => 'large' ) ), robots_meta_from( 'noindex, nofollow, max-snippet:-1, max-image-preview:large' ) );
+	check( 'robots: unknown words ignored, index/follow implied', array( 'index', 'follow' ), robots_meta_from( 'all, whatever' )['robots'] );
+	// Popups: Elementor Pro must be loaded and have registered its 'popup' document type with Elementor.
+	check( 'popup: drawable when Pro is loaded and registered the popup type', '', popup_blocker( true, array( 'post' => 'X', 'popup' => 'ElementorPro\\Modules\\Popup\\Document' ) ) );
+	check( 'popup: blocked, plainly, when Pro is not active', 'popups need Elementor Pro, which is not active on this WordPress', popup_blocker( false, array( 'popup' => 'X' ) ) );
+	check( 'popup: blocked when Pro is installed but its popup type is not registered (Pro did not finish loading)', true, false !== strpos( popup_blocker( true, array( 'post' => 'X', 'section' => 'Y' ) ), 'popup feature is not loaded' ) );
 	check( 'registry: a plain design for Both is ok', 'ok', compatibility_report( array( array( 'elType' => 'container', 'elements' => array( array( 'elType' => 'widget', 'widgetType' => 'heading' ) ) ) ), array( 'enrollment', 'main' ), $installed )['status'] );
 	check( 'enrollment only: first publish of a new blog', 'published', enrollment_status_for_save( TARGET_ENROLLMENT, 'published', true, $editor, 'draft', '' ) );
 	check( 'main / both: the copy follows the Main record', array( 'published', 'draft' ), array( enrollment_status_for_save( TARGET_BOTH, '', true, $editor, 'published', 'draft' ), enrollment_status_for_save( TARGET_MAIN, 'published', true, $editor, 'draft', 'published' ) ) );

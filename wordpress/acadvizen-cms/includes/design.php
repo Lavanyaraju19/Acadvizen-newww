@@ -802,6 +802,39 @@ function main_json_ld_replaces_rank_math( $data ) {
 	return $data;
 }
 
+/** A title as the Main Website writes it: "Title | Acadvizen" (kept as is when it already ends so). */
+function main_document_title( string $title ): string {
+	$title = trim( html_entity_decode( wp_strip_all_tags( $title ), ENT_QUOTES, 'UTF-8' ) );
+	return preg_match( '/\|\s*Acadvizen\s*$/i', $title ) ? $title : $title . ' | Acadvizen';
+}
+
+/**
+ * A page drawn for the Main Website without its own SEO title is titled as Main titles its pages,
+ * not with the Enrollment site's pattern ("Title - enroll.acadvizen.com"). A title set in the
+ * page's SEO box always wins.
+ */
+function main_title_pattern( $title ) {
+	$object = get_queried_object();
+	if ( ! $object instanceof \WP_Post || ! is_main_design_request() || '' !== trim( (string) get_post_meta( $object->ID, 'rank_math_title', true ) ) ) {
+		return $title;
+	}
+	return main_document_title( get_the_title( $object ) );
+}
+
+/**
+ * Advanced robots for a page drawn for the Main Website without its own advanced robots settings:
+ * none, as Main prints "index, follow" (Rank Math would add its site-wide max-snippet… defaults
+ * through this separate filter, after rank_math/frontend/robots). Settings made in the page's SEO
+ * box are kept.
+ */
+function main_robots_pattern( $advanced ) {
+	$object = get_queried_object();
+	if ( ! is_array( $advanced ) || ! $object instanceof \WP_Post || ! is_main_design_request() || metadata_exists( 'post', $object->ID, 'rank_math_advanced_robots' ) ) {
+		return $advanced;
+	}
+	return array();
+}
+
 /** Structured data (JSON-LD) imported from the Main Website, printed for the Main Website only. */
 function print_imported_json_ld(): void {
 	$object = get_queried_object();

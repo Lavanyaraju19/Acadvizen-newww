@@ -227,6 +227,15 @@ function handle_retry_render(): void {
 function handle_rollback(): void {
 	$post       = verify_site_action( 'acv_cms_rollback' );
 	$version_id = isset( $_REQUEST['version_id'] ) ? absint( $_REQUEST['version_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	// Under approval, putting an earlier version back on the Main Website is a reviewer's decision
+	// (the Main-only rollback; Approvals > Restore rolls back every website of the page).
+	if ( approval_enabled() ) {
+		if ( ! current_user_can( REVIEW_CAP ) ) {
+			approval_log( 'main_rollback', $post->ID, 'refused', 'version ' . $version_id );
+			wp_die( esc_html__( 'Only a reviewer can put an earlier version back on the Main Website.', 'acadvizen-cms' ), 403 );
+		}
+		approval_log( 'main_rollback', $post->ID, 'by_reviewer', 'version ' . $version_id );
+	}
 	redirect_back( rollback_to_version( $post->ID, $version_id ) ? 'rolled_back' : 'rollback_failed' );
 }
 

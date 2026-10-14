@@ -78,7 +78,7 @@ function bundle_items( array $bundle, string $step ): array {
 		case 'kit':
 			return empty( $bundle['kit'] ) ? array() : array( $bundle['kit'] );
 		case 'templates':
-			return array_values( (array) ( $bundle['templates'] ?? array() ) );
+			return templates_in_dependency_order( array_values( (array) ( $bundle['templates'] ?? array() ) ) );
 		case 'settings':
 			return empty( $bundle['settings'] ) ? array() : array( $bundle['settings'] );
 		case 'records':
@@ -263,6 +263,7 @@ function import_menu_item( array $item, array &$state ): string {
 			)
 		);
 	}
+	update_term_meta( $menu_id, MAIN_MENU_META, '1' ); // Shown on the Main website: changes to it are reviewer-only under approval.
 	$state['map']['menus'][ $key ] = $menu_id;
 	return "menu {$name}: {$verb} with " . count( $ids ) . ' items';
 }
@@ -356,8 +357,16 @@ function import_submit( int $id, bool $publish ): string {
 	return 'pending' === $outcome ? 'waiting for approval' : 'not submitted: ' . $outcome;
 }
 
+/** A bundle item whose Elementor design is empty: importing it would replace a working design with nothing. */
+function bundle_design_is_empty( array $item ): bool {
+	return array_key_exists( 'elementor_data', $item ) && is_array( $item['elementor_data'] ) && ! $item['elementor_data'];
+}
+
 function import_template_item( array $item, array &$state ): string {
 	$key       = sanitize_key( (string) ( $item['key'] ?? '' ) );
+	if ( bundle_design_is_empty( $item ) || ! array_key_exists( 'elementor_data', $item ) ) {
+		return "template {$key}: left out: its design in the bundle is empty (any existing design is kept)";
+	}
 	$post_type = in_array( $item['post_type'] ?? '', array( 'elementor_library', 'elementor-hf' ), true ) ? $item['post_type'] : 'elementor_library';
 	$existing  = post_by_source( 'template:' . $key, $post_type );
 	list( $gated, $write_id, $live_id ) = import_write_target( $existing, $post_type, (string) ( $state['batch'] ?? '' ) );
@@ -397,6 +406,7 @@ function import_template_item( array $item, array &$state ): string {
 		update_post_meta( $id, 'ehf_target_user_roles', array( '' ) );
 	}
 	set_publish_target( $id, sanitize_publish_target( (string) ( $item['target'] ?? TARGET_MAIN ) ) );
+	$missing = map_template_refs( $item, $state );
 	save_elementor_document( $id, $item, $state['map'] );
 	if ( ! empty( $item['popup_display'] ) && is_array( $item['popup_display'] ) ) {
 		// Elementor Pro popup triggers, e.g. "On page load after 90 seconds":
@@ -408,7 +418,7 @@ function import_template_item( array $item, array &$state ): string {
 		$state['pending_conditions'][ $id ] = array_values( array_map( 'strval', $item['conditions'] ) );
 	}
 	return "template {$key}: " . ( $existing ? 'updated' : 'created' ) . " (#{$id}" . ( $live_id ? ", working copy of live #{$live_id}" : '' ) . ')'
-		. ( $gated ? '; ' . import_submit( $id, true ) : '' );
+		. missing_refs_note( $missing ) . ( $gated ? '; ' . import_submit( $id, true ) : '' );
 }
 
 /**
@@ -431,6 +441,11 @@ function apply_pending_conditions( array &$state ): string {
 			}
 		}
 		update_post_meta( (int) $template_id, '_elementor_conditions', $resolved );
+		// The conditions are part of the revision: a template already submitted is submitted again,
+		// so the reviewer approves it with its conditions (not a revision that no longer exists).
+		if ( approval_enabled() && 'pending' === ( approval_state( (int) $template_id )['state'] ?? '' ) && ( $template = get_post( (int) $template_id ) ) instanceof \WP_Post ) {
+			submit_candidate( $template );
+		}
 		++$done;
 	}
 	unset( $state['pending_conditions'] );
@@ -479,12 +494,24 @@ function merge_main_css( string $existing, string $incoming ): string {
 
 function import_record_item( array $item, array &$state ): string {
 	$key       = sanitize_key( (string) ( $item['key'] ?? '' ) );
+	if ( bundle_design_is_empty( $item ) ) {
+		return "record {$key}: left out: its design in the bundle is empty (any existing design is kept)";
+	}
 	$post_type = sanitize_key( (string) ( $item['post_type'] ?? 'page' ) );
 	if ( '' === $key || ! post_type_exists( $post_type ) ) {
 		return "skipped record {$key} ({$post_type})";
 	}
 	$copies   = posts_by_source( 'record:' . $key, $post_type );
 	$existing = $copies ? array_shift( $copies ) : 0;
+	// A page already served at this Main address (made before, without this record's key) is the
+	// same page: it is updated (through its working copy under approval), never duplicated.
+	if ( ! $existing && ! empty( $item['main_path'] ) && '' !== normalize_main_path( (string) $item['main_path'] ) ) {
+		$serving = live_version_for_path( normalize_main_path( (string) $item['main_path'] ) );
+		if ( $serving && $post_type === get_post_type( (int) $serving['post_id'] ) && 'publish' === get_post_status( (int) $serving['post_id'] ) ) {
+			$existing = (int) $serving['post_id'];
+			update_post_meta( $existing, META_SOURCE, 'record:' . $key );
+		}
+	}
 	// Imports that overlapped (before the import lock) could create a record twice: the first is
 	// kept, the others go to the Trash (each copy's own published page goes with it).
 	foreach ( $copies as $copy ) {
@@ -558,6 +585,7 @@ function import_record_item( array $item, array &$state ): string {
 		}
 	}
 	apply_seo( $id, (array) ( $item['seo'] ?? array() ), $state['map'] );
+	$missing = map_template_refs( $item, $state );
 	if ( ! empty( $item['elementor_data'] ) ) {
 		save_elementor_document( $id, $item, $state['map'] );
 		update_post_meta( $id, '_wp_page_template', sanitize_text_field( (string) ( $item['page_template'] ?? 'elementor_header_footer' ) ) );
@@ -576,13 +604,102 @@ function import_record_item( array $item, array &$state ): string {
 		wp_update_post( array( 'ID' => $id ) );
 	}
 	return "record {$post_type} {$key}: " . ( $existing ? 'updated' : 'created' ) . " (#{$id}" . ( $live_id ? ", working copy of live #{$live_id}" : '' ) . ( isset( $state['map']['paths'][ $key ] ) ? ' -> ' . $state['map']['paths'][ $key ] : '' ) . ')'
-		. ( $copies ? '; duplicate moved to the Trash: #' . implode( ', #', $copies ) : '' ) . $approval;
+		. ( $copies ? '; duplicate moved to the Trash: #' . implode( ', #', $copies ) : '' ) . missing_refs_note( $missing ) . $approval;
 }
 
 /**
  * SEO from the Main Website, stored where Rank Math (this website's SEO plugin) reads it, so it is
  * edited in the normal Rank Math box. Structured data (JSON-LD) is kept as-is.
  */
+/**
+ * Rank Math's robots settings for a page that must publish exactly a Main page's robots tag, e.g.
+ * "index, follow" (no max-snippet…: Rank Math would otherwise add its site-wide defaults) or
+ * "noindex, nofollow". Empty advanced values tell Rank Math to print none.
+ *
+ * @return array{robots: string[], advanced: array<string, string>}
+ */
+function robots_meta_from( string $robots ): array {
+	$directives = array_filter( array_map( 'trim', explode( ',', strtolower( $robots ) ) ) );
+	$out        = array();
+	$advanced   = array( 'max-snippet' => '', 'max-video-preview' => '', 'max-image-preview' => '' );
+	foreach ( $directives as $directive ) {
+		$parts = array_map( 'trim', explode( ':', $directive, 2 ) );
+		if ( 2 === count( $parts ) && array_key_exists( $parts[0], $advanced ) ) {
+			$advanced[ $parts[0] ] = preg_replace( '/[^a-z0-9-]/', '', $parts[1] );
+		} elseif ( in_array( $directive, array( 'index', 'noindex', 'follow', 'nofollow', 'noarchive', 'nosnippet', 'noimageindex' ), true ) ) {
+			$out[] = $directive;
+		}
+	}
+	if ( ! in_array( 'noindex', $out, true ) && ! in_array( 'index', $out, true ) ) {
+		array_unshift( $out, 'index' );
+	}
+	if ( ! in_array( 'nofollow', $out, true ) && ! in_array( 'follow', $out, true ) ) {
+		$out[] = 'follow';
+	}
+	return array( 'robots' => array_values( array_unique( $out ) ), 'advanced' => $advanced );
+}
+
+/** The designs (bundle keys) an item refers to as acv-template://<key>, e.g. the card a loop draws. */
+function template_refs( $value ): array {
+	preg_match_all( '#acv-template://([a-z0-9_\-]+)#i', (string) json_encode( $value, JSON_UNESCAPED_SLASHES ), $m );
+	return array_values( array_unique( array_map( 'strtolower', $m[1] ) ) );
+}
+
+/**
+ * Designs in an order where each comes after the designs it refers to: a card before the page
+ * design whose loop draws it. Otherwise the reference cannot be resolved when the page design is
+ * written (it became template="0": a loop that draws nothing). Order otherwise as in the bundle.
+ */
+function templates_in_dependency_order( array $templates ): array {
+	$by_key = array();
+	foreach ( $templates as $template ) {
+		$by_key[ strtolower( (string) ( $template['key'] ?? '' ) ) ] = $template;
+	}
+	$out   = array();
+	$done  = array();
+	$visit = static function ( string $key, array $trail ) use ( &$visit, &$out, &$done, $by_key ): void {
+		if ( isset( $done[ $key ] ) || ! isset( $by_key[ $key ] ) || in_array( $key, $trail, true ) ) {
+			return;
+		}
+		foreach ( template_refs( array( $by_key[ $key ]['elementor_data'] ?? array(), $by_key[ $key ]['page_settings'] ?? array() ) ) as $ref ) {
+			$visit( $ref, array_merge( $trail, array( $key ) ) );
+		}
+		$done[ $key ] = true;
+		$out[]        = $by_key[ $key ];
+	};
+	foreach ( array_keys( $by_key ) as $key ) {
+		$visit( (string) $key, array() );
+	}
+	return $out;
+}
+
+/**
+ * Before an item's design is written: the designs it refers to that are already on this site (from
+ * an earlier import) are added to the import map. Returns the ones found nowhere, so the import
+ * says so instead of writing a reference to nothing.
+ */
+function map_template_refs( array $item, array &$state ): array {
+	$missing = array();
+	foreach ( template_refs( array( $item['elementor_data'] ?? array(), $item['page_settings'] ?? array(), $item['content'] ?? '' ) ) as $ref ) {
+		if ( ! empty( $state['map']['templates'][ $ref ] ) ) {
+			continue;
+		}
+		// Elementor's template types are left out of post_type 'any': ask for each one.
+		$existing = post_by_source( 'template:' . $ref, 'elementor_library' ) ?: post_by_source( 'template:' . $ref, 'elementor-hf' );
+		if ( $existing ) {
+			$state['map']['templates'][ $ref ] = $existing;
+		} else {
+			$missing[] = $ref;
+		}
+	}
+	return $missing;
+}
+
+/** The import result's note for designs referred to but found nowhere. */
+function missing_refs_note( array $missing ): string {
+	return $missing ? '; PROBLEM: refers to design(s) ' . implode( ', ', $missing ) . ' found neither in this import nor on this site, so that part shows nothing until the design exists' : '';
+}
+
 function apply_seo( int $post_id, array $seo, array $map ): void {
 	$fields = array(
 		'title'               => 'rank_math_title',
@@ -607,7 +724,12 @@ function apply_seo( int $post_id, array $seo, array $map ): void {
 		update_post_meta( $post_id, 'rank_math_facebook_image', (string) wp_get_attachment_url( $image_id ) );
 		update_post_meta( $post_id, 'rank_math_twitter_use_facebook', 'on' );
 	}
-	if ( isset( $seo['noindex'] ) ) {
+	if ( isset( $seo['robots'] ) && '' !== trim( (string) $seo['robots'] ) ) {
+		// The Main page's exact robots directives (also "no max-snippet…" when Main sets none).
+		$robots = robots_meta_from( (string) $seo['robots'] );
+		update_post_meta( $post_id, 'rank_math_robots', $robots['robots'] );
+		update_post_meta( $post_id, 'rank_math_advanced_robots', $robots['advanced'] );
+	} elseif ( isset( $seo['noindex'] ) ) {
 		update_post_meta( $post_id, 'rank_math_robots', $seo['noindex'] ? array( 'noindex', 'follow' ) : array( 'index', 'follow' ) );
 	}
 	if ( ! empty( $seo['json_ld'] ) ) {

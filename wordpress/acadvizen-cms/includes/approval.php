@@ -139,7 +139,11 @@ function approval_transition( array $state, string $action, array $ctx ) {
 			if ( COMPAT_CODE === ( $ctx['compat'] ?? COMPAT_OK ) && empty( $ctx['code_ok'] ) ) {
 				return 'code_needs_review';
 			}
-			return array_merge( $state, array( 'state' => 'approved', 'reviewed_by' => (int) ( $ctx['user'] ?? 0 ), 'reviewed_at' => (int) ( $ctx['time'] ?? time() ), 'self_approved' => (int) ( $ctx['user'] ?? 0 ) === (int) ( $state['submitted_by'] ?? -1 ), 'history' => $history( $state, 'approved' ) ) );
+			// The reviewer confirms the preview of every chosen website (for Both: Main and Enrollment).
+			if ( array_diff( (array) ( $ctx['destinations'] ?? array() ), (array) ( $ctx['previews'] ?? array() ) ) ) {
+				return 'previews_not_checked';
+			}
+			return array_merge( $state, array( 'state' => 'approved', 'reviewed_by' => (int) ( $ctx['user'] ?? 0 ), 'reviewed_at' => (int) ( $ctx['time'] ?? time() ), 'self_approved' => (int) ( $ctx['user'] ?? 0 ) === (int) ( $state['submitted_by'] ?? -1 ), 'destinations' => array_values( (array) ( $ctx['destinations'] ?? array() ) ), 'previews_checked' => array_values( (array) ( $ctx['previews'] ?? array() ) ), 'history' => $history( $state, 'approved' ) ) );
 		case 'reject':
 			if ( empty( $ctx['can_review'] ) ) {
 				return 'not_reviewer';
@@ -269,11 +273,27 @@ function design_elements( int $post_id ): array {
 	return is_array( $decoded ) ? $decoded : array();
 }
 
+/**
+ * SEO fields that belong to a revision: what search engines and link previews show (Rank Math or
+ * Yoast titles, descriptions, canonical, robots, social and schema fields, the imported JSON-LD).
+ * Changing one changes the public page, so it needs approval like the design. Scores and analytics
+ * that the SEO plugin recalculates by itself are left out.
+ */
+function is_revision_seo_key( string $key ): bool {
+	return 1 === preg_match( '/^(rank_math_(title|description|focus_keyword|canonical_url|robots|advanced_robots|facebook_|twitter_|schema_|breadcrumb_title|snippet_)|_yoast_wpseo_(title|metadesc|canonical|meta-robots|opengraph|twitter|schema_)|_acv_json_ld$)/', $key );
+}
+
 function revision_parts( \WP_Post $post ): array {
 	$meta = array();
 	foreach ( REVISION_META_KEYS as $key ) {
 		$value        = get_post_meta( $post->ID, $key, true );
 		$meta[ $key ] = is_scalar( $value ) ? (string) $value : (string) wp_json_encode( $value );
+	}
+	foreach ( (array) get_post_meta( $post->ID ) as $key => $values ) {
+		if ( is_revision_seo_key( (string) $key ) ) {
+			$value                 = maybe_unserialize( $values[0] ?? '' );
+			$meta[ (string) $key ] = is_scalar( $value ) ? (string) $value : (string) wp_json_encode( $value );
+		}
 	}
 	$terms = array();
 	foreach ( get_object_taxonomies( $post->post_type ) as $taxonomy ) {
@@ -308,10 +328,10 @@ function current_fingerprint( \WP_Post $post ): string {
 
 /** 'main' and/or 'enrollment' for a document's chosen destination. */
 function chosen_destinations( \WP_Post $post ): array {
-	if ( is_template_post_type( $post->post_type ) ) {
-		return array( 'enrollment' ); // Templates are drawn into pages; the pages are verified.
-	}
 	$target = get_publish_target( $post->ID );
+	if ( is_template_post_type( $post->post_type ) && '' === (string) get_post_meta( $post->ID, META_TARGET, true ) ) {
+		return array( 'enrollment' ); // A template with no Publish To is an Enrollment template, as before.
+	}
 	$out    = array();
 	if ( targets_enrollment( $target ) ) {
 		$out[] = 'enrollment';
@@ -322,8 +342,44 @@ function chosen_destinations( \WP_Post $post ): array {
 	return $out;
 }
 
+/**
+ * Why this WordPress cannot draw Elementor popups, or '' when it can. Popups are an Elementor Pro
+ * document type: Pro must be loaded AND have registered the 'popup' type with Elementor (a Pro that
+ * is installed but did not finish loading draws no popup).
+ *
+ * @param bool|null  $pro            Elementor Pro loaded (tests pass it)
+ * @param array|null $document_types Elementor's registered document types (tests pass them)
+ */
+function popup_blocker( ?bool $pro = null, ?array $document_types = null ): string {
+	if ( ! ( $pro ?? defined( 'ELEMENTOR_PRO_VERSION' ) ) ) {
+		return 'popups need Elementor Pro, which is not active on this WordPress';
+	}
+	if ( null === $document_types ) {
+		$documents      = class_exists( '\Elementor\Plugin' ) ? ( \Elementor\Plugin::$instance->documents ?? null ) : null;
+		$document_types = $documents ? (array) $documents->get_document_types() : array();
+	}
+	return isset( $document_types['popup'] ) ? '' : 'Elementor Pro is active but its popup feature is not loaded on this WordPress';
+}
+
 function document_compatibility( \WP_Post $post ): array {
-	return compatibility_report( design_elements( $post->ID ), chosen_destinations( $post ) );
+	$elements = design_elements( $post->ID );
+	$report   = compatibility_report( $elements, chosen_destinations( $post ) );
+	// Popups are drawn by Elementor Pro: without it a popup can never appear on either website.
+	$popup_blocker = 'popup' === get_post_meta( $post->ID, '_elementor_template_type', true ) ? popup_blocker() : '';
+	if ( '' !== $popup_blocker ) {
+		foreach ( chosen_destinations( $post ) ?: array( 'enrollment' ) as $destination ) {
+			$report['items'][] = array( 'status' => COMPAT_BLOCKED, 'why' => $popup_blocker, 'fix' => 'activate Elementor Pro (licensed) and check its popups load, or use a section on the page instead', 'widget' => '(popup)', 'count' => 0, 'destination' => $destination, 'provider' => '', 'version' => '' );
+		}
+		$report['status'] = COMPAT_BLOCKED;
+	}
+	// An Elementor document with nothing in it would show an empty page, header or footer.
+	if ( ! $elements && 'builder' === get_post_meta( $post->ID, '_elementor_edit_mode', true ) ) {
+		foreach ( chosen_destinations( $post ) ?: array( 'enrollment' ) as $destination ) {
+			$report['items'][] = array( 'status' => COMPAT_BLOCKED, 'why' => 'the Elementor design is empty: it would show nothing', 'fix' => 'design it in Elementor, or restore an earlier revision', 'widget' => '(whole design)', 'count' => 0, 'destination' => $destination, 'provider' => '', 'version' => '' );
+		}
+		$report['status'] = COMPAT_BLOCKED;
+	}
+	return $report;
 }
 
 function approval_state( int $post_id ): array {
@@ -634,7 +690,33 @@ function refresh_candidate( \WP_Post $post ): void {
 	}
 }
 
+/**
+ * Another live document already serving this document's Main Website address (0 when none). A page
+ * and its own working copies and archives are one document; any other one would be a duplicate at
+ * that address, so submitting is refused until the address is changed or the other page removed.
+ */
+function main_address_conflict( \WP_Post $post ): int {
+	if ( ! is_site_post_type( $post->post_type ) || ! targets_main( get_publish_target( $post->ID ) ) ) {
+		return 0;
+	}
+	$path = main_path_for( $post );
+	$live = '' !== $path ? live_version_for_path( $path ) : null;
+	$self = revision_copy_of( $post->ID ) ?: $post->ID;
+	$other = $live ? (int) $live['post_id'] : 0;
+	return $other && $other !== $self && 'publish' === get_post_status( $other ) ? $other : 0;
+}
+
 function submit_candidate( \WP_Post $post ): string {
+	$conflict = main_address_conflict( $post );
+	if ( $conflict ) {
+		approval_bypass( true );
+		wp_update_post( array( 'ID' => $post->ID, 'post_status' => 'draft' ) );
+		approval_bypass( false );
+		approval_log( 'submit', $post->ID, 'refused', 'main_address_in_use', array( 'other' => $conflict ) );
+		/* translators: 1: page title, 2: page ID */
+		approval_flash( 'error', sprintf( __( 'This Main Website address is already used by the live page "%1$s" (#%2$d). Change the address, or edit that page instead.', 'acadvizen-cms' ), get_the_title( $conflict ), $conflict ) );
+		return 'main_address_in_use';
+	}
 	$report = document_compatibility( $post );
 	$hash   = current_fingerprint( $post );
 	$next   = approval_transition( approval_state( $post->ID ), 'submit', array( 'hash' => $hash, 'user' => get_current_user_id(), 'compat' => $report['status'] ) );
@@ -657,6 +739,16 @@ function submit_candidate( \WP_Post $post ): string {
 	return 'pending';
 }
 
+/** The words shown for one website's publication state. */
+function destination_status_label( string $state ): string {
+	$labels = array(
+		'verified' => __( 'Published (verified)', 'acadvizen-cms' ),
+		'pending'  => __( 'Publishing', 'acadvizen-cms' ),
+		'failed'   => __( 'Failed', 'acadvizen-cms' ),
+	);
+	return $labels[ $state ] ?? __( 'Pending', 'acadvizen-cms' );
+}
+
 function approval_error_text( string $code, array $report = array() ): string {
 	$texts = array(
 		'blocked_widgets'         => __( 'It cannot be published as designed:', 'acadvizen-cms' ),
@@ -667,6 +759,8 @@ function approval_error_text( string $code, array $report = array() ): string {
 		'not_approved'            => __( 'It is not approved yet.', 'acadvizen-cms' ),
 		'changed_since_approved'  => __( 'It changed after it was approved: the approval no longer applies. Submit it again.', 'acadvizen-cms' ),
 		'no_revision'             => __( 'There is nothing to submit.', 'acadvizen-cms' ),
+		'main_address_in_use'     => __( 'Another live page already uses this Main Website address. Change the address, or edit that page instead.', 'acadvizen-cms' ),
+		'previews_not_checked'    => __( 'Check the preview of every chosen website first, and tick it ("I checked the … preview").', 'acadvizen-cms' ),
 		'already_scheduled'       => __( 'It is already scheduled. Cancel the schedule first to publish it now.', 'acadvizen-cms' ),
 		'not_scheduled'           => __( 'It is not scheduled.', 'acadvizen-cms' ),
 	);
@@ -684,7 +778,7 @@ function approval_error_text( string $code, array $report = array() ): string {
 
 /* Review, publishing, verification, rollback ------------------------------------------------------------ */
 
-function review_candidate( int $post_id, string $decision, bool $code_ok, string $note ): string {
+function review_candidate( int $post_id, string $decision, bool $code_ok, string $note, array $previews = array() ): string {
 	$post = get_post( $post_id );
 	if ( ! $post instanceof \WP_Post || ! in_approval_scope( $post ) ) {
 		return 'not_found';
@@ -693,7 +787,7 @@ function review_candidate( int $post_id, string $decision, bool $code_ok, string
 	$next   = approval_transition(
 		approval_state( $post_id ),
 		$decision,
-		array( 'hash' => current_fingerprint( $post ), 'user' => get_current_user_id(), 'can_review' => current_user_can( REVIEW_CAP ), 'compat' => $report['status'], 'code_ok' => $code_ok && current_user_can( 'unfiltered_html' ), 'note' => $note )
+		array( 'hash' => current_fingerprint( $post ), 'user' => get_current_user_id(), 'can_review' => current_user_can( REVIEW_CAP ), 'compat' => $report['status'], 'code_ok' => $code_ok && current_user_can( 'unfiltered_html' ), 'note' => $note, 'destinations' => chosen_destinations( $post ), 'previews' => array_values( array_intersect( array( 'main', 'enrollment' ), $previews ) ) )
 	);
 	if ( ! is_array( $next ) ) {
 		approval_log( $decision, $post_id, 'refused', $next );
@@ -836,6 +930,81 @@ function ensure_scheduled_jobs(): int {
 	return $restored;
 }
 
+/* Navigation on the Main website: reviewers only ----------------------------------------------------- */
+
+/** Term meta marking a WordPress menu as shown on the Main website (set by Import Main Website). */
+const MAIN_MENU_META = 'acv_main_menu';
+
+function is_main_menu( int $menu_id ): bool {
+	return $menu_id > 0 && '1' === (string) get_term_meta( $menu_id, MAIN_MENU_META, true );
+}
+
+/** The menu a menu item belongs to (0 when none). */
+function menu_of_item( int $item_id ): int {
+	$terms = $item_id ? wp_get_object_terms( $item_id, 'nav_menu', array( 'fields' => 'ids' ) ) : array();
+	return is_array( $terms ) && $terms ? (int) $terms[0] : 0;
+}
+
+/**
+ * A change to a Main menu changes every Main page at once, like the global styles: with approval on
+ * only a reviewer can make it, and it is recorded. Menus used only on Enrollment are not affected.
+ * Appearance > Menus (saving, adding items, deleting the menu).
+ */
+function guard_main_menu_screen(): void {
+	if ( ! approval_enabled() || approval_bypass() ) {
+		return;
+	}
+	// phpcs:disable WordPress.Security.NonceVerification -- a refusal only; WordPress checks its own nonces.
+	$action = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : '';
+	$menu   = isset( $_REQUEST['menu'] ) ? absint( $_REQUEST['menu'] ) : 0;
+	$writes = 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) || in_array( $action, array( 'delete', 'delete-menu-item', 'move-down-menu-item', 'move-up-menu-item' ), true );
+	if ( 'delete-menu-item' === $action || 'move-down-menu-item' === $action || 'move-up-menu-item' === $action ) {
+		$menu = menu_of_item( isset( $_REQUEST['menu-item'] ) ? absint( $_REQUEST['menu-item'] ) : 0 );
+	}
+	// phpcs:enable
+	if ( ! $writes || ! is_main_menu( $menu ) ) {
+		return;
+	}
+	if ( ! current_user_can( REVIEW_CAP ) ) {
+		approval_log( 'navigation', 0, 'refused', 'menu ' . $menu );
+		wp_die( esc_html__( 'This menu is shown on the Main website. Changing it changes every Main page at once, so only a reviewer can save it.', 'acadvizen-cms' ), 403 );
+	}
+	approval_log( 'navigation', 0, 'saved_by_reviewer', 'menu ' . $menu );
+}
+
+/** The REST menu routes (block editor navigation, apps). */
+function guard_main_menu_rest( $result, $server, $request ) {
+	if ( null !== $result || ! approval_enabled() || approval_bypass() || ! $request instanceof \WP_REST_Request || 'GET' === $request->get_method() ) {
+		return $result;
+	}
+	$route = $request->get_route();
+	$menu  = 0;
+	if ( preg_match( '#^/wp/v2/menus/(\d+)#', $route, $m ) ) {
+		$menu = (int) $m[1];
+	} elseif ( preg_match( '#^/wp/v2/menu-items/(\d+)#', $route, $m ) ) {
+		$menu = menu_of_item( (int) $m[1] ) ?: (int) $request->get_param( 'menus' );
+	} elseif ( preg_match( '#^/wp/v2/menu-items/?$#', $route ) ) {
+		$menu = (int) $request->get_param( 'menus' );
+	}
+	if ( ! is_main_menu( $menu ) ) {
+		return $result;
+	}
+	if ( ! current_user_can( REVIEW_CAP ) ) {
+		approval_log( 'navigation', 0, 'refused', 'menu ' . $menu . ' (REST)' );
+		return new \WP_Error( 'acv_main_menu_needs_reviewer', __( 'This menu is shown on the Main website: only a reviewer can change it.', 'acadvizen-cms' ), array( 'status' => 403 ) );
+	}
+	approval_log( 'navigation', 0, 'saved_by_reviewer', 'menu ' . $menu . ' (REST)' );
+	return $result;
+}
+
+/** The Customizer cannot refuse one menu in a save of many: for non-reviewers it offers no menus to edit. */
+function limit_customizer_menus( array $components ): array {
+	if ( approval_enabled() && ! current_user_can( REVIEW_CAP ) && get_terms( array( 'taxonomy' => 'nav_menu', 'hide_empty' => false, 'fields' => 'ids', 'meta_key' => MAIN_MENU_META, 'meta_value' => '1' ) ) ) { // phpcs:ignore WordPress.DB.SlowDBQuery
+		return array_values( array_diff( $components, array( 'nav_menus' ) ) );
+	}
+	return $components;
+}
+
 /** "Cancel schedule": the approved revision stays approved and can be published or rescheduled. */
 function cancel_schedule( int $candidate_id ): string {
 	$next = approval_transition( approval_state( $candidate_id ), 'unschedule', array( 'user' => get_current_user_id() ) );
@@ -862,8 +1031,81 @@ function check_destination( string $url, string $mark, array $headers = array() 
 	return array( 'state' => 'retry', 'detail' => 200 === $code ? 'HTTP 200 but another revision is shown' : 'HTTP ' . $code );
 }
 
+/**
+ * A page that draws a template, as a path on the given website: an item of the type a design
+ * template is used for, the page a popup is shown on, otherwise the homepage (headers, footers).
+ */
+function template_showcase_path( \WP_Post $template, string $destination, int $depth = 0 ): string {
+	foreach ( DESIGN_TYPES as $type ) {
+		if ( design_template_for( $type ) === $template->ID ) {
+			foreach ( get_posts( array( 'post_type' => $type, 'post_status' => 'publish', 'posts_per_page' => 20, 'orderby' => 'ID', 'order' => 'ASC' ) ) as $item ) {
+				if ( ! uses_design_template( $item ) ) {
+					continue;
+				}
+				if ( 'main' === $destination && targets_main( get_publish_target( $item->ID ) ) && '' !== main_path_for( $item ) ) {
+					return main_path_for( $item );
+				}
+				if ( 'enrollment' === $destination && targets_enrollment( get_publish_target( $item->ID ) ) ) {
+					return (string) wp_parse_url( (string) get_permalink( $item ), PHP_URL_PATH );
+				}
+			}
+			return '';
+		}
+	}
+	foreach ( (array) get_post_meta( $template->ID, '_elementor_conditions', true ) as $condition ) {
+		if ( preg_match( '#^include/singular/page/(\d+)$#', (string) $condition, $m ) && ( $page = get_post( (int) $m[1] ) ) instanceof \WP_Post ) {
+			return 'main' === $destination ? main_path_for( $page ) : (string) wp_parse_url( (string) get_permalink( $page ), PHP_URL_PATH );
+		}
+	}
+	// A card drawn by another design's loop (e.g. the tool card in the tool page design's "related
+	// tools"), or placed with Elementor's Template widget: shown where that design is shown.
+	$path = referring_document_path( $template, $destination, $depth );
+	return null !== $path ? $path : '/';
+}
+
+/**
+ * Where a template is drawn because another published document uses it (an acv_loop's template="ID"
+ * or Elementor's Template widget), or null when nothing refers to it.
+ */
+function referring_document_path( \WP_Post $template, string $destination, int $depth ): ?string {
+	global $wpdb;
+	if ( $depth >= 3 ) {
+		return null; // A card inside a card inside a design: deep enough; never loops.
+	}
+	$patterns = array( 'template=\\"' . $template->ID . '\\"', '"template_id":"' . $template->ID . '"', '"template_id":' . $template->ID . ',' );
+	$where    = implode( ' OR ', array_fill( 0, count( $patterns ), 'm.meta_value LIKE %s' ) );
+	$ids      = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT m.post_id FROM {$wpdb->postmeta} m JOIN {$wpdb->posts} p ON p.ID = m.post_id WHERE m.meta_key = '_elementor_data' AND p.post_status = 'publish' AND m.post_id <> %d AND ( {$where} ) ORDER BY m.post_id LIMIT 20", array_merge( array( $template->ID ), array_map( static fn( $x ) => '%' . $wpdb->esc_like( $x ) . '%', $patterns ) ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	foreach ( array_map( 'intval', (array) $ids ) as $id ) {
+		$doc = get_post( $id );
+		if ( ! $doc instanceof \WP_Post ) {
+			continue;
+		}
+		if ( is_template_post_type( $doc->post_type ) ) {
+			$path = template_showcase_path( $doc, $destination, $depth + 1 );
+			if ( '' !== $path ) {
+				return $path;
+			}
+			continue;
+		}
+		if ( 'main' === $destination && targets_main( get_publish_target( $doc->ID ) ) && '' !== main_path_for( $doc ) ) {
+			return main_path_for( $doc );
+		}
+		if ( 'enrollment' === $destination && targets_enrollment( get_publish_target( $doc->ID ) ) ) {
+			return (string) wp_parse_url( (string) get_permalink( $doc ), PHP_URL_PATH );
+		}
+	}
+	return null;
+}
+
 /** Where each website shows a live document, as the server can reach it. */
 function destination_url( \WP_Post $live, string $destination ): string {
+	if ( is_template_post_type( $live->post_type ) ) {
+		$path = template_showcase_path( $live, $destination );
+		if ( '' === $path ) {
+			return '';
+		}
+		return 'main' === $destination ? ( '' !== main_internal_url() ? main_internal_url() . $path : '' ) : loopback_base() . $path;
+	}
 	if ( 'main' === $destination ) {
 		$path = main_path_for( $live );
 		return '' !== $path && '' !== main_internal_url() ? main_internal_url() . $path : '';
@@ -926,7 +1168,9 @@ function retry_publication( int $live_id ): bool {
 	foreach ( $failed as $destination ) {
 		$pub['destinations'][ $destination ] = array( 'state' => 'pending', 'detail' => 'checking again', 'at' => time() );
 	}
-	if ( in_array( 'main', $failed, true ) && STATE_FAILED === get_post_meta( $live_id, META_MAIN_STATE, true ) ) {
+	// Redraw for Main now unless its drawing is already published (a failed drawing, or one still
+	// waiting between automatic retries, would otherwise keep Main on the old version for minutes).
+	if ( in_array( 'main', $failed, true ) && in_array( get_post_meta( $live_id, META_MAIN_STATE, true ), array( STATE_FAILED, STATE_PUBLISHING ), true ) ) {
 		queue_main_render( $live_id, 'retry' );
 	}
 	$pub['attempt'] = 0;
@@ -970,13 +1214,38 @@ function rollback_to_archive( int $live_id, int $archive_id ): string {
 
 /** The public page carries its revision mark (also inside the version drawn for the Main Website). */
 function print_revision_mark(): void {
-	if ( ! approval_enabled() || ! is_singular() ) {
+	if ( ! approval_enabled() ) {
 		return;
 	}
-	$hash = (string) get_post_meta( (int) get_queried_object_id(), LIVE_REVISION_META, true );
+	$hash = is_singular() ? (string) get_post_meta( (int) get_queried_object_id(), LIVE_REVISION_META, true ) : '';
 	if ( '' !== $hash ) {
 		echo "\n<!-- " . esc_html( revision_mark( $hash ) ) . " -->\n";
 	}
+	// Templates drawn into this page (header, footer, popup, a type's design) carry their own mark,
+	// so a published template is verified where visitors see it.
+	foreach ( rendered_templates() as $template_id ) {
+		$template_hash = (string) get_post_meta( $template_id, LIVE_REVISION_META, true );
+		if ( '' !== $template_hash ) {
+			echo '<!-- ' . esc_html( revision_mark( $template_hash ) ) . ' (template ' . (int) $template_id . ") -->\n";
+		}
+	}
+}
+
+/** Elementor documents drawn in this request (elementor/frontend/builder_content_data); templates only. */
+function rendered_templates( ?int $add = null ): array {
+	static $ids = array();
+	if ( null !== $add && $add > 0 ) {
+		$ids[ $add ] = true;
+	}
+	return array_keys( $ids );
+}
+
+function note_rendered_document( $data, $post_id ) {
+	$post_id = (int) $post_id;
+	if ( approval_enabled() && $post_id && is_template_post_type( (string) get_post_type( $post_id ) ) ) {
+		rendered_templates( $post_id );
+	}
+	return $data;
 }
 
 /* Roles ---------------------------------------------------------------------------------------------------- */
@@ -1017,7 +1286,8 @@ function handle_approval_action(): void {
 			if ( ! current_user_can( REVIEW_CAP ) ) {
 				wp_die( esc_html__( 'Only a reviewer can approve or reject.', 'acadvizen-cms' ), 403 );
 			}
-			$result = review_candidate( $post_id, $do, ! empty( $_POST['code_ok'] ), isset( $_POST['note'] ) ? sanitize_textarea_field( wp_unslash( $_POST['note'] ) ) : '' ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked above.
+			$previews = isset( $_POST['previews'] ) ? array_map( 'sanitize_key', (array) wp_unslash( $_POST['previews'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked above.
+			$result   = review_candidate( $post_id, $do, ! empty( $_POST['code_ok'] ), isset( $_POST['note'] ) ? sanitize_textarea_field( wp_unslash( $_POST['note'] ) ) : '', $previews ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked above.
 			$ok     = in_array( $result, array( 'approved', 'rejected' ), true );
 			approval_flash( $ok ? 'success' : 'error', $ok ? ( 'approved' === $result ? __( 'Approved: exactly this revision may now be published.', 'acadvizen-cms' ) : __( 'Rejected: it went back to the editor as a draft.', 'acadvizen-cms' ) ) : approval_error_text( $result, document_compatibility( $post ) ) );
 			break;
@@ -1131,6 +1401,10 @@ function render_approvals_page(): void {
 				if ( COMPAT_CODE === $report['status'] && current_user_can( 'unfiltered_html' ) ) {
 					echo '<label><input type="checkbox" name="code_ok" value="1" /> ' . esc_html__( 'I checked the code', 'acadvizen-cms' ) . '</label><br />';
 				}
+				foreach ( chosen_destinations( $post ) as $destination ) {
+					/* translators: %s: website name */
+					echo '<label><input type="checkbox" class="acv-preview-check" name="previews[]" value="' . esc_attr( $destination ) . '" /> ' . esc_html( sprintf( __( 'I checked the %s preview', 'acadvizen-cms' ), $label[ $destination ] ) ) . '</label><br />';
+				}
 				echo '<button class="button button-primary acv-approve">' . esc_html__( 'Approve this revision', 'acadvizen-cms' ) . '</button></form>';
 				printf( '<form method="post" action="%1$s"><textarea name="note" rows="2" placeholder="%2$s"></textarea><br /><button class="button acv-reject">%3$s</button></form>', esc_url( approval_action_url( 'reject', $id ) ), esc_attr__( 'What should change?', 'acadvizen-cms' ), esc_html__( 'Reject', 'acadvizen-cms' ) );
 			} elseif ( 'scheduled' === ( $st['state'] ?? '' ) ) {
@@ -1159,7 +1433,7 @@ function render_approvals_page(): void {
 			echo '<tr id="acv-publication-' . (int) $live_id . '" data-outcome="' . esc_attr( (string) ( $pub['outcome'] ?? '' ) ) . '"><td>' . esc_html( get_the_title( (int) $live_id ) ) . '<br /><small>' . esc_html( (string) ( $pub['kind'] ?? '' ) . ' · ' . substr( (string) ( $pub['hash'] ?? '' ), 0, 12 ) . ' · ' . wp_date( 'j M Y H:i', (int) ( $pub['at'] ?? time() ) ) ) . '</small></td>';
 			echo '<td><strong>' . esc_html( (string) ( $pub['outcome'] ?? '' ) ) . '</strong></td><td>';
 			foreach ( (array) ( $pub['destinations'] ?? array() ) as $destination => $result ) {
-				echo '<span class="acv-dest" data-destination="' . esc_attr( $destination ) . '" data-state="' . esc_attr( (string) ( $result['state'] ?? '' ) ) . '">' . esc_html( ( $label[ $destination ] ?? $destination ) . ': ' . ( $result['state'] ?? '' ) . ( ! empty( $result['detail'] ) ? ' (' . $result['detail'] . ')' : '' ) ) . '</span><br />';
+				echo '<span class="acv-dest" data-destination="' . esc_attr( $destination ) . '" data-state="' . esc_attr( (string) ( $result['state'] ?? '' ) ) . '">' . esc_html( ( $label[ $destination ] ?? $destination ) . ': ' . destination_status_label( (string) ( $result['state'] ?? '' ) ) . ( ! empty( $result['detail'] ) ? ' (' . $result['detail'] . ')' : '' ) ) . '</span><br />';
 			}
 			echo '</td><td>';
 			printf( '<a class="button acv-verify" href="%1$s">%2$s</a> ', esc_url( approval_action_url( 'verify', (int) $live_id ) ), esc_html__( 'Check again', 'acadvizen-cms' ) );
