@@ -5,7 +5,7 @@
   - All 314 addresses were identical before and after.
   - Live CMS workflows were verified on production.
 - The exposed legacy Supabase keys are **no longer used by Main**. They still have to be **disabled** in the Supabase dashboard (owner).
-- The WordPress plugin is **still 0.6.1**: the 0.7.0 upgrade waits for a fresh, verified backup (owner).
+- **WordPress plugin upgraded to 0.7.0** on 14 Oct (after backup verification and a fresh content export); verified on production.
 - Render Bridge and approval: **off**.
 
 ## 0. Production release of 14 October 2026
@@ -21,6 +21,13 @@
 | Browser key fixed | Vercel `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` held the legacy anon JWT; set to the real publishable key. Redeployed as **`dpl_5msnf8Wifuj9iTPmLQyu8Hje7MB5` (live)** | Public config serves `sb_publishable_…`; Supabase accepts it (200); 0 of 30 browser scripts contain a legacy JWT; content API 16/16 again |
 | CMS workflows on production (plugin 0.6.1) | Blogs to Main only, Enrollment only and Both, with edits and cleanup: 15/16 (the failing check is "plugin 0.7.0 installed": expected until P8). Main pages from the Master Admin: **17/17**. Signed content API: **16/16** | `blogs-0.6.1.log`, `pages-0.6.1.log`, `content-api*.log` |
 | Elementor Pro licence | **Active** ("Elementor Pro Advanced"), read on wp-admin → Elementor → License | Read-only |
+| Backups before the plugin upgrade | Owner-supplied Hostinger backup (database and files): **valid but from 10 Oct 09:24**. Gzip OK; the database dump is complete (108 tables, ends with "Dump completed"); the files archive holds 81,826 files including `wp-config.php`; SHA-256 recorded. Byte-identical to the copies downloaded on 12 Oct; does not contain the Master Admin plugin or later changes. **Owner chose:** add a fresh content export, then upgrade. Export taken 14 Oct (Tools → Export → All content): 998 items, 100 Elementor designs, 52 published pages and 7 posts, equal to the live counts. Kept locally only | `plugin-0.7.0/backup-verification.txt`, `content-export.txt` |
+| **Plugin upgrade 0.6.1 → 0.7.0** | Package `0.7.0-62a13a4`: full SHA-256 checked; rebuild reproduces the same bytes. Installed with *Replace current with uploaded*. **0.7.0 active**; 32 plugins, 27 active, unchanged; no other plugin changed | `plugin-0.7.0/plugins-*.json` |
+| After the upgrade | Master Admin: 3 screens (bridge off, by design), **every link on them opens (5/5)**; the live 0.6.1 had 3 dead links (O-45), now gone. Site Health **Good, 0 critical** (scheduled events running, REST API available). `acadvizen/v1/enquiry` still registered. Enrollment: **59/59 pages identical**; screenshot differences equal the natural variation of carousels (measured) | `plugin-0.7.0/admin-and-enrollment-checks.txt` |
+| Live workflows on 0.7.0 | Signed content API **16/16**; blogs to Main / Enrollment / Both **16/16**; Main pages **17/17**; all test content removed | `plugin-0.7.0/*.log` |
+| Main after the plugin upgrade | **314/314 addresses unchanged** against the morning baseline (one address re-read after a connection error) | `plugin-0.7.0/main-314-after-plugin.md` |
+
+**Rollback of the plugin:** upload `dist/acadvizen-cms-0.6.1-2cc2148/acadvizen-cms.zip` (SHA-256 `dd6fcf27dfa101eb5940e868d11673d0bc8fec67f5a7264110039cfa2295e32c`) with *Replace current with uploaded*. Rehearsed on WordPress 7.0.7 / PHP 8.3 / Elementor 4.3.5: content and settings kept.
 
 **Rollback of Main** (a Vercel deployment keeps the variables it was built with):
 - **While the legacy Supabase keys are still enabled:** promote `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T` (release 10, commit `80134d4`).

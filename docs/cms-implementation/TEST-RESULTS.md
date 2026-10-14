@@ -2,6 +2,33 @@
 
 The statuses used are PASS, PARTIAL, FAIL, BLOCKED and NOT TESTED. The level (Automated, LOCAL, PRODUCTION) is stated on every row.
 
+## 14 October 2026, 16:10–17:10 UTC: PRODUCTION plugin upgrade 0.6.1 → 0.7.0
+
+Authorized by the owner. Evidence: `evidence/production-release-20261014/plugin-0.7.0/`.
+
+| Check (PRODUCTION) | Result |
+|---|---|
+| Owner-supplied backups (database and files) | Intact (gzip OK, database dump complete with 108 tables, files archive with `wp-config.php`, 81,826 files). SHA-256 recorded. **But from 10 Oct 09:24**, identical to the 12 Oct copies |
+| Fresh content export (owner's choice) | 998 items; 52 pages and 7 posts published, equal to the live counts |
+| Package | Full SHA-256 matches `7f0d354b…5cd5d9`; rebuild reproduces it |
+| Upgrade | 0.7.0 active; no other plugin changed (32 plugins, 27 active) |
+| Master Admin screens and links | Before (0.6.1): 7 screens, 9 links, **3 dead**. After (0.7.0): 3 screens (bridge off), 5 links, **0 dead** |
+| Site Health | Good, 0 critical; scheduled events running; REST API available |
+| `acadvizen/v1/enquiry` | Registered (POST); not called |
+| Enrollment pages, before vs after | **59/59 identical** (status, title, robots, canonical, Elementor). Screenshot differences equal the measured natural variation (carousels) |
+| Signed content API | **16/16** |
+| Blogs to Main only / Enrollment only / Both | **16/16** (including "plugin 0.7.0 installed") |
+| Main pages from the Master Admin | **17/17** |
+| Main addresses after the upgrade | **314/314 unchanged** against the morning baseline. 313 matched in the full pass; `/tools/microsoft-ads` could not be read in that pass (connection error during a transient slowdown) and matched on every check when re-read |
+
+**Not run on production, and why:**
+
+| Test | Why not | Where it is proven instead |
+|---|---|---|
+| Both with Main or Enrollment failing; retry of the failed side | Would mean breaking a live website's connection for every visitor | LOCAL: both-failure 12 + 3, reliability 38 |
+| Approval workflow, Elementor pages for Main, popup through the CMS | Need the approval and Render Bridge switches: owner approval not given | LOCAL: approval 47, bridge 44 |
+| Elementor popup on the live site | A display condition set wrongly would show it to every visitor | Pro licence verified Active |
+
 ## 14 October 2026, 08:57–09:40 UTC: PRODUCTION release of Main and live workflow checks
 
 Authorized by the owner on 14 Oct. Evidence: `evidence/production-release-20261014/`.

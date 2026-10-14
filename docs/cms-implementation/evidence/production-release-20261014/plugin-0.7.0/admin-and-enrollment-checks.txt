@@ -1,0 +1,35 @@
+PRODUCTION checks around the plugin upgrade 0.6.1 -> 0.7.0, 14 Oct 2026 (read-only, signed-in session).
+Package installed: dist/acadvizen-cms-0.7.0-62a13a4/acadvizen-cms.zip, sha256 7f0d354bea3058cc12b2c232444d0dc8d575e2b7f699657ef4e6378ca51cd5d9
+(checked in full before installing; rebuilding commit 62a13a4 reproduces the same bytes).
+Method: wp-admin Plugins > Add New > Upload > "Replace current with uploaded".
+WordPress showed: Acadvizen Master Admin, version 0.6.1 -> 0.7.0, required WordPress 6.5, PHP 8.0 (both).
+
+Plugins (plugins-before.json / plugins-after.json): 32 plugins, 27 active, before and after.
+Only Acadvizen Master Admin changed (0.6.1 -> 0.7.0, active). Two Hostinger plugins show a second table row
+because an update is available for them; their state and version are unchanged.
+
+Master Admin screens and every admin link on them (output as printed):
+BEFORE (0.6.1):
+  Master Admin screens in the menu: 7 (acadvizen-cms acadvizen-cms-main acadvizen-cms-design acadvizen-cms-publishing acadvizen-cms-versions acadvizen-cms-settings acadvizen-cms-import)
+    DEAD post-new.php?post_type=acv_blog: HTTP 200 Sorry, you are not allowed
+    DEAD post-new.php?post_type=acv_course: HTTP 200 Sorry, you are not allowed
+    DEAD post-new.php?post_type=acv_location: HTTP 200 Sorry, you are not allowed
+  screens with problems: 0; links on the screens: 9 opened, 3 dead
+AFTER (0.7.0, Render Bridge off):
+  Master Admin screens in the menu: 3 (acadvizen-cms acadvizen-cms-main acadvizen-cms-settings)
+  screens with problems: 0; links on the screens: 5 opened, 0 dead
+
+Site Health after the upgrade: status Good; 0 critical issues; 5 recommended improvements (WordPress update
+available 7.1.3; remove inactive plugins; default theme; persistent object cache; site address uses http);
+37 items with no issues, including "Scheduled events are running" and "The REST API is available".
+Before the upgrade: status Good, 5 recommended improvements.
+
+REST after the upgrade: namespaces acadvizen-cms/v1 (4 routes) and acadvizen/v1; /acadvizen/v1/enquiry POST
+(registered, not called). Public readme: "Stable tag: 0.7.0".
+
+Enrollment public pages, snapshot just before vs after the upgrade:
+  59 pages identical (status, title, robots, canonical, Elementor markup), 0 different.
+  Full-page screenshots differed slightly (heights by 20-140 px, 1.2-1.6 % pixels). The same size of
+  variation appears with NO change at all: two captures after the upgrade differ by heights 22 px and
+  up to 8.5 % pixels; two captures before the upgrade (nothing installed in between) differ by heights
+  2-100 px and up to 8.4 % pixels. Cause: rotating carousels and animated sections on those pages.

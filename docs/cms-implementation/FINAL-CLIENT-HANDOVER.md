@@ -2,7 +2,7 @@
 
 ## Status on 14 October 2026 (current)
 
-**Verdict: NOT CLIENT READY.** The Main release is live and the existing CMS workflows are verified on production. Not yet live, and needing the owner steps in `OWNER-ACTIONS.md`: Option B (Elementor pages for Main, mandatory approval), and the plugin upgrade. The leaked legacy key is still valid until the owner disables it. Client-ready needs proof on a real staging site and then production, and that needs the owner's steps in `OWNER-ACTIONS.md`. The approval gate for Main is `MAIN-ACCEPTANCE-CHECKLIST.md`.
+**Verdict: NOT CLIENT READY.** The Main release and plugin 0.7.0 are live, and the existing CMS workflows are verified on production. Not yet live, and needing owner approval: Option B (Render Bridge, mandatory approval). The leaked legacy Supabase key is **still valid**: the owner deferred revocation for this release. Client-ready needs proof on a real staging site and then production, and that needs the owner's steps in `OWNER-ACTIONS.md`. The approval gate for Main is `MAIN-ACCEPTANCE-CHECKLIST.md`.
 
 **Production (14 Oct, after the authorized Main release):**
 - **Main** `dpl_5msnf8Wifuj9iTPmLQyu8Hje7MB5`, commit `7f1a75f`. 314/314 addresses identical before and after; Render Bridge **off**.
@@ -11,7 +11,7 @@
   - Main pages from the Master Admin 17/17;
   - blogs to Main, Enrollment and Both: every workflow check passes.
 - **Main uses only never-exposed Supabase keys.** The leaked legacy key still has to be disabled by the owner (P11).
-- **Enrollment plugin still 0.6.1:** 0.7.0 is ready and rehearsed, and waits for a fresh backup (P1).
+- **Enrollment plugin 0.7.0 installed and verified on production** (14 Oct): every Master Admin link opens, Site Health Good, Enrollment pages unchanged, live workflows passing on 0.7.0.
 - **Elementor Pro licence:** Active.
 
 **Verified complete:**

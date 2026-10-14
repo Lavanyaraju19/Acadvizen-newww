@@ -1,0 +1,172 @@
+[
+ {
+  "file": "acadvizen-course-enquiries/acadvizen-course-enquiries.php",
+  "active": true,
+  "version": "1.0.0"
+ },
+ {
+  "file": "acadvizen-cms/acadvizen-cms.php",
+  "active": true,
+  "version": "0.6.1"
+ },
+ {
+  "file": "contact-form-7/wp-contact-form-7.php",
+  "active": true,
+  "version": "6.1.7"
+ },
+ {
+  "file": "cool-timeline/cooltimeline.php",
+  "active": true,
+  "version": "4.0.0"
+ },
+ {
+  "file": "elementor/elementor.php",
+  "active": true,
+  "version": "4.3.5"
+ },
+ {
+  "file": "elementor-pro/elementor-pro.php",
+  "active": true,
+  "version": "4.3.2"
+ },
+ {
+  "file": "elementskit-lite/elementskit-lite.php",
+  "active": false,
+  "version": "4.0.8"
+ },
+ {
+  "file": "emailkit/EmailKit.php",
+  "active": false,
+  "version": "1.6.9"
+ },
+ {
+  "file": "essential-addons-for-elementor-lite/essential_adons_elementor.php",
+  "active": true,
+  "version": "6.8.5"
+ },
+ {
+  "file": "getgenie/getgenie.php",
+  "active": true,
+  "version": "4.5.6"
+ },
+ {
+  "file": "duracelltomi-google-tag-manager/duracelltomi-google-tag-manager-for-wordpress.php",
+  "active": false,
+  "version": "2.0.6"
+ },
+ {
+  "file": "gutenkit-blocks-addon/gutenkit-blocks-addon.php",
+  "active": true,
+  "version": "2.5.3"
+ },
+ {
+  "file": "hostinger-easy-onboarding/hostinger-easy-onboarding.php",
+  "active": true,
+  "version": "3.0.4"
+ },
+ {
+  "file": "hostinger-easy-onboarding/hostinger-easy-onboarding.php",
+  "active": true,
+  "version": ""
+ },
+ {
+  "file": "hostinger-reach/hostinger-reach.php",
+  "active": true,
+  "version": "1.8.6"
+ },
+ {
+  "file": "hostinger-reach/hostinger-reach.php",
+  "active": true,
+  "version": ""
+ },
+ {
+  "file": "hostinger/hostinger.php",
+  "active": true,
+  "version": "3.0.79"
+ },
+ {
+  "file": "litespeed-cache/litespeed-cache.php",
+  "active": true,
+  "version": "7.9.1"
+ },
+ {
+  "file": "megamenu/megamenu.php",
+  "active": true,
+  "version": "3.10.8"
+ },
+ {
+  "file": "metform/metform.php",
+  "active": true,
+  "version": "4.3.2"
+ },
+ {
+  "file": "microsoft-clarity/clarity.php",
+  "active": true,
+  "version": "0.10.35"
+ },
+ {
+  "file": "pixel-manager-for-woocommerce/pixel-manager-for-woocommerce.php",
+  "active": false,
+  "version": "2.2.2"
+ },
+ {
+  "file": "popup-builder-block/popup-builder-block.php",
+  "active": true,
+  "version": "2.3.7"
+ },
+ {
+  "file": "seo-by-rank-math/rank-math.php",
+  "active": true,
+  "version": "1.0.280"
+ },
+ {
+  "file": "royal-elementor-addons/wpr-addons.php",
+  "active": true,
+  "version": "1.7.1068"
+ },
+ {
+  "file": "shopengine/shopengine.php",
+  "active": true,
+  "version": "4.9.7"
+ },
+ {
+  "file": "google-site-kit/google-site-kit.php",
+  "active": true,
+  "version": "1.189.0"
+ },
+ {
+  "file": "timeline-widget-addon-for-elementor/timeline-widget-addon-for-elementor.php",
+  "active": true,
+  "version": "1.7.2"
+ },
+ {
+  "file": "header-footer-elementor/header-footer-elementor.php",
+  "active": true,
+  "version": "2.9.5"
+ },
+ {
+  "file": "unlimited-elements-for-elementor/unlimited_elements.php",
+  "active": true,
+  "version": "2.0.24"
+ },
+ {
+  "file": "woocommerce/woocommerce.php",
+  "active": true,
+  "version": "11.2.1"
+ },
+ {
+  "file": "insert-headers-and-footers/ihaf.php",
+  "active": true,
+  "version": "2.4.0"
+ },
+ {
+  "file": "wpconsent-cookies-banner-privacy-suite/wpconsent.php",
+  "active": true,
+  "version": "1.2.0"
+ },
+ {
+  "file": "wordpress-seo/wp-seo.php",
+  "active": false,
+  "version": "28.7"
+ }
+]

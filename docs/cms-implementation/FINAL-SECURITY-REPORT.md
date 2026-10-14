@@ -140,3 +140,4 @@ Each step is reversible until the old value is revoked. Never paste a new value 
   - steps 5–6: other passwords.
 
   Until step 3 is done, the leaked service-role key **remains valid**: this is an open security issue, not an accepted risk.
+- **Owner instruction for the 14 Oct release:** do not disable the legacy keys or reset the database password in this run. They therefore remain **valid and exposed**. Main does not use them (verified). Do not reintroduce them anywhere, and do not roll Main back to a deployment that uses them (`DEPLOYMENT-REPORT.md` §0).

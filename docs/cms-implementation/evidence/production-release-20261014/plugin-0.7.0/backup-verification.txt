@@ -1,0 +1,21 @@
+[16:13:47Z] u7133xxxxx_xxxxx.20261010092409 (1).sql.gz: 242355723 bytes, modified 2026-10-14 21:19:30.469527500 +0530
+[16:13:47Z] u7133xxxxx.20261010092409 (1).tar.gz: 2411157890 bytes, modified 2026-10-14 21:36:14.628949300 +0530
+[16:13:48Z] sha256 database: 9ec4d9beccbe60b29c8ffce55866dde5a53daf5be489af78b307838121a36aae
+[16:13:50Z] sha256 files:    4d19ecfa83f6668756c84ceb60abcdd21f1e7943a326d72c1964432e7797b748
+[16:14:12Z] same bytes as the copies downloaded on 12 Oct: database yes, files yes
+[16:14:36Z] gzip integrity database: OK
+[16:15:11Z] gzip integrity files: OK
+[16:15:44Z] database: 108 tables; 3352 INSERT statements; -- MariaDB dump 10.20-11.8.9-MariaDB, for Linux (x86_64)
+[16:15:44Z] database end marker: -- Dump completed on 2026-10-10  9:29:14
+[16:15:44Z] WordPress table prefix: wp_; core tables: options posts postmeta users usermeta terms term_taxonomy 
+[16:15:44Z] acadvizen plugin data present: 0 lines mention acv_cms_
+[16:16:01Z] option 'siteurl','http://enroll.acadvizen.com'
+[16:16:01Z] option 'home','http://enroll.acadvizen.com'
+[16:16:01Z] option 'siteurl','http://enroll.acadvizen.com'
+[16:16:54Z] files archive listing rc=0 : 81826 files, 13663 folders
+[16:16:54Z] WordPress root inside the archive: './domains/enroll.acadvizen.com/public_html/' (wp-config.php present: yes)
+[16:16:54Z] files under ./domains/enroll.acadvizen.com/public_html/wp-content/uploads: 5002; plugins: 28; themes: astra/ hostinger-ai-theme/ 
+[16:16:55Z] key plugins in archive: elementor elementor-pro seo-by-rank-math 
+[16:17:32Z] WordPress core version in archive: $wp_version = '7.0.6'
+[16:18:08Z] Acadvizen Master Admin in archive: not read
+[16:18:08Z] DONE

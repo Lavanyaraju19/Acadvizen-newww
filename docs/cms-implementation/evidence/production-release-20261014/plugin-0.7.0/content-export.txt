@@ -1,0 +1,4 @@
+Fresh content export (owner-chosen supplement to the 10 Oct backup), taken 14 Oct before the upgrade via wp-admin Tools > Export > All content (read-only):
+file: enroll-content-export.xml, 74073686 bytes, sha256 973de644f29b914a2018ac0137314e845d617e7643445198b996185e3ba83b3e
+kept in a local working folder only (not in Git, not uploaded)
+complete: ends with </rss>; 998 items, 100 with an Elementor design; 52 published pages and 7 published posts = live REST counts at export time (52, 7)

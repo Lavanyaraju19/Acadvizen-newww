@@ -385,6 +385,12 @@ Headers, footers, menus, global colours and fonts, and the shared designs under 
 
 ## When a publish fails
 
+> **Today on the live site (14 October, plugin 0.7.0, Elementor pages for Main switched off):** there is no Publishing or Versions screen.
+> - Saving on a **Main Website** screen, or saving a blog post with *Also publish on the Main Website*, reports the result at once: "Saved on the Main Website", or the error.
+> - If it failed, read the message, fix the cause, then save again. Saving the same content again never creates a duplicate.
+>
+> The **Publishing** screen and its **Retry** button below appear only once Elementor pages for Main are switched on.
+
 | You see | Do this |
 |---|---|
 | "Main: Publishing…" for more than 5 minutes | Open the Pages list once (this restarts an interrupted publish), wait a minute, then check again |
