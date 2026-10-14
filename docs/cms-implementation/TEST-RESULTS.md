@@ -2,6 +2,28 @@
 
 The statuses used are PASS, PARTIAL, FAIL, BLOCKED and NOT TESTED. The level (Automated, LOCAL, PRODUCTION) is stated on every row.
 
+## 14 October 2026, 08:57–09:40 UTC: PRODUCTION release of Main and live workflow checks
+
+Authorized by the owner on 14 Oct. Evidence: `evidence/production-release-20261014/`.
+
+| Check (PRODUCTION) | Result |
+|---|---|
+| Main addresses before and after the release | **314/314 identical** on every check (status, title, description, canonical, robots, H1, JSON-LD, forms, text) |
+| Live deployment | `dpl_5msnf8Wifuj9iTPmLQyu8Hje7MB5`, commit `7f1a75f` |
+| `/`, `/admin`, `/robots.txt`, `/api/public-config`, sitemap (314) | 200 |
+| Unsigned content API request | Refused (401) |
+| Render Bridge | Off (manifest 404) |
+| Signed content API (`verify-content-api-live.mjs`) | **16/16**, twice: on `dpl_8buux…` and on the final deployment. Covers unsigned, wrong-secret and stale-timestamp refusal, signed write, draft not public, publish, noindex, sitemap exclusion, edit, replay refused (409, no duplicate), cleanup (0 rows left) |
+| Main pages from the Master Admin (`verify-wordpress-pages-live.mjs`) | **17/17**: draft, sections, preview in Main's design, publish, SEO, private draft copy, live unchanged until published, address clash refused, unpublish, cleanup |
+| Blogs to Main only / Enrollment only / Both (`verify-wordpress-live.mjs`) | **15/16**: every workflow and cleanup check passes. The failing check is "plugin 0.7.0 is installed" (production still runs 0.6.1 until P8) |
+| Keys after the change | Server uses a never-exposed secret key; browsers get the publishable key (Supabase accepts it: 200); 0 of 30 browser scripts contain a legacy JWT |
+| Elementor Pro licence | Active |
+
+**Not yet tested on production:**
+- The plugin 0.7.0 upgrade: waits for a fresh backup (P1).
+- Elementor pages for Main, approval and popups through the CMS: need the Render Bridge and approval switches (P9/P10), after P11.
+- The Both-failure and retry cases: the tools above simulate no failures on production.
+
 ## 14 October 2026: popup investigation, converter and importer defects, production audits, rehearsals #5–#7
 
 All LOCAL unless marked PRODUCTION (read-only). Nothing was deployed, published or changed on production.

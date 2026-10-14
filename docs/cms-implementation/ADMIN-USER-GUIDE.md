@@ -39,7 +39,7 @@
 
 The "Course Modules Built for Modern Marketing Execution" section on the homepage lists the course modules (title, duration, focus and the key points). Edit the modules under **Acadvizen Master Admin → Main Website → Homepage → Lists → Course modules**, or in Main's own `/admin` → Homepage → Course modules. The same list feeds the "Course Program" section higher on the homepage.
 
-> 14 October: the section was hidden on the live homepage since 23 March. It is shown again in the prepared release (not yet live). The five course landing pages on the live site are Page Builder pages without this section; adding it there is a content decision for the owner (`FINAL-OPEN-ISSUES.md` O-41).
+> The section is hidden on the homepage (since 23 March); the owner decided on 14 October to keep it hidden. Editing the list still updates the "Course Program" section. The five course landing pages have no such section; adding one needs the owner's content approval.
 
 ## Popups
 

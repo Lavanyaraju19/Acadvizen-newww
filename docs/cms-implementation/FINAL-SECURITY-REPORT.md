@@ -126,4 +126,17 @@ Each step is reversible until the old value is revoked. Never paste a new value 
 | 6 | **C7 chat-shared credentials** | Hostinger account, WordPress administrators (including the integration account, C8), FTP/SFTP, Vercel account and tokens | Each sign-in works with the new value; WordPress "Test connection" still Connected (the shared secret C6 is separate and was not exposed) | none |
 | 7 | History | Not rewritten (force-push of every branch; existing clones keep the values). Rotation makes the exposed values useless | GitHub secret-scan workflow stays green | — |
 
-Until steps 2–6 are done, the risk in §5 remains an `ACCEPTED RESIDUAL RISK`.
+**Progress on 14 October 2026 (owner asked for remediation):**
+- Step 1 is done: release with the key picker live (commit `7f1a75f`).
+- Step 2 is done, using an existing new-style secret key that was never in Git; Vercel production `SUPABASE_SECRET_KEY` (Sensitive) is set.
+- Also fixed: Vercel's `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` held the legacy anon JWT; it now holds the real publishable key.
+- Verified on production:
+  - signed content API 16/16;
+  - browsers get the publishable key;
+  - 0 browser scripts contain a legacy JWT.
+- **Still open, owner:**
+  - step 3: disable the legacy JWT keys, the step that actually revokes the leaked key;
+  - step 4: reset the database password;
+  - steps 5–6: other passwords.
+
+  Until step 3 is done, the leaked service-role key **remains valid**: this is an open security issue, not an accepted risk.

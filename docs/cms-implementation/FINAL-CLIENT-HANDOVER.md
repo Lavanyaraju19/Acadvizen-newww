@@ -2,12 +2,17 @@
 
 ## Status on 14 October 2026 (current)
 
-**Verdict: NOT CLIENT READY.** Option B (Main pages in Elementor, mandatory approval) works end to end on a local copy, and production is unchanged. Client-ready needs proof on a real staging site and then production, and that needs the owner's steps in `OWNER-ACTIONS.md`. The approval gate for Main is `MAIN-ACCEPTANCE-CHECKLIST.md`.
+**Verdict: NOT CLIENT READY.** The Main release is live and the existing CMS workflows are verified on production. Not yet live, and needing the owner steps in `OWNER-ACTIONS.md`: Option B (Elementor pages for Main, mandatory approval), and the plugin upgrade. The leaked legacy key is still valid until the owner disables it. Client-ready needs proof on a real staging site and then production, and that needs the owner's steps in `OWNER-ACTIONS.md`. The approval gate for Main is `MAIN-ACCEPTANCE-CHECKLIST.md`.
 
-**Production today (read-only checks, nothing changed):**
-- Main release 10: `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T`, commit `80134d4`.
-- Enrollment plugin 0.6.1. Render Bridge **off**.
-- 314/314 Main addresses pass the live check; 0 broken internal links.
+**Production (14 Oct, after the authorized Main release):**
+- **Main** `dpl_5msnf8Wifuj9iTPmLQyu8Hje7MB5`, commit `7f1a75f`. 314/314 addresses identical before and after; Render Bridge **off**.
+- **Live CMS workflows verified on production:**
+  - signed content API 16/16;
+  - Main pages from the Master Admin 17/17;
+  - blogs to Main, Enrollment and Both: every workflow check passes.
+- **Main uses only never-exposed Supabase keys.** The leaked legacy key still has to be disabled by the owner (P11).
+- **Enrollment plugin still 0.6.1:** 0.7.0 is ready and rehearsed, and waits for a fresh backup (P1).
+- **Elementor Pro licence:** Active.
 
 **Verified complete:**
 - Production (12 Oct): editing Main pages and blogs from the Master Admin, published to Main, Enrollment or Both.
@@ -22,7 +27,7 @@
 - **Popups with Elementor Pro:** not verified. The local copy has no Pro; a popup is refused there, correctly. Needs staging with Pro.
 - Migration of production's 109 Page Builder pages: unproven. The local copy has none drawn by Main itself.
 - Fresh production backup and restore rehearsal: not done (owner access).
-- Credentials exposed in Git history: not rotated (O-1, owner decision).
+- Credentials exposed in Git history (O-1): Main has been moved off them (14 Oct). They stay valid until the owner disables the legacy Supabase keys and resets the database password (P11).
 
 **Needs owner approval or action:** P1 to P11 in `OWNER-ACTIONS.md`, plus:
 - O-41: Course Modules on the five course landing pages;

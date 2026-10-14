@@ -1,8 +1,35 @@
-# Deployment report: unified Elementor CMS (13 October 2026, gates updated 14 October)
+# Deployment report: unified Elementor CMS (updated 14 October 2026, after the Main release)
 
-**Summary: nothing was deployed in this phase.** Production is exactly as it was. Everything new is prepared and tested LOCAL, and waits for the owner's authorization.
+**Summary (14 Oct):**
+- **Main released to production** at the owner's request: commit `7f1a75f` on `headless-wordpress`.
+  - All 314 addresses were identical before and after.
+  - Live CMS workflows were verified on production.
+- The exposed legacy Supabase keys are **no longer used by Main**. They still have to be **disabled** in the Supabase dashboard (owner).
+- The WordPress plugin is **still 0.6.1**: the 0.7.0 upgrade waits for a fresh, verified backup (owner).
+- Render Bridge and approval: **off**.
 
-## 1. Production now (read-only checks, 13 Oct ~08:20 UTC)
+## 0. Production release of 14 October 2026
+
+| Step | Result | Evidence |
+|---|---|---|
+| Push | `0554e5f..ac007da`, then `..7f1a75f` (revert of the homepage Course Modules commit, owner decision P12), no force | GitHub `headless-wordpress` |
+| Before snapshot | 314/314 addresses 200 (08:57 UTC) | `evidence/production-release-20261014/main-before-0857Z.json` |
+| Main deployment | `dpl_EnsscA7xTNrXwVuDiScBN1SWV7qg`: commit `7f1a75f`, target production, Ready, aliases www.acadvizen.com and acadvizen.com | Vercel API and `vercel inspect` |
+| Checks after | `/`, `/admin`, `/robots.txt`, `/api/public-config` 200; sitemap 314 addresses; unsigned content API request 401; bridge manifest 404 (off) | `verify-main.txt` |
+| Before vs after | **314/314 identical** on status, title, description, canonical, robots, H1, JSON-LD, forms and text | `compare-before-after.md` |
+| Server key switched to an unexposed key | Vercel `SUPABASE_SECRET_KEY` (Sensitive) set from an existing new-style Supabase secret key that was never in Git; redeployed as `dpl_8buuxRSh6bxAbmNLCTyurdxwLrRj` | Signed content API 16/16 PRODUCTION |
+| Browser key fixed | Vercel `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` held the legacy anon JWT; set to the real publishable key. Redeployed as **`dpl_5msnf8Wifuj9iTPmLQyu8Hje7MB5` (live)** | Public config serves `sb_publishable_…`; Supabase accepts it (200); 0 of 30 browser scripts contain a legacy JWT; content API 16/16 again |
+| CMS workflows on production (plugin 0.6.1) | Blogs to Main only, Enrollment only and Both, with edits and cleanup: 15/16 (the failing check is "plugin 0.7.0 installed": expected until P8). Main pages from the Master Admin: **17/17**. Signed content API: **16/16** | `blogs-0.6.1.log`, `pages-0.6.1.log`, `content-api*.log` |
+| Elementor Pro licence | **Active** ("Elementor Pro Advanced"), read on wp-admin → Elementor → License | Read-only |
+
+**Rollback of Main** (a Vercel deployment keeps the variables it was built with):
+- **While the legacy Supabase keys are still enabled:** promote `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T` (release 10, commit `80134d4`).
+- **After the legacy keys are disabled (P11):**
+  - Release 10 and the first two deployments of 14 Oct (`dpl_EnsscA7x…`, `dpl_8buuxRSh…`) still use a legacy key and **must not be promoted**.
+  - Release 10's code (`80134d4`) reads only the legacy variable, so rebuilding it would fail too.
+  - Roll back only to a commit that contains the key picker (`03d18dc`, release 11, or later): `node scratchpad/vercel/deploy-prod-git.cjs <branch> <sha>` rebuilds that commit with the current, unexposed keys.
+
+## 1. Production on 13 Oct (before the release; superseded by §0)
 
 | Item | State | How checked |
 |---|---|---|
