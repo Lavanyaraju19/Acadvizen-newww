@@ -44,3 +44,6 @@ tsconfig.tsbuildinfo
 _prod_backups/
 .vercel
 .env*.local
+
+# Local WordPress CMS configuration backup
+/lib/wordpress/config.js.pre-integration-fix.bak
