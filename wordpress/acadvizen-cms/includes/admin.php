@@ -250,6 +250,10 @@ function render_dashboard_page(): void {
 	if ( ! current_user_can( 'edit_posts' ) ) {
 		return;
 	}
+	if ( ! native_publishing_ui() ) {
+		render_content_api_dashboard();
+		return;
+	}
 	$live     = list_live_versions();
 	$failed   = get_posts(
 		array(
@@ -316,6 +320,46 @@ function render_dashboard_page(): void {
 			</ul>
 			<p class="description"><?php esc_html_e( 'Global colours, fonts, headers, footers, menus and templates are shared: when you change them, every Main Website page is republished automatically.', 'acadvizen-cms' ); ?></p>
 			<p class="description"><?php echo esc_html( affected_pages_summary( array_column( list_live_versions(), 'main_path' ) ) ); ?></p>
+		</div>
+	</div>
+	<?php
+}
+
+/**
+ * The dashboard while the Render Bridge is off (the Main Website does not read WordPress pages):
+ * only what works in that mode. Main Website content is edited on the Main Website screens, blogs
+ * in Posts ("Publish To" chooses the website), Enrollment pages with Elementor as before. The
+ * Elementor-for-Main screens (Publish To on pages, Publishing, Versions, Website Design) are hidden
+ * in this mode, so nothing here links to them.
+ */
+function render_content_api_dashboard(): void {
+	$cards = array(
+		array( __( 'Main Website', 'acadvizen-cms' ), __( 'The content of www.acadvizen.com: pages, homepage, courses, city pages, header, footer, menus, media and SEO.', 'acadvizen-cms' ), array( array( __( 'Open', 'acadvizen-cms' ), 'admin.php?page=' . MAIN_CONTENT_PAGE, true ) ) ),
+		array( __( 'Blogs', 'acadvizen-cms' ), __( 'Write in Posts. "Publish To" on each post chooses the Enrollment Website, the Main Website or Both.', 'acadvizen-cms' ), array( array( __( 'Add new', 'acadvizen-cms' ), 'post-new.php', true ), array( __( 'See all', 'acadvizen-cms' ), 'edit.php', false ) ) ),
+		array( __( 'Enrollment pages', 'acadvizen-cms' ), __( 'Pages of enroll.acadvizen.com, designed with Elementor as before.', 'acadvizen-cms' ), array( array( __( 'Add new', 'acadvizen-cms' ), 'post-new.php?post_type=page', true ), array( __( 'See all', 'acadvizen-cms' ), 'edit.php?post_type=page', false ) ) ),
+	);
+	if ( approval_enabled() ) {
+		$cards[] = array( __( 'Approvals', 'acadvizen-cms' ), __( 'Changes waiting for a reviewer, and what was published.', 'acadvizen-cms' ), array( array( __( 'Open', 'acadvizen-cms' ), 'admin.php?page=' . APPROVALS_PAGE, true ) ) );
+	}
+	?>
+	<div class="wrap acv-cms-dashboard">
+		<h1><?php esc_html_e( 'Acadvizen Master Admin', 'acadvizen-cms' ); ?></h1>
+		<p class="acv-cms-lead"><?php esc_html_e( 'Manage both websites from here. The Main Website (www.acadvizen.com) is edited under Main Website; blogs in Posts, where "Publish To" chooses the website; Enrollment pages with Elementor as before.', 'acadvizen-cms' ); ?></p>
+		<?php if ( ! is_configured() && current_user_can( 'manage_options' ) ) : ?>
+			<div class="notice notice-warning inline"><p><?php esc_html_e( 'The connection to the Main Website is not set up yet, so nothing can be published there. Please contact your developer.', 'acadvizen-cms' ); ?></p></div>
+		<?php endif; ?>
+		<div class="acv-cms-cards">
+			<?php foreach ( $cards as list( $title, $text, $buttons ) ) : ?>
+				<div class="acv-cms-card">
+					<h2><?php echo esc_html( $title ); ?></h2>
+					<p><?php echo esc_html( $text ); ?></p>
+					<p>
+						<?php foreach ( $buttons as list( $label, $url, $primary ) ) : ?>
+							<a class="button<?php echo $primary ? ' button-primary' : ''; ?>" href="<?php echo esc_url( admin_url( $url ) ); ?>"><?php echo esc_html( $label ); ?></a>
+						<?php endforeach; ?>
+					</p>
+				</div>
+			<?php endforeach; ?>
 		</div>
 	</div>
 	<?php
@@ -411,7 +455,8 @@ function handle_retry_request(): void {
 		wp_die( esc_html__( 'You are not allowed to do this.', 'acadvizen-cms' ), 403 );
 	}
 	queue_sync( $post_id );
-	$back = wp_get_referer() ? wp_get_referer() : admin_url( 'edit.php?post_type=' . POST_TYPE );
+	// Without a referrer: the blog list that exists in this mode (Posts while the Render Bridge is off).
+	$back = wp_get_referer() ? wp_get_referer() : admin_url( native_publishing_ui() ? 'edit.php?post_type=' . POST_TYPE : 'edit.php' );
 	wp_safe_redirect( add_query_arg( 'acv_cms_retried', '1', $back ) );
 	exit;
 }
