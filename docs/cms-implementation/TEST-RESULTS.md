@@ -2,6 +2,62 @@
 
 The statuses used are PASS, PARTIAL, FAIL, BLOCKED and NOT TESTED. The level (Automated, LOCAL, PRODUCTION) is stated on every row.
 
+## 14–15 October 2026: production routing incident, recovery, Main test, Enrollment noindex fix (plugin 0.7.1, local)
+
+**Incident (PRODUCTION, 14 Oct 17:50–21:11 UTC).**
+- What happened: the two domains were attached to a second Vercel project on the same repository (`acadvizen-newww`). That project has no server settings. A preview build was then redeployed there.
+- Effect: WordPress → Main publishing answered 503 `content_api_disabled`; canonical tags pointed to the bare domain; two course landing pages showed generic content.
+- Recovery: the owner moved both domains back to `acadvizen-newww-ua9d` at 21:11 UTC. Afterwards:
+  - 9/9 recovery checks passed;
+  - 314/314 Main addresses identical to the 14 Oct 17:26 baseline;
+  - 59/59 Enrollment pages identical.
+- Open: the duplicate project is still connected to the repository. Disconnecting it is the owner's decision.
+
+| Check | Environment | Result |
+|---|---|---|
+| Main page workflow (create, preview, publish, private copy, address clash refused, unpublish; test page kept as a draft) | PRODUCTION, approved, 15 Oct 06:30 UTC | **17/17**. `/cms-production-test-page-202610150630` is now 404 and kept as a Draft |
+| Main 314 addresses / Enrollment 59 pages after the test | PRODUCTION | 314/314, 59/59 identical |
+| Rank Math Instant Indexing | PRODUCTION, read-only | Module ON; auto-submit for **Posts and Pages** |
+| Enrollment copy of a noindex blog | LOCAL, before the fix | **Defect**: `index, follow`; Rank Math rates it indexable, so it would be submitted to IndexNow |
+| Same, plugin 0.7.1 | LOCAL | `noindex, follow`; not in the post sitemap; Rank Math skips it; after unpublishing it is gone from the feed, listing and sitemap |
+| Blogs, one destination per run (keep mode) | LOCAL, 0.7.1 | Main 12/12, Enrollment 14/14, Both 16/16 |
+| Unit / PHP | LOCAL | 273/273 / **322/322** (3 new) |
+| Signed API, blog sync, conflict, permissions, redirects | LOCAL | 16/16, 18/18, 9/9, 9/9, 11/11 |
+| Scheduling: UTC, and with the site set to Asia/Kolkata | LOCAL | 7/7, 7/7 (13:27 IST shown back for 07:57 UTC; no shift) |
+| Pages workflow, Both failure, approval, approval reliability | LOCAL | 17/17, 12/12, 47/47, 38/38 |
+| Structured types, courses, homepage, header/footer/menus, other content | LOCAL, 0.7.1 | 56/56, 12/12, 14/14, 18/18, 15/15 |
+| Secret scan (tracked files), npm audit (production dependencies) | LOCAL | 0 findings, 0 vulnerabilities |
+
+Pre-existing Enrollment issues found by a read-only render check, not caused by the CMS and left unchanged:
+- 3 missing logo images (404) on the course landing pages;
+- the homepage scrolls 278 px sideways at 768 px.
+
+## 14–15 October 2026, 18:45–19:35 UTC: LOCAL validation of the released code (commit `9f2649b`)
+
+**All LOCAL** (Docker WordPress with plugin 0.7.0 from the repository, local Main on :3100); **none of this is production evidence**. Local Main for the approval suites was rebuilt from `9f2649b` with the Render Bridge on (LOCAL only). Evidence: local working folder `local-tests-20261014b/`, not in Git.
+
+| Group | Suite | Result |
+|---|---|---|
+| Both-destination failures | `both-failure-acceptance.mjs` | **12/12** (the first attempt timed out at the local sign-in page; it passed on rerun) |
+| Conflicts and concurrent editing | `conflict-acceptance.mjs` | **9/9** |
+| Scheduling (site time zone UTC, as on production) | `scheduling-acceptance.mjs` | **7/7**: public 3 s and removed 5 s after the set times |
+| Scheduling with the site time zone set to Asia/Kolkata (restored to UTC afterwards) | same | **7/7**: the editor shows IST, publication happens at the right UTC moment |
+| Blog sync / redirects | `blog-sync-acceptance.mjs` / `redirects-acceptance.mjs` | **18/18** / **11/11** |
+| Preview versus published | `verify-wordpress-pages-live.mjs` (LOCAL) | **17/17** |
+| Approval workflow (bridge build) | `approval-acceptance.mjs` / `approval-reliability-acceptance.mjs` | **47/47** / **38/38** |
+| Signed API: unsigned, wrong secret, stale, replay | `verify-content-api-live.mjs` (LOCAL) | **16/16** |
+| Permissions (Administrator, Author, Contributor) | `permissions-acceptance.mjs` | **9/9** |
+| Main `/admin` sign-in and notifications (new-style keys only) | `newkey-admin-check.mjs` | **6/6** |
+| Unit / PHP / `php -l` | — | **273/273** (36 security-related) / **319/319** / 23 files clean |
+| Secret exposure | tracked-file scan; untracked text files | clean / 0 matches |
+| Dependencies | `npm audit --omit=dev` | 0 vulnerabilities |
+
+No failures; no test skipped within these suites.
+
+**Notes:**
+- **Production runs WordPress in UTC** (Settings → General shows no city time zone), so scheduled times are entered and shown in UTC, 5 h 30 min behind IST. Setting the time zone to Kolkata was tested locally and works.
+- **Correction:** the bridge-manifest endpoint answers 404 to any request without Main's internal token, so a 404 there is not evidence that the bridge is off. Production's bridge is shown to be off by Vercel production having no `WORDPRESS_CONTENT_ENABLED` variable (names-only check, re-confirmed 15 Oct).
+
 ## 14 October 2026, 16:10–17:10 UTC: PRODUCTION plugin upgrade 0.6.1 → 0.7.0
 
 Authorized by the owner. Evidence: `evidence/production-release-20261014/plugin-0.7.0/`.
@@ -39,7 +95,7 @@ Authorized by the owner on 14 Oct. Evidence: `evidence/production-release-202610
 | Live deployment | `dpl_5msnf8Wifuj9iTPmLQyu8Hje7MB5`, commit `7f1a75f` |
 | `/`, `/admin`, `/robots.txt`, `/api/public-config`, sitemap (314) | 200 |
 | Unsigned content API request | Refused (401) |
-| Render Bridge | Off (manifest 404) |
+| Render Bridge | Off: Vercel production has no `WORDPRESS_CONTENT_ENABLED` (names-only check). The manifest 404 seen here is not evidence: the endpoint refuses every request without the internal token |
 | Signed content API (`verify-content-api-live.mjs`) | **16/16**, twice: on `dpl_8buux…` and on the final deployment. Covers unsigned, wrong-secret and stale-timestamp refusal, signed write, draft not public, publish, noindex, sitemap exclusion, edit, replay refused (409, no duplicate), cleanup (0 rows left) |
 | Main pages from the Master Admin (`verify-wordpress-pages-live.mjs`) | **17/17**: draft, sections, preview in Main's design, publish, SEO, private draft copy, live unchanged until published, address clash refused, unpublish, cleanup |
 | Blogs to Main only / Enrollment only / Both (`verify-wordpress-live.mjs`) | **15/16**: every workflow and cleanup check passes. The failing check is "plugin 0.7.0 is installed" (production still runs 0.6.1 until P8) |

@@ -41,9 +41,17 @@ The "Course Modules Built for Modern Marketing Execution" section on the homepag
 
 > The section is hidden on the homepage (since 23 March); the owner decided on 14 October to keep it hidden. Editing the list still updates the "Course Program" section. The five course landing pages have no such section; adding one needs the owner's content approval.
 
+## Scheduled times are in UTC
+
+The Enrollment WordPress has no city time zone set (Settings → General), so every date and time in the admin is **UTC**, 5 hours 30 minutes behind India time.
+
+To publish at 10:00 IST, enter **04:30**.
+
+An administrator can change this under Settings → General → Timezone → Kolkata. This was tested and works; after the change, times are entered and shown in IST.
+
 ## Popups
 
-- Popups (for example the homepage **Quick Registration** popup) are an **Elementor Pro** feature. The live Enrollment website has Elementor Pro 4.3.0 active.
+- Popups (for example the homepage **Quick Registration** popup) are an **Elementor Pro** feature. The live Enrollment website has Elementor Pro 4.3.2 active (licence active).
 - A popup is published like a page: submit, a reviewer checks the preview and approves, then it is published and checked.
 - If Elementor Pro is not active, or its popups did not load, the submit is refused with the exact reason ("popups need Elementor Pro, which is not active on this WordPress"). This cannot be overridden: a popup that cannot be drawn would never appear.
 - **Not yet verified end to end with Elementor Pro** (there is no staging site with Pro yet: `OWNER-ACTIONS.md` P2, P6). Until then, ask the technical team before publishing a popup.
@@ -190,6 +198,13 @@ A blog published to **Both** (or Enrollment) is one blog with two appearances: t
 - Tables, embedded videos, galleries and shortcodes stay on the Enrollment website only. The message after saving lists them.
 
 **Removing:** moving the post to the trash removes it from the Enrollment website only. To take it off the Main Website as well, unpublish or delete it in **Main Website → Blogs**. A blog removed on the Main Website sets its Enrollment post to **Draft**; it is never deleted automatically.
+
+**Search engines on the Enrollment website:**
+- **Hide from search engines** on a blog applies to its Enrollment post too, from plugin **0.7.1**. Up to 0.7.0 the Enrollment post stayed visible to search engines.
+- Rank Math on the Enrollment website tells search engines about every newly published post (Instant Indexing), except posts that are hidden from search engines.
+- Hiding from search engines is not hiding from visitors. A published article, hidden or not, still appears in the Enrollment blog list and its RSS feed. To keep something private, leave it as a **Draft**.
+
+**Only blogs have Publish To** in Main Website. Everything else there (pages, courses, tools, city and service pages, homepage, header, footer, menus, SEO overrides, redirects, site settings) is for the Main Website only. Enrollment pages are still edited in Elementor, as before.
 
 ### If someone else changed it meanwhile (plugin 0.7.0)
 
