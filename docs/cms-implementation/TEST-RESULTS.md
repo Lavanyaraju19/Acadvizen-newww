@@ -2,6 +2,24 @@
 
 The statuses used are PASS, PARTIAL, FAIL, BLOCKED and NOT TESTED. The level (Automated, LOCAL, PRODUCTION) is stated on every row.
 
+## 15 October 2026, 08:40–09:35 UTC: PRODUCTION plugin 0.7.1, Enrollment-only and Both verified
+
+- **Owner approvals:** commit (no push); install without a fresh database backup (**risk accepted**); test E; test B.
+
+| Check (PRODUCTION) | Result |
+|---|---|
+| Package `acadvizen-cms-0.7.1-6fb8222`, sha256 `37bf4a16…7d049cab` | Byte-identical to the rehearsed candidate. Rehearsal 0.7.0 → 0.7.1 → 0.7.0 on WordPress 7.0.7 / PHP 8.3 clean |
+| Install 08:40:45 UTC (Replace current with uploaded) | 0.7.1 active; 29/34 plugins active as before; no other plugin changed |
+| After install | Master Admin 3 screens, 5/5 links; REST namespaces unchanged; enquiry route POST; Enrollment 59/59 and Main 314/314 identical |
+| **Test E, Enrollment only** (09:09 UTC) | **14/14**. Live on Enrollment only; `noindex, follow`; not in post sitemap; **not submitted to IndexNow**; after unpublishing 404 and gone from feed, `/blogs/` and sitemap; kept as a draft |
+| **Test B, Both** (09:19 UTC) | **17/17**. One save publishes to both; Main noindex with its own canonical and not in Main's sitemap; Enrollment `noindex, follow`, not in post sitemap, not submitted to IndexNow; edit reaches both; after unpublishing 404 on both and gone from feeds, listings and sitemaps; kept as a draft on both |
+| Rank Math IndexNow history | Before 0.7.1, the 14 Oct test blogs were submitted 34 times. After 0.7.1: 0 submissions for either test |
+| Test items left (all drafts, none public) | Main page `cms-production-test-page-202610150630`; blogs `…-202610150909` and `…-202610150919` (Enrollment posts 8289 and 8296, drafts) |
+
+- **Remaining production limits:**
+  - partial-failure recovery is verified locally only, by rule;
+  - the approval workflow and Elementor pages for Main/Both are off (owner decisions).
+
 ## 14–15 October 2026: production routing incident, recovery, Main test, Enrollment noindex fix (plugin 0.7.1, local)
 
 **Incident (PRODUCTION, 14 Oct 17:50–21:11 UTC).**

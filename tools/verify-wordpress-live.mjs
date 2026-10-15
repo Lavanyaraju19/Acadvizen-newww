@@ -155,6 +155,7 @@ async function singleDestination() {
   if (onMain) {
     const html = (await get(`/blog/${SLUG}`)).html
     check(`${label}: Main page carries noindex and its own canonical`, /<meta name="robots" content="noindex/.test(html), `canonical=${html.match(/<link rel="canonical" href="([^"]+)"/)?.[1] || ''}`)
+    check(`${label}: the noindex article is not in Main's sitemap`, !(await (await fetch(`${MAIN}/sitemap.xml?t=${Date.now()}`)).text()).includes(SLUG))
   }
   if (onEnroll) {
     const html = await enrollHtml()
