@@ -862,6 +862,10 @@ namespace Acadvizen\CMS {
 	check( 'enrollment only: first publish of a new blog', 'published', enrollment_status_for_save( TARGET_ENROLLMENT, 'published', true, $editor, 'draft', '' ) );
 	check( 'main / both: the copy follows the Main record', array( 'published', 'draft' ), array( enrollment_status_for_save( TARGET_BOTH, '', true, $editor, 'published', 'draft' ), enrollment_status_for_save( TARGET_MAIN, 'published', true, $editor, 'draft', 'published' ) ) );
 	check( 'restoring a version keeps an Enrollment-only copy published', 'published', enrollment_status_for_save( TARGET_ENROLLMENT, '', false, array(), 'draft', 'published' ) );
+	// The blog's "Hide from search engines" reaches the Enrollment copy (it was published index, follow).
+	check( 'enrollment copy: a noindex blog is noindex on Enrollment too', array( 'noindex', 'follow' ), enrollment_copy_robots( array( 'noindex' => true ) ) );
+	check( 'enrollment copy: an indexable blog is index, follow on Enrollment', array( 'index', 'follow' ), enrollment_copy_robots( array( 'noindex' => false ) ) );
+	check( 'enrollment copy: a record without the field leaves the copy\'s robots alone', null, enrollment_copy_robots( array( 'title' => 'x' ) ) );
 	// Ownership, as for WordPress's own posts: Editors work on every record, Authors only on their own.
 	check( 'main content: an editor manages a record someone else created', true, main_manages_record( 'blogs', 'b-1' ) );
 	$GLOBALS['acv_caps'] = array( 'edit_posts', 'publish_posts' );

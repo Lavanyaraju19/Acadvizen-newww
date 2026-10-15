@@ -863,6 +863,17 @@ function enrollment_status_for_save( string $target, string $requested, bool $ma
 }
 
 /**
+ * The Rank Math robots value for the Enrollment copy of a blog, mirroring the blog's "Hide from search
+ * engines" choice (same convention as the importer), or null when the record does not say.
+ */
+function enrollment_copy_robots( array $record ): ?array {
+	if ( ! array_key_exists( 'noindex', $record ) ) {
+		return null;
+	}
+	return $record['noindex'] ? array( 'noindex', 'follow' ) : array( 'index', 'follow' );
+}
+
+/**
  * Keeps the Enrollment website's copy of a blog in step with its Publish To choice: Enrollment
  * and Both publish a normal WordPress post (drawn by the Enrollment theme); Main alone takes the
  * copy off Enrollment (draft). The copy is identified by the Main record id, so it is never duplicated.
@@ -889,6 +900,12 @@ function sync_enrollment_blog_copy( string $main_id, array $record, string $targ
 	);
 	if ( $copy_id ) {
 		$post['ID'] = $copy_id;
+	}
+	// Stored before WordPress fires save_post, so Rank Math's robots tag, sitemap and Instant Indexing
+	// (which skips noindex posts) already see the blog's choice when the copy goes live.
+	$robots = enrollment_copy_robots( $record );
+	if ( null !== $robots ) {
+		$post['meta_input'] = array( 'rank_math_robots' => $robots );
 	}
 	// Written by this plugin, not typed by an editor: the push to Main must not run for it.
 	blog_sync_writing( true );
