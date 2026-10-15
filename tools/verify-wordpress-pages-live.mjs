@@ -7,6 +7,8 @@
 // Sign-in: WP_STORAGE_STATE (a saved session file) or WP_PROD_USER / WP_PROD_PASS from
 // ~/.acadvizen-production.env (one attempt). Override the addresses with WP_URL and MAIN_URL.
 // Screenshots (admin bar hidden) go to EVIDENCE_DIR when set. Prints no credential.
+// KEEP_TEST_ITEM=1 keeps the test page as an unpublished draft instead of deleting it (it is still
+// unpublished at the end, also after an error, and the public address is checked to be 404).
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -22,6 +24,7 @@ process.env.MAIN_URL ||= 'https://www.acadvizen.com'
 const { WP, MAIN, T, screen, get, launch, login, saveForm, notice } = await import('../tests/wordpress/acceptanceKit.mjs')
 const LEVEL = /localhost|127\.0\.0\.1/.test(`${WP} ${MAIN}`) ? 'LOCAL' : 'PRODUCTION'
 const OUT = process.env.EVIDENCE_DIR || ''
+const KEEP = process.env.KEEP_TEST_ITEM === '1'
 if (OUT) fs.mkdirSync(OUT, { recursive: true })
 
 let pass = 0
@@ -188,6 +191,23 @@ try {
 } catch (error) {
   check('run finished without an unexpected error', false, error.message.split('\n')[0])
 } finally {
+  if (KEEP) {
+    /* 7. Keep the test page, unpublished (no Trash, no Delete permanently) ---------------------- */
+    if (pageId && (await get(`/${SLUG}`)).status !== 404) {
+      await admin.goto(screen('pages', `&view=edit&id=${pageId}`)).catch(() => {})
+      await admin.selectOption('#acv-status', 'draft').catch(() => {})
+      await saveForm(admin).catch(() => {})
+    }
+    await admin.goto(screen('pages', `&s=${SLUG}`)).catch(() => {})
+    const rows = await admin.locator('.acv-main-table tr', { hasText: SLUG }).allInnerTexts().catch(() => [])
+    check('K1 test page kept in the admin, unpublished (not deleted)', rows.length > 0 && rows.every((r) => !/Published/.test(r)), `${rows.length} row(s): ${rows.map((r) => r.replace(/\s+/g, ' ').slice(0, 80)).join(' | ')}`)
+    check('Z2 test address answers 404 (not public)', (await eventually(async () => (await get(`/${SLUG}`)).status === 404)) === true)
+    check('Z3 test address is not in the sitemap', !(await (await fetch(`${MAIN}/sitemap.xml?t=${Date.now()}`)).text()).includes(SLUG))
+    if (OUT) fs.writeFileSync(path.join(OUT, `pages-results-${T}.json`), JSON.stringify({ run: T, level: LEVEL, wp: WP, main: MAIN, kept: { pageId, draftId, slug: SLUG }, click_fallbacks: counter.fallbacks, results }, null, 1))
+    await browser.close()
+    console.log(`\n${pass} passed, ${fail} failed [${LEVEL}] | test page /${SLUG} KEPT unpublished (id ${pageId || '-'}${draftId ? `, private copy ${draftId}` : ''}) | click fallbacks ${counter.fallbacks}`)
+    process.exit(fail ? 1 : 0)
+  }
   /* 7. Cleanup through the admin's own Trash and Delete permanently ----------------------------- */
   for (const status of ['', '&trashed=1']) {
     await admin.goto(screen('pages', `${status}&s=${SLUG}`)).catch(() => {})
