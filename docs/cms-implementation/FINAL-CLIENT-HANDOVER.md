@@ -1,6 +1,129 @@
-# Acadvizen central CMS: client handover (updated 14 October 2026)
+# Acadvizen central CMS: client handover (updated 15 October 2026)
 
-## Status on 14 October 2026 (current)
+## Status on 15 October 2026 (current)
+
+**Verdict: READY WITH EXPLICITLY ACCEPTED RISKS.** The sign-in checks M1–M3 passed on 15 Oct, 13:52–13:54 UTC (below). They were run by the engineer at the owner's request, with the existing admin session and the owner's stored credentials.
+
+The owner accepted two open risks on 15 Oct. Neither is resolved:
+- **Security (Owner-Accepted Risk, remediation deferred):**
+  - the leaked legacy Supabase keys were **still accepted** by the production Supabase project at the last check (15 Oct, 13:03 UTC);
+  - the Main admin account still signs in with the password stored on 12 Oct, so **its password has not changed since 12 Oct** (see "Security").
+- **Database backup (Owner-Accepted Risk, interim):** there is no complete backup newer than 10 Oct. The next hosting backup is expected in about two days and must then be verified.
+
+Publishing was verified on the live websites:
+- **15 Oct (plugin 0.7.1):** Main pages, Enrollment-only blogs and Both blogs.
+- **14 Oct (plugin 0.7.0):** Main-only blogs, last verified then.
+
+Detailed evidence (logs, screenshots, comparisons) is held by the engineer outside the repository. `TEST-RESULTS.md` summarises it.
+
+**Status by category (15 Oct)**
+
+| Item | Category |
+|---|---|
+| Main pages from the Master Admin (17/17); Enrollment-only blogs (14/14); Both blogs (17/17); noindex, sitemap, feed and IndexNow behaviour; Main 314 / Enrollment 59 unchanged; plugin 0.7.1 install and rehearsed rollback; admin screens and destination choices (read-only check, see below) | **Verified** (production) |
+| Main-only blogs | **Verified** (production, 14 Oct, plugin 0.7.0); not re-run on 0.7.1 |
+| Failure handling for Both, scheduling (UTC and Asia/Kolkata), roles and permissions, approval workflow, all other Main content types | **Verified locally only** (by rule, or no production accounts) |
+| Sign-in checks M1–M3: WordPress Master Admin, Enrollment Elementor, Main `/admin` sign-in and sign-out | **Verified** (production, 15 Oct 13:52–13:54 UTC) |
+| Legacy Supabase keys and passwords in Git history | **Owner-Accepted Risk** (deferred) |
+| No complete database backup since 10 Oct | **Owner-Accepted Risk** (interim, about two days) |
+| Enrollment: 3 missing logos, sideways scroll at tablet width, carousel link to an unpublished page; Main `/admin` shows "session expired" to someone never signed in; the Master Admin menu mixes Enrollment shortcuts with Main Website | **Known Issue** (outside this release) |
+| Approval workflow and Render Bridge (Elementor pages and popups for Main or Both) | **Not in this release** (off; owner decision) |
+
+**Admin screens on production (15 Oct 13:33 UTC; signed in as an administrator, page loads only, nothing saved)**
+- The dashboard and the Acadvizen Master Admin menu load.
+- **Main Website** has 24 content tabs. The Pages and Blogs lists load from the live Main site (50 rows each, no errors).
+- **New blog:** Publish To offers Enrollment Website / Main Website / Both Websites. Status offers Draft / In review / Approved / Published / Archived. "Hide from search engines" and the Heading / Paragraph / List / Image blocks are there.
+- **New page and new course:** no Publish To (Main only). The page form has title, address, description, SEO fields, noindex, sitemap exclusion and schedule times.
+- WordPress **Pages** shows "Edit with Elementor" for Enrollment pages. Elementor, Elementor Pro, Rank Math and Master Admin are active.
+- A signed-out visitor is sent to the WordPress login. Main `/admin` sends a signed-out visitor to `/admin-login` (email and password).
+- The Master Admin menu also holds **shortcuts to the Enrollment site's own tools**: Pages, Media, Templates, Header & Footer, Menus, Global Styles, SEO and Redirects. These change **Enrollment**. Main content is edited only under **Main Website**.
+
+**Sign-in checks M1–M3 (15 Oct 2026, 13:52–13:54 UTC; nothing saved or published; no form submitted in WordPress)**
+
+| Check | Steps | Result |
+|---|---|---|
+| M1 WordPress Master Admin | Signed-in WordPress admin → **Acadvizen Master Admin → Main Website** → **Blogs → Add new** → left without saving | **PASS**: Pages list loads (50 rows, no red error); Publish To offers **Enrollment Website / Main Website / Both Websites**; afterwards still exactly the 2 retained test blogs |
+| M2 Enrollment Elementor | WordPress **Pages**, hover over the rows | **PASS**: 18 of 20 pages show "Edit with Elementor" (the other two are not Elementor pages). Nothing clicked |
+| M3 Main admin | `https://www.acadvizen.com/admin-login`, one sign-in with the stored Main admin credentials, then **Sign out** | **PASS**: sign-in accepted, "Admin Dashboard" opens. After sign-out the session check answers 401 and `/admin` no longer opens the dashboard |
+
+- **Afterwards:** the 59 Enrollment pages were identical, and the test items were unchanged.
+- **For the client, later:** the same steps work as a quick daily check. Sign in at `https://enroll.acadvizen.com/wp-admin/` and `https://www.acadvizen.com/admin-login` with your own accounts.
+
+**Production**
+
+| Part | Value |
+|---|---|
+| Main website | `https://www.acadvizen.com` (bare domain → 308 → www) |
+| Vercel project | `acadvizen-newww-ua9d` |
+| Deployment | `dpl_5msnf8Wifuj9iTPmLQyu8Hje7MB5`, commit `7f1a75f` (checked 15 Oct 13:00 UTC; no production deployment since 14 Oct). Application code is identical to branch head `1bb4970`: later commits change only docs, tools, tests, `.gitignore` and the WordPress plugin |
+| Enrollment website | `https://enroll.acadvizen.com` (WordPress 7.0.7 on Hostinger, Elementor + Pro, Rank Math) |
+| Master Admin plugin | **0.7.1** (installed 15 Oct 08:40 UTC; package `acadvizen-cms-0.7.1-6fb8222`, sha256 `37bf4a16…7d049cab`) |
+| Render Bridge | **off** |
+| Approval workflow | **off** (owner decision) |
+
+**What was verified on the live websites (15 Oct, 06:30–09:23 UTC; not re-run since the reported credential changes)**
+
+| Workflow | Result |
+|---|---|
+| Main page from the Master Admin: draft, preview, publish, private copy, address clash refused, unpublish | 17/17 |
+| Blog to **Enrollment only** | 14/14: live on Enrollment only; "Hide from search engines" gives `noindex, follow`; not in the sitemap; not sent to IndexNow; after unpublishing gone from the feed, blog list and sitemap |
+| Blog to **Both** in one save | 17/17: both sites, noindex on both, out of both sitemaps, edit reaches both, unpublish removes both |
+| Integrity | **Main, all 314 addresses identical:** after the Main test, after the plugin install, after Both, and at 13:17 UTC. **Enrollment, all 59 pages identical:** after each step and at 13:17 UTC. **After Enrollment-only,** Main was checked on 8 sample addresses (identical). Enquiry endpoint `acadvizen/v1/enquiry` registered (not called) |
+
+**Verified on the test copy only (by rule, not on the live sites):**
+- what happens when one website fails during a "Both" save (12/12);
+- scheduling in UTC and Asia/Kolkata (7/7 each);
+- roles and permissions (9/9);
+- approval workflow (47/47 + 38/38);
+- every other Main content type (structured 56/56, courses 12/12, homepage 14/14, header/footer/menus 18/18, other content 15/15).
+
+**Supported destinations.** Only **Blogs** have Publish To (Main, Enrollment or Both). Everything else in Main Website is for the Main website only. Enrollment pages are still edited in Elementor, unchanged. Elementor pages and popups for Main or Both need the Render Bridge (off; owner decision).
+
+**Security: remediation INCOMPLETE. Owner-Accepted Risk; remediation deferred by the owner on 15 Oct**
+
+1. **Current files (branch head).**
+   - `tools/check-secrets.mjs --all` over all tracked files: no secrets (15 Oct 13:25 UTC, including this document).
+   - `npm audit --omit=dev`: 0 known advisories in the 120 production dependencies of the Main app (npm advisory database, 15 Oct 07:11 UTC; package files unchanged since 13 Oct). Development dependencies were not part of this check, and it is not a full security audit.
+2. **Git history (public).** Gitleaks v8.21.2 over the full history (15 Oct 11:29 UTC, values redacted) reported 15 findings:
+   - 7 are test fixtures. None equals a production secret (equality check).
+   - 1 is an abbreviated example in an old report (false positive).
+   - **7 are real production Supabase legacy JWT keys:** the service_role key (3 old scripts) and the anon key (4 places). None is in the current files.
+   - A targeted search also found the **production database password** and the **Main admin password** in old commits.
+3. **Production status of those credentials:**
+   - **Legacy JWT keys:** at 15 Oct 12:59–13:03 UTC, after the owner reported the dashboard actions, the legacy anon key was **still accepted** by the production Supabase project (`hhfc…`). The legacy key set is therefore **not disabled**, and the leaked service_role key must be treated as **active**. It was not used for testing.
+   - **Main admin password:** reported as changed on 15 Oct, but the Main admin account still signed in at 13:53 UTC with the password stored in the owner's credentials file on 12 Oct (check M3). **That account's password has not changed since 12 Oct.** Whether it equals the password in Git history was not checked; that needs a private equality check, with the owner's approval.
+   - **Database password:** owner-reported as changed; **not independently verified**.
+   - **New keys** (publishable and secret) work: the publishable key reads data, and the Master Admin lists drafts through Main's secret key. Main's code uses the new keys first, so disabling the legacy keys is not expected to affect it.
+4. **Required to close this risk** (deferred by the owner; the risk stays open until then):
+   1. **Owner, in the Supabase dashboard of project `hhfc…`:** disable the JWT-based legacy API keys. Then the engineer confirms that the legacy key is rejected and Main still works.
+   2. **Owner:** change the Main admin password (unchanged since 12 Oct, see check M3) and update the private credentials file. Confirm the database password reset. The engineer can verify each by trying the old credential once (never displayed), only with the owner's approval.
+5. **Removing the legacy variables from Vercel** (`SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `VITE_SUPABASE_ANON_KEY`, `VITE_SUPABASE_URL`) happens **only after** step 4.1 is verified, the dependency check is repeated, and the owner approves. It is not done yet.
+
+**Backups and rollback**
+- **Database backup readiness: NOT MET. Owner-Accepted Risk (interim, accepted 15 Oct for about two days).**
+  - The last complete database backup is from 10 Oct 09:24. The 15 Oct export is incomplete (58 of 108 tables); no newer file existed at 13:00 UTC.
+  - No fresh backup has been restored or test-restored.
+  - The risk stays open until the next complete backup is downloaded and verified: all tables present, dump complete, ideally test-restored in an isolated copy. Database-affecting changes should wait until then.
+  - (The owner had separately accepted the same risk for the plugin 0.7.1 install.)
+- **Other copies:** a fresh WordPress content export (15 Oct, 998 items) and the files archive (14 Oct) are held privately. A content export is not a database backup.
+- **Plugin rollback:** Plugins → Add New Plugin → Upload Plugin → `acadvizen-cms-0.7.0-62a13a4/acadvizen-cms.zip` → Install Now → Replace current with uploaded. Rehearsed on WordPress 7.0.7 / PHP 8.3. On 0.7.0, a **new** hidden blog's Enrollment copy would be published `index, follow` and submitted to IndexNow; copies saved under 0.7.1 keep their setting. Details: `FINAL-RELEASE-AND-ROLLBACK.md`.
+- **Main rollback:** Vercel → `acadvizen-newww-ua9d` → Deployments → promote `dpl_5msnf8Wifuj9iTPmLQyu8Hje7MB5`, the only verified production deployment built with the new Supabase keys. Never promote `dpl_8C59…`, `dpl_EnsscA7x…` or `dpl_8buux…` (they depend on the legacy keys), and never use Redeploy on a preview. Details: `FINAL-RELEASE-AND-ROLLBACK.md`.
+
+**Known issues outside the CMS (re-checked 15 Oct; unchanged; owner decision)**
+- On Enrollment's course landing pages, 3 logo images are missing (404: `uploads/2026/09/pwc.png`, `zomato-1.png`, `uber-1.png`).
+- The Enrollment homepage scrolls sideways at tablet width (768 px).
+- A carousel slide on the Enrollment homepage and `/projects-2/` links to an unpublished page (`/?page_id=6342`, 404).
+- Main `/admin` opened by someone who was never signed in shows "Admin session expired. Please sign in again." with **Back to Login**, which opens `/admin-login`. This works but is worded oddly (existing behaviour, unchanged).
+- The Master Admin menu mixes Main Website with shortcuts to Enrollment's own tools (Pages, Media, Templates, Header & Footer, Menus, Global Styles, SEO, Redirects). "Pages" and "Redirects" exist for both sites; see "Admin screens on production" above.
+- **Vercel housekeeping (outside this release; not blocking client use):**
+  - the duplicate project `acadvizen-newww` is still connected to the repository (no domains). A push to `main` would also build there; its addresses stay on `.vercel.app`;
+  - the old project `acadviden` still lists `enroll.acadvizen.com` (inactive; DNS points to Hostinger). It would matter only if the `enroll` DNS record were removed.
+
+**Test items left on production (drafts, not public; deleting them needs owner approval)**
+- Main page `cms-production-test-page-202610150630`.
+- Blogs `cms-production-test-blog-202610150909` and `…-202610150919`, with their Enrollment posts 8289 and 8296 as drafts.
+
+## Status on 14 October 2026 (historical; superseded by the 15 October section above)
 
 **Verdict: NOT CLIENT READY.** The Main release and plugin 0.7.0 are live, and the existing CMS workflows are verified on production. Not yet live, and needing owner approval: Option B (Render Bridge, mandatory approval). The leaked legacy Supabase key is **still valid**: the owner deferred revocation for this release. Client-ready needs proof on a real staging site and then production, and that needs the owner's steps in `OWNER-ACTIONS.md`. The approval gate for Main is `MAIN-ACCEPTANCE-CHECKLIST.md`.
 
@@ -39,7 +162,7 @@
 - Animated visitor counter differs on every load.
 - After a header or footer change, other Main pages update within about 5–10 minutes (designed redraw).
 
-## Status on 13 October 2026 (superseded where the section above differs)
+## Status on 13 October 2026 (historical; superseded by the 15 October section above)
 
 **(13 Oct wording, superseded:) BLOCKED for a full handover, by production authorization only.** On 14 Oct further defects were found and fixed locally: see the section above.
 
@@ -88,7 +211,7 @@ Then **Acadvizen Master Admin → Settings → Test connection** should say **Co
 | Content | Screen | Appears on | Verified |
 |---|---|---|---|
 | Existing and new Main pages, with sections | Main Website → **Pages** | www.acadvizen.com/&lt;address&gt; | Live (17/17) |
-| Blogs | Main Website → **Blogs** | Main, Enrollment, or Both (**Publish To**) | Live (16/16) |
+| Blogs | Main Website → **Blogs** | Main, Enrollment, or Both (**Publish To**) | Live: Enrollment only 14/14, Both 17/17 (15 Oct, plugin 0.7.1); all three destinations 16/16 (14 Oct, plugin 0.7.0) |
 | Header, footer, menus, site labels | Main Website → **Header**, **Footer**, **Menus**, **Site settings** | Every Main page | Local copy (18/18) |
 | Homepage banner, call to action, lists | Main Website → **Banner**, **Closing call to action**, **Lists**, **Sections** | Main homepage | Local copy (14/14) |
 | Courses and course sections | Main Website → **Courses**, **Course sections** | Main course pages | Local copy (12/12) |
@@ -136,14 +259,16 @@ Verified locally only: production has no Author or Contributor accounts.
 
 ## 7. Known limitations
 
-- **Security:** old credentials remain readable in public Git history and have not been changed, by the owner's decision.
+- **Security:** credentials remain readable in public Git history.
+  - The legacy Supabase keys were **still accepted** at the last check (15 Oct 13:03 UTC). Remediation was deferred by the owner on 15 Oct and the risk is open; see "Security" in the current status above.
+  - The Main admin password has not changed since 12 Oct (check M3). The database password change is owner-reported and not independently verified.
 - **Live-site checks covered pages and blogs only**, because staging is not available (O-5).
-- **Speed:**
+- **Speed** (measured 13 Oct; not re-measured for this handover):
   - Main pages take 1.2–3 s to start loading.
-  - **Tool pages (`/tools/…`) currently take 7.5–10.5 s.**
-  - Release 11 reduces this: tool pages about 6.2 → 1.9 s in the local model.
+  - **Tool pages (`/tools/…`) took 7.5–10.5 s.**
+  - Release 11, now live, was designed to reduce this (tool pages about 6.2 → 1.9 s in the local model). Not yet measured on production.
   - A further step (function region) needs the owner's approval (O-4).
-- **Enrollment homepage:** a section appears twice, from an Elementor edit on 12 Oct (O-3). A ready correction is documented.
+- **Enrollment homepage:** a section appeared twice after an Elementor edit on 12 Oct (O-3, reported 13 Oct; not re-checked for this handover). A ready correction is documented.
 - **Scheduled times are in UTC.**
 
 ## 8. Support and recovery
@@ -178,8 +303,8 @@ Verified locally only: production has no Author or Contributor accounts.
 | — | `MAIN-ROUTE-CHECKLIST.md` | All 314 production Main addresses with their migration target, live SEO facts and local evidence (site-wide migration run) |
 | — | `MAIN-ACCEPTANCE-CHECKLIST.md` | The Main Website approval gate: each criterion, its evidence (PRODUCTION / STAGING / LOCAL) and what is still missing. Current verdict: not ready for approval |
 
-**Live versions:**
-- Main: `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T` (commit `80134d4`);
-- Enrollment plugin: Acadvizen Master Admin 0.6.1 (public files identical to the release package).
+**Live versions (checked 15 Oct 13:00 UTC):**
+- Main: `dpl_5msnf8Wifuj9iTPmLQyu8Hje7MB5` (commit `7f1a75f`);
+- Enrollment plugin: Acadvizen Master Admin **0.7.1** (package `acadvizen-cms-0.7.1-6fb8222`).
 
-**Prepared, not live:** release 11 on local branch `headless-wordpress` (commits `f855e33` … `436a822` and the final docs commit).
+**Branch:** `headless-wordpress` at `1bb4970`, pushed. Compared with the live Main deployment, it adds only docs, tools, tests, `.gitignore` and the plugin, which is already live on Enrollment. No Main release is pending.

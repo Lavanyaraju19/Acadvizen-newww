@@ -1,6 +1,31 @@
-# Final security report: Acadvizen Master Admin / headless CMS (13 October 2026)
+# Final security report: Acadvizen Master Admin / headless CMS (13 October 2026, updated 15 October 2026)
 
 No secret value appears in this report, in the repository, or in any evidence file. Scans compare values privately and print only variable names, file paths and commit IDs.
+
+## Status on 15 October 2026 (current; the 13 October sections below are historical)
+
+**Overall: OPEN. Owner-accepted risk, remediation deferred by the owner on 15 Oct. Not resolved.**
+
+| # | Credential | 15 Oct evidence | Category |
+|---|---|---|---|
+| C1 | Supabase **service-role key** (legacy JWT), public Git history | Gitleaks v8.21.2 full-history scan (15 Oct 11:29 UTC): present in 3 old scripts (`07fb544`), not in current files. The legacy key set was **still accepted** by the production project `hhfc…` at 12:59–13:03 UTC (probed with the public anon key only, never with this key), so this key must be treated as **active** | **Owner-Accepted Risk** (deferred) |
+| C2 | Production database password, public history | Owner reported a reset on 15 Oct; **not independently verified** | **Owner-Accepted Risk** until verified |
+| C3 | Main admin password, public history | Reported as changed on 15 Oct, but the Main admin account still signed in at 13:53 UTC with the password stored in the owner's credentials file on 12 Oct (check M3). **Not changed since 12 Oct.** Whether it equals the exposed password was not checked | **Owner-Accepted Risk** (open) |
+| C4 | Another admin password (`ADMIN_PASSWORD`), public history | Not re-checked | **Owner-Accepted Risk** |
+| C5 | Supabase legacy anon key | Public by design; disabled together with C1 when the legacy keys are switched off | Covered by C1 |
+| C6 | Content-API shared secret | Not in history; test fixtures checked and none equals it | **Verified** (not exposed) |
+| C7 | Credentials shared in chat during the project | Unchanged | **Owner-Accepted Risk** |
+
+- **Current files (branch head):**
+  - `tools/check-secrets.mjs --all`: no secrets (15 Oct 13:25 UTC);
+  - `npm audit --omit=dev`: 0 known advisories in 120 production dependencies (15 Oct 07:11 UTC; development dependencies not included; not a full audit).
+- **Main already uses the new keys** (publishable and secret; verified 15 Oct). Disabling the legacy keys is not expected to affect Main. The old `acadviden*` Vercel projects use a different Supabase project.
+- **Closing these risks** (owner, when ready):
+  1. disable the JWT-based legacy API keys in project `hhfc…`, and the engineer verifies they are rejected;
+  2. change the Main admin password (C3) and update the private credentials file; confirm the database password reset (C2). Verification by trying each old credential once, with the owner's approval;
+  3. only then, and with approval, remove the legacy Vercel variables.
+
+  Rewriting Git history is not needed once the credentials are revoked.
 
 **Status labels:**
 - `PASS — VERIFIED` (production)
@@ -10,7 +35,7 @@ No secret value appears in this report, in the repository, or in any evidence fi
 - `FAIL — FIX REQUIRED`
 - `ACCEPTED RESIDUAL RISK`
 
-## Owner decision on existing credentials (recorded once)
+## Owner decision on existing credentials (13 October 2026, historical)
 
 On 13 October 2026 the owner instructed that **existing passwords and keys must not be changed, rotated, revoked or deleted** during this work. This covers:
 - the Supabase service-role key;

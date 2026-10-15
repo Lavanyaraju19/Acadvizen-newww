@@ -1,6 +1,47 @@
-# Test results — 10 October 2026, updated 14 October 2026
+# Test results — 10 October 2026, updated 15 October 2026
 
-The statuses used are PASS, PARTIAL, FAIL, BLOCKED and NOT TESTED. The level (Automated, LOCAL, PRODUCTION) is stated on every row.
+The statuses used are PASS, PARTIAL, FAIL, BLOCKED and NOT TESTED. The level (Automated, LOCAL, PRODUCTION) is stated on every row. Detailed logs and screenshots are kept by the engineer outside the repository.
+
+## 15 October 2026, 11:00–14:00 UTC: security re-scan, integrity re-check, admin screens, sign-in checks M1–M3 (PRODUCTION, LOCAL)
+
+| Check | Level | Result |
+|---|---|---|
+| Gitleaks v8.21.2, full Git history, values redacted (11:29 UTC) | Automated | 15 findings: 7 test fixtures, 1 false positive, **7 real legacy Supabase JWTs** (service_role ×3, anon ×4) in old commits; none in current files |
+| Legacy Supabase keys on the production project `hhfc…` (12:59–13:03 UTC, after the owner reported dashboard actions) | PRODUCTION | **FAIL (open risk): still accepted.** Remediation deferred by the owner on 15 Oct |
+| New Supabase keys | PRODUCTION | PASS: publishable key reads data; Master Admin lists drafts through Main's secret key |
+| Main 314 addresses / Enrollment 59 pages (13:04–13:17 UTC) | PRODUCTION | PASS 314/314, 59/59 identical |
+| Live deployment | PRODUCTION | `dpl_5msnf8Wifuj9iTPmLQyu8Hje7MB5`, commit `7f1a75f`; no production deployment since 14 Oct |
+| Unit, lint, type check, production build of `1bb4970` | LOCAL | 273/273; 0 errors (10 old warnings); 0 errors; build OK |
+| Runtime logs, about 3 minutes | PRODUCTION | Info entries only, no warnings or errors |
+| Admin screens, signed in as an administrator (13:33 UTC; page loads only, nothing saved) | PRODUCTION | 12/13 automatically; the 13th (Main `/admin` sign-in form) passed in a follow-up check. See below |
+
+**Admin screens, in detail:**
+- the dashboard and the Master Admin menu load;
+- Main Website shows its 24 content tabs;
+- the Pages and Blogs lists load from Main (50 rows each);
+- a new blog offers **Publish To: Enrollment / Main / Both**, the status options and "Hide from search engines";
+- new Pages and Courses have no Publish To (Main only);
+- WordPress Pages show "Edit with Elementor";
+- Elementor, Elementor Pro, Rank Math and Master Admin are active;
+- a signed-out visitor is sent to the WordPress login;
+- Main `/admin` sends a signed-out visitor to `/admin-login`, which has email and password fields.
+
+The "Global Styles" shortcut opened the Elementor editor for the site kit for a few seconds. Nothing was clicked or saved, and the 59 Enrollment pages were identical afterwards.
+
+**Sign-in checks M1–M3 (PRODUCTION, 13:52–13:54 UTC, run by the engineer at the owner's request):**
+
+| Check | Result |
+|---|---|
+| M1 WordPress Master Admin (existing admin session): Main Website → Pages list; Blogs → Add new; left without saving | PASS: 50 rows, no red error; Publish To = Enrollment Website / Main Website / Both Websites; no form submitted; still 2 retained test blogs |
+| M2 WordPress Pages | PASS: 18 of 20 pages show "Edit with Elementor"; nothing clicked |
+| M3 Main `/admin-login`: one sign-in with the stored Main admin credentials, then sign out | PASS: dashboard opened; after sign-out the session answers 401 and `/admin` no longer opens. **Finding:** the password stored on 12 Oct still works, so it has not changed since 12 Oct (see `FINAL-SECURITY-REPORT.md` C3) |
+| Enrollment 59 pages after M1–M3 | PASS: 59/59 identical |
+
+**Open Owner-Accepted Risks (15 Oct, not resolved):**
+- **Security, remediation deferred:** the legacy Supabase keys are still accepted, and the Main admin password has not changed since 12 Oct.
+- **Database backup, interim:** no complete backup since 10 Oct 09:24 (the 15 Oct export has 58 of 108 tables). To be verified when the next hosting backup arrives.
+
+**Counts in this file:** Both is 16/16 in the LOCAL rows and 17/17 on PRODUCTION. The production run had one extra assertion: the article must be absent from Main's sitemap.
 
 ## 15 October 2026, 08:40–09:35 UTC: PRODUCTION plugin 0.7.1, Enrollment-only and Both verified
 

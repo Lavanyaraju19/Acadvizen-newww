@@ -1,6 +1,33 @@
-# Final release and rollback: Acadvizen Master Admin / headless CMS (13 October 2026)
+# Final release and rollback: Acadvizen Master Admin / headless CMS (13 October 2026, updated 15 October 2026)
 
-## 1. Verified current state (read-only, 12 Oct 2026 20:07–20:25 UTC)
+## Current state and rollback (15 October 2026; sections 1–6 below are historical, 13 October)
+
+| Component | State (checked 15 Oct 13:00 UTC) |
+|---|---|
+| Main website | Vercel project `acadvizen-newww-ua9d`, production deployment **`dpl_5msnf8Wifuj9iTPmLQyu8Hje7MB5`** (commit `7f1a75f`), serving `www.acadvizen.com` and `acadvizen.com` (308 → www). No production deployment since 14 Oct |
+| Enrollment plugin | Acadvizen Master Admin **0.7.1**, package `dist/acadvizen-cms-0.7.1-6fb8222/acadvizen-cms.zip` (sha256 `37bf4a16f125c1e83b3de76a09c801be3556a6cac6a303bf020af7be7d049cab`), installed 15 Oct 08:40 UTC |
+| Branch | `headless-wordpress` at `1bb4970`, pushed. Same application code as the live Main deployment (later commits: docs, tools, tests, `.gitignore`, plugin) |
+| Render Bridge / approval workflow | Off / off |
+
+**Rollback**
+
+| Problem | Action |
+|---|---|
+| Plugin 0.7.1 misbehaves | WordPress → **Plugins → Add New Plugin → Upload Plugin** → choose `acadvizen-cms.zip` from `dist/acadvizen-cms-0.7.0-62a13a4/` (sha256 `7f0d354bea3058cc12b2c232444d0dc8d575e2b7f699657ef4e6378ca51cd5d9`) → **Install Now** → **Replace current with uploaded**. Rehearsed 0.7.0 → 0.7.1 → 0.7.0 on WordPress 7.0.7 / PHP 8.3 (15 Oct): clean. **Noindex after rolling back to 0.7.0** (0.7.0 neither writes nor removes the Rank Math robots setting): (1) Enrollment copies saved under 0.7.1 keep their setting; (2) a **new** blog's Enrollment copy gets none, so it is published `index, follow` even with "Hide from search engines" ticked, and Rank Math submits it to IndexNow (auto-submit is on for Posts); (3) changing "Hide from search engines" on an existing blog no longer reaches its Enrollment copy. While on 0.7.0, avoid publishing hidden blogs to Enrollment or Both |
+| A future Main deployment misbehaves | Vercel → `acadvizen-newww-ua9d` → Deployments → **`dpl_5msnf8Wifuj9iTPmLQyu8Hje7MB5`** → ⋯ → **Promote**. This is the only verified production deployment built with the new Supabase keys. Vercel may treat this as an Instant Rollback, which pauses automatic production deployments until the next promotion |
+| Package files | `dist/` is not in Git (local to the engineer's PC). Either package can be rebuilt byte-identically with `node tools/build-cms-plugin.mjs 62a13a4` (0.7.0) or `node tools/build-cms-plugin.mjs 6fb8222` (0.7.1); compare the sha256 before uploading |
+
+**Do not, when rolling back:**
+- promote `dpl_8C59rWUwpicv7eaqiqinsRWeKP5T`, `dpl_EnsscA7x…` or `dpl_8buux…` (the rollback targets of 13–14 Oct). They depend on the legacy Supabase keys and stop working once those keys are disabled;
+- use **Redeploy** on a preview deployment to put it into production. A preview build has no production settings; this caused the 14 Oct incident;
+- add `www.acadvizen.com` or `acadvizen.com` to any project other than `acadvizen-newww-ua9d`. The duplicate project `acadvizen-newww` has no server settings.
+
+**Backups (15 Oct): Owner-Accepted Risk, interim.**
+- There is no complete database backup newer than 10 Oct 09:24. The 15 Oct export is incomplete (58 of 108 tables).
+- The owner accepted this for about two days, until the next hosting backup. It must then be downloaded and verified: all tables present and the dump complete. A restore test should be done in an isolated copy, never on production.
+- A content export (15 Oct, 998 items) and the files archive (14 Oct) exist. A content export is not a database backup.
+
+## 1. Verified current state (historical: 12 Oct 2026 20:07–20:25 UTC)
 
 | Component | State |
 |---|---|
