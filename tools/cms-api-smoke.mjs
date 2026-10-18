@@ -2,7 +2,7 @@
 // GET requests only; nothing is created or changed. Requests are signed with the Main Website's own
 // signer (lib/wordpress/signature.js), so a pass also proves both sides agree.
 //   node tools/cms-api-smoke.mjs                       (production Enrollment; refusal checks only)
-//   CMS_API_URL=https://cms.acadvizen.com/wp-json/acadvizen-cms/v1 node tools/cms-api-smoke.mjs
+//   CMS_API_URL=http://localhost:8088/wp-json/acadvizen-cms/v1 node tools/cms-api-smoke.mjs   (a test WordPress)
 // With WORDPRESS_CMS_WEBHOOK_SECRET in the environment (the value from wp-config/Vercel; it is never
 // printed) the correctly signed requests are checked too.
 import { randomBytes } from 'node:crypto'

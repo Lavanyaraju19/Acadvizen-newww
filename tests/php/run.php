@@ -23,14 +23,14 @@ namespace {
 			define( 'ACADVIZEN_CMS_MAIN_INTERNAL_URL', $argv[4] );
 		}
 		define( 'ACADVIZEN_CMS_WEBHOOK_SECRET', str_repeat( 'x', 40 ) );
-		// Optional: one WordPress with a CMS address and a public address (mu-plugin acadvizen-cms-hosts.php).
-		if ( '' !== ( $argv[5] ?? '' ) ) {
-			define( 'ACADVIZEN_CMS_ADMIN_URL', $argv[5] );
-			define( 'ACADVIZEN_CMS_PUBLIC_URL', $argv[6] );
+		// Retired second-admin-address constants left in an old wp-config.php must change nothing.
+		if ( 'legacy' === ( $argv[5] ?? '' ) ) {
+			define( 'ACADVIZEN_CMS_ADMIN_URL', $argv[2] );
+			define( 'ACADVIZEN_CMS_PUBLIC_URL', 'https://enroll.acadvizen.com' );
 		}
 		require PLUGIN . 'config.php';
 		echo \Acadvizen\CMS\is_configured() ? 'connected' : 'blocked';
-		if ( 'info' === ( $argv[7] ?? '' ) ) {
+		if ( 'info' === ( $argv[5] ?? '' ) ) {
 			echo ' ' . \Acadvizen\CMS\loopback_base() . ' ' . implode( ',', \Acadvizen\CMS\own_hostports() );
 		}
 		exit;
@@ -48,7 +48,7 @@ namespace {
 	if ( true ) { // conditional, so these are not hoisted into the --guard child process
 		define( 'ABSPATH', '/' );
 		define( 'HOUR_IN_SECONDS', 3600 );
-		function home_url() { return 'https://cms.acadvizen.com'; }
+		function home_url() { return 'https://enroll.acadvizen.com'; }
 		function wp_parse_url( $u, $c = -1 ) { return parse_url( $u, $c ); }
 		// main_link_map(): no Main pages; main_only_post_ids(): page 4242 is Main-only.
 		function wp_cache_get( $key = '' ) { return 'main_only_ids' === $key ? array( 4242 ) : array(); }
@@ -203,8 +203,8 @@ namespace Acadvizen\CMS {
 	check( 'css same-origin', '/_acv/c/plugins/elementor/assets/css/frontend.min.css', main_proxy_path( '/wp-content/plugins/elementor/assets/css/frontend.min.css' ) );
 	check( 'font same-origin', '/_acv/c/plugins/elementor/assets/lib/eicons/fonts/eicons.woff2', main_proxy_path( '/wp-content/plugins/elementor/assets/lib/eicons/fonts/eicons.woff2' ) );
 	check( 'svg same-origin', '/_acv/c/uploads/logo.svg', main_proxy_path( '/wp-content/uploads/logo.svg' ) );
-	check( 'image direct from WordPress', 'https://cms.acadvizen.com/wp-content/uploads/a.png', main_proxy_path( '/wp-content/uploads/a.png' ) );
-	check( 'video direct from WordPress', 'https://cms.acadvizen.com/wp-content/uploads/intro.MP4', main_proxy_path( '/wp-content/uploads/intro.MP4' ) );
+	check( 'image direct from WordPress', 'https://enroll.acadvizen.com/wp-content/uploads/a.png', main_proxy_path( '/wp-content/uploads/a.png' ) );
+	check( 'video direct from WordPress', 'https://enroll.acadvizen.com/wp-content/uploads/intro.MP4', main_proxy_path( '/wp-content/uploads/intro.MP4' ) );
 	check( 'wp-includes js', '/_acv/i/js/jquery/jquery.min.js', main_proxy_path( '/wp-includes/js/jquery/jquery.min.js' ) );
 	check( 'rest route', '/_acv/rest/acadvizen/v1/enquiry', main_proxy_path( '/wp-json/acadvizen/v1/enquiry' ) );
 	check( 'rest root', '/_acv/rest/', main_proxy_path( '/wp-json' ) );
@@ -213,10 +213,10 @@ namespace Acadvizen\CMS {
 	check( 'pages are not mapped', null, main_proxy_path( '/about-us/' ) );
 
 	$doc = '<script>fetch(window.location.origin+\'/wp-json/acadvizen/v1/enquiry\',{})</script>'
-		. '<link rel="stylesheet" href="https://cms.acadvizen.com/wp-content/plugins/cf7/styles.css?ver=6.1.7">'
-		. '<img src="https://cms.acadvizen.com/wp-content/uploads/a.png" srcset="/wp-content/uploads/a.png 1x, /wp-content/uploads/b.png?v=2 2x">'
+		. '<link rel="stylesheet" href="https://enroll.acadvizen.com/wp-content/plugins/cf7/styles.css?ver=6.1.7">'
+		. '<img src="https://enroll.acadvizen.com/wp-content/uploads/a.png" srcset="/wp-content/uploads/a.png 1x, /wp-content/uploads/b.png?v=2 2x">'
 		. '<style>.x{background:url(/wp-content/uploads/bg.jpg)}@font-face{src:url(/wp-content/plugins/elementor/assets/lib/eicons/fonts/eicons.woff2?5.34.0)}</style>'
-		. '<script>var c={"root":"https:\/\/cms.acadvizen.com\/wp-json\/","ajax":"\/wp-admin\/admin-ajax.php","assets":"https:\/\/cms.acadvizen.com\/wp-content\/plugins\/elementor\/assets\/","img":"\/wp-content\/uploads\/c.webp"};</script>'
+		. '<script>var c={"root":"https:\/\/enroll.acadvizen.com\/wp-json\/","ajax":"\/wp-admin\/admin-ajax.php","assets":"https:\/\/enroll.acadvizen.com\/wp-content\/plugins\/elementor\/assets\/","img":"\/wp-content\/uploads\/c.webp"};</script>'
 		. '<p>Docs mention example.com/wp-content/ in prose.</p>';
 	$out = rewrite_root_relative_paths_for_main( rewrite_urls_for_main( $doc ) );
 
@@ -224,16 +224,16 @@ namespace Acadvizen\CMS {
 	check( 'no admin-ajax left', false, strpos( $out, 'admin-ajax' ) !== false );
 	check( 'inline fetch literal', true, strpos( $out, "origin+'/_acv/rest/acadvizen/v1/enquiry'" ) !== false );
 	check( 'absolute stylesheet same-origin', true, strpos( $out, 'href="/_acv/c/plugins/cf7/styles.css?ver=6.1.7"' ) !== false );
-	check( 'absolute img stays on WordPress', true, strpos( $out, 'src="https://cms.acadvizen.com/wp-content/uploads/a.png"' ) !== false );
-	check( 'srcset entries direct', true, strpos( $out, 'srcset="https://cms.acadvizen.com/wp-content/uploads/a.png 1x, https://cms.acadvizen.com/wp-content/uploads/b.png?v=2 2x"' ) !== false );
-	check( 'css url() image direct', true, strpos( $out, 'url(https://cms.acadvizen.com/wp-content/uploads/bg.jpg)' ) !== false );
+	check( 'absolute img stays on WordPress', true, strpos( $out, 'src="https://enroll.acadvizen.com/wp-content/uploads/a.png"' ) !== false );
+	check( 'srcset entries direct', true, strpos( $out, 'srcset="https://enroll.acadvizen.com/wp-content/uploads/a.png 1x, https://enroll.acadvizen.com/wp-content/uploads/b.png?v=2 2x"' ) !== false );
+	check( 'css url() image direct', true, strpos( $out, 'url(https://enroll.acadvizen.com/wp-content/uploads/bg.jpg)' ) !== false );
 	check( 'css url() font same-origin', true, strpos( $out, 'url(/_acv/c/plugins/elementor/assets/lib/eicons/fonts/eicons.woff2?5.34.0)' ) !== false );
 	check( 'json-escaped rest root', true, strpos( $out, '"root":"\/_acv\/rest\/"' ) !== false );
 	check( 'json-escaped ajax', true, strpos( $out, '"ajax":"\/_acv\/ajax"' ) !== false );
 	check( 'json-escaped assets', true, strpos( $out, '"assets":"\/_acv\/c\/plugins\/elementor\/assets\/"' ) !== false );
-	check( 'json-escaped image direct', true, strpos( $out, '"img":"https:\/\/cms.acadvizen.com\/wp-content\/uploads\/c.webp"' ) !== false );
+	check( 'json-escaped image direct', true, strpos( $out, '"img":"https:\/\/enroll.acadvizen.com\/wp-content\/uploads\/c.webp"' ) !== false );
 	check( 'mid-path text untouched', true, strpos( $out, 'example.com/wp-content/ in prose' ) !== false );
-	check( 'other hosts untouched', true, strpos( rewrite_urls_for_main( '<a href="https://cms.acadvizen.com.evil.example/wp-content/x">' ), 'evil.example/wp-content/x' ) !== false );
+	check( 'other hosts untouched', true, strpos( rewrite_urls_for_main( '<a href="https://enroll.acadvizen.com.evil.example/wp-content/x">' ), 'evil.example/wp-content/x' ) !== false );
 
 	// --- Main-only pages never appear in Rank Math's sitemap (it passes plain DB rows) ---
 	$row      = (object) array( 'ID' => 4242, 'post_type' => 'page', 'filter' => 'sample' );
@@ -535,11 +535,11 @@ namespace Acadvizen\CMS {
 	check( 'other posts / meta keys ignored', array(), $GLOBALS['acv_scheduled'] );
 
 	// --- Loopback render: follow only the same-URL http -> https upgrade (enroll redirects http) ---
-	check( 'https upgrade followed', true, is_https_upgrade_of( 'http://cms.acadvizen.com/about-us/', 'https://cms.acadvizen.com/about-us/' ) );
-	check( 'other host refused', false, is_https_upgrade_of( 'http://cms.acadvizen.com/about-us/', 'https://evil.example/about-us/' ) );
-	check( 'other path refused', false, is_https_upgrade_of( 'http://cms.acadvizen.com/about-us/', 'https://cms.acadvizen.com/wp-login.php' ) );
-	check( 'https downgrade refused', false, is_https_upgrade_of( 'https://cms.acadvizen.com/a/', 'http://cms.acadvizen.com/a/' ) );
-	check( 'look-alike host refused', false, is_https_upgrade_of( 'http://cms.acadvizen.com/a/', 'https://cms.acadvizen.com.evil.example/a/' ) );
+	check( 'https upgrade followed', true, is_https_upgrade_of( 'http://enroll.acadvizen.com/about-us/', 'https://enroll.acadvizen.com/about-us/' ) );
+	check( 'other host refused', false, is_https_upgrade_of( 'http://enroll.acadvizen.com/about-us/', 'https://evil.example/about-us/' ) );
+	check( 'other path refused', false, is_https_upgrade_of( 'http://enroll.acadvizen.com/about-us/', 'https://enroll.acadvizen.com/wp-login.php' ) );
+	check( 'https downgrade refused', false, is_https_upgrade_of( 'https://enroll.acadvizen.com/a/', 'http://enroll.acadvizen.com/a/' ) );
+	check( 'look-alike host refused', false, is_https_upgrade_of( 'http://enroll.acadvizen.com/a/', 'https://enroll.acadvizen.com.evil.example/a/' ) );
 
 	// --- Signed visitor IP from the Main Website proxy (config.php + render-bridge.php) ---
 	$client_ip = static function ( array $server ) {
@@ -562,21 +562,21 @@ namespace Acadvizen\CMS {
 
 	// --- Production isolation guard (config.php) ---
 	$guard = array(
-		array( 'https://cms.acadvizen.com', 'https://www.acadvizen.com', '', 'blocked' ),
-		array( 'https://cms.acadvizen.com', 'https://acadvizen.com/', '', 'blocked' ),
-		array( 'https://cms.acadvizen.com', 'https://WWW.Acadvizen.com', '', 'blocked' ),
-		array( 'https://cms.acadvizen.com', 'https://staging-main.vercel.app', 'https://www.acadvizen.com', 'blocked' ),
-		array( 'https://cms.acadvizen.com', 'https://staging-main.vercel.app', '', 'connected' ),
-		array( 'https://cms.acadvizen.com', 'https://www.acadvizen.com.evil.example', '', 'connected' ),
+		// A copy of the Enrollment WordPress (staging, backup) never reaches the production Main Website.
+		array( 'https://staging.example', 'https://www.acadvizen.com', '', 'blocked' ),
+		array( 'https://staging.example', 'https://acadvizen.com/', '', 'blocked' ),
+		array( 'https://staging.example', 'https://WWW.Acadvizen.com', '', 'blocked' ),
+		array( 'https://staging.example', 'https://staging-main.vercel.app', 'https://www.acadvizen.com', 'blocked' ),
+		array( 'https://staging.example', 'https://staging-main.vercel.app', '', 'connected' ),
+		array( 'https://staging.example', 'https://www.acadvizen.com.evil.example', '', 'connected' ),
+		// The Enrollment WordPress (its own /wp-admin/ is the Master CMS) is the production site.
 		array( 'https://enroll.acadvizen.com', 'https://www.acadvizen.com', '', 'connected' ),
-		// One WordPress, two addresses: working on the CMS address is the production site...
-		array( 'https://cms.acadvizen.com', 'https://www.acadvizen.com', '', 'connected', 'https://cms.acadvizen.com', 'https://enroll.acadvizen.com' ),
-		array( 'https://enroll.acadvizen.com', 'https://www.acadvizen.com', '', 'connected', 'https://cms.acadvizen.com', 'https://enroll.acadvizen.com' ),
-		// ...but a copy of that wp-config.php on another site (staging) is not.
-		array( 'https://staging-cms.acadvizen.com', 'https://www.acadvizen.com', '', 'blocked', 'https://cms.acadvizen.com', 'https://enroll.acadvizen.com' ),
-		// Renders always run on the public address; both addresses are the site's own.
-		array( 'https://cms.acadvizen.com', 'https://www.acadvizen.com', '', 'connected https://enroll.acadvizen.com cms.acadvizen.com,enroll.acadvizen.com', 'https://cms.acadvizen.com', 'https://enroll.acadvizen.com', 'info' ),
-		array( 'https://cms.acadvizen.com', 'https://staging-main.vercel.app', '', 'connected https://cms.acadvizen.com cms.acadvizen.com', '', '', 'info' ),
+		// The retired second CMS address: its old wp-config constants make no other address production.
+		array( 'https://cms.acadvizen.com', 'https://www.acadvizen.com', '', 'blocked', 'legacy' ),
+		array( 'https://enroll.acadvizen.com', 'https://www.acadvizen.com', '', 'connected', 'legacy' ),
+		// Renders and links use the site's own (Enrollment) address only.
+		array( 'https://enroll.acadvizen.com', 'https://www.acadvizen.com', '', 'connected https://enroll.acadvizen.com enroll.acadvizen.com', 'info' ),
+		array( 'https://staging.example', 'https://staging-main.vercel.app', '', 'connected https://staging.example staging.example', 'info' ),
 	);
 	// [acv_lead_form]: the Main Website lead form, same endpoint and payload as Main's own form.
 	$form = shortcode_lead_form( array( 'form_type' => 'location_enquiry', 'page_slug' => 'seo-course-in-jayanagar', 'message' => 'yes', 'submit' => 'Send "now"' ) );
@@ -948,9 +948,9 @@ namespace Acadvizen\CMS {
 
 	foreach ( $guard as $case ) {
 		list( $home, $main, $internal, $expected ) = $case;
-		$extra = array_map( 'escapeshellarg', array( $case[4] ?? '', $case[5] ?? '', $case[6] ?? '' ) );
-		$cmd   = sprintf( '%s %s --guard %s %s %s %s', escapeshellarg( PHP_BINARY ), escapeshellarg( __FILE__ ), escapeshellarg( $home ), escapeshellarg( $main ), escapeshellarg( $internal ), implode( ' ', $extra ) );
-		check( "guard $home -> $main" . ( $internal ? " (internal $internal)" : '' ) . ( ! empty( $case[4] ) ? ' [CMS + public address]' : '' ) . ( ! empty( $case[6] ) ? ' info' : '' ), $expected, trim( (string) shell_exec( $cmd ) ) );
+		$mode  = $case[4] ?? '';
+		$cmd   = sprintf( '%s %s --guard %s %s %s %s', escapeshellarg( PHP_BINARY ), escapeshellarg( __FILE__ ), escapeshellarg( $home ), escapeshellarg( $main ), escapeshellarg( $internal ), escapeshellarg( $mode ) );
+		check( "guard $home -> $main" . ( $internal ? " (internal $internal)" : '' ) . ( 'legacy' === $mode ? ' [old CMS-address constants]' : '' ) . ( 'info' === $mode ? ' info' : '' ), $expected, trim( (string) shell_exec( $cmd ) ) );
 	}
 
 	echo "\n$count tests, " . ( $count - $failures ) . " passed, $failures failed\n";

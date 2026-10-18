@@ -1,11 +1,13 @@
 <?php
 /**
  * Plugin Name: Acadvizen Staging Isolation (must-use, STAGING ONLY)
- * Description: Keeps the staging copy (cms.acadvizen.com) away from production: no indexing, no production
- *              tracking, no outgoing email, no outgoing requests except an allowlist, no automatic updates.
+ * Description: Keeps a staging copy of the Enrollment WordPress away from production: no indexing, no
+ *              production tracking, no outgoing email, no outgoing requests except an allowlist, no
+ *              automatic updates.
  *
  * Install ONLY on staging: wp-content/mu-plugins/acadvizen-staging-isolation.php
- * It does nothing on any other site address, so a stray copy on production is inert.
+ * It works on whatever address the staging copy has, and does nothing on a production address
+ * (acadvizen.com, www.acadvizen.com, enroll.acadvizen.com), so a stray copy on production is inert.
  * It changes no theme or third-party plugin files.
  */
 
@@ -15,13 +17,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const STAGING_HOST = 'cms.acadvizen.com';
+const PRODUCTION_HOSTS = array( 'acadvizen.com', 'www.acadvizen.com', 'enroll.acadvizen.com' );
 
-if ( STAGING_HOST !== strtolower( (string) wp_parse_url( home_url(), PHP_URL_HOST ) ) ) {
+$acv_staging_host = strtolower( (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
+if ( '' === $acv_staging_host || in_array( $acv_staging_host, PRODUCTION_HOSTS, true ) ) {
 	return;
 }
+define( __NAMESPACE__ . '\\STAGING_HOST', $acv_staging_host );
 
-const PRODUCTION_HOSTS   = array( 'acadvizen.com', 'www.acadvizen.com', 'enroll.acadvizen.com' );
 const PRODUCTION_TRACKING = array( 'AW-17912622133', 'G-XHHL082QEE', 'GTM-T6Q5DK5C' );
 const LOG_OPTION         = 'acv_staging_isolation_log';
 
@@ -146,7 +149,8 @@ add_action( 'admin_notices', static function () {
 	}
 	$url = wp_nonce_url( admin_url( 'admin-post.php?action=acv_staging_purge' ), 'acv_staging_purge' );
 	printf(
-		'<div class="notice notice-warning"><p><strong>STAGING (cms.acadvizen.com)</strong> — not indexed, no production tracking, email and outgoing requests blocked. <a href="%s">Purge server page cache</a></p></div>',
+		'<div class="notice notice-warning"><p><strong>STAGING (%s)</strong> — not indexed, no production tracking, email and outgoing requests blocked. <a href="%s">Purge server page cache</a></p></div>',
+		esc_html( STAGING_HOST ),
 		esc_url( $url )
 	);
 } );

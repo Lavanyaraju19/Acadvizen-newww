@@ -65,7 +65,7 @@ function register_optional_features(): void {
 
 /**
  * Production isolation: only the production Enrollment website may talk to the production Main
- * Website. A copy of it (staging, e.g. cms.acadvizen.com) that still carries a production Main
+ * Website. A copy of it (a staging or backup copy) that still carries a production Main
  * address is treated as "not connected", so it can never notify, revalidate or link production.
  */
 const PRODUCTION_ENROLLMENT_HOST = 'enroll.acadvizen.com';
@@ -82,34 +82,16 @@ function url_hostport( string $url ): string {
 }
 
 /**
- * One WordPress with two addresses (wordpress/mu-plugins/acadvizen-cms-hosts.php): the public
- * Enrollment address and the Master CMS address. Returns both, or none when they are not set or
- * this request did not arrive on either of them - so a copy of wp-config.php on another site
- * (a staging copy) is never mistaken for production.
- *
- * @return array{admin?: string, public?: string}
+ * The address of the public (Enrollment) website. The Master CMS is this WordPress's own admin
+ * (enroll.acadvizen.com/wp-admin/ in production); there is no second CMS address.
  */
-function configured_addresses(): array {
-	if ( ! defined( 'ACADVIZEN_CMS_ADMIN_URL' ) || ! defined( 'ACADVIZEN_CMS_PUBLIC_URL' ) ) {
-		return array();
-	}
-	$urls = array(
-		'admin'  => untrailingslashit( trim( (string) ACADVIZEN_CMS_ADMIN_URL ) ),
-		'public' => untrailingslashit( trim( (string) ACADVIZEN_CMS_PUBLIC_URL ) ),
-	);
-	$hosts = array_map( __NAMESPACE__ . '\\url_hostport', $urls );
-	return in_array( url_hostport( home_url() ), $hosts, true ) && '' !== $hosts['admin'] && '' !== $hosts['public'] ? $urls : array();
-}
-
-/** The address of the public (Enrollment) website, whichever address this request arrived on. */
 function public_site_url(): string {
-	$urls = configured_addresses();
-	return $urls ? $urls['public'] : untrailingslashit( home_url() );
+	return untrailingslashit( home_url() );
 }
 
-/** Every address of this WordPress (host[:port]): links on any of them are its own. */
+/** Every address of this WordPress (host[:port]): links on it are its own. */
 function own_hostports(): array {
-	return array_values( array_unique( array_merge( array( url_hostport( home_url() ) ), array_map( __NAMESPACE__ . '\\url_hostport', configured_addresses() ) ) ) );
+	return array( url_hostport( home_url() ) );
 }
 
 function is_production_enrollment_site(): bool {

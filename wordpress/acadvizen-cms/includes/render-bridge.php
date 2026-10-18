@@ -462,11 +462,11 @@ function map_url_for_main( string $path_and_more, array $link_map ): ?string {
  * Rewrites every absolute URL of this WordPress in $html (plain and JSON-escaped forms).
  */
 function rewrite_urls_for_main( string $html ): string {
-	// Any address of this WordPress (with the CMS address set up, both the CMS and the public one).
+	// This WordPress's own address.
 	$hostport = '(?:' . implode( '|', array_map( static fn( $h ) => preg_quote( $h, '#' ), own_hostports() ) ) . ')';
 	$map      = main_link_map();
 	// Other links (e.g. to an Enrollment page) keep pointing at this WordPress, on its public
-	// address - never the CMS address.
+	// address.
 	$public    = url_hostport( public_site_url() );
 	$on_public = static fn( string $url ) => false !== stripos( str_replace( '\\/', '/', $url ), '//' . $public );
 

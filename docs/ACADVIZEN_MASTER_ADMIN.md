@@ -1,6 +1,6 @@
 # Acadvizen Master Admin and Elementor Render Bridge
 
-One WordPress and one `/wp-admin/` manage both websites: the Enrollment WordPress at `https://enroll.acadvizen.com/wp-admin/`. Optionally it can also be reached at a second admin address, `https://cms.acadvizen.com/wp-admin/` (section 1); the first production install does not need it. The administrator designs with Elementor, chooses **Publish To** (Enrollment, Main or Both) and publishes. Pages for www.acadvizen.com are rendered by WordPress and Elementor. Next.js serves the result at the page's own address; it never re-creates Elementor widgets.
+One WordPress and one `/wp-admin/` manage both websites: the Enrollment WordPress at `https://enroll.acadvizen.com/wp-admin/`. That admin is the Master CMS; there is no separate CMS address. The administrator designs with Elementor, chooses **Publish To** (Enrollment, Main or Both) and publishes. Pages for www.acadvizen.com are rendered by WordPress and Elementor. Next.js serves the result at the page's own address; it never re-creates Elementor widgets.
 
 > **Status (2026-10-10).** Verified end to end on staging: `cms.acadvizen.com` (a copy of enroll) publishing to a Vercel preview of this branch. The stack is WordPress 7.0.6, Astra 4.13.6, Elementor 4.3.3, Elementor Pro, Header Footer Elementor, Max Mega Menu, Contact Form 7 and Rank Math.
 >
@@ -59,35 +59,17 @@ Why this design:
 
 **Visitor IP for forms.** WordPress sees Main's form requests coming from Vercel. The enquiry plugin limits submissions per IP, so without a fix it would apply one shared limit to *all* Main visitors. The proxy therefore sends the visitor's IP with an HMAC signature (`x-acadvizen-client-ip`, `-ts`, `-sig`). The plugin uses that IP only when the signature verifies; a forged header is ignored. This was verified on staging: through Main, a second submission from another visitor returned `201`, a direct repeat returned `429`, and a forged header had no effect.
 
-### One WordPress, two addresses: the Master CMS and the Enrollment website
+### One WordPress: the Master CMS is the Enrollment admin
 
-The Master CMS (`https://cms.acadvizen.com/wp-admin/`) and the Enrollment website (`https://enroll.acadvizen.com/`) are **one WordPress installation and one database**, reached on two addresses. This was chosen after comparing three designs:
+The Master CMS (`https://enroll.acadvizen.com/wp-admin/`) and the Enrollment website (`https://enroll.acadvizen.com/`) are **one WordPress installation and one database** on one address. This was chosen after comparing three designs:
 
 | Design | Verdict |
 |---|---|
-| **One WordPress, two addresses** (admin on `cms`, public site on `enroll`) | **Chosen.** Enrollment keeps its own database: pages, forms, leads, WooCommerce, users, plugins and Theme Builder are untouched, and "Publish to Enrollment" is a normal WordPress publish. Nothing is copied between systems, so nothing can drift. |
-| Two WordPress installations, `cms` pushing pages to `enroll` | Rejected. Elementor designs reference posts, templates, popups, forms, menus and media **by ID**. Every push would have to remap them between two databases whose IDs diverge (enroll creates leads and orders all the time), and WooCommerce/MetForm/ShopEngine data would need a sync of its own. That is fragile. |
-| `enroll` serving HTML rendered on `cms` | Rejected. Forms, carts, nonces and logged-in features would point at the wrong site. |
+| **One WordPress** (the Enrollment admin is the CMS) | **Chosen.** Enrollment keeps its own database: pages, forms, leads, WooCommerce, users, plugins and Theme Builder are untouched, and "Publish to Enrollment" is a normal WordPress publish. Nothing is copied between systems, so nothing can drift. |
+| Two WordPress installations, a separate CMS WordPress pushing pages to `enroll` | Rejected. Elementor designs reference posts, templates, popups, forms, menus and media **by ID**. Every push would have to remap them between two databases whose IDs diverge (enroll creates leads and orders all the time), and WooCommerce/MetForm/ShopEngine data would need a sync of its own. That is fragile. |
+| `enroll` serving HTML rendered on a separate CMS WordPress | Rejected. Forms, carts, nonces and logged-in features would point at the wrong site. |
 
-`wordpress/mu-plugins/acadvizen-cms-hosts.php` makes the two addresses work. It is inert unless both `ACADVIZEN_CMS_ADMIN_URL` and `ACADVIZEN_CMS_PUBLIC_URL` are defined, and on any other address (a staging copy):
-
-- **Each address works on its own.** wp-admin, the Elementor editor and its preview, theme and plugin files all use the address the request arrived on. Elementor needs the editor and its preview on one origin.
-- **Media always has the public address**, so what is saved while working on `cms` (image URLs in designs, generated Elementor CSS) is exactly what `enroll` serves.
-- **`cms` is not a third public website.** Visitors there are sent to the same path on `enroll` (302), and every response is `noindex`. Login, wp-admin, REST, WP-Cron, previews, the Elementor editor and the Main Website's signed render requests are served normally.
-- **On `enroll`,** links saved as `cms` addresses point to `enroll`, and `/wp-admin/` moves to `cms`. Front-end AJAX (`admin-ajax.php`), `admin-post.php`, forms and customer logins stay on `enroll`.
-- **Main renders always run on the public address,** and both addresses count as WordPress's own when pages are prepared for www. A page renders the same whichever address started the job, and no `cms` URL reaches www.
-- **Production identity follows the public address,** but only when the request arrived on one of the two addresses. A staging copy carrying production's `wp-config.php` is therefore still refused a production Main (PHP test "guard … [CMS + public address]").
-
-Verified on the local Docker WordPress with both addresses, 12/12 checks:
-
-- login stays on `cms`;
-- media saved on `cms` uses the public address;
-- Elementor's preview is same-origin;
-- the public page shows the design with no `cms` URLs, and its image loads;
-- `cms` sends visitors to `enroll`, and `enroll`'s wp-admin goes to `cms`;
-- previews work on `cms`;
-- a second edit reaches `enroll`;
-- cleanup.
+An optional second admin address (`cms.acadvizen.com`, with a must-use plugin and the `ACADVIZEN_CMS_ADMIN_URL` / `ACADVIZEN_CMS_PUBLIC_URL` constants) was retired in plugin 0.7.2. The plugin now uses only the site's own address; those constants, if still present in an old `wp-config.php`, are ignored (PHP test "guard … [old CMS-address constants]").
 
 Staging on Hostinger cannot show this until a second hostname is attached to the staging site (section 11).
 
@@ -252,10 +234,6 @@ define( 'ACADVIZEN_CMS_WEBHOOK_SECRET', '<random, at least 32 characters>' );
 // define( 'ACADVIZEN_CMS_MAIN_INTERNAL_URL', 'https://…' ); // server-to-server address of Main, if different
 // define( 'ACADVIZEN_CMS_LOOPBACK_URL', 'http://127.0.0.1' ); // if the site cannot request its own public URL
 // define( 'ACADVIZEN_CMS_MAIN_BYPASS_TOKEN', '…' ); // staging only: Vercel "Protection Bypass for Automation" secret of a protected preview
-// Optional, only for a second admin address (with wordpress/mu-plugins/acadvizen-cms-hosts.php
-// in wp-content/mu-plugins/):
-// define( 'ACADVIZEN_CMS_ADMIN_URL', 'https://cms.acadvizen.com' );
-// define( 'ACADVIZEN_CMS_PUBLIC_URL', 'https://enroll.acadvizen.com' );
 
 // Optional features: they change what Enrollment already does, so they are off until set to true.
 // define( 'ACADVIZEN_CMS_SITE_TEMPLATES', true );  // headers/footers/Theme Builder templates follow Publish To
@@ -269,7 +247,7 @@ The WordPress Address and Site Address settings stay `enroll.acadvizen.com`.
 - Main-only content (tools, Main blogs) is always kept out of Enrollment's sitemaps, whatever the flags.
 - Activation and deactivation rebuild only the rewrite rules saved in the database (soft flush). The plugin never writes `.htaccess`.
 
-**Production isolation (built in).** Only the website whose address is `enroll.acadvizen.com` may use `acadvizen.com` / `www.acadvizen.com` as its Main Website. On any other copy, such as the staging site `cms.acadvizen.com`, a production Main address is refused. The plugin then behaves as "not connected", sends no webhooks and links nothing to production, and Settings says why ("Blocked: …", Test connection `blocked_production_target`). This was verified live on staging on 2026-10-03, with zero requests to production hosts. Staging must point at a staging Main Website and use a different secret from production.
+**Production isolation (built in).** Only the website whose address is `enroll.acadvizen.com` may use `acadvizen.com` / `www.acadvizen.com` as its Main Website. On any other copy, such as a staging copy, a production Main address is refused. The plugin then behaves as "not connected", sends no webhooks and links nothing to production, and Settings says why ("Blocked: …", Test connection `blocked_production_target`). This was verified live on staging on 2026-10-03, with zero requests to production hosts. Staging must point at a staging Main Website and use a different secret from production.
 
 On a protected Vercel preview, the middleware's own manifest request uses Vercel's `VERCEL_AUTOMATION_BYPASS_SECRET` automatically, when "Protection Bypass for Automation" is enabled for the project.
 
@@ -323,12 +301,12 @@ On the site today, MetForm is used on 0 of 49 pages.
 - **Editing very long pages in Elementor is slow on staging.** The converted Main homepage has about 600 Elementor elements: on staging the editor takes 1½–2 minutes to open, and the first one or two changes take up to a minute while Elementor finishes preparing the page; after that, changes are instant. Smaller pages are quick (Contact: 18 s to open, 1 s per change; About: 16 s, 6 s). The converter keeps pages lean (Elementor Accordion and Image Carousel widgets instead of hundreds of separate elements; spacing rules in the Main Website CSS instead of per-element CSS). Splitting the homepage into saved Elementor templates would make it faster still to edit.
 - Vercel's data cache stores items up to 2 MB. The converted Main homepage is the largest page: 1.59 MB as served on staging (About 0.73 MB, a tool page 0.66 MB), served in 1.5–2.1 s. Check the size (Versions & Rollback shows it) before adding a lot more to the homepage; over 2 MB a page is fetched from WordPress on every visit instead of cached.
 
-## 10. Staging environment (cms.acadvizen.com)
+## 10. Staging environment
 
-`cms.acadvizen.com` is a Hostinger "Copy Website" copy of enroll, used **only as staging**. It is not a second CMS.
+The staging copy is a Hostinger "Copy Website" copy of enroll, currently at `cms.acadvizen.com`. It is used **only as staging**: it is not a CMS address, and nothing in production depends on it.
 
 - **WordPress:** the plugin is installed and connected to the Vercel preview alias `acadvizen-cms-staging.vercel.app`. The preview has its own staging-only webhook secret and `ACADVIZEN_CMS_MAIN_BYPASS_TOKEN`; its env is set per deployment, not in the project's Preview environment.
-- **Isolation mu-plugin** `wordpress/staging/acadvizen-staging-isolation.php` (staging host only; it does nothing on any other host). It provides:
+- **Isolation mu-plugin** `wordpress/staging/acadvizen-staging-isolation.php` (active on any non-production address; it does nothing on acadvizen.com, www.acadvizen.com or enroll.acadvizen.com). It provides:
   - noindex everywhere (meta, `X-Robots-Tag`, robots.txt `Disallow: /`);
   - production tracking IDs removed (Google Ads AW-17912622133, GA4, GTM);
   - all email short-circuited and logged;
@@ -388,20 +366,14 @@ Main, in `https://www.acadvizen.com/admin`:
    - After the backup, remove old revisions with a reviewed tool (for example WP-Optimize → "Clean all post revisions").
    - Add `define( 'WP_POST_REVISIONS', 10 );` to `wp-config.php`.
    - Continue only below 2.0 GB.
-4. **(Optional: only for the second admin address.) Free the address `cms.acadvizen.com` for production.** Today it is the staging copy. Steps 4–5 can be skipped; the admin is then `https://enroll.acadvizen.com/wp-admin/`.
-   - Move staging to its own address, for example `staging-cms.acadvizen.com`: hPanel → Websites → the staging site → change domain, or Copy Website to the new subdomain.
-   - Then update `STAGING_HOST` in `wordpress/staging/acadvizen-staging-isolation.php`, the staging site's WordPress Address, and the staging Vercel preview's `WORDPRESS_CMS_API_URL`.
-5. **Give the production WordPress its CMS address.**
-   - hPanel → Websites → enroll → Domains → add `cms.acadvizen.com` to enroll's files (alias / additional domain), with SSL.
-   - DNS already points `cms` and `enroll` at the same server (147.93.17.189), so **no DNS change** is needed.
-   - Check: `https://cms.acadvizen.com/wp-login.php` shows enroll's login.
+4. *(Retired step.)* Earlier versions gave the CMS a second address, `cms.acadvizen.com`. That option was removed in plugin 0.7.2; the admin is `https://enroll.acadvizen.com/wp-admin/`.
+5. *(Retired step, as 4.)*
 
 **Phase B — WordPress (enroll)**
 
 6. **Install the verified package.**
    - Build it with `node tools/build-cms-plugin.mjs`, which prints the path and SHA-256. Compare the checksum before uploading.
    - Plugins → Add New → Upload Plugin → `acadvizen-cms.zip` → **Activate**. Do **not** upload `wordpress/staging/`.
-   - The mu-plugin `wordpress/mu-plugins/acadvizen-cms-hosts.php` is needed only for the optional second admin address (step 7).
 
    *Check, before any `wp-config.php` change:*
    - `node tools/cms-api-smoke.mjs`: the namespace and 4 routes, the enquiry route, `/blogs`, and 4 refusals answering 401;
@@ -412,8 +384,6 @@ Main, in `https://www.acadvizen.com/admin`:
    - a **new** `ACADVIZEN_CMS_WEBHOOK_SECRET` (32+ random characters, generated locally, never the staging one, never sent in chat).
 
    Every existing page defaults to Enrollment.
-   - *Optional second admin address:* also the mu-plugin, plus `ACADVIZEN_CMS_ADMIN_URL` = `https://cms.acadvizen.com` and `ACADVIZEN_CMS_PUBLIC_URL` = `https://enroll.acadvizen.com`. This needs step 4 first.
-     - *Check:* `https://cms.acadvizen.com/wp-admin/` logs in and stays on `cms`; `https://cms.acadvizen.com/` sends visitors to `enroll` with `X-Robots-Tag: noindex`.
    - *Check:* Master Admin → Settings: "Shared secret: Set".
 8. **Server cron.** hPanel → Advanced → Cron Jobs → every minute: `wget -q -O /dev/null https://enroll.acadvizen.com/wp-cron.php`. Keep WordPress's own cron enabled too, so a publish starts at once. *Check:* the cron log in hPanel shows a run every minute.
 9. **Enrollment logo → Main Website:** Templates → Header Footer Elementor → "Header" (#960) → Site Logo → Link: Custom URL `https://www.acadvizen.com/` → Publish. (Verified on staging.)
@@ -453,7 +423,6 @@ Main, in `https://www.acadvizen.com/admin`:
 
 - Main: promote the previous deployment, or unset `WORDPRESS_CONTENT_ENABLED`; every route returns to the Next.js pages.
 - WordPress: Master Admin → Import → Undo removes imported records; deactivating the plugin leaves Enrollment as it was.
-- CMS address: remove `cms.acadvizen.com` from enroll's domains and the two `ACADVIZEN_CMS_*_URL` constants.
 - Database: restore the backup from step 2.
 
 No Vercel firewall change, DNS change or CRM/email change is required.

@@ -1,7 +1,7 @@
 === Acadvizen Master Admin ===
 Requires at least: 6.5
 Requires PHP: 8.0
-Stable tag: 0.7.1
+Stable tag: 0.7.2
 
 One WordPress admin for both Acadvizen websites. Design with Elementor, choose "Publish To"
 (Enrollment, Main or Both), publish. Pages for www.acadvizen.com are rendered by WordPress and
@@ -62,7 +62,7 @@ Activation and deactivation rebuild the rewrite rules saved in the database only
 the plugin never writes .htaccess.
 
 Production isolation: only enroll.acadvizen.com may use acadvizen.com / www.acadvizen.com as
-the Main Website. A copy (e.g. staging cms.acadvizen.com) configured with a production Main
+the Main Website. A copy (e.g. a staging or backup copy) configured with a production Main
 address is treated as not connected and sends nothing there.
 
 == Uninstall ==

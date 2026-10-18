@@ -2,10 +2,12 @@
 // submitted, no browser, no tracking). Run after a deployment or the CMS cutover:
 //   node tools/verify-production.mjs            (before the cutover: CMS checks are reported, not failed)
 //   node tools/verify-production.mjs --cutover  (after it: the Master CMS checks must pass too)
-// Override the addresses with MAIN_URL, ENROLL_URL and CMS_URL.
+// Override the addresses with MAIN_URL and ENROLL_URL. The Master CMS is the Enrollment WordPress
+// admin (ENROLL_URL/wp-admin/); there is no separate CMS address.
 const MAIN = (process.env.MAIN_URL || 'https://www.acadvizen.com').replace(/\/$/, '')
 const ENROLL = (process.env.ENROLL_URL || 'https://enroll.acadvizen.com').replace(/\/$/, '')
-const CMS = (process.env.CMS_URL || 'https://cms.acadvizen.com').replace(/\/$/, '')
+const CMS = ENROLL
+if (process.env.CMS_URL) console.log(`CMS_URL is no longer used and was ignored: the CMS is ${ENROLL}/wp-admin/`)
 const CUTOVER = process.argv.includes('--cutover')
 const LOGO_TARGETS = new Set(['https://acadvizen.com/', 'https://www.acadvizen.com/', '/'])
 
@@ -36,7 +38,7 @@ function logoHrefs(html, base) {
   return [...out]
 }
 
-console.log(`Main ${MAIN} | Enrollment ${ENROLL} | CMS ${CMS}${CUTOVER ? ' | after cutover' : ''}\n`)
+console.log(`Main ${MAIN} | Enrollment ${ENROLL} | CMS ${CMS}/wp-admin/${CUTOVER ? ' | after cutover' : ''}\n`)
 
 /* Main ------------------------------------------------------------------------------------ */
 const apex = await get('https://acadvizen.com/about')
@@ -56,7 +58,7 @@ const badCanonical = rows.filter((r) => r.status === 200 && !tag(r.text, /<link[
 check('Main: canonical on every page, on the www address', badCanonical.length === 0, badCanonical.slice(0, 5).map((r) => r.u.replace(MAIN, '')).join(', '))
 const noindex = rows.filter((r) => /noindex/i.test(tag(r.text, /<meta[^>]+name="robots"[^>]+content="([^"]+)"/)))
 check('Main: no sitemap page is noindex', noindex.length === 0, noindex.map((r) => r.u.replace(MAIN, '')).join(', '))
-const staging = rows.filter((r) => /acadvizen-cms-staging|staging-cms\.acadvizen|cms\.acadvizen\.com\/(?!wp-content)/.test(r.text))
+const staging = rows.filter((r) => /acadvizen-cms-staging|staging-cms\.acadvizen|\bcms\.acadvizen\.com/.test(r.text))
 check('Main: no staging addresses in any page', staging.length === 0, staging.slice(0, 5).map((r) => r.u.replace(MAIN, '')).join(', '))
 const testData = rows.filter((r) => /local-e2e|Local E2E/i.test(r.text))
 check('Main: no "Local E2E" test content on any page', testData.length === 0, `${testData.length} pages${testData.length ? `: ${testData.slice(0, 4).map((r) => r.u.replace(MAIN, '')).join(', ')}` : ''}`)
@@ -113,7 +115,9 @@ check('Enrollment: logo links to https://acadvizen.com/', enrollLogos.length > 0
 const routes = await get(`${ENROLL}/wp-json/acadvizen/v1`)
 check('Enrollment: enquiry API POST /acadvizen/v1/enquiry registered', /"\/acadvizen\/v1\/enquiry"[\s\S]{0,200}POST/.test(routes.text) || /acadvizen\\\/v1\\\/enquiry/.test(routes.text), String(routes.status))
 
-/* Master CMS ------------------------------------------------------------------------------ */
+/* Master CMS (the Enrollment WordPress admin) ---------------------------------------------- */
+const admin = await get(`${CMS}/wp-admin/`)
+check('CMS: /wp-admin/ stays on the Enrollment address', [301, 302].includes(admin.status) && absolute(`${CMS}/wp-admin/`, admin.location).startsWith(`${CMS}/wp-login.php`), `${admin.status} ${admin.location}`)
 const login = await get(`${CMS}/wp-login.php`)
 const loginLogo = tag(login.text, /wp-login-logo"><a href="([^"]+)"/)
 check('CMS: login page answers', login.status === 200, String(login.status))
@@ -121,7 +125,7 @@ check('CMS: login logo links to the Main website', LOGO_TARGETS.has(loginLogo), 
 check('CMS: not the staging copy', !/STAGING|staging-cms/i.test(login.text), '', { required: CUTOVER })
 check('CMS: kept out of search engines (X-Robots-Tag noindex)', /noindex/i.test(login.headers.get('x-robots-tag') || '') || /noindex/i.test(login.text), login.headers.get('x-robots-tag') || 'meta')
 const ns = await get(`${ENROLL}/wp-json/`)
-check('Enrollment: Acadvizen Master Admin plugin active (acadvizen-cms/v1)', /acadvizen-cms\/v1/.test(ns.text), '', { required: CUTOVER })
+check('Enrollment: Acadvizen Master Admin plugin active (acadvizen-cms/v1)', /acadvizen-cms\\?\/v1/.test(ns.text), '', { required: CUTOVER })
 
 console.log(`\n${pass} passed, ${fail} failed, ${info} for information`)
 process.exitCode = fail ? 1 : 0
