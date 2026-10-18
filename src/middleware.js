@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getWordPressConfig } from '../lib/wordpress/config.js'
 import { decideBridgeRoute, normalizeBridgePath, wantsMainFallback } from '../lib/wordpress/bridgeRouting.js'
+import { createManifestLookup } from '../lib/wordpress/manifestLookup.js'
 import { INTERNAL_HEADER, PATH_HEADER, deriveInternalToken } from '../lib/wordpress/internalToken.js'
 import { OWNED_CONTENT_MESSAGE, isWordPressOwnedWrite, isWordPressOwnershipEnabled } from '../lib/wordpress/contentOwnership.js'
 import { fetchCmsPagePrivacy as fetchPageStatusAtAddress, shouldHidePage } from '../lib/cmsPagePrivacy.js'
@@ -8,47 +9,35 @@ import { selectSupabaseServiceKey } from '../lib/supabaseServiceKey.js'
 
 // Acadvizen Render Bridge: pages designed in Elementor and published to the Main Website from
 // WordPress are served by app/wp-render (an internal rewrite, so the address stays the same).
-// The list of such pages is memoised per middleware instance for 30 seconds; page contents are
-// refreshed immediately by the signed publish webhook.
-const BRIDGE_MANIFEST_TTL_MS = 30_000
-let bridgeManifestMemo = { at: 0, value: null, pending: null }
+// The list of such pages is looked up with a time limit and memoised per middleware instance
+// (lib/wordpress/manifestLookup.js), so a slow WordPress never holds a page up: the request goes on
+// with the last known list, or with Main's own page. Page contents are refreshed immediately by the
+// signed publish webhook.
+let bridgeManifestOrigin = ''
+let bridgeManifestLookup = null
 
-async function getBridgeManifest(request) {
+function getBridgeManifest(request) {
   const config = getWordPressConfig()
   if (!config.enabled || !config.secret) return null
-  if (bridgeManifestMemo.at && Date.now() - bridgeManifestMemo.at < BRIDGE_MANIFEST_TTL_MS) {
-    return bridgeManifestMemo.value
-  }
-  if (!bridgeManifestMemo.pending) {
-    const load = async () => {
-      try {
+  bridgeManifestOrigin = request.nextUrl.origin
+  if (!bridgeManifestLookup) {
+    bridgeManifestLookup = createManifestLookup({
+      load: async (signal) => {
         const token = await deriveInternalToken(config.secret)
         // A protected Vercel preview (the staging Main Website) also challenges its own
         // server-side requests; Vercel provides this secret when automation bypass is enabled.
         const bypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET
-        const response = await fetch(new URL('/api/wordpress/bridge-manifest', request.url), {
+        const response = await fetch(new URL('/api/wordpress/bridge-manifest', bridgeManifestOrigin), {
           headers: { [INTERNAL_HEADER]: token, ...(bypass ? { 'x-vercel-protection-bypass': bypass } : {}) },
           cache: 'no-store',
+          signal,
         })
         const json = response.ok ? await response.json() : null
         return json?.manifest || null
-      } catch {
-        return null
-      }
-    }
-    // A new instance's first lookup can fail while the manifest route itself is starting up; one
-    // retry avoids serving that visitor the pre-WordPress page. A failed lookup is not memoised,
-    // so the next request tries again instead of skipping WordPress for the whole TTL.
-    bridgeManifestMemo.pending = load()
-      .then((value) => value || load())
-      .then((value) => {
-        bridgeManifestMemo = value
-          ? { at: Date.now(), value, pending: null }
-          : { at: 0, value: bridgeManifestMemo.value, pending: null }
-        return value || bridgeManifestMemo.value
-      })
+      },
+    })
   }
-  return bridgeManifestMemo.pending
+  return bridgeManifestLookup()
 }
 
 async function bridgeResponse(request, pathname, decision) {
