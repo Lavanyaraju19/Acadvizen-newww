@@ -278,7 +278,7 @@ To stop a redirect, untick **Show on the Main Website** → **Save**. The websit
 
 To use an image, click **Main library** next to any image field. **Choose image** picks from the Enrollment library instead. To describe an image, **Edit** it: **Name**, **Description for screen readers and search engines (alt text)**, **Caption**.
 
-**Scheduling** (**Local-only**): **Publish automatically on** and **Remove automatically on**, with **Status: Published**. **Times are in UTC** (India is UTC + 5:30): to publish at 10:00 IST, enter 04:30.
+**Scheduling** (**Production-verified**, 19 Oct 2026): **Publish automatically on** and **Remove automatically on**, with **Status: Published**. Times are **India time (Asia/Kolkata)**, the site time zone shown next to the field: to publish at 10:00 IST, enter 10:00.
 
 ---
 

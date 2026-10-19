@@ -110,8 +110,10 @@ for (const [from, to] of [
 }
 const ehome = await get(`${ENROLL}/`)
 check('Enrollment: homepage links no 404 address (/contact-us/)', !/href="[^"]*\/contact-us\//.test(ehome.text))
+check('Enrollment: homepage links no trashed page (?page_id=6342)', !/href="[^"]*[?&]page_id=6342\b/.test(ehome.text))
+// Owner decision (19 Oct 2026): the Enrollment logo stays on the Enrollment website.
 const enrollLogos = logoHrefs(ehome.text, ENROLL)
-check('Enrollment: logo links to https://acadvizen.com/', enrollLogos.length > 0 && enrollLogos.every((h) => LOGO_TARGETS.has(h) && h !== '/'), enrollLogos.join(', '))
+check(`Enrollment: logo links to ${ENROLL}/`, enrollLogos.length > 0 && enrollLogos.every((h) => h === `${ENROLL}/`), enrollLogos.join(', '))
 const routes = await get(`${ENROLL}/wp-json/acadvizen/v1`)
 check('Enrollment: enquiry API POST /acadvizen/v1/enquiry registered', /"\/acadvizen\/v1\/enquiry"[\s\S]{0,200}POST/.test(routes.text) || /acadvizen\\\/v1\\\/enquiry/.test(routes.text), String(routes.status))
 

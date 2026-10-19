@@ -100,10 +100,13 @@ export async function launch() {
 }
 
 export async function login(browser, user, pass, viewport = { width: 1440, height: 1100 }) {
-  const page = await (await browser.newContext({ viewport })).newPage()
+  // WP_STORAGE_STATE: a saved signed-in session (as the live tools use), so no password is handled.
+  const storageState = process.env.WP_STORAGE_STATE || undefined
+  const page = await (await browser.newContext({ viewport, storageState })).newPage()
   page.on('dialog', (d) => d.accept())
   const goto = page.goto.bind(page)
   page.goto = (url, options = {}) => goto(url, { waitUntil: 'domcontentloaded', ...options })
+  if (storageState) return page
   await page.goto(`${WP}/wp-login.php`)
   await page.fill('#user_login', user)
   await page.fill('#user_pass', pass)

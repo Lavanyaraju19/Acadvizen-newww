@@ -2,100 +2,119 @@
 
 ## Status on 19 October 2026 (current)
 
-**Verdict: in production and working for everyday content, with open items that need the owner's decisions (listed at the end of this section).** It is **not** labelled "complete": the Main-content import, plugin 0.7.3 and two Enrollment decisions are still waiting for approval.
+**Verdict:**
+- **Everyday content work is live and verified end to end on production:**
+  - Main pages and blogs;
+  - Elementor pages to Main, Enrollment or Both, with approval, scheduling in India time, restore, and redirects.
+- **Not complete:**
+  - importing Main's existing content (the 108 location pages, tools, blogs and the page designs) is **blocked**, waiting for a fresh, verified database backup;
+  - credential rotation is still open.
 
 **One admin for both websites:** `https://enroll.acadvizen.com/wp-admin/` (Acadvizen Master Admin). No other CMS address exists or is used.
 
-**What is live (checked 18 Oct 22:2x UTC and 19 Oct, read-only):**
+**Already in use:** on 19 Oct the client's team submitted two real changes for approval, "Performance Marketing Course" and "New Home". They were left untouched for the team's own reviewer.
+
+**What is live (checked 19 Oct 2026, UTC):**
 
 | Part | Live state |
 |---|---|
-| Main website | Vercel project `acadvizen-newww-ua9d`, deployment `dpl_56BrUwoX4opAgGZ3UDBrw4iBQEa1` (commit `bb43086`, with the Render Bridge on), serving both `acadvizen.com` and `www.acadvizen.com`. Rollback target `dpl_5msnf8Wifuj9iTPmLQyu8Hje7MB5` (`tools/release/enable-bridge.sh --undo`) |
-| Enrollment website | Hostinger (LiteSpeed). Acadvizen Master Admin **0.7.2**; switches SITEMAP_CLEANUP, RENDER_BRIDGE, SITE_TEMPLATES and APPROVAL **on**, LOGIN_BRANDING off |
-| Main unchanged since the release | 314/314 Main addresses identical to the 18 Oct post-release record (read-only crawl, 18 Oct 22:27–22:40 UTC) |
-| Enrollment | Home, sitemaps, robots, REST (`/wp-json/`, `/wp-json/acadvizen-cms/v1/`) answer 200; redirects work (`/about-us/` → 301) |
+| Main website | Vercel project `acadvizen-newww-ua9d`, deployment `dpl_56BrUwoX4opAgGZ3UDBrw4iBQEa1` (commit `bb43086`, Render Bridge on), serving both `acadvizen.com` and `www.acadvizen.com`. Rollback target `dpl_5msnf8Wifuj9iTPmLQyu8Hje7MB5` (`tools/release/enable-bridge.sh --undo`). Unchanged by this release (no Main code changed) |
+| Enrollment website | Hostinger (LiteSpeed). **Acadvizen Master Admin 0.7.3**, installed 08:52:41 UTC (package `acadvizen-cms-0.7.3-210db18`, sha256 `5d0aeeac…`, from commit `210db18`); no other plugin changed (28 of 33 active, as before). Rollback: reinstall `acadvizen-cms-0.7.2-4f959ee` (sha256 `b8e30c92…`) on the same screen. Switches SITEMAP_CLEANUP, RENDER_BRIDGE, SITE_TEMPLATES and APPROVAL on; LOGIN_BRANDING off. Test connection: **Connected** |
+| Site time zone | **Asia/Kolkata** since 09:14:47 UTC (was UTC+0). Stored times did not move |
+| Code | Branch `headless-wordpress` at `210db18`, pushed |
 
 **Capability status.**
 
 The categories are:
 - **L:** implemented and verified locally;
 - **D:** deployed to production;
-- **P:** verified end to end on production;
+- **P:** verified end to end on production.
 - **B:** blocked or not implemented.
+
+All P results below are 19 Oct on plugin 0.7.3 unless dated otherwise. Every test item is labelled, kept out of search engines, and left unpublished (never deleted).
 
 | Capability | Status | Evidence (UTC) |
 |---|---|---|
-| Main pages from the admin: draft not public, preview, publish, private changes, address clash, unpublish (kept as draft), noindex/sitemap | **P** | 17/17, 18 Oct 18:23 |
-| Content API authentication and authorisation (signed requests, refusals) | **P** | 16/16, 18 Oct 18:20 |
-| Blogs to **Main only** | **P** on 0.7.1 (all functional checks; the only failure was "0.7.2 installed", before the install) | 12/13, 18 Oct 18:25 |
-| Blogs to **Enrollment only** | **P** on 0.7.1 (same note) | 13/14, 18 Oct 18:26 |
-| Blogs to **Both** | **P** on 0.7.2 | 17/17, 18 Oct 18:32 |
-| Elementor pages to Main, Enrollment and Both, with address-clash refusal | **P** | 49/49, 18 Oct 17:47 (test pages #8402, #8416, #8430 kept as drafts) |
-| Approval workflow (submit, approve exact revision, publish, working copy, reject, restore, unpublish) | **P** | 15/16, 18 Oct 17:54. Step 7 (reject) is proven by the approval history; the test's message reader was fixed afterwards. Local 47/47 (19 Oct, plugin 0.7.3) |
-| Scheduled publishing (Main page appears and is removed on time) | **P** in UTC | 7/7, 18 Oct 21:23 |
-| Scheduling in **Asia/Kolkata** | **L**; production site time zone is UTC (**B**: needs a setting change, see below) | 7/7 local, 18 Oct 23:02–23:09 UTC (19 Oct 04:32–04:39 IST), across the IST/UTC date boundary |
-| Header, footer, menus | **P** | 17/18, 18 Oct 18:37 (the 1 failure is the test clicking twice; the copy happened) |
-| Main redirects | **P** | 9/10, 18 Oct 18:46 (R2 failed on the test's own pattern; the redirect was correct) |
-| Media upload | **P** | 4/4, 18 Oct 18:47 (attachment #8507) |
-| Main registration popup (title change shows live) | **P** | 5/5, 18 Oct 21:28, original title restored |
-| Enquiry forms (Main and Enrollment) | **P** | Enrollment 4/4, 18 Oct 18:42; Main 4/4, 18 Oct 18:43 |
-| Render Bridge (Main addresses served from WordPress pages) | **D, P** | Live since 18 Oct 17:14; 314/314 identical; city pages 200 under concurrency |
-| Failure handling for Both (Main down, Enrollment copy failure), retry without duplicates, conflict protection | **L** | both-failure 12/12 and main-down 3/3; conflict 9/9 (18 Oct) |
+| Main pages from the admin: draft not public, preview, publish, private changes, address clash, unpublish (kept as draft), noindex/sitemap | **P** | 17/17, 10:04 |
+| Content API authentication and authorisation (signed requests, refusals) | **P** | 16/16, 10:01 |
+| Blogs to **Main only** / **Enrollment only** / **Both** | **P** | 13/13, 10:05 / 14/14, 10:07 / 17/17, 10:09 |
+| Elementor pages to **Main only**, **Enrollment only** and **Both**, each covering:<ul><li>draft and preview;</li><li>submit, self-approval and publish;</li><li>live at 1440/768/390;</li><li>working-copy change;</li><li>restore of the earlier version;</li><li>unpublish.</li></ul> | **P** | 58/58, 09:53–10:01 (test pages #8697, #8712, #8727, drafts) |
+| Approval workflow, Both, covering:<ul><li>submit, approve exact revision, publish;</li><li>direct change refused;</li><li>working copy;</li><li>reject, resubmit;</li><li>restore;</li><li>unpublish.</li></ul> | **P** | 16/16, 09:46–09:51 (test page #8679, draft) |
+| Administrator self-approval | **P** (allowed by design, marked "approved by the person who submitted it" in the history) | used in the runs above and for the homepage fix |
+| Failure handling on production: a Both blog whose address Main already uses. Red message, no Enrollment copy, existing Main blog unchanged | **P** | 3/3, 10:10 |
+| Failure handling that needs an outage (Main down, Enrollment copy failure, retry without duplicates) | **L** only: an outage cannot be caused safely on production | both-failure 12/12, main-down 3/3, conflict 9/9 (18 Oct) |
+| Scheduled publishing in **Asia/Kolkata** (appears and is removed on time) | **P** | 7/7, 09:15–09:22. Entered 14:49 IST: public 4 s after the time, removed 3 s after |
+| Main redirects (switched off/on, refusals for live pages, the admin, chains; cleanup) | **P** | 10/10, 10:12 |
+| Header, footer, menus | **P** (18 Oct) | 17/18, 18 Oct 18:37 (the 1 failure is the test clicking twice; the copy happened) |
+| Media upload | **P** (18 Oct) | 4/4, 18 Oct 18:47 (attachment #8507) |
+| Main registration popup | **P** (18 Oct) | 5/5, 18 Oct 21:28 |
+| Enquiry forms (Main and Enrollment) | **P** (18 Oct) | Enrollment 4/4, 18:42; Main 4/4, 18:43. Not repeated today, to avoid more test enquiries before the import |
+| Render Bridge | **D, P** | live since 18 Oct 17:14 |
 | Roles and permissions (Editor, Author, Contributor) | **L** (production has no Author or Contributor accounts) | 9/9 (18 Oct) |
 | Courses, homepage banner and lists, city/service pages, tools, testimonials, SEO overrides | **L** | structured 56/56, homepage 14/14, courses 12/12, more-content 15/15 (18 Oct) |
-| Importing Main's existing content into WordPress (Elementor designs + 286 records) | **L** (measured on a copy of production); **B** on production (needs approval) | `DATABASE-CAPACITY-AND-CLEANUP-PLAN.md` |
-| 108 location pages show their own description after the import | **L** | Before the fix, 0/8 sampled pages showed their own text (all showed the Jayanagar text). After it, **108/108** on the production copy; the extraction rule was checked against all 108 live pages (108/108) |
-| Plugin 0.7.3 (design-usage search 89 s → 1.45 s on production-sized data) | **L** | PHP 321/321, bridge 44/44, approval 47/47 (19 Oct 07:15–07:40). **B**: commit, package and install need approval |
+| Plugin 0.7.3 (design-usage search 89 s → 1.45 s on production-sized data) | **D, P** | installed 08:52:41; the live runs above all ran on it |
+| **Importing Main's existing content** (286 records, 9 designs, 464 images) | **L**; **B** on production | Measured on a copy of production (`DATABASE-CAPACITY-AND-CLEANUP-PLAN.md`). Blocked: no fresh backup could be taken (below) |
+| **108 location pages** show their own description | **L**; **B** on production (needs the import) | Before the fix, 0/8 sampled pages showed their own text. After it, 108/108 on the production copy; the rule was checked against all 108 live Main pages (108/108) |
 
-**Local regression (full run, 18 Oct 21:29–22:19 UTC):**
-- 924 passed, 0 failed across 19 suites: unit 279; PHP 321; structured 56; site-chrome 18; homepage 14; courses 12; more-content 15; permissions 9; scheduling 7; both-failure 12; conflict 9; blog-sync 18; redirects 11; WordPress live-suite (local) 16; pages (local) 17; content API (local) 16; bridge 44; approval 47; main-down 3.
-- tsc 0 errors; lint 0 errors (10 warnings); production build OK.
-- Since then: unit 283/283, with the 4 new location tests (19 Oct).
+**Both websites compared with their baselines (19 Oct):**
+- **Main:** 314/314 addresses identical to the 18 Oct post-release record (crawl 10:13–10:27; one address timed out during the crawl and was re-checked identical).
+- **Enrollment:** 58 of the 59 addresses recorded on 15 Oct are identical (status, title, robots, canonical, Elementor). The one change is the intended `/test/` unpublish.
+- **Production smoke test** (`tools/verify-production.mjs`): **40 passed, 0 failed**, 09:12.
+
+**Enrollment decisions applied 19 Oct (owner approval):**
+- **`/test/`** (page 2876, a September design draft) is now a **draft**: 404 to visitors and out of the sitemap (09:03). Its content is kept.
+- **Homepage "Know More →" buttons** on the Nike, Spotify and Zomato case studies pointed to page 6342, the trashed old "Projects" page.
+  - They now point to the live Projects page (`/projects-2/`, page 6412, which shows the same case studies).
+  - Done through the approval workflow, 09:09–09:12; restorable from Approvals → Recent publications.
+  - The visible text is identical, and the other 124 links are unchanged.
+- **Enrollment logo** links to `https://enroll.acadvizen.com/`. It already did; no change was made.
+- **Administrator self-approval** is allowed (see above).
+- **Tablet and phone sideways scroll:** fixed on 18 Oct.
+- **"Missing logos":** not reproduced. Those are carousel slides that load as they scroll in.
+
+**Local regression:**
+- **Full run, 18 Oct 21:29–22:19 UTC:** 924 passed, 0 failed across 19 suites; tsc 0 errors; lint 0 errors; production build OK.
+- **On 0.7.3 (19 Oct):** unit 283/283, PHP 321/321, bridge 44/44, approval 47/47.
+- **The Elementor live test with approval** (Main/Enrollment/Both + clash): local 61/61.
 
 **Backup and recovery:**
-- **Recovery point:** 17 Oct 09:43, `u713346627_xDzzw.20261017093050.sql.gz`, verified.
-- **Restore test:** the backup was restored into an isolated copy in 2 min 40 s; 111/111 tables OK; WordPress booted and rendered the same pages.
-- **No newer backup has been taken.** A fresh backup is the first step of any database work.
+- **Recovery point:** 17 Oct 09:43 (`u713346627_xDzzw.20261017093050.sql.gz`), verified.
+  - Restored into an isolated copy in 2 min 40 s; 111/111 tables OK; WordPress booted and rendered the same pages.
+- **A fresh backup could not be taken on 19 Oct:**
+  - `tools/backup-enrollment.sh` was refused by the server at 08:57 UTC ("Permission denied (publickey,password)"). The SSH password stored on the engineer's machine is wrong, or SSH password sign-in is off.
+  - The site has no backup plugin.
+  - Because of this, **the Main-content import was not started**, as the owner required.
 
 **Database storage (Hostinger showed 2,528 of 3,072 MB):**
 - Importing Main's content needs about 35 MB now, and up to about 130–160 MB over time. It fits.
-- The revision cleanup and its rebuild were simulated, with integrity and page checks passing. Deleting alone frees space inside the tables, not the files; a rebuild then needs about 310 MB of temporary space.
-- Full figures and the exact, approval-gated procedure: `DATABASE-CAPACITY-AND-CLEANUP-PLAN.md`.
-
-**Enrollment issues re-checked 19 Oct:**
-- **Tablet and phone sideways scroll:** fixed (CSS published 18 Oct). There is no sideways scroll at 1440, 1024, 768 or 390.
-- **"Missing logos":** not reproduced. The empty images are carousel slides that load as they scroll in; all 48 files answer 200.
-- **Carousel link to an unpublished page:** still there (`?page_id=6342` → 404). Fixing it changes live content: owner decision.
-- **`/test/`:** public and indexable, and in the sitemap (owner decision).
-- **Logo link:** points to `acadvizen.com` (owner decision).
+- The import matches every record by its key (or by the Main address it already serves), so running it again updates rather than duplicates. Import **once** anyway: a second run adds about 67 MB of history.
+- The revision cleanup was simulated only: `DATABASE-CAPACITY-AND-CLEANUP-PLAN.md`.
 
 **Security:**
-- No password, key or token was changed, rotated or disabled in this work.
-- The WordPress credential shared earlier must be treated as exposed. It has **not** been rotated (not verified otherwise).
-- The legacy Supabase keys were still accepted at the last check (15 Oct). They have not been re-checked since.
-- No secret appears in this document, in Git or in the kept evidence. The isolated copy, which held production secrets, was deleted and the deletion verified.
+- No password, key or token was changed, rotated or disabled.
+- The WordPress credential shared earlier must be treated as exposed; it has **not** been rotated.
+- The legacy Supabase keys were still accepted at the last check (15 Oct) and have not been re-checked.
+- No secret appears in this document, in Git (the commit's own secret scan passed) or in the kept evidence. The isolated database copy was deleted, and the deletion verified.
 
 **Hosting notes:**
-- Two old Vercel projects (`acadvizen-newww`, `acadviden-qfxs`) still show `www.acadvizen.com` as their last production address, but only `acadvizen-newww-ua9d` holds the domain.
-- The old project `acadviden` lists `enroll.acadvizen.com`, but DNS sends `enroll` to Hostinger, so it has no effect.
-- A DNS record `cms` still points at the old Hostinger staging copy. Nothing depends on it.
-- Removing any of these needs approval.
+- Only `acadvizen-newww-ua9d` holds the Main domains.
+- Old projects `acadvizen-newww`, `acadviden-qfxs` and `acadviden` remain, along with a `cms` DNS record pointing at the old staging copy. None of them affects the live sites.
+- Removing them needs separate approval.
 
-**Waiting for the owner (smallest set):**
-1. Commit and push the current work, then build and install **plugin 0.7.3** (rollback: reinstall 0.7.2).
-2. **Import Main's content** (one import, after a fresh verified backup), then run the production acceptance checks on the imported pages.
-3. Optional: **revision cleanup** (procedure in `DATABASE-CAPACITY-AND-CLEANUP-PLAN.md`).
-4. **Site time zone → Asia/Kolkata** (Settings → General), if the team wants to enter Indian times.
-5. Enrollment content decisions: `/test/`, the logo link, and the carousel link to the unpublished page.
-6. Credential rotation (WordPress admin, legacy Supabase keys), at a time chosen to avoid breaking integrations.
-7. Optional clean-up of the old Vercel projects and the `cms` DNS record.
+**Waiting for the owner:**
+1. **A fresh database backup:**
+   - either hPanel → Backups → generate and download the Enrollment database backup (as on 17 Oct);
+   - or correct the SSH password in the engineer's local `~/.acadvizen-production.env` yourself (never in chat).
+   - Then the engineer verifies the backup, imports Main's content **once**, and checks the 108 location pages, both websites and the enquiry forms on production.
+2. Credential rotation (WordPress admin, legacy Supabase keys), at a time chosen to avoid breaking integrations.
+3. Optional, separately: revision cleanup; removal of old Vercel projects and the `cms` DNS record.
 
 **Test items left on production (labelled, unpublished, not deleted):**
-- Main leads `3a41e225`, `915005a0`, `da63da54`, and one Enrollment course enquiry;
-- Elementor test pages #8402, #8416, #8430 and #8444 (drafts);
-- Main test pages and blogs from 18 Oct (unpublished);
-- the scheduled test page `/cms-test-scheduled-202610182115` (unpublished);
-- media #8507.
+- **Leads and enquiries:** Main leads `3a41e225`, `915005a0`, `da63da54`, and one Enrollment course enquiry.
+- **Elementor test pages (drafts):** #8402, #8416, #8430, #8444, #8646, #8672, #8679, #8697, #8712, #8727.
+- **Main test pages and blogs** from 18 and 19 Oct (unpublished).
+- **Scheduled test pages:** `/cms-test-scheduled-202610182115` and `/cms-test-scheduled-202610190915` (unpublished).
+- **Media:** #8507.
 
 ## Status on 15 October 2026 (historical; superseded by the 19 October section above)
 
@@ -332,7 +351,7 @@ The full step-by-step guide is `ADMIN-USER-GUIDE.md`.
 3. **New blog:** **Blogs → Add new**, then set **Publish To** (Main, Enrollment, or Both) and **Status**, and **Save**.
 4. **SEO:** each page and blog has an SEO title, description and **noindex**. **SEO overrides** change these for any address.
 5. **Images:** **Media library → Upload** (images up to 3 MB; the type is checked), then pick them with **Choose from the Main library**. Write alt text.
-6. **Scheduling:** "**Publish automatically on**" and "**Remove automatically on**", with Status **Published**. **Times are in UTC.** India is UTC+5:30, so 09:00 IST is entered as 03:30.
+6. **Scheduling:** "**Publish automatically on**" and "**Remove automatically on**", with Status **Published**. Times are **India time (Asia/Kolkata)**, the site time zone shown next to the field (since 19 Oct 2026; verified on production 7/7).
 7. **Hide or remove:** Status **Draft** + **Save**, or **Trash**. **Restore** in the trash brings it back as a draft.
 8. **Undo:** **Earlier versions → Restore** (the last 20 saves).
 
@@ -366,7 +385,7 @@ Verified locally only: production has no Author or Contributor accounts.
   - Release 11, now live, was designed to reduce this (tool pages about 6.2 → 1.9 s in the local model). Not yet measured on production.
   - A further step (function region) needs the owner's approval (O-4).
 - **Enrollment homepage:** a section appeared twice after an Elementor edit on 12 Oct (O-3, reported 13 Oct; not re-checked for this handover). A ready correction is documented.
-- **Scheduled times are in UTC.**
+- **Scheduled times are in India time (Asia/Kolkata)** since 19 Oct 2026. Before that the site used UTC.
 
 ## 8. Support and recovery
 
@@ -400,8 +419,8 @@ Verified locally only: production has no Author or Contributor accounts.
 | — | `MAIN-ROUTE-CHECKLIST.md` | All 314 production Main addresses with their migration target, live SEO facts and local evidence (site-wide migration run) |
 | — | `MAIN-ACCEPTANCE-CHECKLIST.md` | The Main Website approval gate: each criterion, its evidence (PRODUCTION / STAGING / LOCAL) and what is still missing. Current verdict: not ready for approval |
 
-**Live versions (checked 18 Oct 22:2x UTC):**
+**Live versions (checked 19 Oct 2026):**
 - Main: `dpl_56BrUwoX4opAgGZ3UDBrw4iBQEa1` (commit `bb43086`), project `acadvizen-newww-ua9d`;
-- Enrollment plugin: Acadvizen Master Admin **0.7.2** (package `acadvizen-cms-0.7.2-4f959ee`, sha256 `b8e30c92…`).
+- Enrollment plugin: Acadvizen Master Admin **0.7.3** (package `acadvizen-cms-0.7.3-210db18`, sha256 `5d0aeeac…`); rollback package `acadvizen-cms-0.7.2-4f959ee` (sha256 `b8e30c92…`).
 
-**Branch:** `headless-wordpress` at `4f959ee`, pushed. The working tree holds uncommitted work (plugin 0.7.3, exporter fix, new live-test tools, release scripts, docs). Committing it needs approval. Main's application code is unchanged, so no Main deployment is pending.
+**Branch:** `headless-wordpress`, pushed (plugin 0.7.3 is commit `210db18`). Main's application code is unchanged, so no Main deployment is pending. Left uncommitted on purpose: the unused "Option C" files (`next.config.mjs` change, `wordpress/main-site/`, two planning documents) and local screenshots (kept out of Git by policy).

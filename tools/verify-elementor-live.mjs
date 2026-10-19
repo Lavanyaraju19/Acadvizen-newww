@@ -3,6 +3,7 @@
 //
 //   node tools/verify-elementor-live.mjs                 all three destinations, then the Both clash case
 //   DESTINATION=main|enrollment|both node tools/verify-elementor-live.mjs
+//   DESTINATION=clash node tools/verify-elementor-live.mjs    only the Both clash case
 //
 // For each destination, on ONE new, clearly labelled test page ("CMS ACCEPTANCE … <time>", noindex):
 //   create draft → build a section in Elementor (heading, text, button with a link, an image from the
@@ -67,11 +68,45 @@ const rest = async (method, route, data) => {
   return { status: r.status(), json: await r.json().catch(() => ({})) }
 }
 const media = (await rest('GET', 'wp/v2/media?media_type=image&per_page=1&orderby=date')).json[0]
+// With the Approval switch on, "Publish" submits the page; a reviewer (this administrator) approves it
+// and publishes it on Master Admin → Approvals, as the client does. A live page is edited through its
+// working copy, restored with Approvals → Recent publications → Restore, and unpublished with
+// Pages → Quick Edit → Draft (the REST route refuses to change a live page under approval).
+await admin.goto(`${WP}/wp-admin/admin.php?page=acadvizen-cms-settings`, { timeout: 180000 })
+const APPROVAL = /APPROVAL on/.test(await admin.locator('#wpbody-content').innerText().catch(() => ''))
 
+// Returns the post Elementor actually opened (under approval, a live page opens its working copy).
 async function openEditor(id) {
   await admin.goto(`${WP}/wp-admin/post.php?post=${id}&action=elementor`, { timeout: 180000 })
   await admin.waitForFunction(() => window.elementor && window.$e && elementor.documents?.getCurrent?.() && elementor.getPreviewContainer?.(), null, { timeout: 180000 })
   await sleep(2000)
+  return Number(new URL(admin.url()).searchParams.get('post')) || id
+}
+async function approvals() { await admin.goto(`${WP}/wp-admin/admin.php?page=acadvizen-cms-approvals`, { timeout: 180000 }) }
+async function review(docId, selector) {
+  await approvals()
+  const row = admin.locator(`#acv-candidate-${docId}`)
+  if (!(await row.count())) return `no approval row for #${docId}`
+  for (const box of await row.locator('.acv-preview-check').all()) await box.check()
+  await Promise.all([admin.waitForNavigation({ timeout: 300000 }), row.locator(selector).first().dispatchEvent('click')])
+  const own = admin.locator('.acv-cms-approval-flash')
+  return ((await own.count()) ? await own.first().innerText() : '').replace(/\s+/g, ' ').trim().slice(0, 160)
+}
+// After "Publish": under approval, approve exactly that revision and publish it (no-op otherwise).
+async function approveAndPublish(docId, step) {
+  if (!APPROVAL) return
+  const a = await review(docId, '.acv-approve'); const p = await review(docId, '.acv-publish')
+  check(`${step} approved and published on Approvals (self-approval by the administrator)`, /Approved/.test(a) && /Publishing the approved revision/.test(p), `${a.slice(0, 60)} | ${p.slice(0, 60)}`)
+}
+async function quickEditDraft(id) {
+  await admin.goto(`${WP}/wp-admin/edit.php?post_type=page&post_status=all&s=${encodeURIComponent(`cms-acceptance ${T}`.split(' ')[1])}`, { timeout: 180000 })
+  const rowSel = `#post-${id}`
+  await admin.locator(rowSel).waitFor({ state: 'attached', timeout: 60000 })
+  await admin.locator(`${rowSel} button.editinline`).dispatchEvent('click')
+  await admin.locator(`#edit-${id} select[name="_status"]`).selectOption('draft')
+  await admin.locator(`#edit-${id} button.save`).dispatchEvent('click')
+  await admin.waitForSelector(`${rowSel}:not(.inline-editor)`, { timeout: 120000 }); await sleep(2000)
+  return (await rest('GET', `wp/v2/pages/${id}?context=edit`)).json.status || ''
 }
 async function save(kind) {
   await admin.evaluate(async (k) => { await $e.run(k === 'publish' ? 'document/save/publish' : 'document/save/draft') }, kind)
@@ -142,8 +177,13 @@ async function journey(dest) {
   check(`${dest} 3 Preview (signed in) shows the draft`, (await pv.content()).includes(`${label} V1`)); await pv.close()
 
   await save('publish')
+  if (APPROVAL) {
+    const waiting = await get(onMain ? mainUrl : enrollUrl)
+    check(`${dest} 4 Publish submits it for approval (not public yet)`, waiting.status !== 200 || !waiting.html.includes(`${label} V1`), `HTTP ${waiting.status}`)
+  }
+  await approveAndPublish(id, `${dest} 4`)
   const m1 = onMain ? await until(() => get(mainUrl), (r) => r.html.includes(`${label} V1`)) : null
-  const e1 = await get(enrollUrl)
+  const e1 = onEnroll ? (await until(() => get(enrollUrl), (r) => r.html.includes(`${label} V1`), 120000)).last : await get(enrollUrl)
   if (onMain) check(`${dest} 4 Publish: live on Main`, m1.ok, `${m1.s}s, render version ${m1.last.version}`)
   else check(`${dest} 4 Publish: not on Main`, (await get(mainUrl)).status !== 200)
   if (onEnroll) check(`${dest} 4 Publish: live on Enrollment`, e1.html.includes(`${label} V1`), `HTTP ${e1.status}`)
@@ -160,9 +200,30 @@ async function journey(dest) {
     check(`${dest} 5 ${site} test page is noindex`, /noindex/i.test(views[0].robots), views[0].robots)
   }
 
-  await openEditor(id); await setHeading(`${label} V2`); await save('publish')
+  const editId = await openEditor(id); await setHeading(`${label} V2`); await save('publish')
+  if (APPROVAL) {
+    const still = await get(onMain ? mainUrl : enrollUrl)
+    check(`${dest} 6 the change waits for approval in a working copy; the live page keeps V1`, editId !== id && still.html.includes(`${label} V1`) && !still.html.includes(`${label} V2`), `${id} -> ${editId}`)
+  }
+  await approveAndPublish(editId, `${dest} 6`)
   if (onMain) { const m2 = await until(() => get(mainUrl), (r) => r.html.includes(`${label} V2`)); check(`${dest} 6 Update reaches Main`, m2.ok, `${m2.s}s`) }
-  if (onEnroll) check(`${dest} 6 Update reaches Enrollment`, (await get(enrollUrl)).html.includes(`${label} V2`))
+  if (onEnroll) { const e2 = await until(() => get(enrollUrl), (r) => r.html.includes(`${label} V2`), 120000); check(`${dest} 6 Update reaches Enrollment`, e2.ok, `${e2.s}s`) }
+
+  if (APPROVAL) {
+    // Rollback under approval: Approvals → Recent publications → Restore (the previous published version).
+    await approvals()
+    const restore = admin.locator(`a.acv-rollback[href*="post=${id}&"]`).first()
+    const found = (await restore.count()) > 0
+    if (found) await Promise.all([admin.waitForNavigation({ timeout: 300000 }), restore.dispatchEvent('click')])
+    check(`${dest} 7 Approvals → Restore offered for the previous version`, found)
+    if (onMain) { const m3 = await until(() => get(mainUrl), (r) => r.html.includes(`${label} V1`) && !r.html.includes(`${label} V2`)); check(`${dest} 7 restored version live on Main`, m3.ok, `${m3.s}s`) }
+    if (onEnroll) { const e3 = await until(() => get(enrollUrl), (r) => r.html.includes(`${label} V1`) && !r.html.includes(`${label} V2`), 120000); check(`${dest} 7 restored version live on Enrollment`, e3.ok, `${e3.s}s`) }
+    const st = await quickEditDraft(id)
+    check(`${dest} 8 Unpublish (Pages → Quick Edit → Draft)`, st === 'draft', st)
+    if (onMain) { const g = await until(() => get(mainUrl), (r) => r.status !== 200 || !r.html.includes(label)); check(`${dest} 8 gone from Main`, g.ok, `${g.last.status} after ${g.s}s`) }
+    if (onEnroll) { const g = await until(() => get(enrollUrl), (r) => r.status !== 200 || !r.html.includes(label), 120000); check(`${dest} 8 gone from Enrollment`, g.ok, `HTTP ${g.last.status}`) }
+    return
+  }
 
   await openEditor(id)
   await admin.evaluate(() => $e.route('panel/history/revisions'))
@@ -217,13 +278,18 @@ async function clashCase() {
 
 try {
   console.log(`${LIVE ? 'LIVE' : 'LOCAL'} | WordPress ${WP} | Main ${MAIN} | evidence ${OUT}`)
-  for (const d of DESTS) await journey(d)
-  if (!process.env.DESTINATION) await clashCase()
+  for (const d of DESTS.filter((x) => x !== 'clash')) await journey(d)
+  if (!process.env.DESTINATION || DESTS.includes('clash')) await clashCase()
 } catch (e) {
   check('run finished without an error', false, String(e.message || e).slice(0, 300))
 } finally {
   // Whatever happened, every test page ends unpublished (kept as a draft, never deleted automatically).
-  for (const k of kept) { const r = await rest('POST', `wp/v2/pages/${k.id}`, { status: 'draft' }).catch(() => ({})); if (r.json?.status !== 'draft') console.log(`WARNING: test page #${k.id} may still be published`) }
+  for (const k of kept) {
+    let st = (await rest('GET', `wp/v2/pages/${k.id}?context=edit`).catch(() => ({ json: {} }))).json.status
+    if (st && st !== 'draft') st = (await rest('POST', `wp/v2/pages/${k.id}`, { status: 'draft' }).catch(() => ({ json: {} }))).json.status
+    if (st && st !== 'draft') st = await quickEditDraft(k.id).catch(() => st)
+    if (st !== 'draft') console.log(`WARNING: test page #${k.id} may still be published (${st})`)
+  }
   fs.writeFileSync(path.join(OUT, 'test-pages.json'), JSON.stringify(kept, null, 1))
   console.log(`\n${results.filter(Boolean).length} passed, ${results.filter((x) => !x).length} failed [${LIVE ? 'LIVE' : 'LOCAL'}] | test pages kept as drafts: ${kept.map((k) => `#${k.id}`).join(', ') || 'none'}`)
   await browser.close()

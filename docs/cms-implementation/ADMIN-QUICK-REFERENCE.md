@@ -1,6 +1,6 @@
 # Acadvizen Master Admin — quick reference (one page)
 
-*Plugin 0.7.2 (live), 19 October 2026. Full steps and explanations: `ADMIN-USER-GUIDE.md`.*
+*Plugin 0.7.3 (live), 19 October 2026. Full steps and explanations: `ADMIN-USER-GUIDE.md`.*
 
 ## Addresses
 
@@ -50,7 +50,7 @@
 | Schedule | **Publish automatically on** / **Remove automatically on**, with Status **Published** | Yes (Main pages) |
 | Courses, homepage banner and lists, cities, tools, testimonials | The matching **Main Website** screen → **Save** | Copy of the site only |
 
-**Times** are in the site time zone, which is shown next to every date field. Today that is **UTC**, so 09:00 India time is entered as 03:30. Switching the site to **Asia/Kolkata** is a one-line setting that the owner has to approve.
+**Times** are **India time (Asia/Kolkata)**, the site time zone shown next to every date field: to publish at 09:00 IST, enter 09:00.
 
 ## Live addresses
 
