@@ -1,0 +1,5 @@
+{
+  "comment": "Read by tools/release/enable-bridge.sh. expected_live: the production deployment that must be live now (also the rollback target). source: the deployment rebuilt for production with WORDPRESS_CONTENT_ENABLED=true (commit bb43086, bounded manifest lookup).",
+  "expected_live": "dpl_5msnf8Wifuj9iTPmLQyu8Hje7MB5",
+  "source": "dpl_6u7RHTCZs2QdwgU3XNNhC5NUrV4S"
+}

@@ -1,421 +1,381 @@
-# Publishing with the Acadvizen Master Admin — guide for editors
+# Acadvizen Master Admin — beginner's user manual
 
-> **Status (13 October 2026; re-verified 12 Oct 19:46 UTC): live and connected.**
-> - Main website Release 10; Enrollment plugin **0.6.1**.
-> - **Settings → Test connection** says **Connected**.
-> - The workflows below were proven on the live websites through this admin, using labelled test content that was then removed (`TEST-RESULTS.md`, R10).
->
-> All screens were tested on a local copy (115 browser checks). The connection itself was tested on the live Main website.
->
-> **Which screens to use for everyday work:**
-> - **Pages** and **Blogs** are proven on the live websites.
-> - Header, Footer, Menus, homepage lists, Courses, city and service pages, Media and SEO overrides are proven on a full local copy only, because there is no staging site yet.
->   - Their changes show to every visitor at once.
->   - Preview first, change one thing at a time, and use **Earlier versions → Restore** if something looks wrong.
+*For the person who updates the Acadvizen websites. No technical knowledge needed. Written 15 October 2026 for plugin 0.7.1.*
 
-## The ten everyday tasks, and where each is explained
+You manage the content of **two websites** from **one place**:
 
-| # | Task | Where |
+| Website | Address | What it is |
 |---|---|---|
-| 1 | Sign in | **Signing in**, below |
-| 2 | Create or edit content | **Editing the Main website's existing content** and **Everyday tasks** |
-| 3 | Choose Main, Enrollment or Both | **The one choice that matters: Publish To**; `DESTINATION-GUIDE.md` |
-| 4 | Preview, review, approve, publish | **When approval is switched on**; `HOW-TO-PUBLISH.md`; reviewers: `REVIEWER-GUIDE.md` |
-| 5 | Check the public page | **Checking that a change is live** |
-| 6 | A partial failure, and retrying only the failed website | **When a publish fails**; `REVIEWER-GUIDE.md` (statuses, "Check again") |
-| 7 | Earlier versions and rollback | **Earlier versions → Restore**; under approval: **Approvals → Restore** (reviewers) |
-| 8 | Media, SEO, FAQs, courses, Course Modules, popups | **Images**, **SEO overrides**, **Courses**, **Course Modules** and **Popups** below |
-| 9 | What still needs a developer | **What still needs a developer** |
-| 10 | Escalation and recovery | **If something looks wrong**; recovery steps for the technical team: `FINAL-RELEASE-AND-ROLLBACK.md` |
+| **Main website** | `https://www.acadvizen.com` | The main Acadvizen site (courses, blog, tools, city pages) |
+| **Enrollment website** | `https://enroll.acadvizen.com` | The enrollment and landing pages, designed with Elementor |
 
-## Signing in
+Both are managed from the **Enrollment website's WordPress admin**: `https://enroll.acadvizen.com/wp-admin/`. Students, leads, enquiries and payments stay in the Main website's own admin, `https://www.acadvizen.com/admin` (see section 13).
 
-1. Open `https://enroll.acadvizen.com/wp-admin/` (the Enrollment website's WordPress). This is the one Master Admin for both websites.
-2. Sign in with your own WordPress account. Never share an account: the approval history records who did what.
-3. The **Acadvizen Master Admin** menu on the left holds everything for the Main website. Enrollment pages are edited as before under **Pages** with Elementor.
-4. If you cannot sign in, ask an Administrator to reset your password from **Users**. Passwords are never sent by email or chat.
+The one-page summary is `ADMIN-QUICK-REFERENCE.md`.
 
-## Course Modules (homepage)
+---
 
-The "Course Modules Built for Modern Marketing Execution" section on the homepage lists the course modules (title, duration, focus and the key points). Edit the modules under **Acadvizen Master Admin → Main Website → Homepage → Lists → Course modules**, or in Main's own `/admin` → Homepage → Course modules. The same list feeds the "Course Program" section higher on the homepage.
+## How to read the labels in this manual
 
-> The section is hidden on the homepage (since 23 March); the owner decided on 14 October to keep it hidden. Editing the list still updates the "Course Program" section. The five course landing pages have no such section; adding one needs the owner's content approval.
+Every task carries one label, so you know how far you can rely on it:
 
-## Scheduled times are in UTC
-
-The Enrollment WordPress has no city time zone set (Settings → General), so every date and time in the admin is **UTC**, 5 hours 30 minutes behind India time.
-
-To publish at 10:00 IST, enter **04:30**.
-
-An administrator can change this under Settings → General → Timezone → Kolkata. This was tested and works; after the change, times are entered and shown in IST.
-
-## Popups
-
-- Popups (for example the homepage **Quick Registration** popup) are an **Elementor Pro** feature. The live Enrollment website has Elementor Pro 4.3.2 active (licence active).
-- A popup is published like a page: submit, a reviewer checks the preview and approves, then it is published and checked.
-- If Elementor Pro is not active, or its popups did not load, the submit is refused with the exact reason ("popups need Elementor Pro, which is not active on this WordPress"). This cannot be overridden: a popup that cannot be drawn would never appear.
-- **Not yet verified end to end with Elementor Pro** (there is no staging site with Pro yet: `OWNER-ACTIONS.md` P2, P6). Until then, ask the technical team before publishing a popup.
-
-## Where to work
-
-| To change | Use |
+| Label | Meaning |
 |---|---|
-| Pages, courses, locations, Main blogs, tools, FAQs, testimonials, headers, footers, menus, colours and fonts | WordPress: `https://enroll.acadvizen.com/wp-admin/` → **Acadvizen Master Admin** menu, Pages, Templates |
-| Leads, enquiries, students, users, LMS and other application data | Main admin: `https://www.acadvizen.com/admin` (unchanged) |
+| **Production-verified** | Done and checked on the real, live websites |
+| **Local-only** | Tested on a full copy of the websites, not on the live ones. The screen is present on the live admin, but be extra careful: preview first and change one thing at a time |
+| **Disabled** | Built, but switched off on the live websites. Do not use it |
+| **Unavailable** | Not part of this system |
+| **Unverified** | A normal WordPress or Elementor feature that this project did not test |
 
-## Finding existing pages and blogs
+---
 
-| Looking for | Where today |
+## 1. Which content appears on which website
+
+| Content | Where you edit it | Main website | Enrollment website |
+|---|---|---|---|
+| **Blogs** | Master Admin → Main Website → **Blogs** | Yes, if Publish To = Main Website or Both Websites | Yes, if Publish To = Enrollment Website or Both Websites |
+| Main pages | Master Admin → Main Website → **Pages** | Yes | No |
+| Courses, course sections | Main Website → **Courses**, **Course sections** | Yes | No |
+| Tools, city pages, service pages, locations, cities, testimonials | Main Website → those tabs | Yes | No |
+| Homepage banner, closing call to action, sections, lists | Main Website → **Homepage:** row | Yes (homepage) | No |
+| Header, footer, menus, site settings, redirects, SEO overrides | Main Website → **Whole website:** row | Yes (every page) | No |
+| Images for the Main website | Main Website → **Media library** | Yes | No |
+| Enrollment pages | WordPress → **Pages** → **Edit with Elementor** | No | Yes |
+| Images for the Enrollment website | WordPress → **Media** | No | Yes |
+
+**Only Blogs let you choose the website.** Everything under *Main Website* appears on the Main website only.
+
+---
+
+## 2. Signing in and out
+
+**Production-verified** (15 Oct 2026).
+
+**Sign in**
+1. Open `https://enroll.acadvizen.com/wp-admin/`.
+2. Type your **Username or Email Address** and your **Password**.
+3. Click **Log In**.
+4. You see the WordPress dashboard. The black menu on the left contains **Acadvizen Master Admin**.
+
+**Sign out**
+1. Point at your name at the top right of the screen.
+2. Click **Log Out**.
+
+**Forgot your password?** Click **Lost your password?** on the sign-in page. A reset link is sent to your account's email address. Never send a password by chat or email.
+
+*Example:* sign in, check that **Acadvizen Master Admin** is in the left menu, then click **Log Out**. You are back on the sign-in page.
+
+---
+
+## 3. Finding your way: Acadvizen Master Admin → Main Website
+
+**Production-verified** (screens checked 15 Oct 2026).
+
+1. In the left menu, point at **Acadvizen Master Admin** and click **Main Website**.
+2. The screen is called **Main Website — Pages**. Below the heading are four rows of tabs:
+
+| Row | Tabs |
 |---|---|
-| Enrollment pages (53) and posts (7) | WordPress → **Pages** / **Posts** (search box at the top right) |
-| Images used on Enrollment | WordPress → **Media** (786 files) |
-| Main website pages, blogs, tools, courses, homepage, header, footer, menus, city and service pages, images, SEO | WordPress → **Acadvizen Master Admin → Main Website** (plugin 0.6.0). These screens edit the Main website's own records directly; nothing is imported or copied, and each record keeps its www.acadvizen.com address |
+| (first row) | **Pages, Blogs, Tools, City pages, Service pages, Courses, Course sections, Media library, Locations, Cities, Testimonials, Activity** |
+| **Homepage:** | **Banner, Closing call to action, Sections, Lists** |
+| **Blog:** | **Authors, Categories, Tags** |
+| **Whole website:** | **Header, Footer, Menus, SEO overrides, Redirects, Site settings** |
 
-## Editing the Main website's existing content: Acadvizen Master Admin → Main Website
+3. Each tab shows a list. To find something, choose a status in **All statuses** or type in **Search title or address**, then click **Filter**.
+4. Each row has links on the right. Depending on the tab, these are **Edit**, **Preview**, **View live**, **Hide**/**Show** and **Trash**.
+5. To create something new, click **Add new** next to the heading.
 
-> **Status (12 October 2026).** These screens are live (plugin 0.6.1) and connected to www.acadvizen.com. A Main Website screen takes about 20 seconds to open, because the Enrollment server is slow. Wait for it; do not click Save twice.
+**Good to know**
+- A screen can take a few seconds to open, because it fetches the live Main website. Wait for it, and **click Save only once**.
+- A new item has a **Create** button. An existing item has a **Save** button.
+- **Status** decides what visitors see. **Only Published is shown on the website.** *In review* and *Approved* are only labels for your team; the approval workflow is **Disabled**. **Archived** keeps an item off the website.
+- The other entries in the **Acadvizen Master Admin** menu are **Pages, Media, Templates, Header & Footer, Menus, Global Styles, SEO, Redirects** and **Settings**. They are shortcuts to the **Enrollment** website's own WordPress tools; they do not change the Main website. In particular, **Global Styles** opens the Elementor editor for the whole Enrollment site's colours and fonts. Do not change it unless you mean to restyle every Enrollment page.
 
-This screen works directly on what www.acadvizen.com shows today: its pages, blogs, tools, locations, cities and testimonials. You change the text, pictures and settings; the Main website keeps drawing them **in its own design**, so a page looks exactly as before apart from what you changed.
+---
 
-**Find something.** Pick a tab (Pages, Blogs, Tools, Locations, Cities, Testimonials), then type part of the title or address and click **Filter**. Each row has **Edit**, **Preview**, **View live** and **Trash**.
+## 4. Blogs: write, preview, publish, update, unpublish
 
-**Change a live page safely.**
-1. Open the page and click **Prepare changes privately**. You now work on a private copy; visitors still see the live page.
-2. Under **Sections**, open a section, change its text, and click **Save section** under it. Use **Design and devices** for alignment, spacing, colours, text sizes, and **Hide on phones** / **Hide on tablets and computers**.
-3. Click **Preview (desktop, tablet, mobile)** to see the copy exactly as www.acadvizen.com will draw it.
-4. When it is right, set **Status** to **Published** and click **Save**. The message "Your draft copy was published onto the live page" confirms it. The page address does not change.
+**Production-verified:**
+- **Enrollment Website** and **Both Websites**: 15 Oct 2026, plugin 0.7.1;
+- **Main Website**: 14 Oct 2026, plugin 0.7.0;
+- editing and unpublishing: 15 Oct.
 
-Sections can be added (**Add a section**), moved (drag ⠿, or ↑ ↓, then **Save order**), duplicated or deleted. Only the settings the Main website actually uses are offered. Anything else stored in a section is listed as "kept as it is" and never removed.
+### 4.1 Write a new blog (as a draft)
+1. **Main Website → Blogs → Add new**. The screen is called **New blog**.
+2. Fill in:
+   - **Title**, for example *5 SEO tips for beginners*;
+   - **Address**: the end of the web address, lowercase with dashes, for example `seo-tips-for-beginners`;
+   - **Summary**: shown on the blog list and under the title.
+3. Optionally fill in **Excerpt**, **Cover image** (**Choose image** or **Main library**), **Author** and **Main category**.
+4. Under **Article**, click a block button (**Heading**, **Paragraph**, **List** or **Image**) and type into the block. Add as many blocks as you need.
+5. Optionally fill in **SEO title** and **SEO description**.
+6. In the **Publish** box on the right:
+   - **Publish To**: choose the website (see 4.2);
+   - **Status**: leave it on **Draft**.
+7. Click **Create**. The message "Saved on the Main Website." confirms it.
 
-**Blogs.** Write the article with the block buttons (**Heading**, **Paragraph**, **List**, **Image**…), set **Publish To** (Main Website, Enrollment Website or Both Websites) and **Status**, then **Save**. With Both, each website shows the article in its own design.
+A draft is **not public** on either website.
 
-For **Enrollment Website** only, the article is a normal post on enroll.acadvizen.com, and it is kept as a private draft on the Main website. **Status** shows whether it is live on Enrollment. Later edits keep it live; choose **Draft** to take it off Enrollment.
+### 4.2 Choosing the website: Publish To
 
-**Tools, locations, cities, testimonials.** Edit the fields and tick **Show on the Main Website** to make the item visible; untick it to hide it.
-
-**Undo a change.** Every save is kept under **Earlier versions** on the edit screen (the last 20). The first change you save to existing content also keeps the version before it, so even that first change can be undone. Click **Restore** next to a version to bring it back; the status is not changed. For pages, versions cover the page's own settings (title, address, SEO); section changes are protected by the private copy, so nothing reaches visitors before you publish.
-
-**Remove something.** **Trash** takes it off the website at once; open the list's **Trash** link to **Restore** it (it comes back as a draft, not public). Only Editors and Administrators can **Delete permanently**, and only from the trash. For a blog that was also on the Enrollment website, its Enrollment copy goes to WordPress's own trash (**Posts → Trash**) as a safety net. WordPress empties that trash after 30 days. Delete it there sooner if you want it gone now, but use the post's own **Delete Permanently** link, not **Empty Trash**, which would also remove other people's trashed posts.
-
-**See who changed what.** The **Activity** tab lists every change, who made it and whether it worked (Editors and Administrators).
-
-### The homepage
-
-Open **Main Website → Homepage** (the second row of tabs).
-
-- **Banner:** the badge, heading and text at the very top of www.acadvizen.com. Leave a field empty to keep the built-in text.
-- **Closing call to action:** the large box near the end (heading, text, button text and button link).
-- **Lists:** the homepage's lists, such as course modules, skills, case studies, tools, hiring partners and frequently asked questions.
-  - **The first time:** click **Copy what the homepage shows today**. The homepage looks exactly the same afterwards, and each list becomes editable.
-  - **Editing a list:** open it, change, add, reorder (↑ ↓) or remove items, and **Save**.
-  - **Hiding a list:** brings back the built-in one.
-- **Sections:** the "Who is this for", "From the blog" and registration pop-up texts. In "Who is this for", a description is only shown when it is longer than the built-in one.
-
-### Courses
-
-**Courses** lists every course, with these fields:
-- title, address, short description, images, duration and counts;
-- **Skills**, one per line;
-- **Curriculum**: modules, each with its topics, one per line;
-- button texts and links, and SEO.
-
-Tick **Show on the Main Website** to publish a course at www.acadvizen.com/courses/<address>, or untick it to hide the course.
-
-**Course sections** are the extra text blocks of a course. Choose the course first, then **Add a section to this course**.
-
-The **/courses** page itself is a page (Pages → *courses*). To list your courses there, add a **Live list: courses** section to it.
-
-### City pages and service pages
-
-- **City pages** appear at www.acadvizen.com/digital-marketing-course-in-<address>. They have a heading and introduction, an about block, features, figures, testimonials and questions.
-- **Service pages** appear at www.acadvizen.com/<address>, for example *google-ads-course-in-mysuru*. They have a heading, overview, curriculum, benefits and questions. An address already used by a page, or by a fixed part of the website such as *blog* or *courses*, is refused, with a message.
-- **Extra sections:** both, and **Locations**, can carry extra sections, added with the same section editor as pages. In **Design and devices**, choose **Where on the page**: at the top, after the introduction, before the questions, or at the end.
-
-### Images: the Main Website media library
-
-**Media library** shows the images the Main Website uses.
-- **Adding an image:** choose a file (JPEG, PNG, WebP, GIF or AVIF, at most 3 MB), write a short description (alt text) and click **Upload**.
-- **Using an image:** every image field has two buttons. **Choose image** picks from the WordPress (Enrollment) library. **Main library** picks from the Main Website's library.
-- **Describing an image:** open it to change its name, alt text or caption.
-
-### Blog authors, categories and tags
-
-The **Blog** row of tabs has:
-- **Authors:** name, photo and a short bio, shown at www.acadvizen.com/blog/author/<address>;
-- **Categories:** www.acadvizen.com/blog/category/<address>;
-- **Tags.**
-
-On a blog, choose its **Author** and **Main category**. An author or category that is still used by a blog cannot be deleted. The message says how many blogs use it.
-
-### SEO overrides
-
-Some addresses have an **SEO override**: a title and description that replace the page's own SEO fields in search results.
-- **On the page:** its edit screen says so, with **Edit the override** and **Remove it**.
-- **All overrides:** the **SEO overrides** tab lists them all.
-- **Removing one:** the page's own SEO fields apply again.
-
-### Header, footer and menus
-
-The **Whole website** row of tabs has:
-- **Header:** the announcement bar above the menu (on or off, text, link, colours), the phone, email and social links.
-- **Footer:** contact details, social links, the copyright line (*{year}* and *{company}* are filled in automatically) and colours.
-- **Menus:** the links of the header menu, the footer list and the small legal links.
-  - **The first time:** click **Copy the links shown today**. The website looks the same, and every link becomes editable.
-  - **Each link has** its text, address, a position, and **Show under** (to make it a drop-down item). It also has switches for computers and phones.
-  - **In the header:** a link called *Courses* opens the course menu.
-- **Site settings:** the company name, fallback social profiles and the small labels of the header and footer.
-
-Colours left empty use the website's own colours. A colour such as *rgba(255,255,255,0.1)* (a see-through white) is kept as it is.
-
-### Redirects (plugin 0.7.0)
-
-**Main Website → Redirects** (in the *Whole website* row) sends visitors from an old address to a new one on www.acadvizen.com.
-
-1. **Add new**: fill in the **Old address** (e.g. */old-seo-course*), **Send visitors to** (e.g. */seo-course-in-bangalore*, or a full web address) and the **Kind of redirect** (Permanent is right for a page that has moved). Then **Save**. The redirect is saved **switched off**.
-2. Check the addresses. Tick **Show on the Main Website** and click **Save**. Visitors to the old address now go to the new one.
-3. **Remove it:** untick **Show on the Main Website** and **Save**. Only then can it be deleted.
-
-The website refuses, with a clear message, any redirect that would:
-- take over its own system addresses (such as the admin);
-- point to itself;
-- create a chain or a loop;
-- duplicate an existing redirect;
-- **hide a published page or blog** (unpublish that first, if this is really intended).
-
-### One blog on both websites: edit it anywhere (plugin 0.7.0)
-
-A blog published to **Both** (or Enrollment) is one blog with two appearances: the Main Website's article and a normal post on the Enrollment website. Edit it wherever you like; the change reaches both:
-- **Main Website → Blogs:** saves both at once (as before).
-- **Posts** (the regular WordPress editor), on that post:
-  - **Update** also updates the Main Website.
-  - The **Main Website** box on the right, and a message after saving, say whether it worked.
-- **The Main Website's own admin:** the Enrollment post follows within 5 minutes. **Main Website → Blogs → Check now** makes it happen at once.
-
-**New post in the regular editor:** tick **Also publish on the Main Website** in the **Main Website** box, then **Publish**. The post also appears on www.acadvizen.com/blog in the Main Website's design. From then on the two stay linked.
-
-**What reaches the Main Website from the regular editor:**
-- Headings, paragraphs (with bold, italics and links), lists and images.
-- Tables, embedded videos, galleries and shortcodes stay on the Enrollment website only. The message after saving lists them.
-
-**Removing:** moving the post to the trash removes it from the Enrollment website only. To take it off the Main Website as well, unpublish or delete it in **Main Website → Blogs**. A blog removed on the Main Website sets its Enrollment post to **Draft**; it is never deleted automatically.
-
-**Search engines on the Enrollment website:**
-- **Hide from search engines** on a blog applies to its Enrollment post too, from plugin **0.7.1**. Up to 0.7.0 the Enrollment post stayed visible to search engines.
-- Rank Math on the Enrollment website tells search engines about every newly published post (Instant Indexing), except posts that are hidden from search engines.
-- Hiding from search engines is not hiding from visitors. A published article, hidden or not, still appears in the Enrollment blog list and its RSS feed. To keep something private, leave it as a **Draft**.
-
-**Only blogs have Publish To** in Main Website. Everything else there (pages, courses, tools, city and service pages, homepage, header, footer, menus, SEO overrides, redirects, site settings) is for the Main Website only. Enrollment pages are still edited in Elementor, as before.
-
-### If someone else changed it meanwhile (plugin 0.7.0)
-
-**If the content changed after you opened it**, Save is refused with a red message instead of silently replacing their work. The change might have been made in the Main Website's own admin, or by a colleague.
-- What you typed stays in the form.
-- Check the live version first. Clicking **Save** again then replaces their change with yours.
-
-**For a blog changed in two places** before the websites were the same again, nothing is overwritten. The post and the Blogs screen show **Conflict**. To resolve it:
-1. Open it in **Main Website → Blogs**.
-2. Compare the two versions.
-3. Save the one to keep. Both websites then show that version.
-
-## The one choice that matters: Publish To
-
-> **Only when the optional Render Bridge is switched on.** It is **off** on the live websites, and from plugin 0.7.0 the "Publish To" boxes are hidden while it is off, so nothing appears to publish where nothing would show. Use **Main Website** (above) for Main content. The rest of this section, and *Everyday tasks* / *Redesigning* below, describe that optional mode.
-
-Every page, course, location, blog and tool has a **Publish To** box on the right of the edit screen:
-
-| Choice | What visitors see |
+| Choose | The blog appears at |
 |---|---|
-| **Enrollment Website** | Shown on `enroll.acadvizen.com` only. This is the default for every existing page, so nothing changes until you choose otherwise. |
-| **Main Website** | Shown on `www.acadvizen.com` only. On the Enrollment website it stays hidden (visitors get "not found") and out of search engines. |
-| **Both Websites** | Shown on both: design once, published to both. |
+| **Main Website** | `https://www.acadvizen.com/blog/<address>` |
+| **Enrollment Website** | `https://enroll.acadvizen.com/<address>/` (a normal Enrollment post, in the Enrollment design) |
+| **Both Websites** | Both addresses above, each in its own website's design, from one save |
 
-Blogs and tools are Main Website content by default.
+*Example:* you pick **Both Websites** with the address `seo-tips-for-beginners`. After publishing, the article is at `https://www.acadvizen.com/blog/seo-tips-for-beginners` and at `https://enroll.acadvizen.com/seo-tips-for-beginners/`.
 
-## Everyday tasks
+### 4.3 Preview before publishing
+- Open the blog (**Edit**) and click **Preview (desktop, tablet, mobile)**. You see it in the Main website's design. Use **Desktop**, **Tablet** and **Mobile** to switch sizes, and **← Back to editing** to return.
+- For the Enrollment design of a draft (Enrollment or Both), open WordPress → **Posts**, find the post with the same title (it is a draft) and click **Preview**.
 
-**Create**
-1. Open the content type (for example Acadvizen Master Admin → Main Blogs → Add New Blog), or Pages → Add New.
-2. Enter the title and content. Click **Edit with Elementor** to design a page.
-3. Choose Publish To.
+### 4.4 Publish
+1. Open the blog (**Edit**).
+2. Set **Status** to **Published**.
+3. Click **Save**.
+4. Check the live address (section 11). On the tests it appeared within seconds.
 
-**Review before publishing**
-- **Save Draft** keeps it private on both websites.
-- **Preview** (in Elementor) shows it to you only, with the Enrollment website's design.
-- **Preview on the Main Website** shows exactly how it will look on www.acadvizen.com, with Main's header, footer and styles.
-  - Where: the Publish To box on the edit screen, or Elementor → gear icon (Page Settings) → Publish To.
-  - It works for drafts, pages pending review and scheduled pages, and publishes nothing.
-  - It shows the last **saved** version: click Save Draft first, then reload the preview.
-  - Icons can be missing in this preview only.
-  - It works once the developer has added the connection secret. Until then, it explains that the secret is missing.
+### 4.5 Update a published blog
+1. **Edit** → change the text → **Save**. The change reaches the website or websites in **Publish To**.
+2. Check the live address.
 
-Drafts are never sent to the Main website.
+### 4.6 Unpublish (take it off the website)
+1. **Edit** → set **Status** to **Draft** → **Save**.
+2. Check: the live address now shows "page not found".
 
-**Publish**
-- Click **Publish**.
-- Enrollment shows the page at once.
-- For Main, the Publish To box shows "Main: Publishing…" and then "Main: Published (version N, date)". On the test copy this took between a few seconds and about a minute.
+The blog is kept as a draft, so you can publish it again later. For Enrollment and Both, the Enrollment post also becomes a draft. It disappears from the Enrollment blog list, RSS feed and sitemap.
 
-**Update**
-- Edit, then click **Update**. The Main website gets the new version the same way.
-- Autosaves and "Save Draft" on a published page do **not** change the live page.
+### 4.7 Hide from search engines
+- Tick **Hide from search engines** to keep an article out of Google and other search engines. With Enrollment or Both, the Enrollment post gets the same setting, and it is not sent to search engines (**Production-verified**, plugin 0.7.1).
+- This does **not** hide it from visitors: a published article still appears in the blog lists and the Enrollment RSS feed. To keep something private, leave it as a **Draft**.
+- **Leave out of the sitemap** removes it from the Main website's sitemap (**Local-only**).
 
-**Change the address**
-- Edit the address (slug) and click Update.
-- On the Main website, the old address then sends visitors to the new one.
+### 4.8 Remove a blog completely
+**Trash** (in the list) takes it off the website at once. **Local-only** for restoring from the trash (section 12); **Delete permanently** is final.
 
-**Unpublish**
-- Either change Status to Draft and Update, or set Publish To to the other website.
-- The page is removed from the website(s) it no longer targets, and from the sitemap.
+### 4.9 Editing a blog in WordPress → Posts
+**Local-only.** A blog published to Enrollment or Both is also a normal post under WordPress → **Posts**, and saving it there also updates the Main website. For everyday work, use **Main Website → Blogs**.
 
-**Delete**
-- Move to Trash. The page disappears from both websites.
-- Restoring it from the Trash brings it back.
+---
 
-**Undo a change**
-1. Open Acadvizen Master Admin → **Versions & Rollback**, choose the page, and click **Make live** on an earlier version.
-2. That version stays live until the page is next updated.
+## 5. Main website pages
 
-**Schedule a page or blog (Main Website screens)**
-1. Set **Status** to **Published**.
-2. Fill in **Publish automatically on** (when it should appear) and, if needed, **Remove automatically on** (when it should disappear).
-3. Click **Save**. The list shows "Scheduled for …" until the time is reached.
+**Production-verified** (15 Oct 2026, 17 checks): creating, sections, preview, publishing, private changes, address protection and unpublishing.
 
-- **Times are in the site's time zone, which is UTC.** The field shows "+00:00" next to it. India is UTC+5:30, so subtract 5 h 30 min: 09:00 IST is entered as 03:30.
-- Nothing runs in the background. From that time on, the Main website shows or hides the item the next time someone visits the address.
-- Proven end to end on a local copy (12 Oct, twice: it appeared and disappeared within seconds of the set times). It has not been tried on the live site, because that would publish test content on a timer.
+### 5.1 Change a live page safely (recommended)
+1. **Main Website → Pages** → find the page (for example search `about`) → **Edit**.
+2. Click **Prepare changes privately**. You now work on a private copy; visitors still see the live page.
+3. Under **Sections**, open a section, change its text and click **Save section** under it.
+4. Click **Preview (desktop, tablet, mobile)** and check the copy.
+5. Set **Status** to **Published** and click **Save**. The message "Your draft copy was published onto the live page" confirms it.
+6. Open the live address (**View live** in the list) and check the change.
 
-## When approval is switched on (plugin 0.7.0)
+### 5.2 Create a new page
+1. **Main Website → Pages → Add new** (**New page**).
+2. Fill in **Title** and **Address**, for example `summer-workshop`. The page will be at `https://www.acadvizen.com/summer-workshop`.
+3. Optionally fill in **Short description**, **SEO title**, **SEO description** and **Share image**.
+4. Leave **Status** on **Draft** and click **Create**.
+5. Under **Sections**, choose a section type, click **Add**, fill it in and click **Save section**. Repeat for each section.
+6. **Preview (desktop, tablet, mobile)**, then set **Status** to **Published** and click **Save**.
 
-> Prepared and tested on a local copy (`approval-acceptance.mjs` 47 checks, `approval-reliability-acceptance.mjs` 38 checks). **Not switched on on production yet**: it needs plugin 0.7.0 and `ACADVIZEN_CMS_APPROVAL` in wp-config.php (`DEPLOYMENT-REPORT.md`).
+**Address already used?** If another page already uses the address, saving is refused with "This address is already used by another record." Nothing is overwritten. Choose a different address.
 
-Approval changes how Elementor pages, WordPress pages, site documents and templates reach the websites. The Main Website screens (forms) are not affected.
+### 5.3 Unpublish a page
+**Edit** → **Status: Draft** → **Save**. The address then shows "page not found".
 
-| You do | What happens |
+---
+
+## 6. Courses and course sections
+
+**Local-only** (12 checks on the test copy). The production form was checked (15 Oct).
+
+**Edit a course**
+1. **Main Website → Courses** → **Edit**.
+2. Fields you will use most: **Title**, **Subtitle**, **Short description**, **Description**, **Main image**, **Duration**, **Skills** (one per line), **Curriculum** (modules with their topics), **Main button text / link**, **SEO title / description**.
+3. **Show on the Main Website** ticked = visible at `https://www.acadvizen.com/courses/<address>`. Unticked = hidden.
+4. Click **Save**, then check with **View live**.
+
+*Example:* change **Duration** from 4 to 5 → **Save** → **View live** → the course page shows 5.
+
+**Course sections** are extra text blocks on a course page:
+1. **Course sections**.
+2. Choose the course (*Choose a course to see its sections.*).
+3. **Add a section to this course** → **Section heading**, **Text**, **Position** → **Create**.
+
+---
+
+## 7. Homepage content
+
+**Local-only** (14 checks on the test copy). The production forms were checked (15 Oct).
+
+Open **Main Website** and use the **Homepage:** row:
+
+| Tab | What it changes on `https://www.acadvizen.com` | How |
+|---|---|---|
+| **Banner** | The badge, heading and text at the very top | **Edit** → **Badge above the heading**, **Heading**, **Text under the heading** → **Save**. Leave a field empty to keep the built-in text |
+| **Closing call to action** | The large box near the end | **Edit** → **Heading**, **Text**, **Button text**, **Button link** → **Save** |
+| **Sections** | Texts such as "Who is this for" and "From the blog" | **Edit** → change → **Save**. **Hide** hides that section |
+| **Lists** | Homepage lists (skills, tools, hiring partners, frequently asked questions…) | **Not set up yet on the live site** (the list is empty). The first time, someone must click **Copy what the homepage shows today**; the homepage looks the same afterwards and each list becomes editable. Ask the technical team to do this first step with you |
+
+On the **Banner**, **Closing call to action**, **Header**, **Footer** and **Site settings** rows you will also see **Delete permanently**. **Never use it there**: use **Edit**.
+
+---
+
+## 8. Header, footer, navigation and site settings
+
+**Local-only** (18 checks on the test copy). The production forms were checked (15 Oct). Changes appear on **every** Main page. Other pages can take about 5–10 minutes to show them.
+
+| Tab | Fields |
 |---|---|
-| **Publish** (Elementor or the WordPress editor) | **Submits** exactly this revision. Status becomes "Waiting for approval"; nothing goes live |
-| Open a **live** page to edit it | You are taken to its **working copy**. Visitors keep seeing the live page. You no longer need the Duplicate-and-swap method described under Redesigning |
-| Save after submitting or after approval | The approval is cancelled automatically, because the revision changed. Submit again |
-| A reviewer approves | **Publish approved revision** (in Approvals) puts exactly that revision live on the websites in Publish To, then checks each one |
-| Save **Global Styles** | Only reviewers can; it changes both websites at once |
-| Trash a live page | Only reviewers can |
-| Undo a published change | A reviewer uses **Approvals → Restore**. It replaces **Versions & Rollback → Make live** for pages under approval |
-| Throw away an unfinished working copy | **Discard working copy** in the page's **Approval** box |
-| Want it published later | Set a future publish date before submitting. Approval then offers **Schedule approved revision for …**; at that time it is published only if unchanged. **Cancel schedule** keeps the approval |
+| **Header** | **Show the announcement bar above the menu**, **Announcement text**, **Announcement link**, colours, **Phone number**, **Email address**, **Social links** |
+| **Footer** | **Phone**, **Email**, **Address**, **Social links**, **Copyright line** (*{year}* and *{company}* are filled in automatically), colours |
+| **Menus** | Each link: **Menu** (Header menu, Footer links or Legal links), **Text**, **Link**, **Show under** (makes it a drop-down item), **Position**, **Opens in**, **Show on computers and tablets**, **Show on phones** |
+| **Site settings** | **Company name**, social profiles, and the small labels of the header and footer |
 
-**Where to see the state:**
-- the **Approval** box on the edit screen;
-- the page list, where working copies are labelled;
-- **Acadvizen Master Admin → Approvals**.
+**Menus are not set up yet on the live site** (the list is empty). The first time, someone must click **Copy the links shown today**; the website looks the same afterwards and every link becomes editable. Ask the technical team to do this first step with you.
 
-**Why a submit is refused:** the message names the widget, the website, the reason and the fix. Examples: a widget whose plugin is not active; a shop or login widget on a page for Main. Typed HTML or shortcodes can be submitted, but need a reviewer who checks the code.
+*Example (announcement bar):* **Header → Edit** → tick **Show the announcement bar above the menu** → **Announcement text**: *New batch starts 1 November* → **Save** → open the homepage and check the bar.
 
-More: `HOW-TO-PUBLISH.md` (plain steps), `REVIEWER-GUIDE.md`, `DESTINATION-GUIDE.md`, `WIDGET-COMPATIBILITY.md`.
+---
 
-## Redesigning
+## 9. Other Main content
 
-**Change the colour scheme or fonts of the whole website**
-1. Open Acadvizen Master Admin → **Global Styles**. Elementor opens its Site Settings.
-2. Change Global Colors or Global Fonts, then click **Save Changes** at the bottom of the panel.
+**Local-only** (15 checks on the test copy). The production forms were checked (15 Oct).
 
-Every page that uses the global colours changes, on both websites. The Main website republishes its pages in the background, which can take several minutes. A page's own colours, set directly on that page, stay as they are.
+| Tab | Key fields | Visible when |
+|---|---|---|
+| **Tools** | Name, Address, Category, Description, Logo, Website | **Show on the Main Website** ticked (also **Show**/**Hide** in the list) |
+| **City pages** | City, Address, Heading, Introduction, Features, Figures, Questions and answers | **Show on the Main Website** ticked. Address: `/digital-marketing-course-in-<address>` |
+| **Service pages** | Title, Address, Overview, Curriculum, Questions and answers | **Show on the Main Website** ticked. An address already used by a page or a fixed part of the site (e.g. *blog*) is refused |
+| **Locations**, **Cities** | Name, Address, Introduction, contact details | **Show on the Main Website** ticked |
+| **Testimonials** | Student name, Role, Company, Course, Rating (1–5), Quote, Photo | **Show on the Main Website** ticked |
+| **Authors**, **Categories**, **Tags** (row **Blog:**) | Name, Address, description or photo | Used by blogs. An author or category still used by a blog cannot be deleted |
 
-**Redesign a page from scratch**
-1. Open it with **Edit with Elementor**.
-2. Add, move, duplicate or delete sections, columns and widgets by dragging them.
-3. Change spacing, backgrounds, borders, fonts and animations in the left panel.
+---
 
-To work safely on a live page:
-1. Use **Duplicate** (Pages list). The copy is a draft with a different address.
-2. Redesign the copy and check it with **Preview on the Main Website**.
-3. When it is ready:
-   - set the old page to Draft and change its address (for example add `-old`);
-   - give the copy the original address;
-   - publish the copy.
+## 10. SEO, redirects and images
 
-To undo, do the same the other way round. Alternatively, redesign the live page directly: each Update is kept as a version, and **Versions & Rollback → Make live** brings back the previous design.
+**SEO on a page or blog** (**Production-verified** for pages and blogs): **SEO title**, **SEO description**, **Canonical address** (leave empty normally), **Share image**, **Hide from search engines**, **Leave out of the sitemap**.
 
-**Desktop, tablet and mobile**
-- Use Elementor's device switcher at the bottom of the panel.
-- Settings made in tablet or mobile view apply only to that device.
+**SEO overrides** (**Local-only**):
+- Some addresses (for example the homepage) have an override that replaces the page's own SEO fields.
+- **Main Website → SEO overrides** → **Edit** → **SEO title**, **SEO description**, **Social sharing image** → **Save**.
+- **Remove override** makes the page's own SEO fields apply again.
 
-## Templates and shared designs
+**Redirects** (**Local-only**): send visitors from an old address to a new one on the Main website.
+1. **Main Website → Redirects → Add new**.
+2. **Old address**, e.g. `/old-seo-course`; **Send visitors to**, e.g. `/seo-course-in-bangalore`; **Kind of redirect**: **Permanent (301)** for a page that has moved.
+3. Click **Create**. It is saved **switched off**.
+4. **Edit** → tick **Show on the Main Website** → **Save**. Now it works.
 
-- **Save a design for reuse:** in Elementor, the arrow next to Publish → **Save as Template**. To use it, open the folder icon in any page and insert it.
-- **One design for every course, location, tool or blog page:** Acadvizen Master Admin → **Website Design** → choose a type → **Edit design with Elementor**. Saving updates every page of that type that has no design of its own.
-- **Headers and footers:** under Templates. A header or footer used on only one of the websites needs the developer to switch on one setting first (`ACADVIZEN_CMS_SITE_TEMPLATES`). Until then, both websites use the header and footer they use today.
+To stop a redirect, untick **Show on the Main Website** → **Save**. The website refuses redirects that would loop, duplicate another redirect, take over system addresses, or hide a published page.
 
-## City and area pages
+**Images for the Main website** (**Local-only**):
+1. **Main Website → Media library**.
+2. Under **Add an image to the Main Website library**, choose a file (JPEG, PNG, WebP, GIF or AVIF, at most 3 MB) and write the alt text.
+3. Click **Upload**.
 
-1. Add the city: Acadvizen Master Admin → **Cities & Areas** → Add, with no parent.
-2. Add the area with the city as its **parent**.
-3. Create the page: Acadvizen Master Admin → **Locations** → Add New. Enter the title and address (slug), tick its area under Cities & Areas, and fill in the details (address, phone, map link, courses).
-4. Choose Publish To, check with **Preview on the Main Website**, then **Publish**. On the Main website it appears at `www.acadvizen.com/<address>`.
-5. If you change the address later, the old address sends visitors to the new one.
+To use an image, click **Main library** next to any image field. **Choose image** picks from the Enrollment library instead. To describe an image, **Edit** it: **Name**, **Description for screen readers and search engines (alt text)**, **Caption**.
 
-## What still needs a developer
+**Scheduling** (**Local-only**): **Publish automatically on** and **Remove automatically on**, with **Status: Published**. **Times are in UTC** (India is UTC + 5:30): to publish at 10:00 IST, enter 04:30.
 
-- New features or new kinds of data (anything that is not a page, a design or a record of an existing type).
-- The optional website settings (separate headers and footers per website, sitemap clean-up, login logo).
+---
 
-## What the status messages mean
+## 11. Checking that a change is live
 
-| Message | Meaning / what to do |
+1. In the list, click **View live**, or open the address yourself:
+
+| Content | Live address |
 |---|---|
-| Main: Published (version N, …) | Live on the Main website |
-| Main: Publishing… | Wait; refresh the screen in a minute |
-| Main: Publishing… a first attempt failed, trying again automatically | Nothing to do. The previous version stays live |
-| Main: Update failed — previous version still live | Open Acadvizen Master Admin → **Publishing** for the reason, then click Retry |
-| Main: Address already used by an existing Main Website page — not shown | The Main website already has its own page at that address. Choose another address, or ask an administrator to tick "Replace" |
-| Main: Rolled back to version N | An earlier version was made live on purpose |
+| Main page | `https://www.acadvizen.com/<address>` |
+| Blog (Main) | `https://www.acadvizen.com/blog/<address>` |
+| Blog (Enrollment) | `https://enroll.acadvizen.com/<address>/` |
+| Course | `https://www.acadvizen.com/courses/<address>` |
+| Tool | `https://www.acadvizen.com/tools/<address>` |
+| City page | `https://www.acadvizen.com/digital-marketing-course-in-<address>` |
+| Author / category | `https://www.acadvizen.com/blog/author/<address>`, `…/blog/category/<address>` |
 
-## SEO and images
+2. Not updated yet? Reload the page in a **private window** (Ctrl + Shift + N in Chrome). Header and footer changes can take about 5–10 minutes on other pages.
+3. An unpublished or trashed item should show "page not found".
 
-- **Title, description, canonical address and share image** are set in each item's Rank Math box (Main blogs also have SEO fields in "Blog details for the Main Website").
-- **"Hide from Google"** ("Do not show this blog in Google search results") on a Main blog keeps it out of search results.
-- **Images:** upload to the Media Library and add them in Elementor or as the cover image (Main blogs). Always fill in the image's Alternative Text.
+---
 
-## Shared parts (affect many pages)
+## 12. Mistakes and troubleshooting
 
-Headers, footers, menus, global colours and fonts, and the shared designs under Acadvizen Master Admin → **Website Design** are used on many pages. Saving one republishes every Main page in the background, which can take several minutes. Avoid these changes at busy times.
+| Situation | What to do | Label |
+|---|---|---|
+| You published too early | **Edit** → **Status: Draft** → **Save** | Production-verified |
+| You want to change a live page without visitors seeing work in progress | **Prepare changes privately** (section 5.1) | Production-verified |
+| "This address is already used by another record." | Choose another address. Nothing was overwritten | Production-verified |
+| You want an earlier version back | On the edit screen, **Earlier versions** (the last 20 saves) → **Restore** next to the version. The status is not changed | Local-only |
+| You trashed something by mistake | List → **Trash** link → **Restore**. It comes back as a draft (not public) | Local-only |
+| A red message after Save | Read it: it names the problem (for example, the Main website not reachable). Nothing was changed. Wait a minute, then click **Save** once | Local-only |
+| "Enrollment Website copy failed" (yellow) | The Main website was updated but the Enrollment copy was not. Click **Save** again once; the copy is created without duplicates | Local-only |
+| Save refused because someone else changed it | What you typed stays in the form. Check the live version, then **Save** again to replace their change | Local-only |
+| The whole website looks wrong | Stop and contact the technical team. They have a tested rollback (`FINAL-RELEASE-AND-ROLLBACK.md`) | — |
 
-## Who can do what
+**Golden rules**
+- Click **Save** or **Create** **once** and wait.
+- Change one thing at a time, then check it live.
+- Keep test content as **Draft**.
+- Never use **Delete permanently** on Banner, Closing call to action, Header, Footer or Site settings.
 
-- **Editors** can create, edit and publish.
-- On the **Main Website** screen, WordPress's usual roles apply:
-  - **Editors and Administrators** work on everything;
-  - **Authors** see and publish only the articles they wrote there;
-  - **Contributors** save drafts and submit them for review;
-  - pages, tools, locations, cities and testimonials need an Editor.
-- Only **administrators** can:
-  - replace an existing Main website page or set the Main homepage;
-  - change Settings;
-  - import content.
+---
 
-## Checking that a change is live
+## 13. Enrollment pages with Elementor
 
-1. Wait for the Publish To box (or Acadvizen Master Admin → **Publishing**) to say "Main: Published (version N, …)".
-2. Open the page's address shown in the box, in a **private window** so your browser's own copy is not used.
-3. Check the text, the images and that the links work.
-4. On the other website, check that the page is or is not there, as you chose in Publish To.
+**Unverified.** This is the Enrollment website's normal WordPress and Elementor editing, unchanged by this project and not tested by it. The production screen shows **Edit with Elementor** on the Enrollment pages (15 Oct).
 
-## When a publish fails
+**Change text on an Enrollment page without changing its design**
+1. WordPress left menu → **Pages**.
+2. Point at the page and click **Edit with Elementor**.
+3. Click the text on the page and type the new wording. Change only the text: do not move, delete or restyle sections.
+4. Click the green **Update** button at the top (on a draft it may read **Publish**).
+5. Open the page on `https://enroll.acadvizen.com` and check it.
 
-> **Today on the live site (14 October, plugin 0.7.0, Elementor pages for Main switched off):** there is no Publishing or Versions screen.
-> - Saving on a **Main Website** screen, or saving a blog post with *Also publish on the Main Website*, reports the result at once: "Saved on the Main Website", or the error.
-> - If it failed, read the message, fix the cause, then save again. Saving the same content again never creates a duplicate.
->
-> The **Publishing** screen and its **Retry** button below appear only once Elementor pages for Main are switched on.
+**Be careful**
+- **Global Styles** (colours and fonts) and **Header & Footer** change **every** Enrollment page.
+- **Undo a mistake:** Elementor keeps a history of each page (**History → Revisions** in the Elementor editor). Restoring a revision is an Elementor feature not tested by this project; if unsure, ask the technical team.
+- **Do not** use **Instant Indexing: Submit Page** or **Duplicate** unless you know you need them.
 
-| You see | Do this |
+**Main website admin** (`https://www.acadvizen.com/admin-login`, **Production-verified** sign-in and sign-out, 15 Oct): students, leads, enquiries and payments. Sign out with the sign-out button in the admin.
+
+---
+
+## 14. What is not available
+
+| Feature | Label |
 |---|---|
-| "Main: Publishing…" for more than 5 minutes | Open the Pages list once (this restarts an interrupted publish), wait a minute, then check again |
-| "Main: Update failed — previous version still live" | Open Acadvizen Master Admin → **Publishing**, read the reason next to the page, and click **Retry**. The old version stays online meanwhile |
-| "Main: Address already used by an existing Main Website page — not shown" | The Main website already has its own page there. Choose another address, or ask an administrator about "Replace" |
-| Settings says "Not connected" | The connection to the Main website is not configured or is broken. Contact your developer and send them the message shown |
-| The page is right in WordPress but old on the website | Wait a minute and reload in a private window. If it is still old, check its status (above) |
+| Approval workflow (review and approve before publishing) | **Disabled** |
+| Designing Main website pages, or pages for Both, with Elementor (Render Bridge) | **Disabled** |
+| Popups published through the Master Admin | **Disabled** (needs the Render Bridge) |
+| Choosing the website for anything other than Blogs | **Unavailable**: everything else is Main-only |
+| Editing students, leads or enquiries in WordPress | **Unavailable**: use Main `/admin` |
 
-## If something looks wrong
+---
 
-- Check the item's Publish To box and Acadvizen Master Admin → **Publishing**.
-- Acadvizen Master Admin → **Settings** → **Test connection to the Main Website** should say "Connected".
-- Send the message shown there to your developer. The technical guide is `docs/ACADVIZEN_MASTER_ADMIN.md`, section 12.
+## 15. Who can do what
+
+**Local-only:** the live site currently has administrator accounts only.
+
+| Role | Main Website screens |
+|---|---|
+| Administrator, Editor | Everything |
+| Author | Blogs only: their own articles, including publishing |
+| Contributor | Blogs only: drafts and "submit for review"; publishing is refused |
+
+---
+
+## Evidence behind this manual
+
+- **Production checks, 15 Oct 2026** (`TEST-RESULTS.md`):
+  - Main pages 17/17;
+  - Enrollment-only blog 14/14;
+  - Both 17/17;
+  - sign-in checks M1–M3;
+  - a read-only capture of every Main Website screen: tab names, field labels, buttons and choices;
+  - Main 314 / Enrollment 59 pages unchanged.
+- **Production, 14 Oct:** Main-only blog (16/16 run on plugin 0.7.0).
+- **Test copy (Local-only), 15 Oct:** structured content 56/56, courses 12/12, homepage 14/14, header/footer/menus 18/18, other content 15/15, redirects 11/11, scheduling 7/7, permissions 9/9, Both failure 12/12.
+- **Status:** `FINAL-CLIENT-HANDOVER.md`.

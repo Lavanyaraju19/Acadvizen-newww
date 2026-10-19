@@ -464,10 +464,10 @@ export async function routeFamilies(ctx, browser) {
     const sample = services.find((s) => s.path === '/seo-course-in-jayanagar') || services[0]
     const captured = await ctx.captureRoute(browser, `${MAIN}${sample.path}`, ['main'])
     const row = cmsPages.find((x) => `/${x.slug}` === sample.path)
-    ctx.queue('design-location', captured.parts.main, (els) => serviceTemplate(ctx, els, firstHeading(sample.html), row))
+    ctx.queue('design-location', captured.parts.main, (els) => serviceTemplate(ctx, els, firstHeading(sample.html), row, visibleParagraph(sample.html)))
     for (const svc of services.slice(0, ctx.LIMIT)) {
       const row = cmsPages.find((x) => `/${x.slug}` === svc.path)
-      const content = row && row.content && row.content.html ? row.content.html : ((svc.html.match(/<h[12][\s\S]*?<\/h[12]>\s*<p[^>]*>([\s\S]*?)<\/p>/) || [])[1] || '')
+      const content = row && row.content && row.content.html ? row.content.html : visibleParagraph(svc.html)
       bundle.records.push({
         key: `location-${svc.path.slice(1)}`,
         post_type: 'acv_location',
@@ -518,9 +518,15 @@ export async function routeFamilies(ctx, browser) {
   }
 }
 
-function serviceTemplate(ctx, elements, heading, row) {
+// The paragraph Main shows under a service/location page's heading; the paragraph can sit in its own
+// wrapper (<h2>…</h2><div><p>…</p></div>).
+export function visibleParagraph(html) {
+  return (String(html).match(/<h[12][^>]*>[\s\S]*?<\/h[12]>\s*(?:<div[^>]*>\s*)*<p[^>]*>([\s\S]*?)<\/p>/) || [])[1] || ''
+}
+
+function serviceTemplate(ctx, elements, heading, row, visible = '') {
   if (heading) replaceText(elements, heading, '[acv_field name="title"]')
-  const text = row && row.content && row.content.html ? String(row.content.html).replace(/<[^>]+>/g, '').trim() : ''
+  const text = (row && row.content && row.content.html ? String(row.content.html) : visible).replace(/<[^>]+>/g, '').trim()
   let replaced = false
   walk(elements, (el) => {
     if (!replaced && el.widgetType === 'text-editor' && text && widgetText(el).startsWith(text.slice(0, 40))) {

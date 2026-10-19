@@ -1074,7 +1074,10 @@ function referring_document_path( \WP_Post $template, string $destination, int $
 	}
 	$patterns = array( 'template=\\"' . $template->ID . '\\"', '"template_id":"' . $template->ID . '"', '"template_id":' . $template->ID . ',' );
 	$where    = implode( ' OR ', array_fill( 0, count( $patterns ), 'm.meta_value LIKE %s' ) );
-	$ids      = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT m.post_id FROM {$wpdb->postmeta} m JOIN {$wpdb->posts} p ON p.ID = m.post_id WHERE m.meta_key = '_elementor_data' AND p.post_status = 'publish' AND m.post_id <> %d AND ( {$where} ) ORDER BY m.post_id LIMIT 20", array_merge( array( $template->ID ), array_map( static fn( $x ) => '%' . $wpdb->esc_like( $x ) . '%', $patterns ) ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	// Published documents first, then their own _elementor_data (STRAIGHT_JOIN keeps that order): the
+	// database's optimizer otherwise starts from every _elementor_data row, revisions included, and
+	// on enroll (about 1.5 GB of revisions) that scan took about 95 s instead of about 1 s.
+	$ids      = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT m.post_id FROM {$wpdb->posts} p STRAIGHT_JOIN {$wpdb->postmeta} m ON m.post_id = p.ID AND m.meta_key = '_elementor_data' WHERE p.post_status = 'publish' AND m.post_id <> %d AND ( {$where} ) ORDER BY m.post_id LIMIT 20", array_merge( array( $template->ID ), array_map( static fn( $x ) => '%' . $wpdb->esc_like( $x ) . '%', $patterns ) ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 	foreach ( array_map( 'intval', (array) $ids ) as $id ) {
 		$doc = get_post( $id );
 		if ( ! $doc instanceof \WP_Post ) {

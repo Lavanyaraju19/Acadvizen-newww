@@ -1,0 +1,77 @@
+{
+ "run": "202610182142",
+ "main": "http://localhost:3100",
+ "click_fallbacks": 0,
+ "results": [
+  {
+   "name": "1 \"Homepage\" tabs: Banner, Closing call to action, Sections, Lists",
+   "ok": true,
+   "detail": "Homepage: Banner Closing call to action Sections Lists"
+  },
+  {
+   "name": "2 precondition: no list copied yet",
+   "ok": true,
+   "detail": "0 lists"
+  },
+  {
+   "name": "2 the 8 homepage lists are copied",
+   "ok": true,
+   "detail": "Copied 8 lists the homepage shows today. The homepage looks the same; you can now edit them."
+  },
+  {
+   "name": "2 after copying, the homepage is visually identical (desktop)",
+   "ok": true,
+   "detail": "0.016% pixels differ, 1440x13120"
+  },
+  {
+   "name": "2 after copying, the homepage is visually identical (mobile)",
+   "ok": true,
+   "detail": "0.032% pixels differ, 390x21385"
+  },
+  {
+   "name": "3 the FAQ list opens with its questions",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "3 FAQ saved",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "3 the homepage shows the edited question",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "3 restoring the earlier version brings the original question back",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "4 hiding the FAQ list shows the built-in FAQ (homepage as before)",
+   "ok": true,
+   "detail": "0.012% pixels differ"
+  },
+  {
+   "name": "5 banner saved",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "5 the homepage banner shows the new heading",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "5 the closing call to action shows the new button text",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Z everything put back (homepage as before)",
+   "ok": true,
+   "detail": "0.024% pixels differ"
+  }
+ ]
+}

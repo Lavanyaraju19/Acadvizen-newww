@@ -178,8 +178,65 @@ function shortcodeWidget(seed, shortcode, extra = {}) {
 
 /* Supabase (public, read-only) ------------------------------------------------------------------ */
 
+/*
+ * Without the public Supabase key, the same published rows are read through the Main Website's signed
+ * content API (WORDPRESS_CMS_WEBHOOK_SECRET, the secret WordPress already uses; read-only "list" and
+ * "get"). Filters and ordering of the few queries this tool makes are applied here. Page lead-form
+ * sections (table "sections" by page address) are not exposed by that API: none are returned, so
+ * converted pages use the standard lead form; that is reported in the bundle notes.
+ */
+const CONTENT_API_ENTITIES = { tools_extended: 'tools_extended', blogs: 'blogs', pages: 'pages', home_sections: 'home_sections' }
+const contentApiNotes = new Set()
+async function contentApi(body) {
+  const { signPayload } = await import('../../lib/wordpress/signature.js')
+  const raw = JSON.stringify({ purpose: 'content', request_id: crypto.randomUUID(), actor: { login: 'main-to-elementor (read-only)' }, ...body })
+  const ts = Math.floor(Date.now() / 1000)
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const r = await fetch(`${MAIN}/api/wordpress/content`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Acadvizen-Timestamp': String(ts), 'X-Acadvizen-Signature': signPayload(raw, ts, process.env.WORDPRESS_CMS_WEBHOOK_SECRET) }, body: raw })
+      const j = await r.json()
+      if (!j.ok) throw new Error(`content API ${body.op} ${body.entity}: ${j.error || r.status}`)
+      return j
+    } catch (e) { if (attempt >= 3) throw e; await new Promise((res) => setTimeout(res, 2000 * attempt)) }
+  }
+}
+async function rowsFromContentApi(table, query) {
+  const params = new URLSearchParams(query)
+  if (table === 'sections') { contentApiNotes.add('Page lead-form settings (Supabase "sections") are not available through the content API: converted pages use the standard lead form.'); return [] }
+  const entity = CONTENT_API_ENTITIES[table]
+  if (!entity) throw new Error(`${table}: not available through the content API`)
+  const ids = []
+  for (let offset = 0; ; offset += 200) {
+    const page = await contentApi({ op: 'list', entity, limit: 200, offset })
+    ids.push(...page.data.map((r) => r.id))
+    if (page.data.length < 200) break
+  }
+  const rows = []
+  for (const id of ids) rows.push((await contentApi({ op: 'get', entity, id })).data)
+  // pages.content is not offered by the content API (Main never draws it). Main draws a page without
+  // sections from description, else seo_description (lib/cmsPageRender.js), so its body comes from there.
+  if (entity === 'pages') {
+    const escape = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    for (const row of rows) {
+      const text = row.description || row.seo_description || ''
+      if (!row.content && text) row.content = { html: String(text).split(/\n{2,}/).map((p) => `<p>${escape(p.trim())}</p>`).join('') }
+    }
+  }
+  let out = rows
+  for (const [key, value] of params) {
+    const m = String(value).match(/^eq\.(.*)$/)
+    if (m && key !== 'select' && key !== 'order') out = out.filter((r) => String(r[key]) === m[1])
+  }
+  const order = params.get('order')
+  if (order) { const [field, dir] = order.split('.'); out = [...out].sort((a, b) => (String(a[field] ?? '') < String(b[field] ?? '') ? -1 : String(a[field] ?? '') > String(b[field] ?? '') ? 1 : 0) * (dir === 'desc' ? -1 : 1)) }
+  return out
+}
+
 async function supabase(table, query = 'select=*') {
-  if (!SB_URL || !SB_KEY) throw new Error('NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY are required')
+  if (!SB_URL || !SB_KEY) {
+    if (process.env.WORDPRESS_CMS_WEBHOOK_SECRET) return rowsFromContentApi(table, query)
+    throw new Error('NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY (or WORDPRESS_CMS_WEBHOOK_SECRET for the content API) are required')
+  }
   const rows = []
   for (let from = 0; ; from += 1000) {
     const r = await fetch(`${SB_URL}/rest/v1/${table}?${query}`, { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, Range: `${from}-${from + 999}` } })
@@ -234,8 +291,18 @@ function queue(key, viewports, after, options = {}) {
   captures.push({ key, trees, after, options })
 }
 
+// Analytics and advertising requests are never sent: reading the live Main Website must not count as
+// visits or conversions (GTM/GA, Meta pixel, Clarity, Hotjar, Google Ads).
+const TRACKING = /(^|\.)(googletagmanager\.com|google-analytics\.com|analytics\.google\.com|doubleclick\.net|googleadservices\.com|facebook\.(com|net)|clarity\.ms|hotjar\.(com|io))$/i
+
 async function main() {
   const browser = await chromium.launch()
+  const newContext = browser.newContext.bind(browser)
+  browser.newContext = async (...args) => {
+    const context = await newContext(...args)
+    await context.route((url) => TRACKING.test(url.hostname), (route) => route.abort())
+    return context
+  }
   const tasks = []
   try {
     /* Shell: header, footer, background (from a representative page); every family needs it. */
@@ -301,6 +368,7 @@ async function main() {
   bundle.records = bundle.records.filter((r) => !emptyDesign(r))
   fs.writeFileSync(OUT, JSON.stringify(bundle))
   log(`bundle written: ${OUT} (${(fs.statSync(OUT).size / 1e6).toFixed(1)} MB) — media ${bundle.media.length}, menus ${bundle.menus.length}, templates ${bundle.templates.length}, records ${bundle.records.length}, kit colours ${bundle.kit.colors.length}, kit fonts ${bundle.kit.typography.length}`)
+  bundle.notes.push(...contentApiNotes)
   for (const n of [...new Set(bundle.notes)].slice(0, 30)) log('note:', n)
 }
 

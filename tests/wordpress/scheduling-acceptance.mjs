@@ -67,6 +67,15 @@ try {
 } catch (error) {
   check('run finished without an unexpected error', false, String(error.message || error).split(/\r?\n/)[0])
 } finally {
+  // KEEP_TEST_ITEM=1 (production): the page is not deleted; its own "remove" time already took it off line.
+  if (process.env.KEEP_TEST_ITEM === '1') {
+    await admin.goto(screen('pages', `&s=${SLUG}`)).catch(() => {})
+    const kept = await admin.locator('.acv-main-table tr', { hasText: SLUG }).count().catch(() => 0)
+    check('Z kept: test page still in the admin (not deleted) and not public', kept >= 1 && (await get(`/${SLUG}`)).status === 404, `${kept} listed`)
+    await browser.close()
+    console.log(`\n${pass} passed, ${fail} failed | ${MAIN} | page /${SLUG} KEPT`)
+    process.exit(fail ? 1 : 0)
+  }
   for (const [view, label] of [['', 'Trash'], ['&trashed=1', 'Delete permanently']]) {
     await admin.goto(screen('pages', `${view}&s=${SLUG}`)).catch(() => {})
     const href = await admin.locator('.acv-main-table tr', { hasText: SLUG }).first().locator('a', { hasText: label }).getAttribute('href', { timeout: 15000 }).catch(() => '')

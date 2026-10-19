@@ -1,0 +1,67 @@
+{
+ "run": "202610150807",
+ "main": "http://localhost:3100",
+ "click_fallbacks": 0,
+ "results": [
+  {
+   "name": "1 \"Courses\" and \"Course sections\" tabs",
+   "ok": true,
+   "detail": "Pages, Blogs, Tools, City pages, Service pages, Courses, Course sections, Media library, Locations, Cities, Testimonials, Activity, Banner, Closing call to action, Sections, Lists, Authors, Categories, Tags, Header, Footer, Menus, SEO overrides, Redirects, Site settings"
+  },
+  {
+   "name": "1 course created and shown",
+   "ok": true,
+   "detail": "Saved on the Main Website."
+  },
+  {
+   "name": "1 the course page shows the title, a module, its topics and a skill",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "name": "1 a \"Live list: courses\" section lists the new course",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "2 the edit shows on the course page",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "2 restoring the earlier version brings the first description back",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "3 course sections ask for a course first",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "3 a new section starts with the chosen course",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "3 section saved",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "3 the section is listed under its course",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "4 hiding the course removes it from its page and from course lists",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Z the test course and list page are gone",
+   "ok": true,
+   "detail": ""
+  }
+ ]
+}
