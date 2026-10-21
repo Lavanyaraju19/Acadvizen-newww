@@ -8,9 +8,10 @@
 # Output: ~/acadvizen-backups/enroll-<UTC time>/ (enroll-db.sql.gz, enroll-files.tar.gz, server-facts.txt,
 # SHA256SUMS, verify.txt). The backup holds customer data and wp-config.php: keep that folder private.
 #
-# SSH details come from ~/.acadvizen-production.env (SSH_HOST, SSH_PORT, SSH_USER, SSH_PASS); nothing
-# else in that file is read. The password is handed to each ssh call through a temporary askpass helper
-# that reads it from that call's environment; it is never printed, logged or written to disk.
+# SSH details come from ~/.acadvizen-production.env (SSH_HOST, SSH_PORT, SSH_USER, and SSH_PRIVATE_KEY_PATH
+# and/or SSH_PASS); nothing else in that file is read. The key is tried first (once its public half is added in
+# hPanel > Advanced > SSH Access), then the password. The password is handed to each ssh call through a temporary
+# askpass helper that reads it from that call's environment; it is never printed, logged or written to disk.
 #
 # Verification (verify.txt): both archives pass gzip -t; the dump ends with "Dump completed" and has as
 # many tables as the server reports; the archive holds wp-config.php, wp-content/uploads and as many
@@ -29,7 +30,9 @@ setting() {
 	printf '%s' "$v"
 }
 SSH_HOST=$(setting SSH_HOST); SSH_PORT=$(setting SSH_PORT); SSH_USER=$(setting SSH_USER); SSH_PW=$(setting SSH_PASS)
-for v in SSH_HOST SSH_PORT SSH_USER SSH_PW; do [ -n "${!v}" ] || { echo "$v is not set in $ENV_FILE"; exit 1; }; done
+SSH_KEY=$(setting SSH_PRIVATE_KEY_PATH); SSH_KEY="${SSH_KEY/#\~/$HOME}"; [ -f "$SSH_KEY" ] || SSH_KEY=''
+for v in SSH_HOST SSH_PORT SSH_USER; do [ -n "${!v}" ] || { echo "$v is not set in $ENV_FILE"; exit 1; }; done
+[ -n "$SSH_KEY$SSH_PW" ] || { echo "neither SSH_PRIVATE_KEY_PATH nor SSH_PASS is set in $ENV_FILE"; exit 1; }
 
 TS=$(date -u +%Y%m%dT%H%MZ)
 OUT="$HOME/acadvizen-backups/enroll-$TS"

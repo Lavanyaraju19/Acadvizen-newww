@@ -10,15 +10,22 @@ export async function generateMetadata({ params }) {
   const { slug } = await params
   const supabase = getServerSupabaseClient()
   const { data: author } = slug && supabase
-    ? await supabase.from('authors').select('name,bio').eq('slug', slug).maybeSingle()
+    ? await supabase.from('authors').select('id,name,bio').eq('slug', slug).maybeSingle()
     : { data: null }
   if (!author) {
     return buildMetadata({ title: 'Author', description: 'Acadvizen blog author.', path: `/blog/author/${slug}`, noindex: true })
   }
+  // An author without published posts is an empty page: keep it out of search engines (and the sitemap).
+  const { count } = await supabase
+    .from('blogs')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'published')
+    .eq('author_id', author.id)
   return buildMetadata({
     title: `${author.name} - Author`,
     description: author.bio || `Articles written by ${author.name} on the Acadvizen blog.`,
     path: `/blog/author/${slug}`,
+    noindex: !count,
   })
 }
 

@@ -38,3 +38,13 @@ test('the sitemap builder applies the noindex rules to pages, page SEO overrides
   assert.match(source, /indexableRows\(pages, noindexSeoSlugs\)/)
   assert.match(source, /indexableRows\(await fetchPublishedPublicBlogs\(\{ select: '[^']*noindex'/)
 })
+
+test('an author page without published posts is noindex and left out of the sitemap', async () => {
+  const fs = await import('node:fs')
+  const sitemap = fs.readFileSync(new URL('../../lib/publicSitemap.js', import.meta.url), 'utf8')
+  assert.match(sitemap, /from\('blogs'\)\.select\('author_id'\)\.eq\('status', 'published'\)/)
+  assert.match(sitemap, /if \(!row\.slug \|\| !authorsWithPosts\.has\(row\.id\)\) continue/)
+  const page = fs.readFileSync(new URL('../../app/(public)/blog/author/[slug]/page.jsx', import.meta.url), 'utf8')
+  assert.match(page, /\.select\('id', \{ count: 'exact', head: true \}\)\s*\.eq\('status', 'published'\)\s*\.eq\('author_id', author\.id\)/)
+  assert.match(page, /noindex: !count,/)
+})
