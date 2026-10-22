@@ -48,3 +48,21 @@ test('an author page without published posts is noindex and left out of the site
   assert.match(page, /\.select\('id', \{ count: 'exact', head: true \}\)\s*\.eq\('status', 'published'\)\s*\.eq\('author_id', author\.id\)/)
   assert.match(page, /noindex: !count,/)
 })
+
+test('an empty /companies, /internships or /resources list is noindex and left out of the sitemap', async () => {
+  const fs = await import('node:fs')
+  const sitemap = fs.readFileSync(new URL('../../lib/publicSitemap.js', import.meta.url), 'utf8')
+  assert.match(sitemap, /LIST_PAGE_TABLES = \{ '\/companies': 'companies', '\/internships': 'internships', '\/resources': 'resources' \}/)
+  assert.match(sitemap, /if \(await hasActiveRows\(supabase, table\)\) continue/)
+  for (const table of ['companies', 'internships', 'resources']) {
+    const page = fs.readFileSync(new URL(`../../app/(public)/${table}/page.jsx`, import.meta.url), 'utf8')
+    assert.ok(page.includes(`.from('${table}').select('*', { count: 'exact', head: true }).eq('is_active', true)`), table)
+    assert.match(page, /noindex: !count,/)
+  }
+})
+
+test('page metadata is rendered in the <head> for every visitor (no streamed metadata)', async () => {
+  const fs = await import('node:fs')
+  const config = fs.readFileSync(new URL('../../next.config.mjs', import.meta.url), 'utf8')
+  assert.match(config, /htmlLimitedBots: \/\.\*\/,/)
+})

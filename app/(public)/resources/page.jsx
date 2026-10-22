@@ -7,10 +7,17 @@ import { buildMetadata } from '../../lib/seo'
 import Breadcrumbs from '../../../components/cms/templates/Breadcrumbs'
 
 export async function generateMetadata() {
+  // While the list is empty the page only says "check back soon": keep it out of search engines (and the
+  // sitemap, lib/publicSitemap.js) until the first active item is added.
+  const supabase = getServerSupabaseClient()
+  const { count } = supabase
+    ? await supabase.from('resources').select('*', { count: 'exact', head: true }).eq('is_active', true)
+    : { count: 0 }
   return buildMetadata({
     title: 'Resources',
     description: 'Free digital marketing resources, guides, and downloads from Acadvizen.',
     path: '/resources',
+    noindex: !count,
   })
 }
 

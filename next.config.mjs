@@ -56,6 +56,9 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  // Title, description and canonical are always rendered in the page <head> (never streamed into the body),
+  // for every visitor and crawler, so crawlers that do not run JavaScript still read them.
+  htmlLimitedBots: /.*/,
   skipMiddlewareUrlNormalize: true,
   outputFileTracingRoot: __dirname,
   // sharp ships a native .node binary resolved via platform-specific optionalDependencies

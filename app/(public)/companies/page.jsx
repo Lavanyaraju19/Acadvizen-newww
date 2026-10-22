@@ -6,10 +6,17 @@ import { getServerSupabaseClient } from '../../../lib/supabaseServer'
 import { buildMetadata } from '../../lib/seo'
 
 export async function generateMetadata() {
+  // While the list is empty the page only says "check back soon": keep it out of search engines (and the
+  // sitemap, lib/publicSitemap.js) until the first active item is added.
+  const supabase = getServerSupabaseClient()
+  const { count } = supabase
+    ? await supabase.from('companies').select('*', { count: 'exact', head: true }).eq('is_active', true)
+    : { count: 0 }
   return buildMetadata({
     title: 'Hiring Partners',
     description: 'Companies that hire and partner with Acadvizen digital marketing graduates.',
     path: '/companies',
+    noindex: !count,
   })
 }
 
