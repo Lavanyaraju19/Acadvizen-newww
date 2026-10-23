@@ -6,7 +6,7 @@
 
 Every result is labelled by where it was observed:
 - **PRODUCTION**: the live websites and services;
-- **STAGING**: the copy at `cms.acadvizen.com` and its preview Main website;
+- **STAGING** *(historical, retired)*: the copy formerly at `cms.acadvizen.com` and its preview Main website. It is not a CMS address and nothing depends on it; the only admin is `https://enroll.acadvizen.com/wp-admin/`;
 - **LOCAL**: the development machine.
 
 Staging and local results support the work. They are not proof that production works.
@@ -64,7 +64,7 @@ Blogs ("Main Blogs") feed Main's existing `/blog` pages through `GET /wp-json/ac
 | WordPress integration on Main | **Off.** Vercel production has 7 variables and no `WORDPRESS_*` variable |
 | Plugin on Enrollment | **Installed and active, 0.4.0** (found active at 14:52 UTC; not installed by the engineer). `acadvizen-cms/v1` with 4 routes registered. Publicly served files are byte-identical to the 0.4.0 package |
 | Enquiry API `POST /wp-json/acadvizen/v1/enquiry` | Registered (POST) |
-| `cms.acadvizen.com` | The **staging** copy (plugin installed, connected to a staging Main) |
+| `cms.acadvizen.com` | *Historical:* the former **staging** copy. Retired; not a CMS address and not needed by anything |
 
 Main fixes live since 9–10 October:
 - titles show "| Acadvizen" once;

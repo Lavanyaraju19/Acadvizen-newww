@@ -8,7 +8,7 @@ There is deliberately **no second, custom page builder**. Main's `/admin` alread
 
 Where each result was observed:
 - **LOCAL:** the Docker WordPress plus a local Main build (`tests/wordpress`, 44/44 checks, 10 Oct 2026);
-- **STAGING:** `cms.acadvizen.com` (2–10 Oct, earlier plugin build);
+- **STAGING** *(historical, retired)*: `cms.acadvizen.com` (2–10 Oct, earlier plugin build); not a CMS address, nothing depends on it;
 - **PRODUCTION:** the plugin is installed (0.4.0) but not connected to Main, so no publishing behaviour has been verified on production yet. `docs/cms-implementation/CLIENT-HANDOVER.md` has the production acceptance matrix.
 
 ## Implementation matrix

@@ -49,14 +49,22 @@ try {
     const htaccess = () => compose(['exec', '-T', 'wordpress', 'sha256sum', '/var/www/html/.htaccess']).slice(0, 16)
     const jobs = () => cli('cron', 'event', 'list', '--fields=hook', '--format=csv').split(/\r?\n/).filter((h) => ['acv_cms_daily_refresh', 'acv_cms_requeue_stalled'].includes(h)).length
     const namespace = async () => ((await (await fetch(`${WP}/wp-json/`)).json()).namespaces || []).includes('acadvizen-cms/v1')
+    // WP-Cron keeps every job in one stored option without locking: a request that is running WP-Cron while the
+    // plugin is (de)activated (the local Main Website polls WordPress) can save back a copy read a moment earlier.
+    // So the job checks allow a short window. Activation is checked after one admin request, which runs the plugin's
+    // own repair (ensure_recurring_jobs on admin_init), as on the live site. A job list that stays wrong still fails.
+    // Up to 60 s: a WP-Cron run that started before the switch can take that long to finish and save its copy.
+    const settle = async (pred, poke) => { let n = jobs(); for (let i = 0; i < 20 && !pred(n); i++) { if (poke) await fetch(`${WP}/wp-admin/admin-ajax.php`).catch(() => {}); await new Promise((r) => setTimeout(r, 3000)); n = jobs() } return n }
     const before = htaccess()
     cli('plugin', 'deactivate', 'acadvizen-cms')
     check('L deactivate: .htaccess unchanged', htaccess() === before)
-    check('L deactivate: recurring jobs removed', jobs() === 0)
+    const left = await settle((n) => n === 0, false)
+    check('L deactivate: recurring jobs removed', left === 0, `${left} left`)
     check('L deactivate: API namespace gone', !(await namespace()))
     cli('plugin', 'activate', 'acadvizen-cms')
     check('L activate: .htaccess unchanged (rules rebuilt in the database only)', htaccess() === before)
-    check('L activate: both recurring jobs scheduled', jobs() === 2)
+    const scheduled = await settle((n) => n === 2, true)
+    check('L activate: both recurring jobs scheduled', scheduled === 2, `${scheduled} scheduled`)
     check('L activate: API namespace registered', await namespace())
     const state = cli('eval', String.raw`global $wpdb; echo $wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}acv_render_versions'") ? "table" : "no-table", has_filter("login_headerurl") ? " login" : "", has_filter("hfe_get_settings_type_header") ? " hfe" : "", has_action("wp_loaded", 'Acadvizen\CMS\restore_missing_sitemap_rules') ? " sitemap" : "";`)
     check('L activate: versions table present', state.startsWith('table'), state)

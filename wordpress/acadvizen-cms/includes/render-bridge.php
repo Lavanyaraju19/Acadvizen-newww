@@ -82,6 +82,23 @@ function is_bridge_render(): bool {
 	return bridge_render_post_id() > 0;
 }
 
+/**
+ * Elementor's editor preview of a document published to the Main Website only (a page, a working
+ * copy of one, or a Main design template), opened by someone who may edit it. The editor then shows
+ * the page inside the Main Website's header and footer, as visitors of www.acadvizen.com see it,
+ * instead of Enrollment's (seen 20 Oct 2026: the Main homepage was edited under Enrollment's header
+ * and its "ADMISSIONS OPEN" bar). Documents published to Both keep Enrollment's chrome here.
+ */
+function is_main_editor_preview(): bool {
+	$id = isset( $_GET['elementor-preview'] ) ? absint( $_GET['elementor-preview'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; access is checked below.
+	return $id > 0 && is_user_logged_in() && current_user_can( 'edit_post', $id ) && TARGET_MAIN === get_publish_target( $id );
+}
+
+/** True while this request draws a page for the Main Website: a signed bridge render or its editor preview. */
+function rendering_for_main(): bool {
+	return is_bridge_render() || is_main_editor_preview();
+}
+
 /** True for an administrator's signed preview render (not a publish). */
 function is_bridge_preview(): bool {
 	return RENDER_MODE_PREVIEW === bridge_render_request()[1];
@@ -226,6 +243,58 @@ function exclude_main_only_from_core_sitemap( array $args ): array {
 	return $args;
 }
 
+/** Master Admin's "Hide from search engines" box (_acv_noindex) is ticked for this post. */
+function hidden_from_search( int $post_id ): bool {
+	return $post_id > 0 && '1' === (string) get_post_meta( $post_id, META_NOINDEX, true );
+}
+
+/** IDs of published posts with "Hide from search engines" ticked (for the sitemaps). */
+function hidden_from_search_ids(): array {
+	$ids = wp_cache_get( 'hidden_from_search_ids', 'acadvizen_cms' );
+	if ( ! is_array( $ids ) ) {
+		$ids = array_map( 'intval', get_posts( array( 'post_type' => 'any', 'post_status' => 'publish', 'posts_per_page' => -1, 'fields' => 'ids', 'no_found_rows' => true, 'meta_key' => META_NOINDEX, 'meta_value' => '1' ) ) ); // phpcs:ignore WordPress.DB.SlowDBQuery
+		wp_cache_set( 'hidden_from_search_ids', $ids, 'acadvizen_cms', 300 );
+	}
+	return $ids;
+}
+
+/**
+ * rank_math/frontend/robots: a page whose "Hide from search engines" box is ticked in Master Admin says
+ * noindex, whatever its Rank Math settings. Before, the box reached Main's blog API only: the page
+ * drawn by WordPress (and so a Main page served by the Render Bridge) still said "index, follow".
+ */
+function robots_follow_master_admin_noindex( $robots ) {
+	$object = get_queried_object();
+	if ( is_array( $robots ) && $object instanceof \WP_Post && hidden_from_search( (int) $object->ID ) ) {
+		unset( $robots['index'] );
+		$robots['noindex'] = 'noindex';
+	}
+	return $robots;
+}
+
+/** wp_robots (WordPress' own robots tag, used when Rank Math does not print one): the same rule. */
+function core_robots_follow_master_admin_noindex( array $robots ): array {
+	$object = get_queried_object();
+	if ( $object instanceof \WP_Post && hidden_from_search( (int) $object->ID ) ) {
+		unset( $robots['index'] );
+		$robots['noindex'] = true;
+	}
+	return $robots;
+}
+
+/** A page hidden from search engines is not listed in this website's sitemaps either. */
+function exclude_hidden_from_rank_math_sitemap( $url, $type, $object ) {
+	return ( 'post' === $type && is_object( $object ) && isset( $object->ID ) && in_array( (int) $object->ID, hidden_from_search_ids(), true ) ) ? false : $url;
+}
+
+function exclude_hidden_from_core_sitemap( array $args ): array {
+	$ids = hidden_from_search_ids();
+	if ( $ids ) {
+		$args['post__not_in'] = array_merge( $args['post__not_in'] ?? array(), $ids );
+	}
+	return $args;
+}
+
 /**
  * Rank Math sitemap entries (rank_math/sitemap/entry filter): returning false drops the entry.
  * Rank Math passes plain database rows here (not WP_Post), so only the ID is relied on.
@@ -274,10 +343,14 @@ function pick_hfe_template_for_site( $template_id, string $type ) {
 		$single     = \Header_Footer_Elementor::get_template_id( $type );
 		$candidates = '' !== (string) $single ? array( $single ) : array();
 	}
-	$for_main = is_bridge_render();
+	// The same rule as Theme Builder templates: once the Main Website has its own header and footer,
+	// a header or footer shared with Both (Enrollment's, with its announcement bar) is never chosen
+	// for a Main page, whatever order HFE lists them in.
+	$for_main = rendering_for_main();
+	$location = array( 'type_header' => 'header', 'type_footer' => 'footer' )[ $type ] ?? $type;
+	$own      = $for_main && main_has_own_chrome();
 	foreach ( $candidates as $candidate ) {
-		$target = get_publish_target( (int) $candidate );
-		if ( $for_main ? targets_main( $target ) : targets_enrollment( $target ) ) {
+		if ( theme_template_allowed( get_publish_target( (int) $candidate ), $for_main, $location, $own ) ) {
 			return $candidate;
 		}
 	}
@@ -297,8 +370,52 @@ function pick_theme_builder_template_for_site( $template_id, $location = '' ) {
 	if ( $template_id <= 0 ) {
 		return $template_id;
 	}
-	$target = get_publish_target( $template_id );
-	return ( is_bridge_render() ? targets_main( $target ) : targets_enrollment( $target ) ) ? $template_id : 0;
+	$for_main = rendering_for_main();
+	return theme_template_allowed( get_publish_target( $template_id ), $for_main, (string) $location, $for_main && main_has_own_chrome() ) ? $template_id : 0;
+}
+
+/**
+ * Whether a Theme Builder template may be used on the website being rendered. Main pages take their
+ * header and footer from the Main Website's own templates; once those exist, an Enrollment header,
+ * footer or popup shared with "Both" is not added to Main pages as well (seen 19 Oct 2026: Enrollment's
+ * footer bar and popup appeared on the imported Main location pages). Only templates published to the
+ * Main Website itself fill those locations there. Everything else keeps the "Publish To" rule.
+ */
+function theme_template_allowed( string $target, bool $for_main, string $location, bool $main_has_own_chrome ): bool {
+	if ( ! $for_main ) {
+		return targets_enrollment( $target );
+	}
+	if ( $main_has_own_chrome && in_array( $location, array( 'header', 'footer', 'popup' ), true ) ) {
+		return TARGET_MAIN === $target;
+	}
+	return targets_main( $target );
+}
+
+/** True when a published header or footer template is published to the Main Website only. */
+function main_has_own_chrome(): bool {
+	static $has = null;
+	if ( null === $has ) {
+		$ids = get_posts(
+			array(
+				'post_type'        => array( 'elementor-hf', 'elementor_library' ),
+				'post_status'      => 'publish',
+				'fields'           => 'ids',
+				'posts_per_page'   => 50,
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+				'meta_query'       => array( array( 'key' => META_TARGET, 'value' => TARGET_MAIN ) ), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+			)
+		);
+		$has = false;
+		foreach ( (array) $ids as $id ) {
+			$type = (string) get_post_meta( (int) $id, 'ehf_template_type', true ) . ' ' . (string) get_post_meta( (int) $id, '_elementor_template_type', true );
+			if ( preg_match( '/type_header|type_footer|\bheader\b|\bfooter\b/', $type ) ) {
+				$has = true;
+				break;
+			}
+		}
+	}
+	return $has;
 }
 
 /**

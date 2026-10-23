@@ -17,6 +17,9 @@ export function mainOwn(url) {
   return u.toString()
 }
 
+/** Analytics, advertising and session-recording endpoints, blocked while capturing. */
+export const TRACKING = /google-analytics\.com|googletagmanager\.com|google\.com\/(ccm|rmkt|pagead)|doubleclick\.net|googleadservices\.com|clarity\.ms|connect\.facebook\.net|facebook\.com\/tr|static\.hotjar\.com/
+
 export const MAIN_SHELL = {
   header: ['.acadvizen-noise > div.fixed.inset-x-0.top-0', '.acadvizen-noise > div[class*="h-[110px]"]'],
   footer: ['.acadvizen-noise > footer', '.acadvizen-noise > div.fixed.right-0', '.acadvizen-noise > .dock-nav-wrap'],
@@ -36,7 +39,10 @@ async function settle(page) {
   await page.evaluate(() => window.scrollTo(0, 0))
   await page.waitForTimeout(700)
   // Freeze animations so every element is measured in its final state.
-  await page.addStyleTag({ content: '*,*::before,*::after{animation-play-state:paused!important;transition:none!important}[style*="opacity: 0"]{opacity:1!important}' }).catch(() => {})
+  // Reveal animations set an inline opacity (and a slide) that the server writes as "opacity:0" and the
+  // browser as "opacity: 0.4" mid-way; either is the animation's start, never the design (a testimonial
+  // card captured half faded, 21 Oct 2026).
+  await page.addStyleTag({ content: '*,*::before,*::after{animation-play-state:paused!important;transition:none!important}[style*="opacity: 0"],[style*="opacity:0"]{opacity:1!important}' }).catch(() => {})
   await page.evaluate(() => {
     for (const el of document.querySelectorAll('[style*="transform"]')) {
       if (/translate|scale/.test(el.style.transform) && el.closest('main,footer,header')) el.style.transform = 'none'
@@ -74,16 +80,24 @@ export async function readAccordions(page) {
     }
     const styleOf = (el, keys) => { if (!el) return {}; const s = getComputedStyle(el); return Object.fromEntries(keys.map((k) => [k, s[k]])) }
     window.__acvAccordions = []
-    // Items = siblings whose first child is a toggle button; at least two of them in one list.
+    // Items = elements whose first child is a toggle button; at least two of them in one list. An item
+    // may sit in wrappers of its own (a reveal animation around each FAQ item: the course pages,
+    // 20 Oct 2026), so the list is the parent of the item's outermost single-child wrapper.
+    const outermost = (item) => { let n = item; while (n.parentElement && n.parentElement.children.length === 1 && !['MAIN', 'SECTION', 'BODY'].includes(n.parentElement.tagName)) n = n.parentElement; return n }
     const lists = new Map()
     for (const b of document.querySelectorAll('main button')) {
       const item = b.parentElement
       if (!item || item.firstElementChild !== b || !item.parentElement) continue
-      if (!lists.has(item.parentElement)) lists.set(item.parentElement, [])
-      lists.get(item.parentElement).push({ b, item })
+      // Through wrappers only for real disclosure buttons, so separate single toggles (e.g. two
+      // cards with a "Read more" each) are never paired into one accordion.
+      const top = b.hasAttribute('aria-expanded') ? outermost(item) : item
+      if (!top.parentElement) continue
+      if (!lists.has(top.parentElement)) lists.set(top.parentElement, [])
+      lists.get(top.parentElement).push({ b, item, top })
     }
     for (const [list, entries] of lists) {
-      if (entries.length < 2 || entries.length !== [...list.children].filter((c) => c.firstElementChild && c.firstElementChild.tagName === 'BUTTON').length) continue
+      // Every entry is its own child of the list (no two toggles inside one item).
+      if (entries.length < 2 || new Set(entries.map((e) => e.top)).size !== entries.length) continue
       const panelOf = ({ b, item }) => (b.getAttribute('aria-controls') && document.getElementById(b.getAttribute('aria-controls'))) || [...item.children].filter((c) => c !== b).pop() || null
       const isOpen = (e) => { const p = panelOf(e); return b2(e) || Boolean(p && p.offsetHeight > 0 && textOf(p)) }
       const b2 = ({ b }) => b.getAttribute('aria-expanded') === 'true'
@@ -135,7 +149,7 @@ export async function readAccordions(page) {
         title: styleOf(first.b.querySelector('h2,h3,h4,h5') || first.b.querySelector('span,p') || first.b, ['color', 'fontFamily', 'fontSize', 'fontWeight', 'lineHeight']),
         button: styleOf(first.b, ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'backgroundColor']),
         content: styleOf(panelOf(first), ['color', 'fontSize', 'lineHeight', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'marginTop']),
-        gap: getComputedStyle(list).rowGap !== 'normal' ? getComputedStyle(list).rowGap : getComputedStyle(entries[1].item).marginTop,
+        gap: getComputedStyle(list).rowGap !== 'normal' ? getComputedStyle(list).rowGap : getComputedStyle(entries[1].top).marginTop,
         titleTag: ((first.b.querySelector('h2,h3,h4,h5') || {}).tagName || 'div').toLowerCase(),
       })
     }
@@ -168,6 +182,58 @@ export async function readAccordions(page) {
         content,
         gap: getComputedStyle(list).rowGap !== 'normal' ? getComputedStyle(list).rowGap : getComputedStyle(entries[1]).marginTop,
         titleTag: ((summaryOf(first).querySelector('h2,h3,h4,h5') || {}).tagName || 'div').toLowerCase(),
+      })
+    }
+  })
+}
+
+/**
+ * Slideshows (e.g. /achievements' alumni stories): a section with "Previous …" / "Next …" buttons that
+ * swap what one part of it shows. A screenshot only ever sees the first story, so every state is read
+ * by clicking Next until the slideshow comes back (or stops), and what changed per state is kept: the
+ * changed texts and media addresses, in page order. The smallest element holding every change is the
+ * "stage" (marked data-acv-slideshow); its scripted buttons are marked data-acv-skip, since the
+ * Elementor carousel that replaces it brings its own arrows. The first state is restored at the end.
+ */
+export async function readSlideshows(page) {
+  await page.evaluate(async () => {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms))
+    const visible = (e) => e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden'
+    window.__acvSlideshows = []
+    const labelled = (re) => [...document.querySelectorAll('main button[aria-label]')].filter((b) => re.test(b.getAttribute('aria-label').trim()) && visible(b))
+    for (const next of labelled(/^next\b/i)) {
+      const section = next.closest('section') || next.parentElement
+      const prev = labelled(/^prev(ious)?\b/i).find((b) => section.contains(b))
+      if (!prev || section.hasAttribute('data-acv-slideshow') || section.querySelector('[data-acv-slideshow]')) continue
+      // Leaves (text) and media, in page order; their elements, to find what changed.
+      const read = () => {
+        const leaves = [...section.querySelectorAll('*')].filter((e) => visible(e) && !e.closest('button[aria-label]') && ((e.children.length === 0 && e.textContent.trim()) || ['VIDEO', 'IMG'].includes(e.tagName)))
+        return leaves.map((e) => ({ el: e, value: e.tagName === 'VIDEO' ? (e.currentSrc || (e.querySelector('source') || {}).src || '') : e.tagName === 'IMG' ? (e.currentSrc || e.src) : e.textContent.replace(/\s+/g, ' ').trim(), media: ['VIDEO', 'IMG'].includes(e.tagName) }))
+      }
+      const key = (s) => s.map((x) => x.value).join('\u0001')
+      const states = [read()]
+      for (let i = 0; i < 12; i++) {
+        next.click(); await wait(600)
+        const s = read()
+        if (key(s) === key(states[0]) || key(s) === key(states[states.length - 1])) break
+        states.push(s)
+      }
+      // Back to the first state (a looping slideshow is there already; one that stops at its end is not).
+      for (let i = 0; i < 12 && key(read()) !== key(states[0]); i++) { prev.click(); await wait(600) }
+      if (states.length < 2 || states.some((s) => s.length !== states[0].length)) continue
+      const changed = states[0].map((x, i) => states.some((s) => s[i].value !== x.value) ? i : -1).filter((i) => i >= 0)
+      if (!changed.length) continue
+      // Stage: the smallest element holding every changed leaf.
+      let stage = states[0][changed[0]].el
+      while (stage && !changed.every((i) => stage.contains(states[0][i].el))) stage = stage.parentElement
+      if (!stage || !section.contains(stage)) continue
+      stage.setAttribute('data-acv-slideshow', String(window.__acvSlideshows.length))
+      for (const b of stage.querySelectorAll('button')) b.setAttribute('data-acv-skip', '1')
+      for (const b of [next, prev]) b.setAttribute('data-acv-skip', '1')
+      window.__acvSlideshows.push({
+        // Per state: [first-state value, this state's value] for each changed text / media address.
+        slides: states.map((s) => changed.map((i) => ({ from: states[0][i].value, to: s[i].value, media: states[0][i].media }))),
+        titles: states.map((s) => (s.find((x, i) => changed.includes(i) && !x.media) || {}).value || ''),
       })
     }
   })
@@ -249,12 +315,18 @@ export function findHiddenBlocks(roots) {
 
 export async function captureRoute(browser, url, parts = ['main']) {
   const context = await browser.newContext({ viewport: { width: VIEWPORTS.desktop, height: CAPTURE_HEIGHT }, deviceScaleFactor: 1 })
+  // A capture is not a visit: analytics, ad and session-recording calls never leave the browser.
+  await context.route(TRACKING, (route) => route.abort())
   const page = await context.newPage()
   try {
+    // One slow load (a video, a stalled third-party script) must not end a whole export: on a
+    // timeout the page is opened once more and used as soon as its HTML is in.
     const response = await page.goto(mainOwn(url), { waitUntil: 'load', timeout: 120000 })
+      .catch((e) => { if (!/Timeout/i.test(String(e && e.name) + String(e && e.message))) throw e; return page.goto(mainOwn(url), { waitUntil: 'domcontentloaded', timeout: 120000 }) })
     await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {})
     await settle(page)
     await readAccordions(page)
+    await readSlideshows(page)
     // The page's own server HTML wins over what scripts change in the browser afterwards (a legacy
     // client component can rewrite the description): migrated pages publish what Main's server sends.
     const seo = mergeSeo(await readSeo(page), serverSeo(response ? await response.text().catch(() => '') : ''))

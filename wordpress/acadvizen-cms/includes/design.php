@@ -40,6 +40,22 @@ function design_template_for( string $post_type ): int {
 	return ( $id > 0 && 'elementor_library' === get_post_type( $id ) && 'publish' === get_post_status( $id ) ) ? $id : 0;
 }
 
+/**
+ * A record may be drawn by another published design than its type's, chosen per record (meta
+ * DESIGN_CHOICE_META): e.g. the 13 "Digital Marketing Courses in <area>" pages are Locations drawn by
+ * the "Area course page" design, while the 108 location pages keep the type's design.
+ */
+const DESIGN_CHOICE_META = '_acv_design_template';
+
+/** The published Elementor template that shows this record, or 0. */
+function design_template_for_post( \WP_Post $post ): int {
+	$chosen = (int) get_post_meta( $post->ID, DESIGN_CHOICE_META, true );
+	if ( $chosen > 0 && 'elementor_library' === get_post_type( $chosen ) && 'publish' === get_post_status( $chosen ) ) {
+		return $chosen;
+	}
+	return design_template_for( $post->post_type );
+}
+
 /** True when the record was designed in Elementor itself (its own design wins over the template). */
 function has_own_elementor_design( int $post_id ): bool {
 	$data = (string) get_post_meta( $post_id, '_elementor_data', true );
@@ -47,7 +63,7 @@ function has_own_elementor_design( int $post_id ): bool {
 }
 
 function uses_design_template( \WP_Post $post ): bool {
-	return in_array( $post->post_type, DESIGN_TYPES, true ) && ! has_own_elementor_design( $post->ID ) && design_template_for( $post->post_type ) > 0;
+	return in_array( $post->post_type, DESIGN_TYPES, true ) && ! has_own_elementor_design( $post->ID ) && design_template_for_post( $post ) > 0;
 }
 
 /**
@@ -64,7 +80,7 @@ function render_design_template_content( $content ) {
 		return $content;
 	}
 	$rendering = true;
-	$html      = \Elementor\Plugin::instance()->frontend->get_builder_content_for_display( design_template_for( $post->post_type ), true );
+	$html      = \Elementor\Plugin::instance()->frontend->get_builder_content_for_display( design_template_for_post( $post ), true );
 	$rendering = false;
 	return '' !== (string) $html ? run_acv_shortcodes_in_widget( (string) $html ) : $content;
 }
@@ -299,6 +315,9 @@ function shortcode_loop( $atts ): string {
 			'exclude_current' => 'yes',
 			'same'            => '',
 			'link'            => 'no',
+			// layout="row": the cards side by side, wrapping to the next line (e.g. a row of area links), each as wide as its content.
+			'layout'          => 'grid',
+			'same_design'     => 'no',
 			// Search box + category list above the grid, filtering in the browser.
 			'filter'             => 'no',
 			'filter_field'       => 'category',
@@ -330,12 +349,22 @@ function shortcode_loop( $atts ): string {
 	if ( $current instanceof \WP_Post && 'yes' === $atts['exclude_current'] ) {
 		$args['post__not_in'] = array( $current->ID );
 	}
+	$meta_query = array();
 	if ( '' !== $atts['same'] && $current instanceof \WP_Post ) {
 		$key   = field_meta_key( $type, (string) $atts['same'] );
 		$value = get_post_meta( $current->ID, $key, true );
 		if ( '' !== (string) $value ) {
-			$args['meta_query'] = array( array( 'key' => $key, 'value' => $value ) ); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+			$meta_query[] = array( 'key' => $key, 'value' => $value );
 		}
+	}
+	// same_design="yes": only records drawn by the same chosen design as the record being viewed (e.g. the
+	// other area course pages, never the location pages that share their type).
+	if ( 'yes' === $atts['same_design'] && $current instanceof \WP_Post ) {
+		$chosen       = (string) get_post_meta( $current->ID, DESIGN_CHOICE_META, true );
+		$meta_query[] = '' !== $chosen ? array( 'key' => DESIGN_CHOICE_META, 'value' => $chosen ) : array( 'key' => DESIGN_CHOICE_META, 'compare' => 'NOT EXISTS' );
+	}
+	if ( $meta_query ) {
+		$args['meta_query'] = array_merge( array( 'relation' => 'AND' ), $meta_query ); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 	}
 	$query = new \WP_Query( $args );
 	// exclude_current="after": the first `limit` records are taken and the record being viewed is
@@ -350,8 +379,12 @@ function shortcode_loop( $atts ): string {
 	}
 	$class = 'acv-loop-' . substr( md5( (string) wp_json_encode( $atts ) ), 0, 8 );
 	$cols  = array( max( 1, (int) $atts['columns'] ), max( 1, (int) $atts['columns_tablet'] ), max( 1, (int) $atts['columns_mobile'] ) );
+	// Grid of equal columns per device, or (layout="row") cards side by side, wrapping, as wide as their content.
+	$layout = 'row' === $atts['layout']
+		? '.%1$s{display:flex;flex-wrap:wrap;gap:%2$dpx}'
+		: '.%1$s{display:grid;gap:%2$dpx;grid-template-columns:repeat(%3$d,minmax(0,1fr))}@media(max-width:1024px){.%1$s{grid-template-columns:repeat(%4$d,minmax(0,1fr))}}@media(max-width:767px){.%1$s{grid-template-columns:repeat(%5$d,minmax(0,1fr))}}';
 	$out   = sprintf(
-		'<style>.%1$s{display:grid;gap:%2$dpx;grid-template-columns:repeat(%3$d,minmax(0,1fr))}@media(max-width:1024px){.%1$s{grid-template-columns:repeat(%4$d,minmax(0,1fr))}}@media(max-width:767px){.%1$s{grid-template-columns:repeat(%5$d,minmax(0,1fr))}}.%1$s>.acv-loop__item>a{display:block;color:inherit;text-decoration:none}.%1$s>.acv-loop__item>a,.%1$s>.acv-loop__item>.elementor,.%1$s>.acv-loop__item>a>.elementor,.%1$s>.acv-loop__item>.elementor>.e-con,.%1$s>.acv-loop__item>a>.elementor>.e-con{height:100%%}</style><div class="acv-loop %1$s">',
+		'<style>' . $layout . '.%1$s>.acv-loop__item>a{display:block;color:inherit;text-decoration:none}.%1$s>.acv-loop__item>a,.%1$s>.acv-loop__item>.elementor,.%1$s>.acv-loop__item>a>.elementor,.%1$s>.acv-loop__item>.elementor>.e-con,.%1$s>.acv-loop__item>a>.elementor>.e-con{height:100%%}</style><div class="acv-loop %1$s">',
 		esc_attr( $class ),
 		max( 0, (int) $atts['gap'] ),
 		$cols[0],
@@ -628,6 +661,9 @@ const MAIN_BASE_CSS = '.site-content>.ast-container,.site-content .ast-container
 	// As on the Main Website (Tailwind's reset): text blocks add no paragraph spacing of their own and
 	// links take the text colour. Blog article text (.acv-prose) keeps its own spacing.
 	. '.elementor-widget-text-editor:not(.acv-prose) :is(p,li,blockquote){margin:0}.elementor-widget-text-editor:not(.acv-prose) a{color:inherit}'
+	// The theme draws every blockquote italic, grey and indented; a quote in a Main design (testimonial
+	// cards) takes its text widget's own style, as on the Main Website (21 Oct 2026: quotes came out grey).
+	. '.elementor-widget-text-editor:not(.acv-prose) blockquote{font-style:inherit;color:inherit;font-size:inherit;font-weight:inherit;line-height:inherit;border:0;padding:0;background:none;quotes:none}'
 	// The theme colours every heading tag directly, which would hide the title colours chosen in
 	// an Elementor Accordion (they are set on the title row and inherited by its h2-h5).
 	. '.elementor .e-n-accordion-item-title-text{color:inherit}'

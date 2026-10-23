@@ -1,6 +1,218 @@
-# Acadvizen central CMS: client handover (updated 19 October 2026)
+# Acadvizen central CMS: client handover (updated 21 October 2026)
 
-## Status on 19 October 2026 (current)
+## Status on 21 October 2026 (current; supersedes the sections below)
+
+**Verdict: NOT READY.** Production is unchanged since 20 October, and on production 108 of 314 Main addresses are edited visually. A release candidate covering 310 of 314 addresses was built and checked on an isolated copy of production. It reaches the client only through owner-approved steps (end of this section). Release details: `RELEASE-REPORT-2026-10-21.md`. Every address: `MAIN-VISUAL-EDITING-INVENTORY.md`.
+
+**What is live (read-only checks, 21 Oct):**
+- **Enrollment:** Acadvizen Master Admin **0.7.4** (public readme "Stable tag: 0.7.4").
+- **Main:** `dpl_56BrUwoX4opAgGZ3UDBrw4iBQEa1`, with the Render Bridge **enabled**, as the owner instructed. Location pages answer with a WordPress render version; the other pages are drawn by Main.
+- **Signed routes:** anonymous `/wp-json/acadvizen-cms/v1/manifest` and `/render` → 401 with `no-cache`.
+- **Enrollment:** 58 of 59 addresses identical to the 15 Oct record; the one difference is the approved `/test/` unpublish.
+- **No production change was made on 21 Oct:** no install, commit, push, deployment, cache purge, setting or content change.
+
+**Prepared, waiting for approval:**
+- **Plugin 0.7.6** (`dist/acadvizen-cms-0.7.6-worktree-c5b51b05c2a6/acadvizen-cms.zip`, sha256 `6356cd75…347fe52b`). It contains 0.7.5's two fixes:
+  - signed error responses are never cached;
+  - lost scheduled jobs are repaired from the manifest.
+  It adds:
+  - the Elementor editor shows Main pages with Main's own header and footer;
+  - "Hide from search engines" is honoured on Main renders and in the sitemaps;
+  - per-page design choice and the area-page fields.
+  - **Proved in the copy:** cache headers 0.7.4 vs 0.7.6, job repair, and rollback 0.7.6 → 0.7.4 → 0.7.6.
+- **The Main release-candidate bundle** `main-rc-20261021` (sha256 `1d795bc8…3d41638`):
+  - homepage, 19 dedicated pages, 86 blogs and 67 tools with their shared designs;
+  - 13 "-in-" city pages;
+  - 13 area pages and 2 city course pages, with the area name, heading, introduction and a live "Nearby areas" list bound per page.
+
+**Checked in the copy (21 Oct), against what www.acadvizen.com serves now:**
+- **SEO and text:**
+  - title, canonical, robots and description on all 310;
+  - visible text on locations 108/108, -in- pages 13/13, area pages 13/13 and city course pages 2/2;
+  - visible text on blogs 86/86, the homepage (145/145 lines), `/courses` (166/166) and `/placement` on phones (88/88).
+- **Chrome:** only Main's header and footer on all 310; no Enrollment footer, popup, course bar or "ADMISSIONS OPEN" bar.
+- **"Nearby areas":** identical to production on 13/13 area pages.
+- **Layout:** desktop, tablet and phone, with no sideways scroll.
+  - Known remaining differences: the alumni carousel on `/achievements` uses arrows instead of side tabs, page heights differ by 0–16%, and spacing differs slightly in places (inventory §2).
+- **Real admin interface (copy, temporary admin):**
+  - edit in Elementor → Publish (submits) → Approvals → Approve (administrator self-approval) → Publish approved revision → render job → the Main render shows the change;
+  - shown for `/about`, `/tools` and the homepage;
+  - shown for the shared "Tool page design" (one edit reached **67/67** tool pages and no other page);
+  - shown for the "Area course page design" (**13/13** area pages, no other page).
+
+**Security:** credential rotation remains **deferred by explicit client instruction**. The WordPress admin credential shared earlier and the legacy Supabase keys are still exposed, and that risk is not resolved. No secret appears in the code, documents or evidence.
+
+**Waiting for the owner:**
+1. **Install plugin 0.7.6** on Enrollment (Plugins → Add New → Upload → Replace current with uploaded); rollback with the 0.7.4 zip.
+2. **Approve the cutover of each Main family** (homepage, dedicated pages, blogs, tools, -in- city pages, area pages). Each is imported as "waiting for approval", one page published and checked first, then the rest. Rollback per page or per family (inventory §4).
+3. **Decide on `/companies`, `/internships`, `/resources`** (empty lists: stay on Main, or a list bound to Main's data after a Main release) **and `/blog/author/john-doe`** (placeholder author in the sitemap: remove on Main).
+4. **Main fixes outside the CMS** (found by the 21 Oct crawl):
+   - 8 links to tools without a record answer a noindex "Tool Details" page;
+   - 5 tool logos (Framer, Carrd, Claude, Writesonic, QuillBot) are not images;
+   - some tool logo addresses point to logo.clearbit.com, which no longer answers.
+5. **Credential rotation** whenever the client allows it.
+
+## Status on 20 October 2026 (superseded by 21 October above)
+
+**Verdict: NOT READY.** The release work below is done and verified on production. The client's acceptance requirement is that **every** Main page be visually editable in the WordPress admin, and today that holds for 108 of 314 addresses (34.4%). The full inventory is `MAIN-VISUAL-EDITING-INVENTORY.md`. Completing it needs owner-approved production cutovers, listed at the end of this section.
+
+**Live versions (checked 20 Oct 2026):**
+- **Main:** Vercel project `acadvizen-newww-ua9d`, deployment `dpl_56BrUwoX4opAgGZ3UDBrw4iBQEa1` (commit `bb43086`). The Render Bridge stays **enabled**, as the owner instructed.
+- **Enrollment:** Acadvizen Master Admin **0.7.4**, installed 09:48:01 UTC.
+  - Package: `acadvizen-cms-0.7.4-worktree-2cdb89872e37`, sha256 `14c1b94921c27da8e0b734cd5f85f38ad2ee759c0bd43364432e4b21211ca69f`, built reproducibly from the working tree.
+  - 27 files: the same file list as 0.7.3, with 5 files changed (reviewed). 23 PHP files, 0 syntax errors, no secrets.
+  - Only this plugin changed during the install.
+  - Rollback: reinstall `acadvizen-cms-0.7.3-210db18` (sha256 `5d0aeeac…`) on Plugins → Add New → Upload → "Replace current with uploaded". 0.7.4 changes no database structure.
+
+**What 0.7.4 fixed, verified on production:**
+- **Signed routes no longer cached:**
+  - anonymous `/wp-json/acadvizen-cms/v1/manifest` and `/render` → **401**, no LiteSpeed cache hit (09:48 and 11:14 UTC, after an hour of Main's real signed traffic);
+  - signed manifest → 200 with no cache.
+- **Main pages use only Main's own header, footer and popups:**
+  - all 108 location pages contain the Main header (#8798), the Main footer (#8799) and the location design (#8800);
+  - none contains Enrollment's footer #1799, popup #6147 or course bar (11:10 UTC).
+- **The Approvals screen lists every waiting item:** 110 rows, including the team's #8516 and #8517.
+
+**Found during the release, fixed in 0.7.5 (local only; installing it needs approval):**
+- **Cached 404s:** a signed `/render` request for an address that is not live returned a 404 that LiteSpeed cached and then served to anonymous visitors.
+  - Cleared with LiteSpeed **Purge All** at 09:50 UTC; "Purge By URL" does not match addresses with `?path=`.
+  - 0.7.5 marks every response of the plugin's routes, errors included, as not cacheable.
+- **Lost scheduled jobs:** the recurring jobs are also re-checked whenever Main asks for the manifest, so a job WP-Cron drops is repaired without anyone opening the admin.
+- **Package:** `acadvizen-cms-0.7.5-worktree-a17a03213fd3`, sha256 `faba88a80466a825cebac5f61269f056ef0bdb839592d4103a610483997399f3` (only `rest.php` and the version changed against 0.7.4).
+
+**The 108 location pages (imported once on 19 Oct; republished 20 Oct):**
+- The 20 drafts moved to Trash on 19 Oct were restored (Trash → Restore).
+- All 108 were submitted and approved, and published 10:36–11:03 UTC (the first page alone, checked, then the other 107).
+- **Production verification, 11:09–11:12 UTC: 108/108 pass:**
+  - status, title, canonical, robots, description, heading, own description, no other location's text;
+  - Main header, served from WordPress;
+  - compared with the pre-import baseline.
+- **Appearance at 1440 and 390 px:** visually close to the original, not identical.
+  - The page is about 150 px taller (spacing, footer link wrapping).
+  - The theme's small "scroll to top" button appears at the bottom right. A one-line Main Website CSS rule hides it, but it is not applied without approval.
+  - Hidden extras visitors do not see: "Skip to content", and the WordPress site title "enroll.acadvizen.com" inside a hidden header element.
+- **Main crawl (11:26 UTC):**
+  - the other 205 of 206 addresses are identical to the 18 Oct record; the remaining one timed out during the crawl and answered 200 on recheck;
+  - the 108 location pages keep 100% of their original text.
+
+**Both websites:**
+- Production smoke test: **40 passed, 0 failed** (11:13 UTC).
+- Enrollment: 58/59 baseline addresses identical; the one change is the intended `/test/` unpublish.
+- No sideways scroll at 768 px and above; homepage links to unpublished pages: 0. The logo links to enroll.acadvizen.com.
+
+**Enquiry forms (production, 10:37 UTC): 8/8.**
+- Both forms refuse empty submissions, send to their endpoints (`/api/cms/leads` 200; `/wp-json/acadvizen/v1/enquiry` 201), show the confirmation, and store the entry.
+- Two labelled test entries were created ("CMS ACCEPTANCE TEST 202610201037 - please ignore", example.com address); no real customer enquiry was sent.
+
+**Local tests:**
+- **0.7.5 (the working tree):** PHP 333/333; JavaScript 283/283; bridge scenarios **44/44**; approval suite 47/47.
+- **Lifecycle scenario:** 5 runs × 8/8.
+- **The intermittent lifecycle failure:**
+  - **Cause:** WordPress keeps all scheduled jobs in one unlocked stored option, so a WP-Cron run that started before (de)activation can save back an older copy.
+  - **Fix:** the test now waits up to 60 s and triggers the plugin's own repair; 0.7.5 also repairs jobs on every manifest request.
+- **0.7.4 earlier today:** bridge scenarios 43/44, the failure being the timing race described above.
+
+**Backup and recovery:**
+- The designated backup set is Hostinger's weekly backup of **17 Oct 2026** (database dump completed 09:43:54).
+- It was verified by three isolated restores (111/111 tables, WordPress serving pages).
+- It is **not** a fresh 20 Oct backup: restoring it would lose every change since 17 Oct. Code changes are rolled back by reinstalling the previous plugin, and the import by Approvals (per page) or "Undo this import".
+
+**Security:**
+- **Credential rotation is deferred by explicit client instruction.** Two credentials are exposed and remain outstanding risks:
+  - the WordPress admin credential shared earlier;
+  - the legacy Supabase keys.
+- No credential was changed, and no secret appears in this document, in Git or in the evidence.
+
+**Test items on production (labelled, unpublished or kept):**
+- Main leads `3a41e225`, `915005a0`, `da63da54`, `51a68cae`, and two Enrollment course enquiries;
+- Elementor test pages #8402, #8416, #8430, #8444, #8646, #8672, #8679, #8697, #8712, #8727 (drafts);
+- Main test pages and blogs; scheduled test pages `/cms-test-scheduled-202610182115` and `/cms-test-scheduled-202610190915`;
+- media #8507.
+
+**Waiting for the owner:**
+1. **Install 0.7.5:** the cached-404 fix and job repair; rollback 0.7.4.
+2. **Optional:** add `#ast-scroll-top{display:none!important}` to Main Website CSS (Master Admin → Design), so Main location pages have no theme scroll button.
+3. **Full visual editing:** approve, family by family, importing the homepage, the 14 dedicated pages, blogs and tools as Elementor pages (each a production cutover, checked on a copy first). Also approve design and build of Elementor list templates for the data-driven pages (blog/tool lists, placements, city pages).
+4. **Optional:** Hostinger's LiteSpeed route exclusion, blocked by Hostinger's 2FA on 19 Oct. It is no longer required once 0.7.5 is installed.
+
+## Acceptance update of 19 October 2026, evening (superseded by the 20 October status above)
+
+**Verdict: NOT READY.** This update supersedes any earlier statement below that suggests the Render Bridge or full-site Elementor editing on Main is currently accepted.
+
+- Hostinger sign-in reached a suspicious-login 2FA challenge, but the browser remains on that challenge and the LiteSpeed controls are not accessible. No verification code was handled. WordPress remains publicly reachable, but the LiteSpeed cache toolbox previously returned 403. The already-authorized exclusion and purge of only `/wp-json/acadvizen-cms/v1/manifest` and `/wp-json/acadvizen-cms/v1/render` have not been performed. The latest body-discarding anonymous checks observed `/manifest` returning **200** with `Cache-Control: no-store, max-age=0` and `X-LiteSpeed-Cache: hit`; `/render?path=%2F` returned **401** with no cache-hit header. Until exclusions and targeted purge are completed and verified, a cache may bypass WordPress authentication.
+- A read-only production smoke run reported **40 passed, 0 failed, 2 informational**. It observed **0 of 314** Main sitemap pages served with the WordPress CMS marker. This does not demonstrate full-site Elementor editing or publishing.
+- Keep the Render Bridge disabled; do not assign routes or enable it until the cache/authentication risk, security review and end-to-end acceptance are resolved and the owner explicitly approves enabling it. Representative existing pages and templates, plus the complete route inventory, must pass before describing Main as fully Elementor-editable.
+- The local 0.7.4 candidate passed **332/332 PHP tests**, **283/283 JavaScript tests**, and **24 PHP syntax checks**. Its reproducible local ZIP is `dist/acadvizen-cms-0.7.4-worktree-2cdb89872e37/acadvizen-cms.zip` (SHA-256 `14c1b94921c27da8e0b734cd5f85f38ad2ee759c0bd43364432e4b21211ca69f`); it has not been installed or deployed.
+- The latest documented verified restore point is the 17 October database backup, restored in isolation with 111/111 tables passing checks. A fresh backup attempt on 19 October failed because SSH access was denied. The local August backup files are incomplete and are not a recovery point.
+
+**Next production gate:** complete Hostinger's 2FA directly in the shared browser and reach the LiteSpeed cache controls; then apply only the two already-approved route exclusions and targeted purge, and verify anonymous manifest rejection without a cache hit and anonymous render rejection. Do not share the 2FA code, broaden the purge or change other production settings. A fresh verified database backup and a tested recovery plan are separately required before any installation, migration or route change.
+
+## Main content import, 19 October 2026 (production; result: rolled back, waiting for plugin 0.7.4)
+
+**Backups (designated by the owner: Hostinger's weekly set, 17 Oct 2026, in Downloads; originals untouched):**
+
+| File | SHA-256 | Contents | Integrity |
+|---|---|---|---|
+| `u713346627_xDzzw.20261017093050.sql.gz` | `b2143d9f3e09df2d8788865276d49fc2c8d3932bfd5a515b2db7573a6108fec3` | **Production Enrollment database** (site address enroll.acadvizen.com), 111 `wp_` tables | gzip OK, "Dump completed 2026-10-17 9:43:54". **Selected** |
+| `u713346627_od1Hd.20261017093050.sql.gz` | `c0e75462347dd1af753487de9e485fad9aec332c06176f37b9c9639a7c397dae` | Old staging site (cms.acadvizen.com), 109 tables | gzip OK, complete. A different database |
+| `u713346627_kb4Ph.20261017093050.sql.gz` | `ec60b9f5023728cb534e0b764c5a558430422eaff0dbb2a589d465e2956e6594` | Small separate site (cms.acadvizen.com), 21 tables | gzip OK, complete. Not production |
+| `u713346627.20261017093050.tar.gz` | `a10c7a54701b20438d6a33c8f659399d64b52b02e202b0f4aaea6e36c47c8b46` | Account files: Enrollment (45,351 entries incl. configuration and uploads), staging and preview sites | 95,443 entries, no errors. Its `.ssh` folder was never extracted |
+
+**Restore tests:** xDzzw plus the Enrollment files were restored into an isolated, internet-less copy three times. Each time, 111/111 tables passed the check and WordPress served its pages. A load takes about 4 minutes. The copy was deleted afterwards and the deletion verified.
+
+**Dry runs in the copy (×2, identical):**
+- **Import:** 115 created, 0 updated, 0 skipped, 0 failed.
+- **Publish:** 111 published.
+- **Renders:** all 108 location renders matched live Main on title, canonical, robots, description, heading, own text and Main header.
+- **Database:** +10.5 MB.
+- **Enrollment:** 59/59 pages identical except one added Google Fonts stylesheet (Inter) from the shared kit; nothing visible.
+- **Undo import:** removed everything the import created.
+
+**Production import (exactly once):**
+- **Bundle:** `main-20261019`, exported from live Main at 10:42–10:52 UTC. It holds the 108 location pages, the Main header and footer, and the location design. The homepage, other pages, blogs and tools were not included.
+- **Import, 12:18:56–12:19:07 UTC:** 116 items processed. **Created 115, updated 0, skipped 0, failed 0.**
+- **Publish, 12:42–13:07 UTC:** 111 items approved and published through Approvals (the 3 designs first, then 108 locations).
+
+**Production verification of the 108 location pages, 14:23:55–14:26:09 UTC: 108/108 passed.**
+- Status, title, canonical (including the existing MG Road exception), robots, description, heading, the page's own description and no other page's, Main header, served from WordPress.
+- Report: `locations-after-import.json` in the engineer's evidence.
+
+**Why it was rolled back:**
+- **What visitors saw:** the screenshots showed Enrollment's own Elementor Pro footer (#1799, Publish To "Both") and popup (#6147) added to every imported Main page: a white "Overview · Course Program · our Mentors · Projects · Apply Now" bar.
+- **Action:** the 108 pages were unpublished (kept as drafts) at 14:31–14:50 UTC.
+- **Result, 14:51 UTC:** Main serves its own pages again, and 108/108 match the pre-import baseline. Main's code and deployment were never changed.
+
+**Problems found during the import and fixed in plugin 0.7.4 (local, not installed):**
+1. **LiteSpeed cache serves the plugin's signed data:**
+   - LiteSpeed Cache cached the signed manifest as public for one week, overriding the plugin's no-cache header. As a result:
+     - Main received a stale list of pages, and two pages did not appear until **Purge All** at 14:19 UTC;
+     - an anonymous request still gets the cached manifest (`200`, `X-LiteSpeed-Cache: hit`; seen again 20 Oct 09:19 UTC; it is empty today).
+   - **Fix:** the plugin calls LiteSpeed's own no-cache API.
+2. **Enrollment's shared footer and popup appear on Main pages.** Once the Main Website has its own header and footer, Main renders use only Main-only headers, footers and popups. Enrollment is unchanged.
+   - Isolated test: 0/108 renders contain #1799 or #6147, and 108/108 contain the Main header and footer.
+3. **The Approvals screen listed only the newest 100 documents**, drafts included, so older waiting items disappeared. Today 20 of the imported drafts were moved to Trash (restorable) so the team's #8516 and #8517 show again.
+
+**Local tests on 0.7.4:**
+- PHP 332/332; approval suite 47/47.
+- Bridge scenarios 43/44. The failing check is a plugin-lifecycle WP-Cron timing check, and a different one of the two fails on different runs (a known WP-Cron race with concurrent requests, as described in `publisher.php`).
+
+**Current production state (20 Oct 2026):**
+- **Main:** `dpl_56BrUwoX4opAgGZ3UDBrw4iBQEa1`, serving its own pages (manifest empty).
+- **Enrollment plugin:** 0.7.3.
+- **Imported items in WordPress:**
+  - the 3 Main-only designs are published (no effect without published pages);
+  - 88 location pages are drafts and 20 are in Trash;
+  - the menu and the kit colours/fonts remain.
+- **Rollback of the whole import:** Master Admin → Import Main Website → **Undo this import**.
+
+**To finish:**
+1. **Approve plugin 0.7.4:** commit it, build the package and install it (rollback: 0.7.3).
+2. Restore the 20 trashed drafts.
+3. Re-approve and publish the 108 pages.
+4. Purge LiteSpeed once.
+5. Re-verify the 108 pages, anonymous access to `/manifest` (expect 401), both websites and the enquiry forms.
+
+## Earlier production status on 19 October 2026 (superseded by latest acceptance update)
 
 **Verdict:**
 - **Everyday content work is live and verified end to end on production:**

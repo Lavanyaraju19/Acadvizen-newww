@@ -1,6 +1,6 @@
 # Acadvizen Master Admin — beginner's user manual
 
-*For the person who updates the Acadvizen websites. No technical knowledge needed. Written 15 October 2026 for plugin 0.7.1.*
+*For the person who updates the Acadvizen websites. No technical knowledge needed. Written 15 October 2026 for plugin 0.7.1; updated 20 October 2026 for plugin 0.7.4 (scheduling, location pages) and 21 October 2026 for plugin 0.7.6, which is prepared but not yet installed (§5.5).*
 
 You manage the content of **two websites** from **one place**:
 
@@ -183,6 +183,28 @@ The blog is kept as a draft, so you can publish it again later. For Enrollment a
 
 ### 5.3 Unpublish a page
 **Edit** → **Status: Draft** → **Save**. The address then shows "page not found".
+
+### 5.4 The 108 location pages (from 20 October 2026, plugin 0.7.4)
+Pages such as "SEO Course In Jayanagar" (`www.acadvizen.com/seo-course-in-jayanagar`) now come from WordPress.
+- **Their text:** **Acadvizen Master Admin → Locations** → **Edit** the page → change the title, the description or the SEO fields → **Publish**.
+  - This submits the change. A reviewer then opens **Approvals**, checks the preview, clicks **Approve this revision** and then **Publish approved revision**.
+  - The live page keeps the old text until then.
+- **Their design** (header, layout, colours, footer) is **one Elementor template shared by all 108 pages:** **Templates** → "Main — Location & service page design" → **Edit with Elementor**.
+  - Change it, **Publish**, then approve and publish it on **Approvals**.
+  - Every location page is updated within a few minutes.
+- **To take one page off the website:** **Acadvizen Master Admin → Locations** → **Quick Edit** → **Status: Draft** → **Update**. Main then shows its own earlier version of that address again.
+- **Verified on the live site:** all 108 published through Approvals and checked on 20 Oct 2026. Editing a single location's text has not been separately tested on the live site.
+
+### 5.5 Pages waiting for their move to WordPress (plugin 0.7.6, after the owner's approval)
+*Built and checked on a copy of the site on 21 October 2026; none of these is live from WordPress yet.* Each family below moves only when the owner approves its cutover. Until then the Main Website keeps drawing it, and these instructions do not apply yet.
+
+- **The homepage and the dedicated pages** (About, Achievements, Contact, Placement, Courses, Tools, …): each is its own Elementor page. **Pages** → the page → **Edit with Elementor** → change it → **Publish** → a reviewer approves and publishes it on **Approvals**.
+  - Lists on these pages fill themselves from the records: the homepage's "From the Blog", the blog list and the tool list (with its search box and categories). Add a blog or tool and it appears there; you do not edit the list.
+- **Blog posts and tool pages:** each record keeps its own text, image and SEO. All of them share one design: **Templates** → "Main — Blog post design" or "Main — Tool page design".
+- **The 13 "Digital Marketing Course in <area>" pages** (e.g. BTM Layout) are location pages (§5.4) and share their design.
+- **The 13 "Digital Marketing Courses in <area>" pages and the 2 city course pages** (Bangalore, Mysore) share the "Main — Area course page design" (or "City course page design"). Their own words are in **Locations** → the page → **Details**: **Heading**, **Introduction**, the **"Nearby areas" title**, and the name shown in other pages' "Nearby areas" lists. "Nearby areas" itself is a live list: the other area pages of the same **City group**, in the order of **Order** (Page Attributes).
+- **Which design draws a page:** **Locations** → the page → **Details** → **Design**.
+- **While editing,** Elementor shows a Main page inside the Main Website's own header and footer, as visitors of www.acadvizen.com see it. Pages for Enrollment, or for both websites, are shown with Enrollment's header.
 
 ---
 

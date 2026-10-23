@@ -24,12 +24,16 @@
 # Output: ~/acadvizen-release/main-<UTC time>/.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
+# Git Bash rewrites arguments that start with "/" into Windows paths ("/companies" -> "C:/Program Files/Git/companies").
+# The addresses below reach node through the environment, never as arguments; this also keeps any other argument intact.
+export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*'
 
 PROJECT='acadvizen-newww-ua9d'
 MAIN='https://www.acadvizen.com'
 EXPECTED=$(node -e "console.log(require('./tools/release/main-release.json').expected_live || '')")
 NOINDEX=$(node -e "console.log((require('./tools/release/main-release.json').expect_noindex || []).join(' '))")
-OUT="$HOME/acadvizen-release/main-$(date -u +%Y%m%dT%H%MZ)"; mkdir -p "$OUT"
+# A Windows-style path (C:/Users/...): node reads it whether or not Git Bash converts arguments.
+OUT="$(cygpath -m "$HOME" 2>/dev/null || echo "$HOME")/acadvizen-release/main-$(date -u +%Y%m%dT%H%MZ)"; mkdir -p "$OUT"
 log() { echo "[$(date -u +%H:%M:%SZ)] $*" | tee -a "$OUT/log.txt"; }
 
 [[ "$EXPECTED" =~ ^dpl_[A-Za-z0-9]{24,}$ ]] || { echo "expected_live is not a full deployment id"; exit 1; }
@@ -78,19 +82,13 @@ log "recording every Main address after the release..."
 inventory after
 log "after: $(summary after)"
 # The intended changes leave the sitemap: compare every other address as before.
-node -e "const j=require(process.argv[1]);const drop=new Set(process.argv[3].split(' ').filter(Boolean));j.rows=j.rows.filter(r=>!drop.has(r.path));j.total=j.rows.length;require('fs').writeFileSync(process.argv[2],JSON.stringify(j))" "$OUT/before.json" "$OUT/before-kept.json" "$NOINDEX"
+export ACV_NOINDEX="$NOINDEX"
+node -e "const j=require(process.argv[1]);const drop=new Set(process.env.ACV_NOINDEX.split(' ').filter(Boolean));if(drop.size!==$(echo $NOINDEX | wc -w)){console.error('noindex list not read');process.exit(1)}j.rows=j.rows.filter(r=>!drop.has(r.path));j.total=j.rows.length;require('fs').writeFileSync(process.argv[2],JSON.stringify(j))" "$OUT/before.json" "$OUT/before-kept.json"
 ok=1
 node tools/main-migration-compare.mjs "$OUT/before-kept.json" "$OUT/after.json" --md "$OUT/compare.md" > "$OUT/compare.txt" 2>&1 || ok=0
 log "other addresses: $(tail -1 "$OUT/compare.txt")"
-# The intended noindex addresses, the sitemap, and metadata placement (a browser-like visitor and Googlebot, 3 reads each).
-node -e "
-const MAIN='$MAIN', noindex=process.argv[1].split(' ').filter(Boolean), sample=['/','/about','/blog','/testimonials','/courses','/tools','/placement',...noindex];
-const UAS={browser:'Mozilla/5.0 acadvizen-release-check',googlebot:'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'};
-(async()=>{let bad=[];const sm=await (await fetch(MAIN+'/sitemap.xml')).text();
-for(const p of noindex){const r=await fetch(MAIN+p);const h=await r.text();const head=h.split('</head>')[0];const robots=(head.match(/<meta name=\"robots\" content=\"([^\"]*)\"/)||[])[1]||'';
- if(r.status!==200||!/noindex/.test(robots))bad.push(p+' status '+r.status+' robots '+robots); if(sm.includes(MAIN+p+'<')||sm.includes(MAIN.replace('www.','')+p+'<'))bad.push(p+' still in sitemap')}
-for(const p of sample)for(const [n,ua] of Object.entries(UAS))for(let i=0;i<3;i++){const h=await (await fetch(MAIN+p,{headers:{'User-Agent':ua}})).text();const head=h.split('</head>')[0];if(!/<title>/.test(head)||!/rel=\"canonical\"/.test(head))bad.push(p+' '+n+' metadata not in <head>')}
-console.log(bad.length?'FAIL '+bad.join(' | '):'PASS intended noindex addresses ('+noindex.length+'), sitemap, metadata in <head> ('+sample.length+' pages x 2 visitors x 3)');process.exit(bad.length?1:0)})()" "$NOINDEX" > "$OUT/intended.txt" 2>&1 || ok=0
+# The intended noindex addresses, the sitemap, and metadata placement (tools/release/check-intended.mjs).
+node tools/release/check-intended.mjs "$MAIN" > "$OUT/intended.txt" 2>&1 || ok=0
 log "intended changes: $(cat "$OUT/intended.txt")"
 if [ "$ok" = 1 ]; then
 	log "PASS: release live on $now (was $EXPECTED). Way back: bash tools/release/release-main.sh --undo"

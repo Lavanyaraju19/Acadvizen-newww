@@ -116,7 +116,7 @@ namespace {
 		function update_post_meta( $id, $key, $value ) { return true; }
 		function wp_cache_delete( $key, $group = '' ) { $GLOBALS['acv_cache_deleted'][] = "$group/$key"; return true; }
 		function wp_doing_cron() { return ! empty( $GLOBALS['acv_doing_cron'] ); }
-		function get_posts( $args = array() ) { return $GLOBALS['acv_post_ids'] ?? array(); }
+		function get_posts( $args = array() ) { $GLOBALS['acv_get_posts_calls'][] = $args; return $GLOBALS['acv_post_ids'] ?? array(); }
 		if ( ! function_exists( 'delete_option' ) ) {
 			function delete_option( $name ) { unset( $GLOBALS['acv_options'][ $name ] ); return true; }
 		}
@@ -156,6 +156,7 @@ namespace {
 		function shortcode_atts( $pairs, $atts, $tag = '' ) { return array_merge( $pairs, array_intersect_key( (array) $atts, $pairs ) ); }
 		define( 'Acadvizen\CMS\POST_TYPE', 'acv_blog' ); // normally defined by acadvizen-cms.php
 		define( 'Acadvizen\CMS\MENU_SLUG', 'acadvizen-cms' );
+		define( 'Acadvizen\CMS\REST_NAMESPACE', 'acadvizen-cms/v1' );
 		define( 'ACADVIZEN_CMS_WEBHOOK_SECRET', 'test-secret-0123456789abcdef0123456789abcdef' );
 		require PLUGIN . 'config.php';
 		require PLUGIN . 'post-type.php';
@@ -167,7 +168,12 @@ namespace {
 		require PLUGIN . 'admin.php';
 		require PLUGIN . 'design.php';
 		require PLUGIN . 'migration.php';
+		require PLUGIN . 'media-guard.php';
 		class WP_REST_Request { private $headers; public function __construct( array $headers = array() ) { $this->headers = $headers; } public function get_header( $key ) { return $this->headers[ $key ] ?? null; } public function get_param( $key ) { return null; } }
+		class WP_REST_Response { public $data; public $headers = array(); public function __construct( $data = null ) { $this->data = $data; } public function header( $key, $value ) { $this->headers[ $key ] = $value; } }
+		if ( ! function_exists( 'do_action' ) ) {
+			function do_action( $hook, ...$args ) { $GLOBALS['acv_actions'][] = $hook; }
+		}
 		require PLUGIN . 'rest.php';
 		require PLUGIN . 'main-content.php';
 		if ( ! function_exists( 'strip_shortcodes' ) ) {
@@ -249,6 +255,13 @@ namespace Acadvizen\CMS {
 	check( 'theme builder: Main-only template skipped on Enrollment', 0, pick_theme_builder_template_for_site( 502, 'header' ) );
 	check( 'theme builder: Enrollment template kept on Enrollment', 503, pick_theme_builder_template_for_site( 503, 'popup' ) );
 	check( 'theme builder: invalid id untouched', 0, pick_theme_builder_template_for_site( 0, 'footer' ) );
+	// Main renders once the Main Website has its own header/footer: Enrollment chrome shared with Both stays off Main.
+	check( 'theme builder (Main, own chrome): Both footer/header/popup skipped', array( false, false, false ), array( theme_template_allowed( 'both', true, 'footer', true ), theme_template_allowed( 'both', true, 'header', true ), theme_template_allowed( 'both', true, 'popup', true ) ) );
+	check( 'theme builder (Main, own chrome): Main-only footer and popup used', array( true, true ), array( theme_template_allowed( 'main', true, 'footer', true ), theme_template_allowed( 'main', true, 'popup', true ) ) );
+	check( 'theme builder (Main, own chrome): Both template in other locations kept', true, theme_template_allowed( 'both', true, 'single', true ) );
+	check( 'theme builder (Main, no own chrome yet): Both footer kept as before', true, theme_template_allowed( 'both', true, 'footer', false ) );
+	check( 'theme builder (Main): Enrollment-only template never used', array( false, false ), array( theme_template_allowed( 'enrollment', true, 'footer', true ), theme_template_allowed( 'enrollment', true, 'single', false ) ) );
+	check( 'theme builder (Enrollment): unchanged by Main chrome', array( true, true, false ), array( theme_template_allowed( 'both', false, 'footer', true ), theme_template_allowed( 'enrollment', false, 'popup', true ), theme_template_allowed( 'main', false, 'header', true ) ) );
 
 	// --- Version preview on WordPress maps the Main /_acv/ paths back ---
 	$stored  = '<link href="/_acv/c/plugins/x.css?ver=1"><script>var c={"root":"\/_acv\/rest\/","ajax":"\/_acv\/ajax"}</script><script>fetch(\'/_acv/rest/acadvizen/v1/enquiry\')</script><script src="/_acv/i/js/jquery.min.js"></script>';
@@ -500,6 +513,72 @@ namespace Acadvizen\CMS {
 	check( 'hfe header: no Enrollment header at all -> none (theme header)', '', pick_hfe_template_for_site( 7722, 'type_header' ) );
 	unset( $GLOBALS['acv_hfe_matches'], $GLOBALS['acv_meta'] );
 
+	// --- Elementor editor preview of a Main page: Main's header and footer, never Enrollment's (and its bar) ---
+	if ( ! function_exists( 'is_user_logged_in' ) ) {
+		function is_user_logged_in() { return ! empty( $GLOBALS['acv_logged_in'] ); }
+	}
+	$GLOBALS['acv_hfe_matches'] = array( array( 'id' => 960 ), array( 'id' => 7722 ), array( 'id' => 961 ), array( 'id' => 7723 ) );
+	$GLOBALS['acv_meta'][960]   = array( 'ehf_template_type' => 'type_header', META_TARGET => TARGET_BOTH ); // Enrollment header + "ADMISSIONS OPEN" bar
+	$GLOBALS['acv_meta'][7722]  = array( 'ehf_template_type' => 'type_header', META_TARGET => TARGET_MAIN );
+	$GLOBALS['acv_meta'][961]   = array( 'ehf_template_type' => 'type_footer', META_TARGET => TARGET_BOTH );
+	$GLOBALS['acv_meta'][7723]  = array( 'ehf_template_type' => 'type_footer', META_TARGET => TARGET_MAIN );
+	$GLOBALS['acv_meta'][8100]  = array( META_TARGET => TARGET_MAIN ); // a Main-only page being edited
+	$GLOBALS['acv_meta'][8101]  = array( META_TARGET => TARGET_BOTH ); // a page published to both websites
+	$GLOBALS['acv_post_ids']    = array( 7722 ); // main_has_own_chrome(): a published Main-only header exists
+	$GLOBALS['acv_caps']        = array( 'edit_post' );
+	$GLOBALS['acv_logged_in']   = true;
+	$_GET['elementor-preview']  = '8100';
+	check( 'editor preview (Main page): Main header, although Enrollment\'s Both header is listed first', 7722, (int) pick_hfe_template_for_site( 960, 'type_header' ) );
+	check( 'editor preview (Main page): Main footer', 7723, (int) pick_hfe_template_for_site( 961, 'type_footer' ) );
+	check( 'editor preview (Main page): Enrollment\'s Both popup skipped, Main-only popup kept', array( 0, 7722 ), array( pick_theme_builder_template_for_site( 960, 'popup' ), pick_theme_builder_template_for_site( 7722, 'popup' ) ) );
+	$_GET['elementor-preview'] = '8101';
+	check( 'editor preview (page for Both): Enrollment\'s header, as before', 960, (int) pick_hfe_template_for_site( 960, 'type_header' ) );
+	$_GET['elementor-preview'] = '8100';
+	$GLOBALS['acv_caps']       = array();
+	check( 'editor preview param without edit rights: Enrollment\'s header (no Main chrome for visitors)', 960, (int) pick_hfe_template_for_site( 960, 'type_header' ) );
+	$GLOBALS['acv_caps']       = array( 'edit_post' );
+	$GLOBALS['acv_logged_in']  = false;
+	check( 'editor preview param while logged out: Enrollment\'s header', 960, (int) pick_hfe_template_for_site( 960, 'type_header' ) );
+	unset( $_GET['elementor-preview'], $GLOBALS['acv_hfe_matches'], $GLOBALS['acv_meta'], $GLOBALS['acv_post_ids'], $GLOBALS['acv_logged_in'] );
+	$GLOBALS['acv_caps'] = array();
+
+	// --- "Hide from search engines" in Master Admin must never be published as "index" ---
+	if ( ! function_exists( 'get_queried_object' ) ) {
+		function get_queried_object() { return $GLOBALS['acv_queried'] ?? null; }
+	}
+	$GLOBALS['acv_meta'][8200] = array( META_NOINDEX => '1' );                              // ticked in Master Admin, no Rank Math noindex
+	$GLOBALS['acv_meta'][8201] = array( 'rank_math_robots' => array( 'noindex', 'follow' ) ); // Rank Math noindex only
+	$GLOBALS['acv_meta'][8202] = array( 'rank_math_robots' => array( 'index', 'follow' ) );   // indexed
+	check( 'noindex: Master Admin box alone marks the Main render noindex', true, is_noindex( 8200 ) );
+	check( 'noindex: Rank Math noindex still counts', true, is_noindex( 8201 ) );
+	check( 'noindex: an indexed page stays indexed', false, is_noindex( 8202 ) );
+	$GLOBALS['acv_queried'] = new \WP_Post( 8200 );
+	check( 'noindex: the page\'s Rank Math robots tag says noindex, not index', array( 'follow' => 'follow', 'noindex' => 'noindex' ), robots_follow_master_admin_noindex( array( 'index' => 'index', 'follow' => 'follow' ) ) );
+	check( 'noindex: WordPress\' own robots tag says noindex too', array( 'follow' => true, 'noindex' => true ), core_robots_follow_master_admin_noindex( array( 'index' => true, 'follow' => true ) ) );
+	$GLOBALS['acv_queried'] = new \WP_Post( 8202 );
+	check( 'noindex: robots of an indexed page untouched', array( 'index' => 'index', 'follow' => 'follow' ), robots_follow_master_admin_noindex( array( 'index' => 'index', 'follow' => 'follow' ) ) );
+	unset( $GLOBALS['acv_meta'], $GLOBALS['acv_queried'] );
+
+	// --- A record drawn by a design chosen for it (the area course pages), others by their type's design ---
+	if ( ! function_exists( 'get_post_status' ) ) {
+		function get_post_status( $id ) { return $GLOBALS['acv_statuses'][ $id ] ?? 'publish'; }
+	}
+	$GLOBALS['acv_options'][ DESIGN_TEMPLATES_OPTION ] = array( 'acv_location' => 8800 );
+	$GLOBALS['acv_types'][8800] = 'elementor_library'; // Main — Location & service page design
+	$GLOBALS['acv_types'][8900] = 'elementor_library'; // Main — Area course page design
+	$GLOBALS['acv_types'][8901] = 'page';              // not a design
+	$GLOBALS['acv_meta'][9301]  = array( DESIGN_CHOICE_META => '8900' );
+	$GLOBALS['acv_meta'][9302]  = array();
+	$GLOBALS['acv_meta'][9303]  = array( DESIGN_CHOICE_META => '8901' );
+	$GLOBALS['acv_meta'][9304]  = array( DESIGN_CHOICE_META => '8900' );
+	$GLOBALS['acv_statuses'][8900] = 'publish';
+	check( 'design choice: an area page is drawn by its chosen design', 8900, design_template_for_post( new \WP_Post( 9301, 'acv_location' ) ) );
+	check( 'design choice: a location without a choice keeps the type\'s design', 8800, design_template_for_post( new \WP_Post( 9302, 'acv_location' ) ) );
+	check( 'design choice: a choice that is not a design template is ignored', 8800, design_template_for_post( new \WP_Post( 9303, 'acv_location' ) ) );
+	$GLOBALS['acv_statuses'][8900] = 'draft';
+	check( 'design choice: an unpublished chosen design falls back to the type\'s design', 8800, design_template_for_post( new \WP_Post( 9304, 'acv_location' ) ) );
+	unset( $GLOBALS['acv_options'][ DESIGN_TEMPLATES_OPTION ], $GLOBALS['acv_types'][8800], $GLOBALS['acv_types'][8900], $GLOBALS['acv_types'][8901], $GLOBALS['acv_meta'], $GLOBALS['acv_statuses'] );
+
 	// --- Site-wide re-render: the homepage and pages first, blog posts last ---
 	$GLOBALS['acv_types']   = array( 601 => 'acv_blog', 602 => 'acv_tool', 603 => 'page', 604 => 'page', 605 => 'acv_course' );
 	$GLOBALS['acv_targets'][604] = '1'; // 604 is the Main homepage
@@ -746,12 +825,20 @@ namespace Acadvizen\CMS {
 
 	check( 'import: a bundle item with an empty design is never imported over an existing one; items without a design are content-only', array( true, false, false ), array( bundle_design_is_empty( array( 'elementor_data' => array() ) ), bundle_design_is_empty( array( 'elementor_data' => array( array( 'elType' => 'container' ) ) ) ), bundle_design_is_empty( array( 'content' => 'x' ) ) ) );
 
+	// Media guard and imported media titles (0.7.7).
+	check( 'media: nothing published uses it -> deleted; in use -> refused for a person, kept quietly for the plugin\'s own clean-up', array( 'allow', 'refuse', 'keep' ), array( media_delete_decision( array(), false ), media_delete_decision( array( 12 ), false ), media_delete_decision( array( 12, 13 ), true ) ) );
+	check( 'media: the internal flag is off by default and can be set and cleared', array( false, true, false ), array( media_guard_internal(), media_guard_internal( true ), media_guard_internal( false ) ) );
+	check( 'import: an imported file gets a recognisable title (title, else alt text, else the tidied file name)', array( 'Main Website: Hero banner', 'Main Website: Students at work', 'Main Website: Digital marketing course' ), array( imported_media_title( array( 'title' => 'Hero banner', 'alt' => 'x' ), 'a.webp' ), imported_media_title( array( 'alt' => 'Students at work' ), 'a.webp' ), imported_media_title( array(), 'digital-marketing-course-1791348892158-5vjuov.webp' ) ) );
+
 	// Approval state machine.
 	$ctx  = static fn( array $extra = array() ) => array_merge( array( 'hash' => 'h1', 'user' => 2, 'time' => 100, 'can_review' => false, 'compat' => 'ok' ), $extra );
 	$sub  = approval_transition( array(), 'submit', $ctx() );
 	check( 'approval: submit makes it pending for exactly that revision', array( 'pending', 'h1', 2 ), array( $sub['state'], $sub['hash'], $sub['submitted_by'] ) );
 	check( 'approval: only a reviewer approves', 'not_reviewer', approval_transition( $sub, 'approve', $ctx() ) );
 	check( 'approval: a revision changed after submitting cannot be approved', 'changed_since_submitted', approval_transition( $sub, 'approve', $ctx( array( 'can_review' => true, 'hash' => 'h2' ) ) ) );
+	check( 'approval: the queue marks a waiting or approved submission stale once the current fingerprint differs (e.g. a kit change); drafts, rejected and unchanged ones are not stale', array( true, false, true, false, false, false ), array( submission_is_stale( $sub, 'h2' ), submission_is_stale( $sub, 'h1' ), submission_is_stale( array( 'state' => 'approved', 'hash' => 'h1' ), 'h3' ), submission_is_stale( array( 'state' => 'rejected', 'hash' => 'h1' ), 'h3' ), submission_is_stale( array(), 'h3' ), submission_is_stale( array( 'state' => 'pending', 'hash' => '' ), 'h3' ) ) );
+	$re = approval_transition( $sub, 'submit', $ctx( array( 'hash' => 'h2', 'time' => 200 ) ) );
+	check( 'approval: submitting the current version again replaces the stale one: pending for the new fingerprint, then approvable', array( 'pending', 'h2', 200, 'approved' ), array( $re['state'], $re['hash'], $re['submitted_at'], approval_transition( $re, 'approve', $ctx( array( 'can_review' => true, 'hash' => 'h2' ) ) )['state'] ?? '' ) );
 	$app  = approval_transition( $sub, 'approve', $ctx( array( 'can_review' => true, 'user' => 3 ) ) );
 	check( 'approval: a reviewer approves exactly the submitted revision', array( 'approved', 'h1', 3, false ), array( $app['state'], $app['hash'], $app['reviewed_by'], $app['self_approved'] ) );
 	check( 'approval: self-approval is recorded as such', true, approval_transition( $sub, 'approve', $ctx( array( 'can_review' => true, 'user' => 2 ) ) )['self_approved'] );
@@ -785,6 +872,28 @@ namespace Acadvizen\CMS {
 	check( 'approval: the approval records the websites and the previews checked', array( array( 'main', 'enrollment' ), array( 'enrollment', 'main' ) ), array_values( array_intersect_key( approval_transition( $sub, 'approve', array_merge( $both, array( 'previews' => array( 'enrollment', 'main' ) ) ) ), array_flip( array( 'destinations', 'previews_checked' ) ) ) ) );
 	check( 'approval: rejection goes back to the editor with a note', array( 'rejected', 'Fix the hero' ), array( approval_transition( $sub, 'reject', $ctx( array( 'can_review' => true, 'note' => 'Fix the hero' ) ) )['state'], approval_transition( $sub, 'reject', $ctx( array( 'can_review' => true, 'note' => 'Fix the hero' ) ) )['note'] ) );
 	check( 'approval: history keeps every step', array( 'submitted', 'approved', 'approval_invalidated_by_edit' ), array_column( $inv['history'], 'what' ) );
+
+	// The Approvals screen must include old items, keep query order, and scan once for both state groups.
+	$approval_query_ids = range( 2120, 2001 );
+	$approval_query_ids[] = 2118;
+	$approval_query_ids[] = 2002;
+	$GLOBALS['acv_post_ids']        = $approval_query_ids;
+	$GLOBALS['acv_meta']            = array();
+	$GLOBALS['acv_get_posts_calls'] = array();
+	foreach ( array_unique( $approval_query_ids ) as $id ) {
+		$GLOBALS['acv_meta'][ $id ][ APPROVAL_META ] = array( 'state' => 'rejected' );
+	}
+	$GLOBALS['acv_meta'][2118][APPROVAL_META] = array( 'state' => 'pending' );
+	$GLOBALS['acv_meta'][2090][APPROVAL_META] = array( 'state' => 'approved' );
+	$GLOBALS['acv_meta'][2002][APPROVAL_META] = array( 'state' => 'pending' );
+	$GLOBALS['acv_meta'][2003][APPROVAL_META] = array( 'state' => 'scheduled' );
+	$GLOBALS['acv_meta'][2001][APPROVAL_META] = array( 'state' => 'approved' );
+	$pending_approval_ids = approval_candidates( array( 'pending' ) );
+	$ready_approval_ids   = approval_candidates( array( 'approved', 'scheduled' ) );
+	check( 'approval candidates: pending documents older than the first 100 remain in query order', array( 2118, 2002 ), $pending_approval_ids );
+	check( 'approval candidates: approved and scheduled documents older than the first 100 remain in query order', array( 2090, 2003, 2001 ), $ready_approval_ids );
+	check( 'approval candidates: duplicate IDs are returned once, preserving first occurrence', true, $pending_approval_ids === array( 2118, 2002 ) && count( $pending_approval_ids ) === count( array_unique( $pending_approval_ids ) ) );
+	check( 'approval candidates: one ID-only, no-count unbounded scan serves both lists', array( 1, -1, true, 'ids', APPROVAL_META, 'EXISTS' ), array( count( $GLOBALS['acv_get_posts_calls'] ), $GLOBALS['acv_get_posts_calls'][0]['posts_per_page'], $GLOBALS['acv_get_posts_calls'][0]['no_found_rows'], $GLOBALS['acv_get_posts_calls'][0]['fields'], $GLOBALS['acv_get_posts_calls'][0]['meta_key'], $GLOBALS['acv_get_posts_calls'][0]['meta_compare'] ) );
 
 	// Publication outcome per website.
 	check( 'publication: success only when every chosen website shows the revision', array( 'verified', 'publishing', 'partial_failure', 'failed', 'partial_failure' ), array(
@@ -943,6 +1052,23 @@ namespace Acadvizen\CMS {
 	check( 'affected pages: listed, sorted, duplicates once', 'Saving republishes 2 Main Website pages: /, /about.', affected_pages_summary( array( '/about', '/', '/about', '' ) ) );
 	check( 'affected pages: long list shortened with a count', 'Saving republishes 4 Main Website pages: /a, /b and 2 more.', affected_pages_summary( array( '/d', '/c', '/b', '/a' ), 2 ) );
 	check( 'affected pages: one page', 'Saving republishes 1 Main Website page: /tools/canva.', affected_pages_summary( array( '/tools/canva' ) ) );
+
+	// Every request to this plugin's routes turns LiteSpeed caching off before dispatch, errors included (a cached 404 from
+	// /render was served to anonymous visitors on 20 Oct 2026); other routes are left alone.
+	$route_request = new class() { public $route = ''; public function get_route() { return $this->route; } };
+	$GLOBALS['acv_actions'] = array();
+	$route_request->route = '/acadvizen-cms/v1/render';
+	$passed = no_cache_for_own_routes( 'untouched', null, $route_request );
+	$route_request->route = '/wp/v2/pages';
+	no_cache_for_own_routes( null, null, $route_request );
+	$route_request->route = '/acadvizen-cms-other/v1/x';
+	no_cache_for_own_routes( null, null, $route_request );
+	check( 'own routes: LiteSpeed no-cache before dispatch (errors too), result passed through, other routes untouched', array( 'untouched', array( 'litespeed_control_set_nocache' ) ), array( $passed, $GLOBALS['acv_actions'] ) );
+
+	// Signed Main Website data must never be cached by LiteSpeed (its REST cache overrode the header; enroll, 19 Oct 2026).
+	$GLOBALS['acv_actions'] = array();
+	$nc = no_cache_response( array( 'pages' => array() ) );
+	check( 'signed responses: no-store, LiteSpeed no-cache header and LiteSpeed\'s own no-cache call', array( 'no-store, max-age=0', 'no-cache', true ), array( $nc->headers['Cache-Control'] ?? '', $nc->headers['X-LiteSpeed-Cache-Control'] ?? '', in_array( 'litespeed_control_set_nocache', $GLOBALS['acv_actions'], true ) ) );
 
 	check( 'signed routes: no secret configured -> refused', 'refused', trim( (string) shell_exec( sprintf( '%s %s --no-secret', escapeshellarg( PHP_BINARY ), escapeshellarg( __FILE__ ) ) ) ) );
 

@@ -12,7 +12,7 @@ No secret value was printed or recorded while testing these rows. Credentials sh
 | Production Enrollment WordPress (`enroll.acadvizen.com/wp-admin`) | Plugin install; Enrollment fixes | **Blocked** | Two sets of credentials (the checklist's and the one given in chat) were rejected. Attempts stopped to avoid locking the account | **Owner:** install the plugin, or create a working administrator for the engineer and store it in a local file (never in chat) |
 | Hostinger hPanel | Backups, database size, File Manager (`wp-config.php`), cron | **Blocked** | The login page answers with a Cloudflare challenge (403). Not bypassed | **Owner:** perform the hPanel steps, or grant access through hPanel → Access Manager |
 | Supabase dashboard | Backups; applying the two migrations | **Blocked** | The login requires a CAPTCHA. Not bypassed | **Supabase owner:** confirm backups and run the two migrations (handover, section 11) |
-| Staging WordPress and FTP (`cms.acadvizen.com`) | Staging tests | Credentials exist locally; **not used this session** | The staging plugin runs an earlier build | Optional: update staging to the release package and re-run the lifecycle |
+| Staging WordPress and FTP (`cms.acadvizen.com`; *historical, retired, not a CMS address*) | Staging tests | Credentials exist locally; **not used this session** | The staging plugin runs an earlier build | Optional: update staging to the release package and re-run the lifecycle |
 | Production test enquiry | Proving lead storage | Used once (approved) | Lead stored 10 Oct 09:42 UTC, verified, then deleted by id | No further live enquiries without a new approval |
 
 ## Owner's access checklist (`ACADVIZEN_ACCESS_CHECKLIST.md`)

@@ -353,6 +353,99 @@ function cardsCss(cards) {
     + '@media (max-width:767px){selector ul.acv-cards{grid-template-columns:1fr}}'
 }
 
+/**
+ * The Main Website's own video cover (a tint over the poster and a "▶ Play Video" pill) drawn on
+ * Elementor's image overlay and play button, so the video starts the same way: one click on the
+ * cover, then the player with its controls. The label stays readable to screen readers (Elementor's
+ * own "Play Video" text) and the play icon is replaced by the pill.
+ */
+export function videoCoverCss(overlay) {
+  if (!overlay || !overlay.pill) return ''
+  const p = overlay.pill
+  const quote = (s) => `"${String(s).replace(/["\\]/g, '\\$&').replace(/[\r\n]+/g, ' ')}"`
+  return (overlay.tint && !isTransparent(overlay.tint) ? `selector .elementor-custom-embed-image-overlay::before{content:"";position:absolute;inset:0;background:${overlay.tint};pointer-events:none}` : '')
+    + `selector .elementor-custom-embed-play{display:inline-flex;align-items:center;gap:${p.gap && p.gap !== 'normal' ? p.gap : '8px'};width:auto;height:auto;white-space:nowrap;background:${p.bg};border:${p.border};border-radius:${p.radius};padding:${p.padding};color:${p.color};font-size:${p.fontSize};font-weight:${p.fontWeight};line-height:1.25;opacity:1;z-index:1}`
+    + 'selector .elementor-custom-embed-play i,selector .elementor-custom-embed-play svg{display:none}'
+    + (overlay.icon ? `selector .elementor-custom-embed-play::before{content:${quote(overlay.icon)};font-size:1.25em;line-height:1}` : '')
+    + (overlay.label ? `selector .elementor-custom-embed-play::after{content:${quote(overlay.label)}}` : '')
+}
+
+/**
+ * A slideshow (e.g. the alumni stories on /achievements) as Elementor's Nested Carousel: slide 1 is the
+ * converted first state; each other slide is a copy with that state's texts and media addresses
+ * (videos, images) swapped in, so every story is there and each slide is an ordinary container an
+ * administrator edits in place. The carousel brings its own arrows and dots; it does not move by itself
+ * (as on the Main Website).
+ */
+export function slideshowCarousel(first, slideshow, seed, transformLink = (u) => u) {
+  const escapeHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const swap = (value, reps) => {
+    if (typeof value !== 'string') return value
+    let out = value
+    for (const r of reps) {
+      if (r.from === r.to || !r.from) continue
+      const pairs = r.media ? [[r.from, r.to], [transformLink(r.from), transformLink(r.to)]] : [[r.from, r.to], [escapeHtml(r.from), escapeHtml(r.to)]]
+      for (const [a, b] of pairs) if (a) out = out.split(a).join(b)
+    }
+    return out
+  }
+  const retarget = (el, reps, s) => {
+    const walk = (v) => (Array.isArray(v) ? v.map(walk) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x)])) : swap(v, reps))
+    return { ...el, id: elementId(`${s}:${el.id}`), settings: walk(el.settings), elements: (el.elements || []).map((c) => retarget(c, reps, s)) }
+  }
+  // The stage's own layout held the slideshow's scripted buttons beside the card (e.g. a five-column
+  // grid: arrow, tab, card, tab, arrow); without them a slide is one full-width column with the card.
+  const asSlide = (el) => {
+    const settings = Object.fromEntries(Object.entries(el.settings || {}).filter(([k]) => !/^grid_|^container_type|^width|^_flex_size|^flex_direction|^flex_justify_content|^flex_align_items/.test(k)))
+    return { ...el, settings: { ...settings, container_type: 'flex', flex_direction: 'column', flex_align_items: 'stretch', content_width: 'full', width: { unit: '%', size: 100, sizes: [] } } }
+  }
+  first = asSlide(first)
+  const slides = slideshow.slides.map((reps, i) => (i === 0 ? first : retarget(first, reps, `${seed}:slide${i}`)))
+  const items = slides.map((_, i) => ({ slide_title: slideshow.titles[i] || `Slide #${i + 1}`, _id: elementId(`${seed}:item${i}`) }))
+  slides.forEach((s, i) => { s.settings = { ...s.settings, _title: items[i].slide_title }; s.isInner = false })
+  return {
+    id: elementId(`${seed}:carousel`),
+    elType: 'widget',
+    widgetType: 'nested-carousel',
+    settings: { carousel_name: 'Slideshow', carousel_items: items, slides_to_show: '1', slides_to_show_tablet: '1', slides_to_show_mobile: '1', slides_to_scroll: '1', autoplay: '', infinite: 'yes', arrows: 'yes', pagination: 'bullets', equal_height: 'yes' },
+    elements: slides,
+    isInner: false,
+  }
+}
+
+/** How many grid tracks an item spans, from its computed grid-*-start / grid-*-end ("span 2", "1 / 3"). */
+export function gridSpan(start, end) {
+  const m = /^span\s+(\d+)$/.exec(String(end || '').trim()) || /^span\s+(\d+)$/.exec(String(start || '').trim())
+  if (m) return Number(m[1])
+  const a = Number(start), b = Number(end)
+  return Number.isInteger(a) && Number.isInteger(b) && b > a ? b - a : 1
+}
+
+/**
+ * Grid spans per device as CSS on the item (Elementor's grid container has no per-item span control):
+ * the desktop span, then tablet (≤1024px) and phone (≤767px) where they differ. Empty when the item
+ * spans one track everywhere.
+ */
+export function gridSpanCss(nodes) {
+  const spans = {}
+  for (const d of ['desktop', 'tablet', 'mobile']) {
+    const x = nodes[d]
+    if (!x || x.hidden || !x.style) continue
+    spans[d] = [gridSpan(x.style.gridColumnStart, x.style.gridColumnEnd), gridSpan(x.style.gridRowStart, x.style.gridRowEnd)]
+  }
+  if (!Object.values(spans).some(([c, r]) => c > 1 || r > 1)) return ''
+  const rule = ([c, r]) => `selector{grid-column:span ${c};grid-row:span ${r}}`
+  let css = '', last = ''
+  for (const [d, media] of [['desktop', ''], ['tablet', '(max-width:1024px)'], ['mobile', '(max-width:767px)']]) {
+    if (!spans[d]) continue
+    const r = rule(spans[d])
+    if (r === last) continue
+    css += media ? `@media ${media}{${r}}` : r
+    last = r
+  }
+  return css
+}
+
 function widget(widgetType, seed, settings) {
   return { id: elementId(seed), elType: 'widget', widgetType, settings, elements: [], isInner: false }
 }
@@ -387,7 +480,9 @@ function widthSettings(nodes, parents, widget) {
     const textHeight = n.rect.h - px(n.style.paddingTop) - px(n.style.paddingBottom) - px(n.style.borderTopWidth) - px(n.style.borderBottomWidth)
     // (Zero-width children, e.g. a hover underline bar, do not count.)
     const onlyChild = parent.children && parent.children.filter((c) => !c.hidden && c.rect.w > 0).length === 1
-    if (widget && isRow && TEXT_KINDS.has(n.kind) && textHeight <= lineHeight * 1.5 && (w < inner * 0.5 || (stretched && onlyChild))) {
+    // Any one-line text in a row that does not grow (e.g. a footer link beside a separator, 21 Oct 2026:
+    // measured at 267px it wrapped onto two lines in WordPress' rendering of the same font).
+    if (widget && isRow && TEXT_KINDS.has(n.kind) && textHeight <= lineHeight * 1.5 && (w < inner * 0.5 || (stretched && onlyChild) || !(Number(n.style.flexGrow) > 0))) {
       out._element_width = 'auto'
       out._flex_size = 'none'
       return out
@@ -529,6 +624,16 @@ export class Converter {
   }
 
   convert(trees, node, parent, top = false) {
+    let out = this.convertNode(trees, node, parent, top)
+    // A slideshow's stage (capture.mjs, readSlideshows) becomes an Elementor Nested Carousel.
+    if (node.slideshow && out.length === 1 && out[0].elType === 'container') out = [slideshowCarousel(out[0], node.slideshow, `${this.seed}:${node.id}`, (u) => this.transformLink(u))]
+    // A grid item spanning several columns or rows (a large photo in a collage) keeps its span.
+    const css = gridSpanCss(this.nodesFor(trees, node.id))
+    if (css && out.length === 1) out[0].settings.custom_css = `${out[0].settings.custom_css || ''}${css}`
+    return out
+  }
+
+  convertNode(trees, node, parent, top = false) {
     const nodes = this.nodesFor(trees, node.id)
     const visibleSomewhere = DEVICES.some((d) => nodes[d] && !nodes[d].hidden)
     if (!visibleSomewhere) return []
@@ -579,7 +684,24 @@ export class Converter {
     // A page column limited by max-width (e.g. 1280px with side padding) is an Elementor "Boxed"
     // container: core Layout settings an administrator can see and change, no custom CSS.
     const capped = !n.hidden ? cappedWidth(n) : 0
-    if (capped) {
+    // A capped box that is itself drawn (a card: background, border, shadow) is capped as a whole and
+    // centred; "Boxed" would cap only its content and stretch the card across the row (seen on
+    // /achievements, 20 Oct 2026: the hero card 1377px wide instead of 1280px).
+    const drawn = !isTransparent(s.backgroundColor) || (s.backgroundImage && s.backgroundImage !== 'none') || px(s.borderTopWidth) > 0 || (s.boxShadow && s.boxShadow !== 'none')
+    // Where the capped box sits in its parent: "Boxed" always centres its content, so a box that sits
+    // at the left (a section heading block, max-width 768px, under a wider row; area pages, 21 Oct
+    // 2026: 100px too far right) keeps its side instead.
+    const pd = parents.desktop
+    const gapLeft = pd ? n.rect.x - (pd.rect.x + px(pd.style.paddingLeft) + px(pd.style.borderLeftWidth)) : 0
+    const gapRight = pd ? (pd.rect.x + pd.rect.w - px(pd.style.paddingRight) - px(pd.style.borderRightWidth)) - (n.rect.x + n.rect.w) : 0
+    const side = capped && pd && Math.abs(gapLeft - gapRight) > 4 ? (gapLeft <= 2 ? 'left' : gapRight <= 2 ? 'right' : '') : ''
+    if (capped && !drawn && side) {
+      for (const key of ['width', 'width_tablet', 'width_mobile', '_flex_align_self', '_flex_align_self_tablet', '_flex_align_self_mobile']) delete settings[key]
+      settings.custom_css = `${settings.custom_css || ''}selector{max-width:${capped}px;width:100%;${side === 'left' ? 'margin-right:auto' : 'margin-left:auto'}}`
+    } else if (capped && drawn) {
+      for (const key of ['width', 'width_tablet', 'width_mobile', '_flex_align_self', '_flex_align_self_tablet', '_flex_align_self_mobile']) delete settings[key]
+      settings.custom_css = `${settings.custom_css || ''}selector{max-width:${capped}px;margin-left:auto;margin-right:auto;width:100%}`
+    } else if (capped) {
       settings.content_width = 'boxed'
       settings.boxed_width = size(Math.max(0, capped - px(s.paddingLeft) - px(s.paddingRight)))
       for (const key of ['width', 'width_tablet', 'width_mobile', '_flex_align_self', '_flex_align_self_tablet', '_flex_align_self_mobile']) delete settings[key]
@@ -592,7 +714,12 @@ export class Converter {
     // Visible leaves only: a zero-width child (a hover underline bar) is not content.
     const collect = (x) => { if (x.hidden || x.rect.w === 0) return; if (!x.children || !x.children.length) leaves.push(x); else x.children.forEach(collect) }
     collect(n)
-    const oneLine = leaves.length === 1 && TEXT_KINDS.has(leaves[0].kind) && leaves[0].rect.h <= (px(leaves[0].style.lineHeight) || px(leaves[0].style.fontSize) * 1.2) * 1.5
+    // One line of content: a single text, or text with icons/separators beside it (a footer link with its
+    // "|"), no taller than one line of its largest text.
+    const lineOf = (l) => (px(l.style.lineHeight) || px(l.style.fontSize) * 1.2)
+    const texts = leaves.filter((l) => TEXT_KINDS.has(l.kind))
+    const oneLine = texts.length >= 1 && leaves.every((l) => TEXT_KINDS.has(l.kind) || l.kind === 'svg')
+      && (leaves.length === 1 ? leaves[0].rect.h <= lineOf(leaves[0]) * 1.5 : n.rect.h - px(s.paddingTop) - px(s.paddingBottom) <= Math.max(...texts.map(lineOf)) * 1.5)
     if (!top && inRow && oneLine && !capped) {
       for (const key of ['width', 'width_tablet', 'width_mobile']) delete settings[key]
       settings._flex_size = 'none'
@@ -646,6 +773,20 @@ export class Converter {
       return out
     }))
     if (isGrid && settings.container_type !== 'grid') settings.container_type = 'grid'
+    // A grid's vertical alignment of its items (e.g. a hero's text and "at a glance" card aligned at the
+    // bottom, lg:items-end), per device: Elementor's grid has no such control, so it is said in CSS.
+    if (isGrid) {
+      const alignOf = (x) => (x && !x.hidden && x.style.display.includes('grid') && !['normal', 'stretch'].includes(x.style.alignItems) ? x.style.alignItems : '')
+      const rules = [['desktop', ''], ['tablet', '(max-width:1024px)'], ['mobile', '(max-width:767px)']].map(([d, media]) => [media, alignOf(nodes[d])])
+      let css = '', last = ''
+      for (const [media, value] of rules) {
+        const v = value || 'stretch'
+        if (v === last || (!media && !value)) { last = v; continue }
+        css += media ? `@media ${media}{selector{align-items:${v}}}` : `selector{align-items:${v}}`
+        last = v
+      }
+      if (css) settings.custom_css = `${settings.custom_css || ''}${css}`
+    }
     // Fixed and absolute boxes do not stretch with the page: give them their measured size
     // (fixed: share of the viewport, so full-width bars stay full width).
     if (['fixed', 'absolute'].includes(s.position)) {
@@ -716,6 +857,10 @@ export class Converter {
       if (n.rect.h - px(s.paddingTop) - px(s.paddingBottom) - px(s.borderTopWidth) * 2 < lineHeight * 1.6) extraCss.push('white-space:nowrap')
       if (sh && sh.css) extraCss.push(`box-shadow:${sh.css}`)
       if (s.backdropFilter && s.backdropFilter !== 'none') extraCss.push(`backdrop-filter:${s.backdropFilter}`)
+      // A tall button with its label written vertically (a carousel's side tab) keeps its height,
+      // with the label centred and on one line.
+      const vertical = n.attrs && n.attrs.writingMode
+      if (vertical) extraCss.push(`writing-mode:${vertical};text-orientation:mixed;white-space:nowrap;min-height:${Math.round(n.rect.h)}px;display:flex;align-items:center;justify-content:center`)
       // In a plain block (not a flex/grid row) the text alignment places the button, e.g. a centred
       // "Enroll Now" under a section: the widget spans the row and aligns the button inside it.
       const inBlock = parents.desktop && !/flex|grid/.test(parents.desktop.style.display)
@@ -733,8 +878,10 @@ export class Converter {
     const readMore = n.kind !== 'heading' && Number(s.webkitLineClamp) > 0 && n.attrs && n.attrs.readmore ? Number(s.webkitLineClamp) : 0
     const lines = Number(s.webkitLineClamp) > 0 && !readMore ? Number(s.webkitLineClamp) : 0
     const clamp = (target) => (lines ? `selector ${target}{display:-webkit-box;-webkit-line-clamp:${lines};-webkit-box-orient:vertical;overflow:hidden}` : '')
+    const verticalCss = (target) => (n.attrs && n.attrs.writingMode ? `selector ${target}{writing-mode:${n.attrs.writingMode};text-orientation:mixed}` : '')
     if (n.kind === 'heading') {
       const settings = mergeSettings({ title: html, header_size: n.tag }, alignResp, typographySettings(nodes, this.ds), common)
+      if (verticalCss('.elementor-heading-title')) settings.custom_css = `${settings.custom_css || ''}${verticalCss('.elementor-heading-title')}`
       colorSetting('title_color', hexColor(s.color), this.ds, settings)
       if (n.attrs.href && !this.linkDepth) settings.link = linkSetting(this.transformLink(n.attrs.href))
       if (gradientText) {
@@ -750,6 +897,7 @@ export class Converter {
     if (n.kind === 'link' && n.attrs.href && !this.linkDepth) body = `<a href="${this.transformLink(n.attrs.href)}">${html}</a>`
     const settings = mergeSettings({ editor: `<${blockTag === 'li' ? 'p' : blockTag}>${body}</${blockTag === 'li' ? 'p' : blockTag}>` }, alignResp, typographySettings(nodes, this.ds), common)
     colorSetting('text_color', hexColor(s.color), this.ds, settings)
+    if (verticalCss('p')) settings.custom_css = `${settings.custom_css || ''}${verticalCss('p')}`
     // Paragraph margins inside Text Editors are reset once for the whole Main Website (design.php,
     // MAIN_BASE_CSS) rather than per widget: thousands of per-widget CSS blocks make the editor slow.
     if (gradientText) settings.custom_css = `${settings.custom_css || ''}selector .elementor-widget-container{background-image:${s.backgroundImage};-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}`
@@ -819,6 +967,8 @@ export class Converter {
     }
     const r = radius(n.style)
     if (!isZeroBox(r)) Object.assign(settings, { _border_radius: r, custom_css: 'selector .elementor-wrapper{border-radius:inherit;overflow:hidden}' })
+    const css = videoCoverCss(a.overlay)
+    if (css && settings.show_image_overlay) settings.custom_css = `${settings.custom_css || ''}${css}`
     return widget('video', seed, settings)
   }
 

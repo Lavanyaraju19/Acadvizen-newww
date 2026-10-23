@@ -1,7 +1,7 @@
 === Acadvizen Master Admin ===
 Requires at least: 6.5
 Requires PHP: 8.0
-Stable tag: 0.7.3
+Stable tag: 0.7.7
 
 One WordPress admin for both Acadvizen websites. Design with Elementor, choose "Publish To"
 (Enrollment, Main or Both), publish. Pages for www.acadvizen.com are rendered by WordPress and
@@ -69,3 +69,32 @@ address is treated as not connected and sends nothing there.
 
 Deactivating changes nothing for existing Enrollment pages. Deleting the plugin removes only its
 own data (logs, jobs, version table); content is kept.
+
+== Changelog ==
+
+= 0.7.7 =
+* Media in use cannot be deleted: an image or file that published, scheduled or waiting-for-approval
+  content shows (featured image, or anywhere in its Elementor design, by ID or file address) is kept,
+  and the person deleting it is told which content uses it. Undo import keeps such files quietly.
+  (22 Oct 2026: 322 just-imported blog images were deleted while 48 of those blogs were live.)
+* Imported files get a recognisable Media Library title ("Main Website: …") instead of none.
+
+= 0.7.6 =
+* Approvals marks a waiting or approved item that changed since it was submitted (the page itself,
+  or a shared style, header, footer or template it uses) and offers "Submit the current version
+  again" in place of Approve / Publish, which would be refused for it.
+* Elementor's editor previews a Main-only page, working copy or Main design inside the Main
+  Website's header and footer (Enrollment's header and its "ADMISSIONS OPEN" bar were shown).
+* Header Footer Elementor templates follow the Theme Builder rule: once the Main Website has its
+  own header and footer, a header or footer shared with Both is never used on a Main page.
+* "Hide from search engines" (Master Admin) is published as noindex everywhere: the Main render's
+  noindex flag, the page's robots tag (Rank Math and WordPress) and both sitemaps. Before, a page
+  ticked there could be published to the Main Website as "index, follow".
+* A record can be drawn by a design chosen for it (_acv_design_template), e.g. the area course
+  pages; [acv_loop] gains layout="row" and same_design="yes".
+
+= 0.7.5 =
+* Every response of the plugin's REST routes, errors included, is marked not cacheable for
+  LiteSpeed before the route runs (a signed 404 from /render was cached and served to anonymous
+  visitors).
+* The recurring jobs are re-created on each manifest request when WP-Cron has lost them.

@@ -14,7 +14,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 const MAX_PER_PAGE = 100;
 
+/**
+ * rest_pre_dispatch: nothing this plugin answers may be cached, errors included. LiteSpeed Cache
+ * stored a signed request's 404 from /render and then served it to anonymous visitors (enroll,
+ * 20 Oct 2026), so the no-cache call is made before any route runs, not only on success.
+ */
+function no_cache_for_own_routes( $result, $server, $request ) {
+	if ( is_object( $request ) && method_exists( $request, 'get_route' ) && 0 === strpos( (string) $request->get_route(), '/' . REST_NAMESPACE . '/' ) ) {
+		do_action( 'litespeed_control_set_nocache', 'acadvizen-cms: signed Main Website data' );
+	}
+	return $result;
+}
+
 function register_rest_routes(): void {
+	add_filter( 'rest_pre_dispatch', __NAMESPACE__ . '\\no_cache_for_own_routes', 10, 3 );
 	register_rest_route(
 		REST_NAMESPACE,
 		'/blogs',
@@ -75,6 +88,7 @@ function is_signed_main_request( \WP_REST_Request $request, string $message ): b
  */
 function rest_manifest(): \WP_REST_Response {
 	maybe_requeue_stalled_renders(); // The Main Website asks often; repairs a lost publishing job.
+	ensure_recurring_jobs(); // ...and the recurring jobs, which WP-Cron can drop too, even if nobody opens the admin.
 	$pages      = array();
 	$live_paths = array();
 	foreach ( list_live_versions() as $row ) {
@@ -242,5 +256,9 @@ function no_cache_response( array $data ): \WP_REST_Response {
 	$response = new \WP_REST_Response( $data );
 	$response->header( 'Cache-Control', 'no-store, max-age=0' );
 	$response->header( 'X-LiteSpeed-Cache-Control', 'no-cache' );
+	// LiteSpeed Cache's REST caching sets its own cache header at the end of the request and overrode
+	// the one above (seen on enroll, 19 Oct 2026: the manifest cached "public,max-age=604800", so pages
+	// a background job made live stayed off the Main Website). Its own API turns caching off.
+	do_action( 'litespeed_control_set_nocache', 'acadvizen-cms: signed Main Website data' );
 	return $response;
 }

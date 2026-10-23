@@ -11,7 +11,7 @@ export function extractInPage({ roots, viewport }) {
   const STYLE_KEYS = [
     'display', 'position', 'top', 'right', 'bottom', 'left', 'zIndex', 'flexDirection', 'flexWrap',
     'justifyContent', 'alignItems', 'alignSelf', 'flexGrow', 'flexShrink', 'order', 'rowGap', 'columnGap',
-    'gridTemplateColumns', 'gridColumnStart', 'gridColumnEnd', 'width', 'height', 'minHeight', 'maxWidth',
+    'gridTemplateColumns', 'gridColumnStart', 'gridColumnEnd', 'gridRowStart', 'gridRowEnd', 'writingMode', 'width', 'height', 'minHeight', 'maxWidth',
     'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'marginTop', 'marginRight', 'marginBottom',
     'marginLeft', 'backgroundColor', 'backgroundImage', 'backgroundSize', 'backgroundPosition', 'backgroundRepeat',
     'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderTopStyle', 'borderTopColor',
@@ -59,12 +59,25 @@ export function extractInPage({ roots, viewport }) {
         const cs = getComputedStyle(child)
         const drawn = cs.backgroundColor !== 'rgba(0, 0, 0, 0)' || cs.backgroundImage !== 'none' || parseFloat(cs.borderTopWidth) > 0
         if ((child.tagName === 'A' || child.tagName === 'BUTTON') && drawn) return false
+        // Likewise a pill or badge (an inline-flex span with its own border/background, e.g. "Placement
+        // Support" on the area pages): its box would be lost as text formatting.
+        if (drawn && d !== 'inline') return false
         if (d.startsWith('inline') && child.children.length === 0) continue
         return false
       }
       if (!isInlineOnly(child)) return false
     }
     return true
+  }
+  // Colours as hex: WordPress' HTML filter (kses, which Elementor applies to heading and text
+  // content) drops any inline style containing "(", so "color:rgb(…)" vanished and multi-coloured
+  // headings turned one colour (homepage "180 DAYS | 120+ Tools Mastery | …", 20 Oct 2026).
+  const hexOf = (c) => {
+    const m = /^rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)(?:\s*[,/]\s*([\d.]+%?))?\s*\)$/.exec(String(c).trim())
+    if (!m) return c
+    const h = (v) => Math.max(0, Math.min(255, Math.round(Number(v)))).toString(16).padStart(2, '0')
+    const a = m[4] === undefined ? 1 : (m[4].endsWith('%') ? parseFloat(m[4]) / 100 : parseFloat(m[4]))
+    return `#${h(m[1])}${h(m[2])}${h(m[3])}${a < 1 ? h(a * 255) : ''}`
   }
   // Inline HTML with only formatting tags kept; differing colours/weights become inline styles.
   const cleanInlineHtml = (el) => {
@@ -82,7 +95,7 @@ export function extractInPage({ roots, viewport }) {
         const tag = n.tagName.toLowerCase()
         if (tag === 'br') { html += '<br>'; continue }
         const styles = []
-        if (s.color !== base.color) styles.push(`color:${s.color}`)
+        if (s.color !== base.color) styles.push(`color:${hexOf(s.color)}`)
         if (s.fontWeight !== base.fontWeight) styles.push(`font-weight:${s.fontWeight}`)
         if (s.fontStyle !== base.fontStyle) styles.push(`font-style:${s.fontStyle}`)
         if ((s.webkitBackgroundClip || s.backgroundClip) === 'text' && s.backgroundImage !== 'none') {
@@ -107,6 +120,8 @@ export function extractInPage({ roots, viewport }) {
 
   const nodeFor = (el, depth) => {
     if (SKIP_TAGS.has(el.tagName)) return null
+    // A slideshow's own scripted buttons (capture.mjs, readSlideshows): the carousel brings its own.
+    if (el.hasAttribute && el.hasAttribute('data-acv-skip')) return null
     const s = getComputedStyle(el)
     const id = idOf(el)
     const rect = el.getBoundingClientRect()
@@ -142,7 +157,21 @@ export function extractInPage({ roots, viewport }) {
     if (tag === 'VIDEO') {
       const source = el.querySelector('source')
       const src = el.currentSrc || el.src || (source ? source.src : '')
-      if (src) return { ...base, kind: 'video', attrs: { ...base.attrs, src, poster: el.poster || '', autoplay: el.autoplay, muted: el.muted, loop: el.loop, controls: el.controls }, children: [] }
+      // The page's own cover on top of the video (a tint and a "Play Video" pill): its look is kept
+      // so Elementor's play button can be drawn the same way.
+      const cover = el.parentElement && [...el.parentElement.children].find((c) => c.tagName === 'BUTTON' && getComputedStyle(c).position === 'absolute')
+      let overlay = null
+      if (cover) {
+        const pill = [...cover.querySelectorAll('span,div')].find((x) => { const cs = getComputedStyle(x); return cs.backgroundColor !== 'rgba(0, 0, 0, 0)' || parseFloat(cs.borderTopWidth) > 0 }) || cover
+        const ps = getComputedStyle(pill)
+        const label = (pill.innerText || '').replace(/\s+/g, ' ').trim()
+        const icon = (label.match(/^[▶►⏵]️?/) || [''])[0]
+        overlay = {
+          tint: getComputedStyle(cover).backgroundColor, icon, label: label.slice(icon.length).trim(),
+          pill: { bg: ps.backgroundColor, border: `${ps.borderTopWidth} ${ps.borderTopStyle} ${ps.borderTopColor}`, radius: ps.borderTopLeftRadius, padding: ps.padding, color: ps.color, fontSize: ps.fontSize, fontWeight: ps.fontWeight, gap: ps.columnGap },
+        }
+      }
+      if (src) return { ...base, kind: 'video', attrs: { ...base.attrs, src, poster: el.poster || '', autoplay: el.autoplay, muted: el.muted, loop: el.loop, controls: el.controls, overlay }, children: [] }
     }
     if (tag === 'BUTTON' && s.position === 'absolute' && el.parentElement && el.parentElement.querySelector(':scope > video')) return null
     // A scripted "Read more" that unclamps the text before it: the text is shown in full instead.
@@ -180,12 +209,15 @@ export function extractInPage({ roots, viewport }) {
           // Clamped to a few lines with a scripted "Read more" after it (the button itself is left
           // out): becomes the plugin's Read more (CSS class acv-readmore), same lines and label.
           readmore: el.nextElementSibling && el.nextElementSibling.tagName === 'BUTTON' && /^\s*(read|show) more\s*$/i.test(el.nextElementSibling.textContent) ? el.nextElementSibling.textContent.trim() : '',
+          // Text written vertically (on the element or its inline content), e.g. a carousel's side tabs.
+          writingMode: [el, ...el.querySelectorAll('*')].map((x) => getComputedStyle(x).writingMode).find((w) => /^(vertical|sideways)/.test(w || '')) || '',
         },
         children: [],
       }
     }
     if (tag === 'BUTTON' && !el.querySelector('img,svg')) {
-      return { ...base, kind: 'link', text, html: cleanInlineHtml(el), children: [] }
+      const writingMode = [el, ...el.querySelectorAll('*')].map((x) => getComputedStyle(x).writingMode).find((w) => /^(vertical|sideways)/.test(w || '')) || ''
+      return { ...base, kind: 'link', text, html: cleanInlineHtml(el), attrs: { ...base.attrs, writingMode }, children: [] }
     }
     // Containers. Loose text next to elements becomes its own text leaf.
     const children = []
@@ -206,7 +238,8 @@ export function extractInPage({ roots, viewport }) {
       const n = nodeFor(child, depth + 1)
       if (n) children.push(n)
     }
-    return { ...base, kind: 'box', hasDirectText: hasDirectText(el), children }
+    const slideshow = el.hasAttribute('data-acv-slideshow') && window.__acvSlideshows ? window.__acvSlideshows[Number(el.getAttribute('data-acv-slideshow'))] : null
+    return { ...base, kind: 'box', hasDirectText: hasDirectText(el), ...(slideshow ? { slideshow } : {}), children }
   }
 
   const out = []

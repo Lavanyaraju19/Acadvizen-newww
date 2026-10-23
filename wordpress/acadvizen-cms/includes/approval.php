@@ -326,6 +326,17 @@ function current_fingerprint( \WP_Post $post ): string {
 	return revision_fingerprint( revision_parts( $post ) );
 }
 
+/**
+ * A waiting or approved submission whose recorded fingerprint is no longer the document's current one:
+ * approving or publishing it is refused, and it has to be submitted again. The fingerprint covers the
+ * shared style kit too, so a change to global colours or fonts makes every waiting submission stale.
+ */
+function submission_is_stale( array $state, string $current_hash ): bool {
+	return in_array( (string) ( $state['state'] ?? '' ), array( 'pending', 'approved', 'scheduled' ), true )
+		&& '' !== (string) ( $state['hash'] ?? '' )
+		&& (string) $state['hash'] !== $current_hash;
+}
+
 /** 'main' and/or 'enrollment' for a document's chosen destination. */
 function chosen_destinations( \WP_Post $post ): array {
 	$target = get_publish_target( $post->ID );
@@ -1036,6 +1047,18 @@ function check_destination( string $url, string $mark, array $headers = array() 
  * template is used for, the page a popup is shown on, otherwise the homepage (headers, footers).
  */
 function template_showcase_path( \WP_Post $template, string $destination, int $depth = 0 ): string {
+	// A design chosen per record (DESIGN_CHOICE_META): shown on the first record that uses it.
+	foreach ( get_posts( array( 'post_type' => DESIGN_TYPES, 'post_status' => 'publish', 'posts_per_page' => 20, 'orderby' => 'ID', 'order' => 'ASC', 'meta_key' => DESIGN_CHOICE_META, 'meta_value' => (string) $template->ID ) ) as $item ) { // phpcs:ignore WordPress.DB.SlowDBQuery
+		if ( ! uses_design_template( $item ) ) {
+			continue;
+		}
+		if ( 'main' === $destination && targets_main( get_publish_target( $item->ID ) ) && '' !== main_path_for( $item ) ) {
+			return main_path_for( $item );
+		}
+		if ( 'enrollment' === $destination && targets_enrollment( get_publish_target( $item->ID ) ) ) {
+			return (string) wp_parse_url( (string) get_permalink( $item ), PHP_URL_PATH );
+		}
+	}
 	foreach ( DESIGN_TYPES as $type ) {
 		if ( design_template_for( $type ) === $template->ID ) {
 			foreach ( get_posts( array( 'post_type' => $type, 'post_status' => 'publish', 'posts_per_page' => 20, 'orderby' => 'ID', 'order' => 'ASC' ) ) as $item ) {
@@ -1348,8 +1371,13 @@ function render_approval_notice(): void {
 /* Admin screen: Approvals ------------------------------------------------------------------------------------- */
 
 function approval_candidates( array $states ): array {
-	$ids = get_posts( array( 'post_type' => array_merge( SITE_POST_TYPES, TEMPLATE_POST_TYPES ), 'post_status' => array( 'draft', 'pending' ), 'posts_per_page' => 100, 'fields' => 'ids', 'meta_key' => APPROVAL_META, 'meta_compare' => 'EXISTS' ) ); // phpcs:ignore WordPress.DB.SlowDBQuery
-	return array_values( array_filter( array_map( 'intval', $ids ), static fn( $id ) => in_array( approval_state( $id )['state'] ?? '', $states, true ) ) );
+	static $candidate_ids = null;
+	if ( null === $candidate_ids ) {
+		// Keep every document with an approval record; a cap here hid older waiting items after a 108-page import.
+		$ids           = get_posts( array( 'post_type' => array_merge( SITE_POST_TYPES, TEMPLATE_POST_TYPES ), 'post_status' => array( 'draft', 'pending' ), 'posts_per_page' => -1, 'no_found_rows' => true, 'fields' => 'ids', 'meta_key' => APPROVAL_META, 'meta_compare' => 'EXISTS' ) ); // phpcs:ignore WordPress.DB.SlowDBQuery
+		$candidate_ids = array_values( array_unique( array_map( 'intval', $ids ) ) );
+	}
+	return array_values( array_filter( $candidate_ids, static fn( $id ) => in_array( approval_state( $id )['state'] ?? '', $states, true ) ) );
 }
 
 function render_approvals_page(): void {
@@ -1376,7 +1404,8 @@ function render_approvals_page(): void {
 			$st     = approval_state( $id );
 			$report = document_compatibility( $post );
 			$live   = (int) get_post_meta( $id, COPY_OF_META, true );
-			echo '<tr id="acv-candidate-' . (int) $id . '" data-state="' . esc_attr( (string) ( $st['state'] ?? '' ) ) . '" data-hash="' . esc_attr( substr( (string) ( $st['hash'] ?? '' ), 0, 16 ) ) . '">';
+			$stale  = submission_is_stale( $st, current_fingerprint( $post ) );
+			echo '<tr id="acv-candidate-' . (int) $id . '" data-state="' . esc_attr( (string) ( $st['state'] ?? '' ) ) . '" data-hash="' . esc_attr( substr( (string) ( $st['hash'] ?? '' ), 0, 16 ) ) . '" data-stale="' . ( $stale ? '1' : '0' ) . '">';
 			printf(
 				'<td><strong>%1$s</strong><br />%2$s<br /><small>%3$s</small></td>',
 				esc_html( get_the_title( $post ) ),
@@ -1399,7 +1428,15 @@ function render_approvals_page(): void {
 			}
 			printf( ' · <a href="%1$s" target="_blank">%2$s</a>', esc_url( add_query_arg( array( 'page' => APPROVALS_PAGE, 'devices' => $id ), admin_url( 'admin.php' ) ) ), esc_html__( 'Desktop / tablet / phone', 'acadvizen-cms' ) );
 			echo '</td><td>';
-			if ( 'pending' === $state && $reviewer ) {
+			if ( $stale && 'scheduled' !== ( $st['state'] ?? '' ) ) {
+				// What would be approved or published is no longer what was submitted (the page, or a shared style,
+				// header, footer or template it uses, changed since): approving it is refused, so offer to submit the
+				// current version instead. The reviewer then checks and approves that one.
+				echo '<strong class="acv-stale">' . esc_html__( 'Changed since it was submitted (the page itself, or a shared style, header, footer or template it uses). Check the preview, then submit the current version again.', 'acadvizen-cms' ) . '</strong><br />';
+				if ( current_user_can( 'edit_post', $id ) || $reviewer ) {
+					printf( '<a class="button acv-resubmit" href="%1$s">%2$s</a>', esc_url( approval_action_url( 'submit', $id ) ), esc_html__( 'Submit the current version again', 'acadvizen-cms' ) );
+				}
+			} elseif ( 'pending' === $state && $reviewer ) {
 				printf( '<form method="post" action="%1$s">', esc_url( approval_action_url( 'approve', $id ) ) );
 				if ( COMPAT_CODE === $report['status'] && current_user_can( 'unfiltered_html' ) ) {
 					echo '<label><input type="checkbox" name="code_ok" value="1" /> ' . esc_html__( 'I checked the code', 'acadvizen-cms' ) . '</label><br />';

@@ -169,6 +169,23 @@ function resolve_placeholders( $value, array $map ) {
 
 /* Steps ------------------------------------------------------------------------------------------ */
 
+/**
+ * The Media Library title of an imported file: "Main Website: <title, alt text or file name>". Imported files used to
+ * arrive untitled ("(no title)"), which made them look like leftovers (22 Oct 2026: 322 were deleted while in use).
+ */
+function imported_media_title( array $item, string $file_name ): string {
+	$label = trim( (string) ( $item['title'] ?? '' ) );
+	if ( '' === $label ) {
+		$label = trim( (string) ( $item['alt'] ?? '' ) );
+	}
+	if ( '' === $label ) {
+		// "digital-marketing-course-1791348892158-5vjuov.webp" -> "Digital marketing course".
+		$label = (string) preg_replace( '/-\d{10,}-[a-z0-9]{4,8}$/', '', pathinfo( $file_name, PATHINFO_FILENAME ) );
+		$label = ucfirst( trim( str_replace( array( '-', '_' ), ' ', $label ) ) );
+	}
+	return sanitize_text_field( 'Main Website: ' . mb_substr( $label, 0, 160 ) );
+}
+
 function import_media_item( array $item, array &$state ): string {
 	$key = sanitize_key( (string) ( $item['key'] ?? '' ) );
 	$url = esc_url_raw( (string) ( $item['url'] ?? '' ) );
@@ -192,7 +209,7 @@ function import_media_item( array $item, array &$state ): string {
 		return "media {$key}: download failed ({$tmp->get_error_message()}); the original address is kept";
 	}
 	$name = short_file_name( sanitize_file_name( (string) ( $item['filename'] ?? basename( (string) wp_parse_url( $url, PHP_URL_PATH ) ) ) ) );
-	$id   = media_handle_sideload( array( 'name' => $name, 'tmp_name' => $tmp ), 0, sanitize_text_field( (string) ( $item['title'] ?? '' ) ) );
+	$id   = media_handle_sideload( array( 'name' => $name, 'tmp_name' => $tmp ), 0, imported_media_title( $item, $name ) );
 	if ( is_wp_error( $id ) ) {
 		wp_delete_file( $tmp );
 		$state['map']['media'][ $key ] = array( 'id' => 0, 'url' => $url );
@@ -874,6 +891,9 @@ function undo_import( string $batch ): int {
 		)
 	);
 	$attachments = get_posts( array( 'post_type' => 'attachment', 'post_status' => 'inherit', 'fields' => 'ids', 'posts_per_page' => -1, 'meta_key' => META_IMPORT_BATCH, 'meta_value' => $batch ) ); // phpcs:ignore WordPress.DB.SlowDBQuery
+	// The batch's own items go first, its media last; an image that other published content still shows is kept
+	// (includes/media-guard.php), quietly, without stopping the undo.
+	media_guard_internal( true );
 	foreach ( array_unique( array_merge( $ids, $attachments ) ) as $id ) {
 		if ( 'attachment' !== get_post_type( $id ) ) {
 			// Its working copy and archived revisions (approval.php) go with it.
@@ -884,6 +904,7 @@ function undo_import( string $batch ): int {
 		}
 		$deleted += ( 'attachment' === get_post_type( $id ) ? wp_delete_attachment( (int) $id, true ) : wp_delete_post( (int) $id, true ) ) ? 1 : 0;
 	}
+	media_guard_internal( false );
 	foreach ( get_terms( array( 'hide_empty' => false, 'meta_key' => META_IMPORT_BATCH, 'meta_value' => $batch, 'taxonomy' => array( 'nav_menu', 'acv_city', 'acv_blog_category' ) ) ) as $term ) { // phpcs:ignore WordPress.DB.SlowDBQuery
 		if ( 'nav_menu' === $term->taxonomy ) {
 			wp_delete_nav_menu( $term->term_id );

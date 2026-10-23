@@ -1,6 +1,6 @@
 # Acadvizen Master Admin — quick reference (one page)
 
-*Plugin 0.7.3 (live), 19 October 2026. Full steps and explanations: `ADMIN-USER-GUIDE.md`.*
+*Plugin 0.7.4 is live on enroll.acadvizen.com; 0.7.6 is prepared and waits for the owner's approval (21 October 2026). Rows marked "after its cutover" describe pages that are still drawn by the Main Website today. Full steps and explanations: `ADMIN-USER-GUIDE.md`.*
 
 ## Addresses
 
@@ -48,7 +48,12 @@
 | Redirect | **Redirects → Add new** → old address, new address → **Create** → tick **Show on the Main Website** → **Save** | Yes |
 | Upload a Main image | **Media library** → choose file (up to 3 MB) and alt text → **Upload** | Yes |
 | Schedule | **Publish automatically on** / **Remove automatically on**, with Status **Published** | Yes (Main pages) |
+| A location page's text (the 108 "… course in <area>" pages on www.acadvizen.com) | **Acadvizen Master Admin → Locations** → **Edit** → change the title, description or SEO → **Publish** (submits it) → a reviewer approves and publishes it on **Approvals** | Publishing: yes (all 108, 20 Oct). Editing one page's text: not separately tested on the live site |
+| The design shared by all 108 location pages | **Templates** → "Main — Location & service page design" → **Edit with Elementor** → **Publish** → **Approvals**. One change updates all 108 pages | Copy of the site |
 | Courses, homepage banner and lists, cities, tools, testimonials | The matching **Main Website** screen → **Save** | Copy of the site only |
+| An area page ("Digital Marketing Courses in <area>", 13 pages) or a city course page (2), after its cutover | **Locations** → the page → **Details**: Heading, Introduction, "Nearby areas" title → **Publish** → approval. Their shared look: **Templates** → "Main — Area course page design" (or "City course page design") → **Edit with Elementor** | Copy of the site (0.7.6) |
+| Which design draws a location or area page | **Locations** → the page → **Details** → **Design** | Copy of the site (0.7.6) |
+| Hide a page from Google | The page's **Hide from search engines** box. From 0.7.6 this also sets "noindex" on the page drawn for www.acadvizen.com and removes it from the sitemaps | PHP tests (0.7.6); not yet on production |
 
 **Times** are **India time (Asia/Kolkata)**, the site time zone shown next to every date field: to publish at 09:00 IST, enter 09:00.
 

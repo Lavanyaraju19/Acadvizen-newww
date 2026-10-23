@@ -102,12 +102,19 @@ async function main() {
   for (const path of paths) {
     let status = 0
     let html = ''
-    try {
-      const r = await fetch(own(`${MAIN}${path}`), { redirect: 'manual', headers: { 'user-agent': 'acadvizen-route-inventory (read-only)' }, signal: AbortSignal.timeout(60000) })
-      status = r.status
-      html = status === 200 ? await r.text() : ''
-    } catch {
-      status = 0
+    // A dropped connection or timeout is not an answer from the site: try again (3 attempts). Any HTTP
+    // answer, an error status included, is recorded as it is. 22 Oct 2026: two addresses read as 0 once
+    // on a slow network ended a release's control check although both answered 200.
+    for (let attempt = 1; attempt <= 3 && !status; attempt++) {
+      try {
+        const r = await fetch(own(`${MAIN}${path}`), { redirect: 'manual', headers: { 'user-agent': 'acadvizen-route-inventory (read-only)' }, signal: AbortSignal.timeout(60000) })
+        status = r.status
+        html = status === 200 ? await r.text() : ''
+      } catch {
+        status = 0
+        html = ''
+        if (attempt < 3) await new Promise((ok) => setTimeout(ok, 5000 * attempt))
+      }
     }
     rows.push({
       path,

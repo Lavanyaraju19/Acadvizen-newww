@@ -4,7 +4,7 @@
  * and its public Supabase content (anon key, read-only).
  *
  *   NEXT_PUBLIC_SUPABASE_URL=… NEXT_PUBLIC_SUPABASE_ANON_KEY=… \
- *   node tools/main-to-elementor/build-bundle.mjs --out bundle.json [--only tools,pages] [--limit N]
+ *   node tools/main-to-elementor/build-bundle.mjs --out bundle.json [--only shell,tools,blogs,services,pages,areas] [--limit N]
  *
  * The bundle is imported in WordPress: Acadvizen Master Admin > Import Main Website.
  * Nothing here writes to the Main Website or Supabase.
@@ -24,7 +24,7 @@ const { chromium } = require('playwright')
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) => (a.startsWith('--') ? [...acc, [a.slice(2), all[i + 1] && !all[i + 1].startsWith('--') ? all[i + 1] : true]] : acc), []))
 const MAIN = String(args.main || 'https://www.acadvizen.com').replace(/\/$/, '')
 const OUT = String(args.out || 'acadvizen-main-bundle.json')
-const ONLY = args.only ? String(args.only).split(',') : ['shell', 'tools', 'blogs', 'services', 'pages']
+const ONLY = args.only ? String(args.only).split(',') : ['shell', 'tools', 'blogs', 'services', 'pages', 'areas']
 const LIMIT = args.limit ? Number(args.limit) : Infinity
 // --paths /a,/b : only these Main addresses (pages and services families), e.g. to move one page first.
 const PATHS = args.paths ? String(args.paths).split(',').map((p) => p.trim()).filter(Boolean) : null
@@ -185,7 +185,7 @@ function shortcodeWidget(seed, shortcode, extra = {}) {
  * sections (table "sections" by page address) are not exposed by that API: none are returned, so
  * converted pages use the standard lead form; that is reported in the bundle notes.
  */
-const CONTENT_API_ENTITIES = { tools_extended: 'tools_extended', blogs: 'blogs', pages: 'pages', home_sections: 'home_sections' }
+const CONTENT_API_ENTITIES = { tools_extended: 'tools_extended', blogs: 'blogs', pages: 'pages', home_sections: 'home_sections', locations: 'locations', cities: 'cities' }
 const contentApiNotes = new Set()
 async function contentApi(body) {
   const { signPayload } = await import('../../lib/wordpress/signature.js')
@@ -328,6 +328,7 @@ async function main() {
     const ctx = { MAIN, LIMIT, PATHS, INCLUDE_APP_ROUTES: Boolean(args['include-app-routes']), ONLY, bundle, queue, media, link, log, supabase, captureRoute, seoFrom, headSeo }
     if (ONLY.includes('blogs')) tasks.push(() => families.blogFamily(ctx, browser))
     if (ONLY.includes('services') || ONLY.includes('pages')) tasks.push(() => families.routeFamilies(ctx, browser))
+    if (ONLY.includes('areas')) tasks.push(() => families.areaFamily(ctx, browser))
     for (const t of tasks) await t()
   } finally {
     await browser.close()

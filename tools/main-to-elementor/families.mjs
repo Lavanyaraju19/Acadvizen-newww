@@ -437,6 +437,7 @@ export async function routeFamilies(ctx, browser) {
   const services = []
   const statics = []
   const keptOnMain = []
+  const areaPaths = []
   for (const p of paths) {
     const r = await fetch(mainOwn(`${MAIN}${p}`), { redirect: 'manual' })
     if (r.status >= 300 && r.status < 400) {
@@ -453,10 +454,12 @@ export async function routeFamilies(ctx, browser) {
     // Application routes (e.g. /companies, /resources) can look as sparse before their data loads,
     // so the layout alone does not decide: they keep their own design.
     const isCmsRow = cmsPages.some((x) => `/${x.slug}` === p)
+    if (AREA_ROUTE.test(p) || CITY_COURSE_ROUTE.test(p)) { areaPaths.push(p); continue }
     if (!ctx.INCLUDE_APP_ROUTES && APP_ROUTE.test(p)) keptOnMain.push(p)
     else if (p !== '/' && !p.startsWith('/courses/') && isCmsRow && isServiceLayout(html)) services.push({ path: p, html })
     else statics.push(p)
   }
+  if (areaPaths.length) bundle.notes.push(`drawn by a shared design with the page name bound (--only areas), not converted as individual pages: ${areaPaths.join(' ')}`)
   if (keptOnMain.length) bundle.notes.push(`kept on the Main Website (application and data-driven routes; --include-app-routes converts them): ${keptOnMain.join(' ')}`)
   log(`routes: ${services.length} service/location pages, ${statics.length} individual pages`)
   bundle.notes.push(`individual pages: ${statics.join(' ')}`)
@@ -509,7 +512,10 @@ export async function routeFamilies(ctx, browser) {
           if (fromBlog && !grid) ctx.bundle.notes.push('/: the "From the Blog" cards were kept as captured (no card grid found); new posts will not appear there until a loop is added')
           if (grid) {
             blogCardTemplate(ctx, structuredClone(grid.el.elements[0]), 'card-blog-home', 'Main — Homepage blog card')
-            replaceElement(els, grid.el, shortcodeWidget('home-blog-loop', '[acv_loop type="acv_blog" template="acv-template://card-blog-home" limit="4" columns="4" columns_tablet="2" columns_mobile="1" gap="16" orderby="date" order="DESC"]'))
+            // As many newest posts as Main shows (six on 21 Oct 2026; a fixed four left two out), in its columns.
+            const gs = grid.el.settings || {}
+            const cols = (v, d) => (v && Number(v.size) > 0 ? Number(v.size) : d)
+            replaceElement(els, grid.el, shortcodeWidget('home-blog-loop', `[acv_loop type="acv_blog" template="acv-template://card-blog-home" limit="${grid.el.elements.length}" columns="${cols(gs.grid_columns_grid, 4)}" columns_tablet="${cols(gs.grid_columns_grid_tablet, 2)}" columns_mobile="${cols(gs.grid_columns_grid_mobile, 1)}" gap="16" orderby="date" order="DESC"]`))
           }
         }
         pageRecord(ctx, p, els, captured, (captured.seo.title || p).split('|')[0].trim())
@@ -538,4 +544,226 @@ function serviceTemplate(ctx, elements, heading, row, visible = '') {
   if (!replaced) ctx.bundle.notes.push('service design: description text not found')
   ctx.bundle.templates.push({ key: 'design-location', post_type: 'elementor_library', elementor_template_type: 'page', title: 'Main — Location & service page design', target: 'main', elementor_data: elements })
   ctx.bundle.settings.design_templates.acv_location = 'design-location'
+}
+
+/* Area and city course pages (data-generated) -------------------------------------------------- */
+
+/** /digital-marketing-courses-<area>: drawn by Main from a "locations" row (LocationPageRenderer). */
+export const AREA_ROUTE = /^\/digital-marketing-courses-[a-z0-9-]+$/
+/** /digital-marketing-course-<city> (not "-in-"): drawn by Main from a "cities" row (CityCoursePageRenderer). */
+export const CITY_COURSE_ROUTE = /^\/digital-marketing-course-(?!in-)[a-z0-9-]+$/
+
+/** The area or city name as Main writes it on the page, from its address (formatLocation/formatCity). */
+export function nameFromSlug(slug) {
+  return String(slug || '').split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')
+}
+
+/**
+ * The page's own name in the design's visible text becomes the record's name field; text inside HTML
+ * tags (links, attributes) is never touched.
+ */
+export function bindName(elements, name, field = '[acv_field name="title"]') {
+  if (!name) return 0
+  let n = 0
+  // Text inside a link to another page (a blog post's title under "Related resources") belongs to that
+  // page and is never bound, nor is anything in an address.
+  const swap = (html) => {
+    let inLink = 0
+    return String(html).split(/(<[^>]+>)/).map((part) => {
+      if (/^<a[\s>]/i.test(part)) { inLink++; return part }
+      if (/^<\/a>/i.test(part)) { inLink = Math.max(0, inLink - 1); return part }
+      return part.startsWith('<') || inLink ? part : part.split(name).join(field)
+    }).join('')
+  }
+  const SKIP = /^(link|url|external_url|hosted_url|image|background_image|_css_classes|custom_css|__globals__|_id)$/
+  const bindValue = (value, key = '') => {
+    if (SKIP.test(key)) return value
+    if (typeof value === 'string') { if (!value.includes(name)) return value; n++; return swap(value) }
+    if (Array.isArray(value)) return value.map((v) => bindValue(v))
+    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, bindValue(v, k)]))
+    return value
+  }
+  const linked = (el) => Boolean(el.settings && el.settings.link && el.settings.link.url)
+  const visit = (els, insideLink) => {
+    for (const el of els) {
+      const here = insideLink || linked(el)
+      // Text settings only (titles, editor text, accordion/tab items), never in or under a link to elsewhere.
+      if (!here && el.settings) el.settings = Object.fromEntries(Object.entries(el.settings).map(([k, v]) => [k, /^(title|editor|text|items|tabs|carousel_items|slides)$/.test(k) || (Array.isArray(v) && k.endsWith('_items')) ? bindValue(v, k) : v]))
+      visit(el.elements || [], here)
+    }
+  }
+  visit(elements, false)
+  return n
+}
+
+/**
+ * Text that differs per page beyond its name, read from each live page so every record keeps its own:
+ * the introduction under the heading (a location row's description) and the "Nearby areas in …" title
+ * (Main writes "the city" or "Bangalore" depending on the row).
+ */
+export function areaTexts(html) {
+  const main = (String(html).match(/<main[\s\S]*?<\/main>/) || [String(html)])[0]
+  const text = (s) => String(s || '').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&#x27;|&#39;/g, "'").replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim()
+  const intro = text((main.match(/<h1[^>]*>[\s\S]*?<\/h1>[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>/) || [])[1])
+  const nearby = text((main.match(/>\s*(Nearby areas in [^<]*)</) || [])[1])
+  // The heading: "Digital Marketing Courses in <area>" unless the row has its own ("… near MG Road").
+  const heading = text((main.match(/<h1[^>]*>([\s\S]*?)<\/h1>/) || [])[1])
+  return { intro, nearby, heading }
+}
+
+/** The design widget showing exactly this text becomes the given field. */
+function bindExactText(elements, text, field) {
+  if (!text) return false
+  let done = false
+  walk(elements, (el) => {
+    if (done || el.elType !== 'widget') return
+    if (widgetText(el) === text) {
+      const s = el.settings
+      for (const key of ['title', 'editor', 'text']) if (typeof s[key] === 'string') { s[key] = key === 'editor' ? `<p>${field}</p>` : field; done = true; break }
+    }
+  })
+  return done
+}
+
+/**
+ * "Nearby areas" (Main: the other active locations of the same city, by order_index, at most six) as a
+ * loop of the records drawn by the same design and in the same city, in the same order. The list's
+ * first link is the card; its text is the record's name, its address the record's.
+ */
+/** The gap between the items of a converted list container (its flex or grid gap), in px. */
+function gapOf(el) {
+  const g = (el.settings && (el.settings.flex_gap || el.settings.grid_gaps)) || {}
+  return Number(g.column || g.size) || 8
+}
+
+function nearbyAreasLoop(ctx, els, siblingNames, designKey) {
+  const list = findDeepestContainer(els, (el) => siblingNames.filter((name) => textsOf(el).includes(name)).length >= Math.min(3, siblingNames.length))
+  if (!list || !list.el.elements || !list.el.elements.length) {
+    ctx.bundle.notes.push(`${designKey}: "Nearby areas" list not found; its links stay as captured`)
+    return false
+  }
+  const card = JSON.parse(JSON.stringify(list.el.elements[0]))
+  const first = textsOf(card)[0] || ''
+  if (first) replaceText([card], first, '[acv_field name="name"]')
+  walk([card], (el) => {
+    const s = el.settings || {}
+    if (s.link && /^\/digital-marketing-courses-/.test(s.link.url || '')) s.link = { ...s.link, url: '#acv-field-url' }
+    if (typeof s.editor === 'string') s.editor = s.editor.replace(/href="\/digital-marketing-courses-[^"]*"/g, 'href="#acv-field-url"')
+  })
+  card.isInner = false
+  const cardKey = `${designKey}-nearby-card`
+  ctx.bundle.templates.push({ key: cardKey, post_type: 'elementor_library', elementor_template_type: 'section', title: 'Main — Nearby area link', target: 'main', elementor_data: [card] })
+  // The loop takes over the list's layout: its grid columns per device (Main: three cards a row on
+  // desktop), or a wrapping row; the list's own box becomes a plain full-width box around the loop.
+  const ls = list.el.settings || {}
+  const grid = ls.container_type === 'grid'
+  const cols = (v, d) => (v && Number(v.size) > 0 ? Number(v.size) : d)
+  const layout = grid ? `columns="${cols(ls.grid_columns_grid, 3)}" columns_tablet="${cols(ls.grid_columns_grid_tablet, 2)}" columns_mobile="${cols(ls.grid_columns_grid_mobile, 1)}"` : 'layout="row"'
+  if (grid) {
+    list.el.settings = Object.fromEntries(Object.entries(ls).filter(([k]) => !/^grid_|^container_type/.test(k)))
+    list.el.settings.container_type = 'flex'
+    list.el.settings.flex_direction = 'column'
+  }
+  list.el.elements = [shortcodeWidget(`${designKey}:nearby`, `[acv_loop type="acv_location" template="acv-template://${cardKey}" limit="6" ${layout} gap="${gapOf({ settings: ls })}" same="_acv_location_city_id" same_design="yes" exclude_current="yes" orderby="menu_order title" order="ASC" link="no"]`)]
+  return true
+}
+
+/** The area addresses a live page lists under "Nearby areas", in order (its own section only). */
+export function nearbyOrder(html) {
+  const at = String(html).search(/>\s*Nearby areas/i)
+  if (at < 0) return []
+  const section = html.slice(at, (html.indexOf('</section>', at) + 1 || html.length + 1) - 1)
+  return [...new Set([...section.matchAll(/href="\/digital-marketing-courses-([a-z0-9-]+)"/g)].map((m) => m[1]))]
+}
+
+/**
+ * One order for all areas, consistent with every live "Nearby areas" list (each is a slice of Main's
+ * order_index order, which the content API does not expose): each list says which area comes before
+ * which; areas never seen keep the end, by name.
+ */
+export function mergeOrder(lists, all, limit = 6) {
+  const before = new Map(all.map((s) => [s, new Set()]))
+  for (const entry of lists) {
+    // A list is either the addresses alone, or { list, candidates }: the addresses that page could
+    // list (Main: the other active locations of its city, or all others without a city).
+    const list = Array.isArray(entry) ? entry : entry.list
+    for (let i = 1; i < list.length; i++) if (before.has(list[i]) && before.has(list[i - 1])) before.get(list[i]).add(list[i - 1])
+    // A full list (the first `limit`) says every candidate it leaves out comes after its last one.
+    if (!Array.isArray(entry) && list.length === limit) for (const s of entry.candidates) if (!list.includes(s) && before.has(s) && before.has(list[limit - 1])) before.get(s).add(list[limit - 1])
+  }
+  const out = []
+  const left = new Set(all)
+  while (left.size) {
+    const ready = [...left].filter((s) => [...before.get(s)].every((p) => !left.has(p))).sort()
+    const next = ready.length ? ready[0] : [...left].sort()[0] // a cycle (should not happen): by name
+    out.push(next); left.delete(next)
+  }
+  return out
+}
+
+export async function areaFamily(ctx, browser) {
+  const { MAIN, bundle, log } = ctx
+  const sitemap = await sitemapPaths(ctx)
+  const families = [
+    { key: 'design-area', title: 'Main — Area course page design', re: AREA_ROUTE, prefix: '/digital-marketing-courses-', table: 'locations', sample: 'jayanagar' },
+    { key: 'design-city-course', title: 'Main — City course page design', re: CITY_COURSE_ROUTE, prefix: '/digital-marketing-course-', table: 'cities', sample: 'bangalore' },
+  ]
+  for (const f of families) {
+    const paths = sitemap.filter((p) => f.re.test(p) && (!ctx.PATHS || ctx.PATHS.includes(p)))
+    if (!paths.length) continue
+    const rows = (await ctx.supabase(f.table, 'select=*')).filter((r) => r.is_active !== false)
+    const bySlug = new Map(rows.map((r) => [r.slug, r]))
+    const samplePath = paths.find((p) => p === `${f.prefix}${f.sample}`) || paths[0]
+    const sampleSlug = samplePath.slice(f.prefix.length)
+    const sampleRow = bySlug.get(sampleSlug) || {}
+    // The other locations Main lists on the sample page, as it chooses them.
+    const siblings = rows.filter((r) => r.slug !== sampleSlug && (!sampleRow.city_id || r.city_id === sampleRow.city_id)).sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0)).slice(0, 6).map((r) => r.name)
+    log(`${f.key}: ${paths.length} pages from "${f.table}" (${rows.length} rows); sample ${samplePath}`)
+    const captured = await ctx.captureRoute(browser, `${MAIN}${samplePath}`, ['main'])
+    ctx.queue(f.key, captured.parts.main, (els) => {
+      if (f.table === 'locations' && siblings.length) nearbyAreasLoop(ctx, els, siblings, f.key)
+      // Per-page texts first (they contain the name too), then the name everywhere else.
+      const sampleTexts = areaTexts((pages.find((x) => x.p === samplePath) || {}).html || '')
+      if (sampleTexts.intro && !bindExactText(els, sampleTexts.intro, '[acv_field name="intro"]')) bundle.notes.push(`${f.key}: introduction "${sampleTexts.intro.slice(0, 50)}" not found in the design`)
+      if (sampleTexts.heading && !bindExactText(els, sampleTexts.heading, '[acv_field name="heading"]')) bundle.notes.push(`${f.key}: heading "${sampleTexts.heading}" not found in the design`)
+      if (sampleTexts.nearby && !bindExactText(els, sampleTexts.nearby, '[acv_field name="nearby_title"]')) bundle.notes.push(`${f.key}: "${sampleTexts.nearby}" not found in the design`)
+      const bound = bindName(els, nameFromSlug(sampleSlug))
+      if (!bound) bundle.notes.push(`${f.key}: the page name "${nameFromSlug(sampleSlug)}" was not found in the design`)
+      bundle.templates.push({ key: f.key, post_type: 'elementor_library', elementor_template_type: 'page', title: f.title, target: 'main', elementor_data: els })
+    })
+    const pages = []
+    for (const p of paths) pages.push({ p, html: await (await fetch(mainOwn(`${MAIN}${p}`))).text() })
+    // Main orders nearby areas by order_index; the order is read back from the live pages themselves.
+    const slugs = paths.map((p) => p.slice(f.prefix.length))
+    const cityOf = (s) => String((bySlug.get(s) || {}).city_id || '')
+    const order = f.table === 'locations'
+      ? mergeOrder(pages.map((x) => { const self = x.p.slice(f.prefix.length); return { list: nearbyOrder(x.html), candidates: slugs.filter((s) => s !== self && (!cityOf(self) || cityOf(s) === cityOf(self))) } }), slugs)
+      : []
+    if (order.length) log(`${f.key}: nearby order ${order.join(' ')}`)
+    for (const { p, html } of pages) {
+      const slug = p.slice(f.prefix.length)
+      const row = bySlug.get(slug) || {}
+      bundle.records.push({
+        key: `area-${p.slice(1)}`,
+        post_type: 'acv_location',
+        title: nameFromSlug(slug),
+        slug: p.slice(1),
+        content: '',
+        order: Number.isFinite(Number(row.order_index)) && row.order_index !== null && row.order_index !== undefined ? Number(row.order_index) : Math.max(0, order.indexOf(slug)),
+        target: 'main',
+        main_path: p,
+        replace: true,
+        seo: ctx.headSeo(html, p),
+        meta: {
+          _acv_design_template: `acv-template://${f.key}`,
+          _acv_location_name: String(row.name || nameFromSlug(slug)),
+          _acv_location_intro: areaTexts(html).intro,
+          _acv_location_heading: areaTexts(html).heading,
+          ...(areaTexts(html).nearby ? { _acv_location_nearby_title: areaTexts(html).nearby } : {}),
+          ...(row.city_id ? { _acv_location_city_id: String(row.city_id) } : {}),
+        },
+      })
+    }
+    if (paths.some((p) => !bySlug.has(p.slice(f.prefix.length)))) bundle.notes.push(`${f.key}: ${paths.filter((p) => !bySlug.has(p.slice(f.prefix.length))).join(' ')} have no "${f.table}" row (Main draws them from their address alone)`)
+  }
 }

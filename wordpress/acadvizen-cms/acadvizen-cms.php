@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Acadvizen Master Admin
  * Description:       One WordPress admin for both Acadvizen websites. Design with Elementor, choose "Publish To" (Enrollment, Main or Both) and publish. Pages for www.acadvizen.com are rendered by WordPress/Elementor and published through the Acadvizen Render Bridge.
- * Version:           0.7.3
+ * Version:           0.7.7
  * Requires at least: 6.5
  * Requires PHP:      8.0
  * Author:            Acadvizen
@@ -21,12 +21,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const VERSION        = '0.7.3';
+const VERSION        = '0.7.7';
 const POST_TYPE      = 'acv_blog';
 const REST_NAMESPACE = 'acadvizen-cms/v1';
 const MENU_SLUG      = 'acadvizen-cms';
 
-foreach ( array( 'config', 'post-type', 'targets', 'blocks', 'fields', 'main-site', 'sync', 'versions', 'render-bridge', 'publisher', 'elementor', 'content-types', 'design', 'migration', 'rest', 'main-content', 'blog-sync', 'registry', 'approval', 'admin', 'admin-site' ) as $module ) {
+foreach ( array( 'config', 'post-type', 'targets', 'blocks', 'fields', 'main-site', 'sync', 'versions', 'render-bridge', 'publisher', 'elementor', 'content-types', 'design', 'migration', 'media-guard', 'rest', 'main-content', 'blog-sync', 'registry', 'approval', 'admin', 'admin-site' ) as $module ) {
 	require_once __DIR__ . '/includes/' . $module . '.php';
 }
 
@@ -72,6 +72,8 @@ foreach ( array_merge( SITE_POST_TYPES, TEMPLATE_POST_TYPES ) as $acv_scope_type
 }
 add_filter( 'pre_trash_post', __NAMESPACE__ . '\\guard_trash', 10, 2 );
 add_filter( 'pre_delete_post', __NAMESPACE__ . '\\guard_trash', 10, 2 );
+// Media that published content still shows is not deleted (includes/media-guard.php).
+add_filter( 'pre_delete_attachment', __NAMESPACE__ . '\\guard_media_delete', 10, 2 );
 add_action( 'wp_after_insert_post', __NAMESPACE__ . '\\after_candidate_saved', 40, 2 );
 add_action( 'elementor/document/after_save', __NAMESPACE__ . '\\after_candidate_design_saved', 30, 2 );
 add_action( VERIFY_HOOK, __NAMESPACE__ . '\\verify_publication', 10, 3 );
@@ -90,6 +92,11 @@ add_action( 'pre_get_posts', __NAMESPACE__ . '\\include_unpublished_in_preview' 
 add_filter( 'redirect_canonical', __NAMESPACE__ . '\\block_canonical_redirect_to_main_only' );
 add_filter( 'wp_sitemaps_posts_query_args', __NAMESPACE__ . '\\exclude_main_only_from_core_sitemap' );
 add_filter( 'rank_math/sitemap/entry', __NAMESPACE__ . '\\exclude_main_only_from_rank_math_sitemap', 10, 3 );
+// "Hide from search engines" in Master Admin wins over the page's Rank Math settings, everywhere.
+add_filter( 'rank_math/frontend/robots', __NAMESPACE__ . '\\robots_follow_master_admin_noindex', 20 );
+add_filter( 'wp_robots', __NAMESPACE__ . '\\core_robots_follow_master_admin_noindex', 20 );
+add_filter( 'rank_math/sitemap/entry', __NAMESPACE__ . '\\exclude_hidden_from_rank_math_sitemap', 10, 3 );
+add_filter( 'wp_sitemaps_posts_query_args', __NAMESPACE__ . '\\exclude_hidden_from_core_sitemap' );
 // Header/footer choice per website, sitemap clean-up and login branding: off unless wp-config.php
 // turns them on (config.php, OPTIONAL_FEATURES).
 register_optional_features();

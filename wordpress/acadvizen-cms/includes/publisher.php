@@ -551,7 +551,11 @@ function is_https_upgrade_of( string $from, string $to ): bool {
 	return 0 === strpos( $from, 'http://' ) && 'https://' . substr( $from, 7 ) === $to;
 }
 
+/** Hidden from search engines: Master Admin's "Hide from search engines" box, or Rank Math's noindex. */
 function is_noindex( int $post_id ): bool {
+	if ( hidden_from_search( $post_id ) ) {
+		return true;
+	}
 	$robots = get_post_meta( $post_id, 'rank_math_robots', true );
 	return is_array( $robots ) && in_array( 'noindex', $robots, true );
 }

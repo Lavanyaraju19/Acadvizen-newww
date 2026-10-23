@@ -38,6 +38,14 @@ function content_field_definitions(): array {
 			'_acv_location_phone'   => array( __( 'Phone', 'acadvizen-cms' ), 'text', '' ),
 			'_acv_location_map_url' => array( __( 'Google Maps link', 'acadvizen-cms' ), 'url', '' ),
 			'_acv_location_courses' => array( __( 'Courses offered here', 'acadvizen-cms' ), 'posts:acv_course', '' ),
+			// Area course pages (www.acadvizen.com/digital-marketing-courses-<area>): their own texts, shown by
+			// [acv_field] in the "Area course page" design; empty for the other locations.
+			'_acv_design_template'        => array( __( 'Design', 'acadvizen-cms' ), 'design', '' ),
+			'_acv_location_heading'       => array( __( 'Heading (area pages)', 'acadvizen-cms' ), 'text', __( 'e.g. Digital Marketing Courses in Jayanagar', 'acadvizen-cms' ) ),
+			'_acv_location_intro'         => array( __( 'Introduction (area pages)', 'acadvizen-cms' ), 'lines', '' ),
+			'_acv_location_name'          => array( __( 'Name in "Nearby areas" lists', 'acadvizen-cms' ), 'text', __( 'e.g. JP Nagar', 'acadvizen-cms' ) ),
+			'_acv_location_nearby_title'  => array( __( '"Nearby areas" title (area pages)', 'acadvizen-cms' ), 'text', __( 'e.g. Nearby areas in the city', 'acadvizen-cms' ) ),
+			'_acv_location_city_id'       => array( __( 'City group (pages with the same group list each other as nearby areas)', 'acadvizen-cms' ), 'text', '' ),
 		),
 		'acv_faq'         => array(
 			'_acv_faq_global' => array( __( 'Show on every page that lists FAQs', 'acadvizen-cms' ), 'checkbox', '' ),
@@ -52,6 +60,21 @@ function content_field_definitions(): array {
 			'_acv_tool_category' => array( __( 'Category', 'acadvizen-cms' ), 'text', __( 'e.g. SEO', 'acadvizen-cms' ) ),
 			'_acv_tool_brand_color' => array( __( 'Brand colour', 'acadvizen-cms' ), 'text', __( 'e.g. #F9AB00', 'acadvizen-cms' ) ),
 		),
+	);
+}
+
+/** Published Elementor page designs a record may be drawn by (Templates of type "Page"). */
+function design_choices(): array {
+	return get_posts(
+		array(
+			'post_type'      => 'elementor_library',
+			'post_status'    => 'publish',
+			'posts_per_page' => 100,
+			'orderby'        => 'title',
+			'order'          => 'ASC',
+			'meta_key'       => '_elementor_template_type', // phpcs:ignore WordPress.DB.SlowDBQuery
+			'meta_value'     => 'page', // phpcs:ignore WordPress.DB.SlowDBQuery
+		)
 	);
 }
 
@@ -226,6 +249,13 @@ function render_content_fields( \WP_Post $post ): void {
 				printf( '<option value="%1$d" %2$s>%1$d</option>', (int) $i, selected( (string) $i, (string) $value, false ) );
 			}
 			echo '</select>';
+		} elseif ( 'design' === $type ) {
+			// The type's own design (Website Design screen) or another published page design.
+			printf( '<select id="%1$s" name="%2$s"><option value="">%3$s</option>', esc_attr( $id ), esc_attr( $key ), esc_html__( 'The usual design for this kind of page', 'acadvizen-cms' ) );
+			foreach ( design_choices() as $template ) {
+				printf( '<option value="%1$d" %2$s>%3$s</option>', (int) $template->ID, selected( (string) $template->ID, (string) $value, false ), esc_html( get_the_title( $template ) ) );
+			}
+			echo '</select><p class="description">' . esc_html__( 'Which Elementor design draws this page. Change the design itself in Templates → Edit with Elementor.', 'acadvizen-cms' ) . '</p>';
 		} elseif ( 0 === strpos( $type, 'posts:' ) ) {
 			$selected = array_map( 'intval', (array) $value );
 			$choices  = get_posts(
@@ -280,6 +310,14 @@ function save_content_fields( int $post_id, \WP_Post $post ): void {
 		} elseif ( 'rating' === $type ) {
 			$rating = absint( $raw );
 			update_post_meta( $post_id, $key, $rating >= 1 && $rating <= 5 ? (string) $rating : '' );
+		} elseif ( 'design' === $type ) {
+			$chosen = absint( $raw );
+			$valid  = in_array( $chosen, wp_list_pluck( design_choices(), 'ID' ), true );
+			if ( $valid ) {
+				update_post_meta( $post_id, $key, (string) $chosen );
+			} else {
+				delete_post_meta( $post_id, $key );
+			}
 		} else {
 			update_post_meta( $post_id, $key, sanitize_text_field( (string) $raw ) );
 		}
