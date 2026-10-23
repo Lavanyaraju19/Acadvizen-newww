@@ -173,6 +173,47 @@ The site time zone is **Asia/Kolkata**. Any change to a scheduled item before it
   - Ask for a fresh backup before large changes.
 - **The Main Website's own admin** (www.acadvizen.com/admin) still opens. Content now edited in WordPress should be edited **here**, not there. Edits made there to pages that WordPress draws will not show on the website.
 
+## 10a. Users, roles and sign-in safety
+
+**Today:** two Administrator accounts exist. One of them is also used by the team for daily work and was used for the 22–23 Oct test runs. Give every person their own account.
+
+**Roles that exist in this WordPress:**
+
+| Role | Can do |
+|---|---|
+| **Administrator** | Everything, including approving and publishing (self-approval allowed) and the settings. Keep this to one or two owners. |
+| **Reviewer (approves publishing)** | Added by Master Admin: everything an Editor can do, plus approving and publishing on **Approvals**. |
+| **Editor** | Creates and edits all pages, posts and media, and submits for approval. Cannot approve or publish. |
+| **Author** | Own blog posts, submitted for approval. |
+| **Contributor** | Own drafts only. |
+
+**To add a person** (an Administrator does this):
+1. Go to **Users → Add New User**.
+2. Enter the name and e-mail, choose the role, and tick *Send the new user an email*.
+3. The person sets their own password from the e-mail.
+
+**Password and session safety:**
+- Each person changes their own password under **Users → Profile → Set New Password**.
+- On the same screen, **Log Out Everywhere Else** ends that account's other sessions.
+- Do not share an account, and never send passwords by e-mail or chat.
+
+**Before removing the shared account:** check that each new account can do its job. Then the owner removes or demotes the shared one.
+
+## 10b. Backups
+
+Hostinger keeps the backups. **hPanel → Websites → enroll.acadvizen.com → Files → Backups** lets you:
+- generate a new backup;
+- download the latest **database** backup (database `…_xDzzw` is the Enrollment website);
+- download the **files** backup.
+
+Ask your developer to verify a downloaded backup: checksum, integrity, table count and a test restore in an isolated copy. **Never restore an older backup over the live website**: it would lose every enquiry and change made since.
+
+## 10c. Main Website's own admin
+
+www.acadvizen.com/admin still works for **leads**, users, the student area, and the lists behind **/companies**, **/internships**, **/resources** and the blog author, category and tag pages.
+
+Content that WordPress now draws (pages, blogs, tools, locations, header, footer, menus, SEO) must be edited in **WordPress**. A switch that makes Main's admin refuse such edits with a clear message is prepared, but **not switched on yet** (owner decision, after a fresh backup).
+
 ## 11. Known differences and limits (as of 23 Oct 2026)
 
 These are known and recorded; none breaks a page.
@@ -186,6 +227,6 @@ These are known and recorded; none breaks a page.
 | Homepage | The video shows the browser's player controls under its cover; the page is a little taller on phones. |
 | Location pages | No `<h1>` heading (also the case on the Main Website before). |
 | 3 blog categories | Categories longer than 200 characters (they were tag lists) were not stored. |
-| Main's own admin | Not locked for content WordPress now draws (`WORDPRESS_OWNS_PUBLIC_CONTENT` is not set). |
+| Main's own admin | Not yet locked for content WordPress now draws: see 10c. |
 
 Evidence for every result is in `docs/cms-implementation/PRODUCTION-TASK-LEDGER.md`.

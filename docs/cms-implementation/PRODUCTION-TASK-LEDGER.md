@@ -2,7 +2,7 @@
 
 This is the living list of every production task.
 
-- **Updated:** 23 Oct 2026, 17:40 UTC.
+- **Updated:** 23 Oct 2026, 18:20 UTC.
 - **Production evidence:** the `PRODUCTION — …` labels below come only from the live websites. Local results are marked "local (supplementary)".
 - **Starting point:** `PRODUCTION-AUDIT-2026-10-21.md`.
 
@@ -27,6 +27,20 @@ Status values: DONE · VERIFIED (production) · READY (built and tested, waiting
 4. The Both partial-failure test and a scheduling re-run on production.
 5. Commit and push the repository changes: plugin 0.7.7 source, release and migration tools, docs.
 6. Rotate the shared admin account (used by both the team and the test runs) and the deferred credentials.
+
+## Final handover directive, 23 Oct 2026, 17:50–18:20 UTC
+
+| # | Task | Status | Evidence / blocker |
+|---|---|---|---|
+| 1 | Latest backup | **BLOCKED: owner action** | Newest available: the Hostinger set from **17 Oct 2026 09:30**, in `Downloads`. It holds the Enrollment database `u713346627_xDzzw.20261017093050.sql.gz` (sha256 `b2143d9f…`, gzip OK, "Dump completed", 111 tables, test-restored 19 Oct) and the account files `u713346627.20261017093050.tar.gz` (3.55 GB). The folder `Acadvizen-Private-Backups` holds older sets (14–15 Oct). It does **not** cover anything since 17 Oct (plugin 0.7.6/0.7.7, the 202 migrated pages, about 650 images). A fresh backup is not possible from here: the SSH key `acadvizen-hostinger` is refused again (17:52Z), and no key or password was changed. **Owner:** hPanel → Websites → enroll.acadvizen.com → Files → Backups → generate and download the database (`…_xDzzw`) and the files backup into `Downloads`; I then verify checksum, gzip, table count and a test restore. |
+| 2 | Bangalore area page | **COMPLETE** | Live: 200, drawn by WordPress, no "Feature title", "Feature description" or "Why choose us"; canonical self, `index, follow`, in the sitemap. |
+| 3 | `WORDPRESS_OWNS_PUBLIC_CONTENT` | **PREPARED; NOT APPLIED** (gated on 1, on the push, and on an allow rule) | Inspection found the lock would also have blocked the Main admin screens for `/companies`, `/internships`, `/resources` and blog authors/categories/tags (generic `entities` writes). **Fixed** in commit `40729e6`: those tables stay editable; leads were never locked (`/api/cms/leads`). Unit 312/312. Script `tools/release/set-content-ownership.sh <live id>`: it adds only this variable, redeploys, compares every address, probes (anonymous POST `/api/cms/pages` → 423; companies, internships, resources, authors, leads ≠ 423) and rolls back automatically. Probes today, lock off: pages 401, companies 401, leads 400. **Order:** backup → push → release `40729e6` with `release-main.sh` → `set-content-ownership.sh`. |
+| 4 | Git | **COMMITTED LOCALLY; NOT PUSHED** (awaiting owner approval) | `e1b82ff`: 40 files, plugin 0.7.7 source (rebuilt package sha256 = installed `32cc3050…`), tools, tests, docs. `40729e6`: 3 files (ownership fix, test, script). Plus a docs commit for this update. Excluded: `next.config.mjs` (Option C hunk), `wordpress/main-site/`, the Option C docs, all PNG screenshots, evidence result files, `dist/`. Secret scan: none; `git diff --check` clean; repository hook "No secrets found". Unit 312/312, PHP 354/354, plugin PHP lint 0 failures. |
+| 5 | Individual accounts | **DOCUMENTED; creation BLOCKED** (gated on 1) | Users: 2 accounts, both Administrator (one shared by the team and the test runs). Implemented roles: Administrator, **Reviewer (approves publishing)** (plugin role: editor + approve/publish), Editor, Author, Contributor. Manual §10a: how to add people, change passwords, log out other sessions. No credential was changed. |
+| 6 | Both partial-failure test | **BLOCKED** | It creates test content on production, so it waits for the fresh backup (directive rule 4). It also needs the signing secret in the test's environment, which was not exported from the private env file; nothing was bypassed. |
+| 7 | Scheduling test | **BLOCKED** (gated on 1) | Last production result: 7/7 on 19 Oct 2026. |
+| 8 | Final verification (read-only parts) | **COMPLETE for what needs no change** | Main `dpl_2B5hNrES1eUqxDhrbVJVuEfkiAyV` Ready; final crawl 17:2xZ: 310/310 sitemap addresses 200 and drawn by WordPress, 0 differences in status, title, canonical, robots or description against 21 Oct; the 4 Main-only pages 200, noindex, not in the sitemap; Enrollment 58/59 identical to 15 Oct (`/test/` intended); Main `/admin` 200; Enrollment `wp-login` 200; plugin 0.7.7; enquiry route present; `/manifest` and `/render` 401 no-store; env names present, ownership variable not set. Queue: #8516 (stale since 19 Oct), #10936, #11007 pending, untouched. **#9304:** last seen pending, untouched, 22 Oct 15:19Z; it left the queue by 23 Oct 15:35Z through the team's own action. The publish records of all 9 batches show the tools never acted on #9304, #8516 or #8517. |
+| 9 | Ledger and guide | **COMPLETE** | Manual: new §10a (users, roles, passwords, sessions), §10b (backups, never restore over live), §10c (Main's own admin and the prepared lock). |
 
 ## Gate A: Recovery
 
