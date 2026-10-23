@@ -2,7 +2,7 @@
 
 This is the living list of every production task.
 
-- **Updated:** 23 Oct 2026, 18:20 UTC.
+- **Updated:** 24 Oct 2026.
 - **Production evidence:** the `PRODUCTION — …` labels below come only from the live websites. Local results are marked "local (supplementary)".
 - **Starting point:** `PRODUCTION-AUDIT-2026-10-21.md`.
 
@@ -28,6 +28,23 @@ Status values: DONE · VERIFIED (production) · READY (built and tested, waiting
 5. Commit and push the repository changes: plugin 0.7.7 source, release and migration tools, docs.
 6. Rotate the shared admin account (used by both the team and the test runs) and the deferred credentials.
 
+## Final master implementation prompt, 24 Oct 2026
+
+Overall: **PARTIALLY COMPLETE.**
+
+- **Implemented and verified:** Elementor-to-Main visual control (Render Bridge, PRODUCTION), and everything below except the gated rows.
+- **Not done:** the backup, push, 0.7.8 install, ownership lock, scheduling re-run, production partial-failure test and accounts. They wait for the fresh backup, owner permissions or owner details. **Nothing was changed on production on 24 Oct**: only one read-only screen read.
+
+| # | Item | Status | Result |
+|---|---|---|---|
+| M1 | Custom dashboard out of the editing workflow | **READY (LOCAL), plugin 0.7.8** | Content types are normal top-level menus (Main Blogs with Blog Categories, Courses, Locations with Cities & Areas, Tools, FAQs, Testimonials). The plugin menu "Approvals & Publishing" opens Approvals. The overview page is unlisted but its address works. 9 links that duplicated standard WordPress, Rank Math, Elementor and UAE screens are gone. LOCAL: all screens 200; screen hook names unchanged (`acadvizen-master-admin_page_…`), so the stall repair still runs on Publishing. PHP **356/356**, lint clean. Package `dist/acadvizen-cms-0.7.8-worktree-de4acc818b53` sha256 `97cfea45…`, 28 files byte-identical to source; only `acadvizen-cms.php`, `includes/admin.php` and `readme.txt` differ from 0.7.7. `plugin-release.json`: release 0.7.8, rollback 0.7.7 (`32cc3050…`, the installed package). **Install gated on the backup.** |
+| M2 | Elementor feature inventory | **PRODUCTION (read-only)** | Widget compatibility screen read with the owner's session: 437 widgets. On Main: 347 work, 8 work with a reviewer check, 3 typed code, 79 refused (WooCommerce, ShopEngine, Login). On Enrollment: 434 work. `evidence/production-widget-inventory-20261024.json`; summary in `REQUIREMENT-CAPABILITY-MATRIX.md` §2. |
+| M3 | Requirement-to-capability matrix; publication contract | **DONE** | `REQUIREMENT-CAPABILITY-MATRIX.md` §3–§4. |
+| M4 | Both partial failure | **LOCAL PASS; production BLOCKED** | Local A9 and `both-failure-acceptance` 12/12. Production needs the signing secret in the test environment; it was not extracted. |
+| M5 | 3 over-long blog categories | **RECHECKED: no change needed** | Not shown publicly on either version of the three posts, nor on `/blog`. Main's category pages read Main's own database and are unchanged. Nothing was truncated. `REQUIREMENT-CAPABILITY-MATRIX.md` §5. |
+| M6 | Push of `e1b82ff`, `40729e6`, `f108662` and the 24 Oct commit | **BLOCKED** | Owner authorised the push, but the command safety check refused `git push origin headless-wordpress` twice. It needs the allow rule `Bash(git push origin headless-wordpress)`, or the owner pushes. |
+| M7 | Backup gate | **BLOCKED (owner)** | As in row 1 below. |
+
 ## Final handover directive, 23 Oct 2026, 17:50–18:20 UTC
 
 | # | Task | Status | Evidence / blocker |
@@ -41,6 +58,19 @@ Status values: DONE · VERIFIED (production) · READY (built and tested, waiting
 | 7 | Scheduling test | **BLOCKED** (gated on 1) | Last production result: 7/7 on 19 Oct 2026. |
 | 8 | Final verification (read-only parts) | **COMPLETE for what needs no change** | Main `dpl_2B5hNrES1eUqxDhrbVJVuEfkiAyV` Ready; final crawl 17:2xZ: 310/310 sitemap addresses 200 and drawn by WordPress, 0 differences in status, title, canonical, robots or description against 21 Oct; the 4 Main-only pages 200, noindex, not in the sitemap; Enrollment 58/59 identical to 15 Oct (`/test/` intended); Main `/admin` 200; Enrollment `wp-login` 200; plugin 0.7.7; enquiry route present; `/manifest` and `/render` 401 no-store; env names present, ownership variable not set. Queue: #8516 (stale since 19 Oct), #10936, #11007 pending, untouched. **#9304:** last seen pending, untouched, 22 Oct 15:19Z; it left the queue by 23 Oct 15:35Z through the team's own action. The publish records of all 9 batches show the tools never acted on #9304, #8516 or #8517. |
 | 9 | Ledger and guide | **COMPLETE** | Manual: new §10a (users, roles, passwords, sessions), §10b (backups, never restore over live), §10c (Main's own admin and the prepared lock). |
+
+### Backup routes investigated, 23 Oct 2026, 18:37–18:55 UTC (no key, password or setting changed)
+
+| Route | Result |
+|---|---|
+| Newer backup files on this computer | None. The newest is still Hostinger's 17 Oct 09:30 set; it does **not** cover the current production state and must never be restored over it. |
+| SSH key `acadvizen-hostinger` (existing, unchanged) | Refused by the server (`Permission denied (publickey,password)`); not worked around. |
+| Saved Hostinger browser session | None usable. hPanel shows Cloudflare's "Performing security verification" human check; not bypassed. |
+| Hostinger API or automation | None configured. The private env file has only the hPanel login, and signing in with stored passwords is refused by the Claude Code safety classifier. |
+| Hostinger plugins in WordPress (Hostinger, Hub, Tools, Reach) | No backup feature. The "Secure Backups" menu entry only advertises installing the Duplicator plugin; installing a new plugin on production before a backup would be an unreviewed production change, so it was not done. |
+| Documented workflow (operating manual §10b) | hPanel → Websites → enroll.acadvizen.com → Files → Backups, with the owner signed in. **A sign-in window was reopened 18:4xZ for the owner** (Cloudflare check and 2FA need a person). |
+
+Also verified on 23–24 Oct: the committed plugin source (`e1b82ff`) and the installed 0.7.7 package have identical contents (28/28 files byte-identical; the archive bytes differ only by entry timestamps, because the build stamps the latest plugin commit's date). Unit 312/312, PHP 354/354, plugin lint 0 failures. The 3 commits sit directly on `origin/headless-wordpress` (3 ahead, 0 behind), with no excluded files and no secret patterns. **Push, ownership lock and the production tests wait for the fresh backup**, as the directive requires.
 
 ## Gate A: Recovery
 

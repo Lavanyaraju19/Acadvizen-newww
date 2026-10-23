@@ -1,7 +1,7 @@
 === Acadvizen Master Admin ===
 Requires at least: 6.5
 Requires PHP: 8.0
-Stable tag: 0.7.7
+Stable tag: 0.7.8
 
 One WordPress admin for both Acadvizen websites. Design with Elementor, choose "Publish To"
 (Enrollment, Main or Both), publish. Pages for www.acadvizen.com are rendered by WordPress and
@@ -71,6 +71,16 @@ Deactivating changes nothing for existing Enrollment pages. Deleting the plugin 
 own data (logs, jobs, version table); content is kept.
 
 == Changelog ==
+
+= 0.7.8 =
+* The admin menu follows standard WordPress: Main Blogs, Courses, Locations, Tools, FAQs and
+  Testimonials are top-level menus next to Posts and Pages, edited with Elementor as before.
+* The plugin's own menu is renamed "Approvals & Publishing" and opens Approvals. It keeps Publishing
+  status, Versions & Rollback, Main Website, Global Styles, Website Design, Widget compatibility,
+  Import and Settings. Duplicate links to Pages, Templates, Media, Menus, SEO and Redirects are gone
+  (they stay in their usual WordPress menus). The old overview page is no longer listed; its address
+  still works. Screen names, publishing, approvals, versions, previews, retries and rollback are
+  unchanged.
 
 = 0.7.7 =
 * Media in use cannot be deleted: an image or file that published, scheduled or waiting-for-approval

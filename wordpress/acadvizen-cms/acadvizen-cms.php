@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Acadvizen Master Admin
  * Description:       One WordPress admin for both Acadvizen websites. Design with Elementor, choose "Publish To" (Enrollment, Main or Both) and publish. Pages for www.acadvizen.com are rendered by WordPress/Elementor and published through the Acadvizen Render Bridge.
- * Version:           0.7.7
+ * Version:           0.7.8
  * Requires at least: 6.5
  * Requires PHP:      8.0
  * Author:            Acadvizen
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const VERSION        = '0.7.7';
+const VERSION        = '0.7.8';
 const POST_TYPE      = 'acv_blog';
 const REST_NAMESPACE = 'acadvizen-cms/v1';
 const MENU_SLUG      = 'acadvizen-cms';
@@ -154,6 +154,15 @@ add_action( STALL_CHECK_HOOK, __NAMESPACE__ . '\\requeue_stalled_renders' );
 add_action( STALL_CHECK_HOOK, __NAMESPACE__ . '\\ensure_scheduled_jobs' );
 
 /* Admin -------------------------------------------------------------------------------------- */
+// Content types get their own top-level WordPress menus (like Posts), not entries under one custom menu.
+add_filter(
+	'register_post_type_args',
+	static function ( $args, $post_type ) {
+		return in_array( $post_type, array( POST_TYPE, 'acv_course', 'acv_location', 'acv_tool', 'acv_faq', 'acv_testimonial' ), true ) ? array_merge( (array) $args, standard_menu_args( $post_type ) ) : $args;
+	},
+	10,
+	2
+);
 if ( is_admin() ) {
 	add_action( 'admin_menu', __NAMESPACE__ . '\\register_admin_menu', 9 );
 	// Main Website content (the www.acadvizen.com records themselves): includes/main-content.php.

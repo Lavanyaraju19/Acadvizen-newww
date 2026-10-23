@@ -12,10 +12,12 @@ Nothing changes on either website until a reviewer approves it and it is publish
 
 1. **Sign in** at https://enroll.acadvizen.com/wp-admin/ and tick **Remember Me**.
 
-2. **Open what you want to change.** In the left menu, under **Acadvizen Master Admin**:
+2. **Open what you want to change** in the left menu:
    - **Pages:** the homepage, About, Contact, Courses list, Tools list, Placement, Achievements and the other dedicated pages.
    - **Main Blogs:** blog posts for www.acadvizen.com/blog.
-   - **Tools**, **Courses**, **Locations**, **Cities & Areas**: the matching Main pages.
+   - **Tools**, **Courses**, **Locations** (with **Cities & Areas** inside it): the matching Main pages.
+
+   *Plugin 0.7.8 (prepared, not installed yet) makes these normal menu items, next to Posts and Pages. Until it is installed, they are under **Acadvizen Master Admin**.*
 
 3. **Edit with Elementor.** Click **Edit with Elementor**. Click any heading, text, button or image on the page and change it in the left panel.
 
@@ -37,7 +39,7 @@ Nothing changes on either website until a reviewer approves it and it is publish
 
 6. **Submit.** Click **Publish**. This *submits* the change for approval; it does not go live yet.
 
-7. **Approve and publish.** Go to **Acadvizen Master Admin → Approvals**.
+7. **Approve and publish.** Go to **Acadvizen Master Admin → Approvals** (after 0.7.8: click **Approvals & Publishing**).
    1. Open the previews and tick **"I checked the … preview"**.
    2. Click **Approve this revision**.
    3. Click **Publish approved revision**.

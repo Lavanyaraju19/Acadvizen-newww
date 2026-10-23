@@ -275,15 +275,17 @@ namespace Acadvizen\CMS {
 	check( 'preview: shim added once and paths still mapped', array( 1, true ), array( substr_count( $full, 'elementor-invisible' ), false !== strpos( $full, 'href="/wp-content/a.css"' ) ) );
 	check( 'preview round-trip: render then preview restores WordPress paths', '<link href="/wp-content/a.css"><script>fetch(\'/wp-json/x/v1/y\')</script>', preview_document_for_wordpress( rewrite_root_relative_paths_for_main( '<link href="/wp-content/a.css"><script>fetch(\'/wp-json/x/v1/y\')</script>' ) ) );
 
-	// --- Master Admin menu: content types grouped with content, not appended after Settings ---
-	$menu   = array( array( 'Dashboard', 'c', MENU_SLUG ), array( 'Pages', 'c', 'edit.php?post_type=page' ), array( 'Settings', 'c', MENU_SLUG . '-settings' ),
-		array( 'Other plugin', 'c', 'other.php' ), array( 'Courses', 'c', 'edit.php?post_type=acv_course' ), array( 'Main Blogs', 'c', 'edit.php?post_type=acv_blog' ) );
+	// --- Approvals & Publishing menu (0.7.8): Approvals first, setup tools last; content types have their own menus ---
+	$menu   = array( array( 'Overview', 'c', MENU_SLUG ), array( 'Settings', 'c', MENU_SLUG . '-settings' ), array( 'Other plugin', 'c', 'other.php' ),
+		array( 'Publishing status', 'c', MENU_SLUG . '-publishing' ), array( 'Approvals', 'c', APPROVALS_PAGE ), array( 'Main Website', 'c', MAIN_CONTENT_PAGE ) );
 	$sorted = array_map( static fn( $r ) => $r[0], sorted_submenu( $menu, admin_menu_order() ) );
-	check( 'menu order: content before settings, unknown rows last', array( 'Dashboard', 'Pages', 'Main Blogs', 'Courses', 'Settings', 'Other plugin' ), $sorted );
+	check( 'menu order: Approvals first, then publishing status and Main content, settings and the overview last, unknown rows after', array( 'Approvals', 'Publishing status', 'Main Website', 'Settings', 'Overview', 'Other plugin' ), $sorted );
 	$order = admin_menu_order( 'post.php?post=7&action=elementor' );
 	$at    = array_search( 'post.php?post=7&action=elementor', $order, true );
-	check( 'menu order: Global Styles link is placed with the design items (after Menus, before Website Design)', array( 'nav-menus.php', MENU_SLUG . '-design' ), array( $order[ $at - 1 ], $order[ $at + 1 ] ) );
-	check( 'menu order: Main Website content right after the dashboard', MAIN_CONTENT_PAGE, $order[1] );
+	check( 'menu order: Global Styles link is placed with the design items (after Main content, before Website Design)', array( MAIN_CONTENT_PAGE, MENU_SLUG . '-design' ), array( $order[ $at - 1 ], $order[ $at + 1 ] ) );
+	check( 'menu order: Approvals is the first item (the top-level link opens it)', APPROVALS_PAGE, $order[0] );
+	check( 'standard menus: each content type has its own top-level menu, next to Pages', array( true, 'dashicons-welcome-write-blog', '20.1', true, 'dashicons-admin-tools', '20.4' ), array( standard_menu_args( POST_TYPE )['show_in_menu'], standard_menu_args( POST_TYPE )['menu_icon'], standard_menu_args( POST_TYPE )['menu_position'], standard_menu_args( 'acv_tool' )['show_in_menu'], standard_menu_args( 'acv_tool' )['menu_icon'], standard_menu_args( 'acv_tool' )['menu_position'] ) );
+	check( 'standard menus: an unknown type still gets a plain top-level menu (no position forced)', array( true, false ), array( standard_menu_args( 'x' )['show_in_menu'], isset( standard_menu_args( 'x' )['menu_position'] ) ) );
 	check( 'global styles: opens Site Settings over an Elementor page (as Elementor does)', 'post.php?post=723&action=elementor&acv-open=global-styles', global_styles_url_for( 723, 10 ) );
 	check( 'global styles: no Elementor page yet -> the kit itself', 'post.php?post=10&action=elementor', global_styles_url_for( 0, 10 ) );
 	// The small private page Global Styles opens over can never be published by any save.

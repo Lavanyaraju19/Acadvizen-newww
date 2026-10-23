@@ -12,55 +12,59 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * "Acadvizen Master Admin": one place that links every website-management task. Existing
- * WordPress/Elementor screens are linked, not replaced, so the normal admin keeps working.
+ * The ordinary WordPress admin is the editing experience: Pages, Posts-like content types (Main Blogs, Courses,
+ * Locations, Tools, FAQs, Testimonials: their own top-level menus, see standard_menu_args()), Media, Menus,
+ * Templates and Elementor stay where WordPress and Elementor put them, and "Publish To" is chosen in Elementor's
+ * Page Settings. This menu only holds what WordPress itself has no screen for: Approvals (the review queue),
+ * Publishing status, Versions & Rollback, Main's own content screens and, for administrators, the design and
+ * setup tools. Its old Dashboard page stays reachable at its address (links and tools use it) but is not listed.
  */
 function register_admin_menu(): void {
 	add_menu_page(
-		__( 'Acadvizen Master Admin', 'acadvizen-cms' ),
-		__( 'Acadvizen Master Admin', 'acadvizen-cms' ),
+		__( 'Approvals & Publishing', 'acadvizen-cms' ),
+		__( 'Approvals & Publishing', 'acadvizen-cms' ),
 		'edit_posts',
 		MENU_SLUG,
-		__NAMESPACE__ . '\\render_dashboard_page',
-		'dashicons-admin-site-alt3',
+		__NAMESPACE__ . '\render_dashboard_page',
+		'dashicons-yes-alt',
 		3
 	);
-	add_submenu_page( MENU_SLUG, __( 'Dashboard', 'acadvizen-cms' ), __( 'Dashboard', 'acadvizen-cms' ), 'edit_posts', MENU_SLUG, __NAMESPACE__ . '\\render_dashboard_page' );
+	// Screen hooks are named after the menu title ("load-acadvizen-master-admin_page_…"); code that hooks into these
+	// screens (e.g. the stalled-publish repair in acadvizen-cms.php) keeps working with the new label.
+	$GLOBALS['admin_page_hooks'][ MENU_SLUG ] = 'acadvizen-master-admin'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+	add_submenu_page( MENU_SLUG, __( 'Overview', 'acadvizen-cms' ), __( 'Overview', 'acadvizen-cms' ), 'edit_posts', MENU_SLUG, __NAMESPACE__ . '\render_dashboard_page' );
 
-	$links = array(
-		array( __( 'Pages', 'acadvizen-cms' ), 'edit_pages', 'edit.php?post_type=page' ),
-		array( __( 'Templates', 'acadvizen-cms' ), 'edit_posts', 'edit.php?post_type=elementor_library' ),
-	);
-	if ( post_type_exists( 'elementor-hf' ) ) {
-		$links[] = array( __( 'Header & Footer', 'acadvizen-cms' ), 'edit_pages', 'edit.php?post_type=elementor-hf' );
-	}
-	$links[] = array( __( 'Menus', 'acadvizen-cms' ), 'edit_theme_options', 'nav-menus.php' );
-	if ( (int) get_option( 'elementor_active_kit' ) ) {
-		$links[] = array( __( 'Global Styles (colours & fonts)', 'acadvizen-cms' ), 'manage_options', global_styles_url() );
-	}
-	foreach ( $links as list( $label, $cap, $url ) ) {
-		add_submenu_page( MENU_SLUG, $label, $label, $cap, $url );
-	}
-	// Blogs, Courses, Locations, FAQs, Testimonials and Tools are added here automatically by
-	// their post types (show_in_menu). Taxonomies need explicit links:
-	// The native publishing model's screens (config.php, native_publishing_ui): only while it is on.
 	$native = native_publishing_ui();
 	if ( $native ) {
-		add_submenu_page( MENU_SLUG, __( 'Cities & Areas', 'acadvizen-cms' ), __( 'Cities & Areas', 'acadvizen-cms' ), 'manage_categories', 'edit-tags.php?taxonomy=acv_city&post_type=acv_location' );
-		add_submenu_page( MENU_SLUG, __( 'Blog Categories', 'acadvizen-cms' ), __( 'Blog Categories', 'acadvizen-cms' ), 'manage_categories', 'edit-tags.php?taxonomy=acv_blog_category&post_type=' . POST_TYPE );
+		add_submenu_page( MENU_SLUG, __( 'Publishing', 'acadvizen-cms' ), __( 'Publishing status', 'acadvizen-cms' ), 'edit_pages', MENU_SLUG . '-publishing', __NAMESPACE__ . '\render_publishing_page' );
+		add_submenu_page( MENU_SLUG, __( 'Versions & Rollback', 'acadvizen-cms' ), __( 'Versions & Rollback', 'acadvizen-cms' ), 'edit_pages', MENU_SLUG . '-versions', __NAMESPACE__ . '\render_versions_page' );
 	}
-	add_submenu_page( MENU_SLUG, __( 'Media', 'acadvizen-cms' ), __( 'Media', 'acadvizen-cms' ), 'upload_files', 'upload.php' );
-	if ( defined( 'RANK_MATH_VERSION' ) ) {
-		add_submenu_page( MENU_SLUG, __( 'SEO', 'acadvizen-cms' ), __( 'SEO', 'acadvizen-cms' ), 'manage_options', 'admin.php?page=rank-math' );
-		add_submenu_page( MENU_SLUG, __( 'Redirects', 'acadvizen-cms' ), __( 'Redirects', 'acadvizen-cms' ), 'manage_options', 'admin.php?page=rank-math-redirections' );
+	// Elementor's Site Settings change both websites: an administrator's tool, not an everyday menu item.
+	if ( (int) get_option( 'elementor_active_kit' ) ) {
+		add_submenu_page( MENU_SLUG, __( 'Global Styles (both websites)', 'acadvizen-cms' ), __( 'Global Styles (both websites)', 'acadvizen-cms' ), 'manage_options', global_styles_url() );
 	}
 	if ( $native ) {
-		add_submenu_page( MENU_SLUG, __( 'Import Main Website', 'acadvizen-cms' ), __( 'Import Main Website', 'acadvizen-cms' ), 'manage_options', MENU_SLUG . '-import', __NAMESPACE__ . '\render_import_page' );
-		add_submenu_page( MENU_SLUG, __( 'Website Design', 'acadvizen-cms' ), __( 'Website Design', 'acadvizen-cms' ), 'manage_options', MENU_SLUG . '-design', __NAMESPACE__ . '\render_design_page' );
-		add_submenu_page( MENU_SLUG, __( 'Publishing', 'acadvizen-cms' ), __( 'Publishing', 'acadvizen-cms' ), 'edit_pages', MENU_SLUG . '-publishing', __NAMESPACE__ . '\\render_publishing_page' );
-		add_submenu_page( MENU_SLUG, __( 'Versions & Rollback', 'acadvizen-cms' ), __( 'Versions & Rollback', 'acadvizen-cms' ), 'edit_pages', MENU_SLUG . '-versions', __NAMESPACE__ . '\\render_versions_page' );
+		add_submenu_page( MENU_SLUG, __( 'Website Design', 'acadvizen-cms' ), __( 'Website Design', 'acadvizen-cms' ), 'manage_options', MENU_SLUG . '-design', __NAMESPACE__ . 'ender_design_page' );
+		add_submenu_page( MENU_SLUG, __( 'Import Main Website', 'acadvizen-cms' ), __( 'Import Main Website', 'acadvizen-cms' ), 'manage_options', MENU_SLUG . '-import', __NAMESPACE__ . 'ender_import_page' );
 	}
-	add_submenu_page( MENU_SLUG, __( 'Settings', 'acadvizen-cms' ), __( 'Settings', 'acadvizen-cms' ), 'manage_options', MENU_SLUG . '-settings', __NAMESPACE__ . '\\render_settings_page' );
+	add_submenu_page( MENU_SLUG, __( 'Settings', 'acadvizen-cms' ), __( 'Settings', 'acadvizen-cms' ), 'manage_options', MENU_SLUG . '-settings', __NAMESPACE__ . '\render_settings_page' );
+}
+
+/**
+ * Menu arguments that give a content type its own top-level WordPress menu, next to Pages, like Posts:
+ * the ordinary place a WordPress user looks for it (its categories / areas appear under it automatically).
+ */
+function standard_menu_args( string $post_type ): array {
+	$menus = array(
+		POST_TYPE         => array( 'dashicons-welcome-write-blog', '20.1' ),
+		'acv_course'      => array( 'dashicons-welcome-learn-more', '20.2' ),
+		'acv_location'    => array( 'dashicons-location', '20.3' ),
+		'acv_tool'        => array( 'dashicons-admin-tools', '20.4' ),
+		'acv_faq'         => array( 'dashicons-editor-help', '20.5' ),
+		'acv_testimonial' => array( 'dashicons-format-quote', '20.6' ),
+	);
+	list( $icon, $position ) = $menus[ $post_type ] ?? array( 'dashicons-admin-page', null );
+	return array_filter( array( 'show_in_menu' => true, 'menu_icon' => $icon, 'menu_position' => $position ), static fn( $v ) => null !== $v );
 }
 
 /**
@@ -179,36 +183,29 @@ function order_admin_menu(): void {
 				$global_styles = (string) $row[2];
 			}
 		}
-		$submenu[ MENU_SLUG ] = sorted_submenu( $submenu[ MENU_SLUG ], admin_menu_order( $global_styles ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$rows = sorted_submenu( $submenu[ MENU_SLUG ], admin_menu_order( $global_styles ) );
+		// With Approvals listed, the old overview page leaves the menu (its address keeps working) and the top-level
+		// "Approvals & Publishing" link opens Approvals, the first item.
+		if ( array_filter( $rows, static fn( $r ) => APPROVALS_PAGE === ( $r[2] ?? '' ) ) ) {
+			$rows = array_values( array_filter( $rows, static fn( $r ) => MENU_SLUG !== ( $r[2] ?? '' ) ) );
+		}
+		$submenu[ MENU_SLUG ] = $rows; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 	}
 }
 
 /** Menu slugs in display order ($global_styles: the Global Styles link, which varies). */
 function admin_menu_order( string $global_styles = '' ): array {
 	return array(
-		MENU_SLUG,
-		MAIN_CONTENT_PAGE,
-		'edit.php?post_type=page',
-		'edit.php?post_type=' . POST_TYPE,
-		'edit-tags.php?taxonomy=acv_blog_category&post_type=' . POST_TYPE,
-		'edit.php?post_type=acv_course',
-		'edit.php?post_type=acv_location',
-		'edit-tags.php?taxonomy=acv_city&post_type=acv_location',
-		'edit.php?post_type=acv_faq',
-		'edit.php?post_type=acv_testimonial',
-		'edit.php?post_type=acv_tool',
-		'upload.php',
-		'edit.php?post_type=elementor_library',
-		'edit.php?post_type=elementor-hf',
-		'nav-menus.php',
-		$global_styles,
-		MENU_SLUG . '-design',
-		'admin.php?page=rank-math',
-		'admin.php?page=rank-math-redirections',
+		APPROVALS_PAGE,
 		MENU_SLUG . '-publishing',
 		MENU_SLUG . '-versions',
-		MENU_SLUG . '-settings',
+		MAIN_CONTENT_PAGE,
+		$global_styles,
+		MENU_SLUG . '-design',
+		COMPAT_PAGE,
 		MENU_SLUG . '-import',
+		MENU_SLUG . '-settings',
+		MENU_SLUG,
 	);
 }
 

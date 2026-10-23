@@ -72,6 +72,18 @@ If you need a page back on the Main Website's own original version, set its Word
 
    ![Master Admin dashboard](screenshots/01-master-admin-dashboard.png)
 
+3. **After the plugin 0.7.8 update** (prepared and tested locally; it is installed only after a fresh backup), the menu follows standard WordPress:
+
+   | Left menu | Contains |
+   |---|---|
+   | **Approvals & Publishing** (opens Approvals) | Approvals, Publishing status, Versions & Rollback, Main Website, Global Styles (both websites), Website Design, Widget compatibility, Import Main Website, Settings |
+   | **Pages**, **Templates**, **Media**, **Appearance → Menus**, **Rank Math SEO** (with Redirections), **UAE → Header & Footer** (the Main header and footer) | Their usual WordPress places (no longer repeated under the plugin's menu) |
+   | **Main Blogs** | Blog posts, Add New Blog, Blog Categories |
+   | **Courses**, **Tools**, **FAQs**, **Testimonials** | Each its own menu |
+   | **Locations** | Locations, Add New Location, Cities & Areas |
+
+   The old Master Admin overview page leaves the menu. Approvals, publishing checks, versions, previews, retries and rollback work exactly as before.
+
 ## 3. Editing a page
 
 1. Open the list (for example **Pages**, **Main Blogs** or **Tools**).
@@ -226,7 +238,7 @@ These are known and recorded; none breaks a page.
 | `/digital-marketing-courses-bangalore` | Main showed a "Why choose us" block with placeholder words ("Feature title"); the WordPress version leaves it out. **Owner decision pending.** |
 | Homepage | The video shows the browser's player controls under its cover; the page is a little taller on phones. |
 | Location pages | No `<h1>` heading (also the case on the Main Website before). |
-| 3 blog categories | Categories longer than 200 characters (they were tag lists) were not stored. |
+| 3 blog categories | Three Main posts had a "category" that is a keyword list of 256–304 characters (WordPress allows 200). They were not stored in WordPress, and not shortened. Rechecked 24 Oct: neither website shows these categories on the post or on `/blog`, and Main's own category pages are unchanged. To give these posts real categories, choose short ones in Main's admin and in WordPress. |
 | Main's own admin | Not yet locked for content WordPress now draws: see 10c. |
 
-Evidence for every result is in `docs/cms-implementation/PRODUCTION-TASK-LEDGER.md`.
+Evidence for every result is in `docs/cms-implementation/PRODUCTION-TASK-LEDGER.md`. What each Elementor widget does on each website, and the exact publication states, are in `docs/cms-implementation/REQUIREMENT-CAPABILITY-MATRIX.md`.
