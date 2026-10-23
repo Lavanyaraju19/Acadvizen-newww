@@ -36,3 +36,13 @@ test('every owned area is a real /api/cms route folder', () => {
   const folders = new Set(readdirSync(dir).filter((f) => statSync(path.join(dir, f)).isDirectory()))
   for (const area of WORDPRESS_OWNED_CMS_AREAS) assert.ok(folders.has(area), `app/api/cms/${area} exists`)
 })
+
+test('with WordPress owning public content, the tables behind pages that stay on Main remain editable', () => {
+  for (const entity of ['companies', 'internships', 'resources', 'authors', 'blog_categories', 'blog_tags']) {
+    assert.equal(isWordPressOwnedWrite({ method: 'POST', pathname: `/api/cms/entities/${entity}`, enabled: true }), false, entity)
+  }
+  // Content WordPress now draws stays locked, and leads (their own API) are not affected.
+  assert.equal(isWordPressOwnedWrite({ method: 'POST', pathname: '/api/cms/entities/testimonials', enabled: true }), true)
+  assert.equal(isWordPressOwnedWrite({ method: 'PUT', pathname: '/api/cms/pages', enabled: true }), true)
+  assert.equal(isWordPressOwnedWrite({ method: 'PATCH', pathname: '/api/cms/leads/1', enabled: true }), false)
+})
