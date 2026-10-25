@@ -466,10 +466,25 @@ function copy_document( \WP_Post $source, array $overrides, array $extra_meta ):
 }
 
 /** The open working copy of a live document, created on first use. */
+/**
+ * A working copy kept after it was published (see publish_approved()) is stale when the live page no
+ * longer shows the revision it published. Copies still being worked on are never stale.
+ */
+function is_stale_working_copy( array $copy_state, string $live_revision ): bool {
+	return 'published' === ( $copy_state['state'] ?? '' ) && (string) ( $copy_state['hash'] ?? '' ) !== $live_revision;
+}
+
 function working_copy_for( \WP_Post $live, bool $create = true ): int {
 	$existing = (int) get_post_meta( $live->ID, WORKING_COPY_META, true );
 	if ( $existing && ( $copy = get_post( $existing ) ) && 'trash' !== $copy->post_status && (int) get_post_meta( $existing, COPY_OF_META, true ) === $live->ID ) {
-		return $existing;
+		if ( ! is_stale_working_copy( approval_state( $existing ), (string) get_post_meta( $live->ID, LIVE_REVISION_META, true ) ) ) {
+			return $existing;
+		}
+		// Kept after it was published, and the live page changed since (a rollback, another publication):
+		// editing it would bring back what it holds. A fresh copy of the live page replaces it.
+		approval_bypass( true );
+		wp_trash_post( $existing );
+		approval_bypass( false );
 	}
 	if ( ! $create ) {
 		return 0;
@@ -679,26 +694,78 @@ function after_candidate_design_saved( $document, $data ): void {
 	}
 }
 
-/** After a save: invalidate an approval the save changed; a save as Pending submits it. */
+/**
+ * After a save: invalidate an approval the save changed; a save as Pending submits it. "Publish" or
+ * "Update" by a reviewer (an administrator) in the editor publishes: see publish_own_submission().
+ */
 function refresh_candidate( \WP_Post $post ): void {
 	$state  = approval_state( $post->ID );
 	$hash   = current_fingerprint( $post );
+	$direct = 'pending' === $post->post_status && is_editor_request() && reviewer_publishes_directly();
 	$edited = approval_transition( $state, 'edited', array( 'hash' => $hash, 'user' => get_current_user_id() ) );
 	if ( is_array( $edited ) && $edited !== $state ) {
 		update_post_meta( $post->ID, APPROVAL_META, $edited );
 		approval_log( 'approval_invalidated', $post->ID, 'changed_after_' . ( $state['state'] ?? '' ), '', array( 'hash' => $hash ) );
-		approval_flash( 'warning', __( 'You changed this after it was submitted or approved: it needs to be submitted and approved again.', 'acadvizen-cms' ) );
 		$state = $edited;
-		if ( 'pending' === $post->post_status ) {
+		if ( 'pending' === $post->post_status && ! $direct ) {
+			approval_flash( 'warning', __( 'You changed this after it was submitted or approved: it needs to be submitted and approved again.', 'acadvizen-cms' ) );
 			approval_bypass( true );
 			wp_update_post( array( 'ID' => $post->ID, 'post_status' => 'draft' ) );
 			approval_bypass( false );
 			return;
 		}
 	}
-	if ( 'pending' === $post->post_status && ! in_array( $state['state'] ?? '', array( 'pending', 'approved', 'scheduled' ), true ) ) {
-		submit_candidate( $post );
+	if ( 'pending' !== $post->post_status ) {
+		return;
 	}
+	if ( ! in_array( $state['state'] ?? '', array( 'pending', 'approved', 'scheduled' ), true ) ) {
+		if ( 'pending' !== submit_candidate( $post ) || ! $direct ) {
+			return;
+		}
+		$state = approval_state( $post->ID );
+	}
+	if ( $direct && in_array( $state['state'] ?? '', array( 'pending', 'approved' ), true ) && $hash === ( $state['hash'] ?? '' ) ) {
+		publish_own_submission( $post );
+	}
+}
+
+/**
+ * Whether "Publish" in the editor publishes for the current user: reviewers (administrators and the
+ * "Reviewer (approves publishing)" role) publish as in normal WordPress, recorded as approved by
+ * themselves; Editors, Authors and Contributors submit for approval. ACADVIZEN_CMS_REVIEWERS_SUBMIT
+ * (true in wp-config.php) keeps the two-step flow (submit, then approve on Approvals) for everyone.
+ */
+function reviewer_publishes_directly(): bool {
+	return current_user_can( REVIEW_CAP ) && ! ( defined( 'ACADVIZEN_CMS_REVIEWERS_SUBMIT' ) && ACADVIZEN_CMS_REVIEWERS_SUBMIT );
+}
+
+/**
+ * A reviewer's own Publish/Update from the editor: the submitted revision is approved by them (they
+ * saw it in the editor's preview) and published to its chosen websites at once, or scheduled when
+ * it carries a future date. The same rules as on Approvals apply: a design that cannot be shown is
+ * refused, and typed code needs the right to publish code. Publication is then checked on each
+ * website as usual (Approvals & Publishing -> Recent publications).
+ */
+function publish_own_submission( \WP_Post $post ): string {
+	$state = approval_state( $post->ID );
+	if ( 'pending' === ( $state['state'] ?? '' ) ) {
+		$state = array( 'state' => review_candidate( $post->ID, 'approve', current_user_can( 'unfiltered_html' ), __( 'Published from the editor', 'acadvizen-cms' ), chosen_destinations( $post ) ) );
+	}
+	if ( 'approved' !== ( $state['state'] ?? '' ) ) {
+		approval_flash( 'warning', approval_error_text( (string) ( $state['state'] ?? '' ) ) . ' ' . __( 'It is waiting on Approvals & Publishing.', 'acadvizen-cms' ) );
+		return (string) ( $state['state'] ?? '' );
+	}
+	$result = publish_approved( $post->ID, false, true );
+	if ( 'scheduled' === $result ) {
+		approval_flash( 'success', __( 'Scheduled: it is published at the date you set.', 'acadvizen-cms' ) );
+		return 'scheduled';
+	}
+	if ( ! is_int( $result ) ) {
+		approval_flash( 'error', approval_error_text( (string) $result ) );
+		return (string) $result;
+	}
+	approval_flash( 'success', __( 'Published. Each chosen website is checked within a few minutes: see Approvals & Publishing -> Recent publications.', 'acadvizen-cms' ) );
+	return 'published';
 }
 
 /**
@@ -816,10 +883,12 @@ function review_candidate( int $post_id, string $decision, bool $code_ok, string
 
 /**
  * Publishes exactly the approved revision. Returns the live document id, or an error code.
+ * $keep_copy: a working copy published from the editor stays the page's working copy (as a draft), so
+ * the open editor can keep updating; otherwise it is removed once published.
  *
  * @return int|string
  */
-function publish_approved( int $candidate_id, bool $due = false ) {
+function publish_approved( int $candidate_id, bool $due = false, bool $keep_copy = false ) {
 	$candidate = get_post( $candidate_id );
 	if ( ! $candidate instanceof \WP_Post || ! in_approval_scope( $candidate ) ) {
 		return 'not_found';
@@ -853,9 +922,15 @@ function publish_approved( int $candidate_id, bool $due = false ) {
 		$archive = archive_live( $live );
 		apply_revision( $candidate, $live );
 		approval_bypass( true );
-		wp_trash_post( $candidate_id );
+		if ( $keep_copy ) {
+			wp_update_post( array( 'ID' => $candidate_id, 'post_status' => 'draft' ) );
+		} else {
+			wp_trash_post( $candidate_id );
+		}
 		approval_bypass( false );
-		delete_post_meta( $live_id, WORKING_COPY_META );
+		if ( ! $keep_copy ) {
+			delete_post_meta( $live_id, WORKING_COPY_META );
+		}
 	} else {
 		$live_id = $candidate_id;
 		approval_bypass( true );
@@ -1176,6 +1251,73 @@ function verify_publication( $live_id, $hash, $attempt = 1 ): array {
 		approval_log( 'verify', $live_id, $pub['outcome'], (string) wp_json_encode( $pub['destinations'] ), array( 'hash' => $hash ) );
 	}
 	return $pub;
+}
+
+/** Seconds without any check after which a publication still "publishing" has lost its next check. */
+const VERIFY_LOST_AFTER = 900;
+
+/**
+ * Whether a publication's checks stopped: it still says "publishing", no check is waiting for it, and
+ * none ran for VERIFY_LOST_AFTER seconds (the longest normal gap between two checks is 600 seconds).
+ */
+function is_verification_lost( array $pub, bool $check_waiting, int $now ): bool {
+	if ( 'publishing' !== ( $pub['outcome'] ?? '' ) || $check_waiting ) {
+		return false;
+	}
+	$last = (int) ( $pub['at'] ?? 0 );
+	foreach ( (array) ( $pub['destinations'] ?? array() ) as $result ) {
+		$last = max( $last, (int) ( $result['at'] ?? 0 ) );
+	}
+	return $now - $last > VERIFY_LOST_AFTER;
+}
+
+/** Whether a check of this publication (document and revision) is waiting in WP-Cron. */
+function verification_waiting( int $live_id, string $hash ): bool {
+	foreach ( (array) _get_cron_array() as $hooks ) {
+		foreach ( (array) ( $hooks[ VERIFY_HOOK ] ?? array() ) as $event ) {
+			$args = (array) ( $event['args'] ?? array() );
+			if ( (int) ( $args[0] ?? 0 ) === $live_id && (string) ( $args[1] ?? '' ) === $hash ) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+/**
+ * WP-Cron can lose a job (see forget_cached_cron_list()); a publication whose next check was lost
+ * stayed "publishing" for good (23 Oct 2026: /contact was published and drawn, and still said
+ * "Publishing" a day and a half later). Its checks continue from where they stopped. Runs with the
+ * hourly stall check and when a publishing screen is opened. Returns how many were resumed.
+ */
+function resume_lost_verifications(): int {
+	if ( ! approval_enabled() ) {
+		return 0;
+	}
+	$ids = get_posts(
+		array(
+			'post_type'        => array_merge( SITE_POST_TYPES, TEMPLATE_POST_TYPES ),
+			'post_status'      => 'any',
+			'fields'           => 'ids',
+			'posts_per_page'   => 50,
+			'no_found_rows'    => true,
+			'suppress_filters' => true,
+			'meta_query'       => array( array( 'key' => PUBLICATION_META, 'value' => 's:10:"publishing"', 'compare' => 'LIKE' ) ), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+		)
+	);
+	$resumed = 0;
+	foreach ( array_map( 'intval', (array) $ids ) as $live_id ) {
+		$pub  = get_post_meta( $live_id, PUBLICATION_META, true );
+		$hash = is_array( $pub ) ? (string) ( $pub['hash'] ?? '' ) : '';
+		if ( '' === $hash || ! is_verification_lost( $pub, verification_waiting( $live_id, $hash ), time() ) ) {
+			continue;
+		}
+		$attempt = min( max( 1, (int) ( $pub['attempt'] ?? 0 ) + 1 ), count( VERIFY_DELAYS ) );
+		wp_schedule_single_event( time() + 5, VERIFY_HOOK, array( $live_id, $hash, $attempt ) );
+		approval_log( 'verify_resumed', $live_id, 'publishing', 'check ' . $attempt . ' of ' . count( VERIFY_DELAYS ), array( 'hash' => $hash ) );
+		++$resumed;
+	}
+	return $resumed;
 }
 
 /**

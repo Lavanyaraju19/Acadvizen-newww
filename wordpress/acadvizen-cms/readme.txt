@@ -1,7 +1,7 @@
 === Acadvizen Master Admin ===
 Requires at least: 6.5
 Requires PHP: 8.0
-Stable tag: 0.7.8
+Stable tag: 0.7.9
 
 One WordPress admin for both Acadvizen websites. Design with Elementor, choose "Publish To"
 (Enrollment, Main or Both), publish. Pages for www.acadvizen.com are rendered by WordPress and
@@ -71,6 +71,20 @@ Deactivating changes nothing for existing Enrollment pages. Deleting the plugin 
 own data (logs, jobs, version table); content is kept.
 
 == Changelog ==
+
+= 0.7.9 =
+* "Publish" and "Update" in the editor publish for administrators and reviewers, as in normal
+  WordPress. Their own change is recorded as approved by them and published to its chosen websites at
+  once (or scheduled, when it has a future date), then checked on each website as before. Editors,
+  Authors and Contributors still submit for approval. Blocked widgets are still refused, and typed code
+  still needs the right to publish code. ACADVIZEN_CMS_REVIEWERS_SUBMIT (true) keeps the two-step flow.
+  (24 Oct 2026: 35 submissions on the live site, none approved, so nothing the team published went live.)
+* A publication whose next check was lost (WP-Cron can drop a job) is checked again: hourly, and when
+  Approvals or Publishing opens. 23 Oct 2026: /contact was live but showed "Publishing" for 1.5 days.
+* Popups and other Theme Builder templates published through Approvals now appear: Elementor Pro's
+  display-conditions cache is rebuilt when a template goes on or off the websites or its conditions
+  change, and once after this update (then the Main pages are redrawn). 23 Oct 2026: the Main
+  homepage's Quick Registration popup was approved and published but never shown.
 
 = 0.7.8 =
 * The admin menu follows standard WordPress: Main Blogs, Courses, Locations, Tools, FAQs and

@@ -47,6 +47,17 @@ Today all 310 Main sitemap addresses are drawn this way, with 0 differences in s
 
 **On Enrollment,** 434 widgets work and the same 3 need code rights.
 
+**Measured coverage (25 Oct 2026).** These categories are kept apart, and none is counted as "working" without evidence.
+
+| Status | Widgets | Evidence |
+|---|---|---|
+| **Verified live on Main** | The 11 types used by the 310 live Main pages: Image, Text Editor, Navigation Menu, HTML, Heading and Button (all 310 pages), Shortcode (178), Nested Accordion (23), Video (2), Image Carousel (1), Nested Carousel (1). Plus Container nesting, typography, colours, backgrounds, spacing and responsive sizes | Every page answers 200, drawn by WordPress; SEO identical to 23 Oct; text verified at migration. `evidence/production-main-widgets-used-20261025.json` |
+| **Verified end to end (create → preview → publish → update → restore)** | Container (nested), Heading, Text Editor, Button, Image, checked at 1440 / 768 / 390 px | PRODUCTION `verify-elementor-live` 58/58 (22 Oct); LOCAL `approval-acceptance` 47/47 and `direct-publish-acceptance` 11/11 (25 Oct) |
+| **Drawn by Elementor, not individually tested on Main** | The other 336 widgets marked "Works" (section 2) | They are drawn by the same Elementor and add-ons as on Enrollment, but no Main page uses them yet. Check each in the Main preview before first use |
+| **Works with a reviewer check** | 8 (section 2) | Behaviour after load differs on Main (search, post lists, unknown add-ons) |
+| **Refused on Main, with the reason** | 79: WooCommerce (29), ShopEngine (49), Login (1) | Shop, cart and sign-in run only on Enrollment. Publish them to Enrollment, or link to them |
+| **Needs a dependency** | Elementor Pro features (popups, custom CSS, motion effects, Theme Builder) | Pro 4.3.2 is active on production (licence status not checked). If it lapses, affected pages are flagged |
+
 **Page and site features:**
 
 | Feature | Main | How |
@@ -72,9 +83,9 @@ Today all 310 Main sitemap addresses are drawn this way, with 0 differences in s
 |---|---|---|---|---|
 | R1 | One WordPress + Elementor admin for both websites | enroll.acadvizen.com/wp-admin; Elementor editor for every page, post and template of both | 310/310 Main addresses drawn by WordPress; `verify-elementor-live` 58/58 | **PRODUCTION** |
 | R2 | Full practical visual control of Main, Main stays Next.js | Render Bridge (section 1) | section 1; 437-widget inventory (section 2) | **PRODUCTION** |
-| R3 | Custom Master CMS dashboard out of the main editing workflow, without breaking services | Plugin **0.7.8**: content types (Main Blogs, Courses, Locations, Tools, FAQs, Testimonials) are normal top-level WordPress menus; the plugin menu is "Approvals & Publishing" and opens Approvals; the overview page is no longer listed (its address still works); 9 duplicate links removed. Screen names and every service unchanged | PHP 356/356; LOCAL: menu and all 8 screens 200, screen hook names unchanged, stall repair attached (`evidence/local-menu-078.png`) | **LOCAL**. Production install waits for the fresh backup |
+| R3 | Custom Master CMS dashboard out of the main editing workflow, without breaking services | Plugin **0.7.8** (carried in 0.7.9): content types (Main Blogs, Courses, Locations, Tools, FAQs, Testimonials) are normal top-level WordPress menus; the plugin menu is "Approvals & Publishing" and opens Approvals; the overview page is no longer listed (its address still works); 9 duplicate links removed. Screen names and every service unchanged | PHP 356/356; LOCAL: menu and all 8 screens 200, screen hook names unchanged, stall repair attached (`evidence/local-menu-078.png`) | **LOCAL**. Production install waits for the fresh backup |
 | R4 | Destination: Enrollment / Main / Both in the normal workflow | Page Settings → **Publish To (Acadvizen)** in Elementor; also in the WordPress editor | `verify-elementor-live` (each destination) | **PRODUCTION** |
-| R5 | Approval before publishing | Publish = submit; a reviewer approves the exact revision, after ticking each chosen website's preview; self-approval allowed for administrators | `verify-approval-live` 16/16 | **PRODUCTION** |
+| R5 | Approval before publishing | Editors, Authors, Contributors: Publish = submit; a reviewer approves the exact revision, after ticking each chosen website's preview. Administrators and Reviewers: from 0.7.9, Publish/Update publishes directly (self-approval recorded), section 5a | `verify-approval-live` 16/16 (PRODUCTION, 0.7.6); `direct-publish-acceptance` 11/11 and `approval-acceptance` 47/47 (LOCAL, 0.7.9) | Submit flow **PRODUCTION**; direct publish **LOCAL**, install pending |
 | R6 | Truthful remote status, retry, preview, rollback | Section 4 | Section 4 | **PRODUCTION**, except the forced Main failure (R7) |
 | R7 | Both: partial failure reported, never success | Each website has its own state; the outcome is "partial failure" naming the failed website; the failed website keeps the previous version; Check again retries | LOCAL: `approval-acceptance` A9 and `both-failure-acceptance` 12/12 | **BLOCKED on production**: forcing a Main failure needs the signing secret in the test environment, and no approved way to provide it exists. Rule: never extract it |
 | R8 | Scheduling | Future date → "Schedule approved revision"; any change cancels it | PRODUCTION 7/7 on 19 Oct; LOCAL IST 7/7 | Re-run on production waits for the backup |
@@ -130,12 +141,24 @@ Three Main blog posts carry a "category" that is really a keyword list of 256, 2
 
 **Decision:** no WordPress representation is needed. A shortened or split name would invent categories that Main never had. If the owner wants real categories for these posts, the clean fix is to give them proper short categories in Main's admin (Blog taxonomy) and in WordPress.
 
+## 5a. "Publish does not publish": causes found on production and the fix (25 Oct 2026, plugin 0.7.9)
+
+Read-only on production (Approvals history, Publishing status, Templates, live HTML); fixed and tested locally. The fix is **not installed yet** (section 6).
+
+| # | What the team saw | Cause (evidence) | Fix in 0.7.9 | Local test |
+|---|---|---|---|---|
+| P1 | Clicking **Publish** on Enrollment pages (New Home, Courses 1, Placement 1, Mentors 1, Career 1, Branches, Partnership) changed nothing on the website | With approval on, Publish only *submits*. On 24 Oct: 35 submissions, 0 approvals, 0 publications; 9 items still waiting. 29 history entries are "changed after it was submitted": publishing again after an edit set the page back to Draft | Publish / Update by an Administrator or Reviewer publishes (recorded as approved by them; scheduled if future-dated). The working copy stays open, so Update works again in the same editor. Editors, Authors and Contributors still submit. Compatibility rules still apply | `direct-publish-acceptance.mjs` **11/11** |
+| P2 | `/contact` showed **Publishing** for 1.5 days although it was live | The chain of background checks is a series of one-off WP-Cron jobs; one was lost, so the result was never recorded | Lost checks are resumed (hourly, and when Approvals or Publishing opens) | D7, PHP unit |
+| P3 | The Main homepage's **Quick Registration popup** (lead form) was approved and published on 23 Oct but never appears | Elementor Pro shows popups from a cache of display conditions. It was rebuilt while the popup was *pending* (left out) and is not rebuilt when a template is published. Confirmed in Pro's source (`conditions-cache.php`: only `publish`/`draft`; no status hook) and on the live homepage (no popup markup, no revision mark `d41d742c…`) | The cache is rebuilt whenever a template goes on or off the websites or its conditions change, and once after the update; then the Main pages are redrawn | PHP unit. Not testable locally (no Elementor Pro); to be verified on production after install |
+
+The Main publishing path itself works: 288 Main pages are "Published", and every recent Main publication is verified (the approved revision is shown at its address).
+
 ## 6. What is not complete, and why
 
 | Item | Why | Next step |
 |---|---|---|
-| Fresh backup | SSH key refused; hPanel needs the owner's own sign-in | Owner generates and downloads the database and files backups in hPanel → Backups, then the developer verifies them |
+| Fresh backup | 25 Oct: the **files** backup of 24 Oct is valid (sha256 `d404585a…`, archive intact, Enrollment `public_html` with plugin 0.7.7). The **database** file supplied (`u713346627_kb4Ph…`, 30 KB, 21 tables, site `cms.acadvizen.com`) is **not** the Enrollment database (`u713346627_xDzzw`) | Owner downloads the `…_xDzzw` database backup of the same 24 Oct set in hPanel → Backups → Databases; the developer verifies it, then releases |
 | Push of the reviewed commits | Refused by the command safety check in this environment | Owner adds the allow rule `Bash(git push origin headless-wordpress)`, or pushes |
-| 0.7.8 install; ownership lock; scheduling re-run; full regression | Gated on the fresh backup | `tools/release/install-plugin.mjs`, `set-content-ownership.sh`, the regression suites |
+| 0.7.9 install (includes 0.7.8); ownership lock; scheduling re-run; production acceptance | Gated on the database backup | `tools/release/install-plugin.mjs`, `set-content-ownership.sh`, the regression suites |
 | Both partial failure on production | Needs the signing secret in the test environment; no approved mechanism | Owner decides whether to provide one; until then the LOCAL proof stands |
 | Personal accounts | No approved names, e-mails and roles | Owner supplies them |

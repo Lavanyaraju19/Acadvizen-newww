@@ -310,6 +310,7 @@ function maybe_requeue_stalled_renders(): void {
 	if ( ! get_transient( 'acv_cms_stall_check' ) ) {
 		set_transient( 'acv_cms_stall_check', 1, MINUTE_IN_SECONDS );
 		requeue_stalled_renders();
+		resume_lost_verifications();
 	}
 }
 
@@ -335,6 +336,91 @@ function queue_site_rerender( string $reason ): void {
 	// together are one re-render, not one per kind of change).
 	if ( ! hook_is_scheduled( RERENDER_ALL_HOOK ) ) {
 		wp_schedule_single_event( time() + 30, RERENDER_ALL_HOOK, array( $reason ) );
+	}
+}
+
+/* Elementor Pro display conditions ---------------------------------------------------------------- */
+
+/** Post types whose Elementor documents can carry Pro display conditions (popups, Theme Builder). */
+const CONDITION_POST_TYPES = array( 'elementor_library', 'e-floating-buttons' );
+
+/** Option: the plugin version that last rebuilt Pro's display-conditions cache. */
+const CONDITIONS_SYNCED_OPTION = 'acv_cms_conditions_synced';
+
+/**
+ * Whether a status change puts a template on, or takes it off, the websites. Elementor Pro shows
+ * popups and Theme Builder templates from a cache of display conditions that it rebuilds only when
+ * conditions are saved in its own dialog; it does not follow status changes.
+ */
+function conditions_change_matters( string $post_type, string $new_status, string $old_status ): bool {
+	return in_array( $post_type, CONDITION_POST_TYPES, true ) && $new_status !== $old_status && ( 'publish' === $new_status || 'publish' === $old_status );
+}
+
+/**
+ * transition_post_status. A template published through Approvals goes pending -> publish, and Pro's
+ * cache, built while it was pending, left it out: 23 Oct 2026, the Main homepage's Quick
+ * Registration popup was published and approved but never shown.
+ */
+function note_template_status_change( $new_status, $old_status, $post ): void {
+	if ( $post instanceof \WP_Post && conditions_change_matters( $post->post_type, (string) $new_status, (string) $old_status ) ) {
+		queue_conditions_refresh();
+	}
+}
+
+/** added/updated/deleted_post_meta: an approved revision gave a live template new display conditions. */
+function note_conditions_meta_change( $meta_id, $object_id, $meta_key ): void {
+	$object_id = (int) $object_id;
+	if ( '_elementor_conditions' === $meta_key && 'publish' === get_post_status( $object_id ) && in_array( get_post_type( $object_id ), CONDITION_POST_TYPES, true ) ) {
+		queue_conditions_refresh();
+	}
+}
+
+/** One rebuild at the end of the request, however many templates changed (before any re-render job). */
+function queue_conditions_refresh(): void {
+	static $queued = false;
+	if ( ! $queued ) {
+		$queued = true;
+		add_action( 'shutdown', __NAMESPACE__ . '\\refresh_theme_conditions', 0 );
+	}
+}
+
+/** Rebuilds Elementor Pro's display-conditions cache. False when Pro is not active. */
+function refresh_theme_conditions(): bool {
+	if ( ! class_exists( '\ElementorPro\Modules\ThemeBuilder\Module' ) ) {
+		return false;
+	}
+	\ElementorPro\Modules\ThemeBuilder\Module::instance()->get_conditions_manager()->get_cache()->regenerate();
+	return true;
+}
+
+/**
+ * admin_init, once per plugin version: rebuild the cache (templates published before this fix may be
+ * missing from it) and redraw the Main pages when a published Main template has display conditions.
+ */
+function sync_theme_conditions_once(): void {
+	if ( VERSION === get_option( CONDITIONS_SYNCED_OPTION ) || ! current_user_can( 'edit_pages' ) ) {
+		return;
+	}
+	update_option( CONDITIONS_SYNCED_OPTION, VERSION, false );
+	if ( ! refresh_theme_conditions() ) {
+		return;
+	}
+	$main_templates = get_posts(
+		array(
+			'post_type'        => CONDITION_POST_TYPES,
+			'post_status'      => 'publish',
+			'fields'           => 'ids',
+			'posts_per_page'   => 1,
+			'no_found_rows'    => true,
+			'suppress_filters' => true,
+			'meta_query'       => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				array( 'key' => '_elementor_conditions', 'compare' => 'EXISTS' ),
+				array( 'key' => META_TARGET, 'value' => array( TARGET_MAIN, TARGET_BOTH ), 'compare' => 'IN' ),
+			),
+		)
+	);
+	if ( $main_templates ) {
+		queue_site_rerender( 'display-conditions' );
 	}
 }
 

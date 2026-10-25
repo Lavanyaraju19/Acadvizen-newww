@@ -1,9 +1,9 @@
 {
   "comment": "Read by tools/release/install-plugin.mjs. release: the reviewed package to install on enroll.acadvizen.com. rollback: the version live before it, reinstalled automatically if a check fails (and by --undo).",
   "release": {
-    "zip": "dist/acadvizen-cms-0.7.8-worktree-de4acc818b53/acadvizen-cms.zip",
-    "sha256": "97cfea4521818f0549dfdbdbea04edbb9d786c25300217145789a795f74bf9ae",
-    "version": "0.7.8"
+    "zip": "dist/acadvizen-cms-0.7.9-worktree-c7ec89e8ac0e/acadvizen-cms.zip",
+    "sha256": "5e1cd1a209268f2045f7644067a2b0ff11b746b7309aab648283e88f526f5861",
+    "version": "0.7.9"
   },
   "rollback": {
     "zip": "dist/acadvizen-cms-0.7.7-worktree-a102a1796267/acadvizen-cms.zip",

@@ -37,18 +37,22 @@ Nothing changes on either website until a reviewer approves it and it is publish
 
 5. **Preview.** Use the **Preview on the Main Website** link in that panel, or the desktop, tablet and phone icons at the top. Previewing publishes nothing.
 
-6. **Submit.** Click **Publish**. This *submits* the change for approval; it does not go live yet.
+6. **Publish.** Click **Publish** (or **Update**).
+   - **Administrators and Reviewers, from plugin 0.7.9:** this publishes, as in normal WordPress. The page updates on the chosen website(s) within about a minute, and you can keep editing and click **Update** again. A page with a future date is scheduled instead.
+   - **Editors, Authors and Contributors** (and everyone before 0.7.9 is installed): Publish only *submits* the change for approval. Nothing goes live until step 7.
 
-7. **Approve and publish.** Go to **Acadvizen Master Admin → Approvals** (after 0.7.8: click **Approvals & Publishing**).
+7. **Approve and publish** (only for a submitted change). Go to **Acadvizen Master Admin → Approvals** (after the update: click **Approvals & Publishing**).
    1. Open the previews and tick **"I checked the … preview"**.
    2. Click **Approve this revision**.
    3. Click **Publish approved revision**.
 
    The website updates within about a minute.
 
+   > **Until 0.7.9 is installed, administrators must also do step 7.** On 24 Oct, 35 changes were submitted with Publish and none were approved, so none of them reached the website. They are still waiting on Approvals.
+
    ![Approvals](screenshots/02-approvals.png)
 
-8. **Check the live page.** **Publishing** shows each Main page's status ("Main: Published (version N, … ago)"). Open the page on the website to confirm.
+8. **Check the live page.** **Approvals & Publishing → Recent publications** shows each website's result: *Published (verified)*, *Publishing* (being checked), or *Failed* with the reason. **Check again** retries a failed website. Open the page on the website to confirm.
 
 ## If something says "Changed since it was submitted"
 

@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Acadvizen Master Admin
  * Description:       One WordPress admin for both Acadvizen websites. Design with Elementor, choose "Publish To" (Enrollment, Main or Both) and publish. Pages for www.acadvizen.com are rendered by WordPress/Elementor and published through the Acadvizen Render Bridge.
- * Version:           0.7.8
+ * Version:           0.7.9
  * Requires at least: 6.5
  * Requires PHP:      8.0
  * Author:            Acadvizen
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const VERSION        = '0.7.8';
+const VERSION        = '0.7.9';
 const POST_TYPE      = 'acv_blog';
 const REST_NAMESPACE = 'acadvizen-cms/v1';
 const MENU_SLUG      = 'acadvizen-cms';
@@ -137,6 +137,12 @@ foreach ( array( 'wp_update_nav_menu' => 'menu', 'wp_update_nav_menu_item' => 'm
 foreach ( array( 'added_post_meta', 'updated_post_meta' ) as $meta_hook ) {
 	add_action( $meta_hook, __NAMESPACE__ . '\\maybe_rerender_for_kit_change', 10, 3 );
 }
+// Elementor Pro's display-conditions cache follows templates published, unpublished or re-conditioned
+// through Approvals (Pro itself rebuilds it only from its own conditions dialog).
+add_action( 'transition_post_status', __NAMESPACE__ . '\\note_template_status_change', 10, 3 );
+foreach ( array( 'added_post_meta', 'updated_post_meta', 'deleted_post_meta' ) as $meta_hook ) {
+	add_action( $meta_hook, __NAMESPACE__ . '\\note_conditions_meta_change', 10, 3 );
+}
 add_action( SYNC_HOOK, __NAMESPACE__ . '\\run_sync_job', 10, 4 );
 add_action( RENDER_HOOK, __NAMESPACE__ . '\\run_render_job', 10, 4 );
 add_action( RERENDER_ALL_HOOK, __NAMESPACE__ . '\\run_site_rerender', 10, 1 );
@@ -152,6 +158,7 @@ foreach ( array( 'pre_unschedule_event', 'pre_reschedule_event' ) as $acv_cron_f
 add_action( DAILY_REFRESH_HOOK, __NAMESPACE__ . '\\run_daily_refresh' );
 add_action( STALL_CHECK_HOOK, __NAMESPACE__ . '\\requeue_stalled_renders' );
 add_action( STALL_CHECK_HOOK, __NAMESPACE__ . '\\ensure_scheduled_jobs' );
+add_action( STALL_CHECK_HOOK, __NAMESPACE__ . '\\resume_lost_verifications' );
 
 /* Admin -------------------------------------------------------------------------------------- */
 // Content types get their own top-level WordPress menus (like Posts), not entries under one custom menu.
@@ -182,6 +189,7 @@ if ( is_admin() ) {
 	add_filter( 'wp_insert_post_data', __NAMESPACE__ . '\\keep_global_styles_canvas_private', 10, 2 );
 	add_action( 'load-post.php', __NAMESPACE__ . '\\forget_global_styles_canvas_autosave' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\ensure_recurring_jobs' );
+	add_action( 'admin_init', __NAMESPACE__ . '\\sync_theme_conditions_once' );
 	add_action( 'admin_init', __NAMESPACE__ . '\\ensure_blog_pull_job' );
 	add_action( 'add_meta_boxes_post', __NAMESPACE__ . '\\add_blog_sync_box' );
 	add_filter( 'manage_post_posts_columns', __NAMESPACE__ . '\\add_blog_sync_column' );
@@ -208,7 +216,7 @@ if ( is_admin() ) {
 		11
 	);
 	// Screens that show publishing status also repair a stalled publish (at most once a minute).
-	foreach ( array( 'load-edit.php', 'load-post.php', 'load-toplevel_page_' . MENU_SLUG, 'load-acadvizen-master-admin_page_' . MENU_SLUG . '-publishing' ) as $screen_hook ) {
+	foreach ( array( 'load-edit.php', 'load-post.php', 'load-toplevel_page_' . MENU_SLUG, 'load-acadvizen-master-admin_page_' . MENU_SLUG . '-publishing', 'load-acadvizen-master-admin_page_' . APPROVALS_PAGE ) as $screen_hook ) {
 		add_action(
 			$screen_hook,
 			static function () {

@@ -307,6 +307,26 @@ switch ( $action ) {
 		}
 		$out( $counts );
 		break;
+	case 'lose-verification': // lose-verification <id> : simulates WP-Cron losing the next check (outcome "publishing", last check 30 min ago)
+		$pub = get_post_meta( (int) $a[0], Acadvizen\CMS\PUBLICATION_META, true );
+		foreach ( (array) _get_cron_array() as $time => $hooks ) {
+			foreach ( (array) ( $hooks[ Acadvizen\CMS\VERIFY_HOOK ] ?? array() ) as $event ) {
+				if ( (int) ( $event['args'][0] ?? 0 ) === (int) $a[0] ) {
+					wp_unschedule_event( $time, Acadvizen\CMS\VERIFY_HOOK, $event['args'] );
+				}
+			}
+		}
+		$pub['outcome'] = 'publishing';
+		$pub['at']      = time() - 1800;
+		foreach ( array_keys( (array) $pub['destinations'] ) as $destination ) {
+			$pub['destinations'][ $destination ] = array( 'state' => 'pending', 'detail' => '', 'at' => time() - 1800 );
+		}
+		update_post_meta( (int) $a[0], Acadvizen\CMS\PUBLICATION_META, $pub );
+		$out( 'ok' );
+		break;
+	case 'resume-verifications': // resume-verifications -> how many lost checks were started again (as the hourly job does)
+		$out( (string) Acadvizen\CMS\resume_lost_verifications() );
+		break;
 	case 'cleanup': // cleanup <title-marker>
 		Acadvizen\CMS\approval_bypass( true );
 		$ids = get_posts( array( 'post_type' => array_values( array_diff( get_post_types(), array( 'attachment', 'revision', 'nav_menu_item' ) ) ), 'post_status' => 'any', 's' => $a[0], 'posts_per_page' => 200, 'fields' => 'ids' ) );

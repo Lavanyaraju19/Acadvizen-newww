@@ -2,7 +2,7 @@
 
 This is the living list of every production task.
 
-- **Updated:** 24 Oct 2026.
+- **Updated:** 25 Oct 2026.
 - **Production evidence:** the `PRODUCTION — …` labels below come only from the live websites. Local results are marked "local (supplementary)".
 - **Starting point:** `PRODUCTION-AUDIT-2026-10-21.md`.
 
@@ -27,6 +27,24 @@ Status values: DONE · VERIFIED (production) · READY (built and tested, waiting
 4. The Both partial-failure test and a scheduling re-run on production.
 5. Commit and push the repository changes: plugin 0.7.7 source, release and migration tools, docs.
 6. Rotate the shared admin account (used by both the team and the test runs) and the deferred credentials.
+
+## Final production completion prompt, 25 Oct 2026
+
+Overall: **PARTIALLY COMPLETE.**
+
+- **Production was not changed on 25 Oct.** All production work was read-only. The supplied database backup is not the Enrollment database, so the backup gate is not met.
+- **Ready locally:** plugin **0.7.9**, which fixes the three causes of "Publish does not publish" found on production (`REQUIREMENT-CAPABILITY-MATRIX.md` §5a), plus the 0.7.8 menus.
+
+| # | Item | Status | Result |
+|---|---|---|---|
+| N1 | Files backup `u713346627.20261024094529.tar.gz` | **VALID** | 3,827,657,355 bytes; sha256 `d404585a39bd1d27e89af3aa4e6cbd67c3aca63e3a1bb1191a453250b474b416`; every entry read (tar exit 0), 99,090 entries; newest file 24 Oct 15:16. Holds `enroll.acadvizen.com/public_html` (wp-config names database `u713346627_xDzzw`; 8,569 upload entries; Master Admin 0.7.7, all 28 files byte-identical to the rollback package `32cc3050…`). Not extracted over anything; only single files were read into a scratch folder, and the config copies were deleted. |
+| N2 | Database backup `u713346627_kb4Ph.20261024094529.sql.gz` | **NOT USABLE FOR ENROLLMENT** | 30,097 bytes; sha256 `b789e4441c95daa8297792deab781e173f37da4db44b8ed4f193586442608178`; gzip OK, "Dump completed on 2026-10-24 9:47:39". It holds database `u713346627_kb4Ph`: 21 tables, `siteurl` `https://cms.acadvizen.com`, theme Twenty Twenty-Five, Hostinger plugins only. The Enrollment database is `u713346627_xDzzw` (111 tables on 17 Oct). **Owner:** hPanel → Backups → Databases → `u713346627_xDzzw`, 24 Oct (or newer) → download into Downloads. |
+| N3 | Production baseline (read-only) | **RECORDED** | Main `dpl_2B5hNrES1eUqxDhrbVJVuEfkiAyV` Ready; plugin 0.7.7. Main sitemap 310; **320/320** addresses identical to 23 Oct in status, title, description, canonical and robots (23 timed out in the crawl and were rechecked directly: 200, drawn by WordPress). Enrollment 58/59 identical (`/test/` 404, noindex). The 4 Main-only pages are noindex and out of the sitemap; Main `/admin` 200; the enquiry route is `POST /acadvizen/v1/enquiry`; the plugin API answers 401 to anonymous requests. **All 372 WordPress images on the 86 live blog posts load (200).** The 310 Main pages use 11 Elementor widget types. |
+| N4 | "Publish does not publish" | **ROOT CAUSES FOUND; FIX READY (LOCAL)** | P1: Publish only submits, and none of the team's 35 submissions on 24 Oct was approved. P2: a lost background check left `/contact` at "Publishing". P3: the Quick Registration popup is never shown because Pro's conditions cache is stale. Fix in plugin 0.7.9; see the matrix §5a. |
+| N5 | Plugin 0.7.9 | **READY (LOCAL)** | Package `dist/acadvizen-cms-0.7.9-worktree-c7ec89e8ac0e` sha256 `5e1cd1a2…`, 28 files byte-identical to source. `plugin-release.json`: release 0.7.9, rollback 0.7.7 (identical to the plugin in the 24 Oct files backup). LOCAL tests, all passing: PHP 359/359, JS unit 312/312, direct-publish 11/11, approval 47/47, reliability 38/38, scheduling 7/7, Both failure 12/12. Secret scan: none. **Install gated on N2.** |
+| N6 | Waiting queue on production | **RECORDED, NOT TOUCHED** | 9 waiting, all Enrollment, submitted by the shared account 19–24 Oct: #11453 Mentors 1, #11521 Career 1, #10936 Courses 1, #11011 Placement 1, #11457 Mentors, #11415 Branches, #11007 Partnership, **#9304 New Home**, **#8516 Performance Marketing Course**. #8517's edit screen redirects (302) to its working copy. Contact (Main) shows "Publishing" since 23 Oct but is live (render v7). None was approved, changed or removed by us. |
+| N7 | Push | **BLOCKED** | No allow rule `Bash(git push origin headless-wordpress)`; it was refused twice on 24 Oct. |
+| N8 | Production acceptance, the 18-item demo, Both partial failure, accounts | **BLOCKED** | Gated on N2 (and, for the partial failure, the signing secret; for accounts, owner-approved names). |
 
 ## Final master implementation prompt, 24 Oct 2026
 

@@ -907,6 +907,32 @@ namespace Acadvizen\CMS {
 	) );
 	check( 'publication: the public mark is a short, stable form of the revision', 'acv-revision:0123456789abcdef', revision_mark( '0123456789abcdef0123' ) );
 
+	// A publication whose next check was lost (WP-Cron) is resumed; one still being checked is not.
+	$checking = array( 'outcome' => 'publishing', 'at' => 1000, 'destinations' => array( 'main' => array( 'state' => 'pending', 'at' => 2000 ) ) );
+	check( 'verification: lost after 15 minutes without a check and none waiting; not while one waits, not before, not once finished', array( true, false, false, false ), array(
+		is_verification_lost( $checking, false, 2000 + 901 ),
+		is_verification_lost( $checking, true, 2000 + 5000 ),
+		is_verification_lost( $checking, false, 2000 + 600 ),
+		is_verification_lost( array( 'outcome' => 'verified' ) + $checking, false, 2000 + 5000 ),
+	) );
+
+	// A working copy kept after publishing from the editor is replaced once the live page changed another way.
+	check( 'working copy: kept copy in step with the live page -> reused; live page changed since -> stale; copies being worked on -> never stale', array( false, true, false, false ), array(
+		is_stale_working_copy( array( 'state' => 'published', 'hash' => 'aaa' ), 'aaa' ),
+		is_stale_working_copy( array( 'state' => 'published', 'hash' => 'aaa' ), 'bbb' ),
+		is_stale_working_copy( array( 'state' => 'pending', 'hash' => 'aaa' ), 'bbb' ),
+		is_stale_working_copy( array(), 'bbb' ),
+	) );
+
+	// Elementor Pro's display-conditions cache is rebuilt when a template goes on or off the websites.
+	check( 'display conditions: template published or unpublished -> rebuild; other changes or post types -> no', array( true, true, false, false, false ), array(
+		conditions_change_matters( 'elementor_library', 'publish', 'pending' ),
+		conditions_change_matters( 'elementor_library', 'draft', 'publish' ),
+		conditions_change_matters( 'elementor_library', 'publish', 'publish' ),
+		conditions_change_matters( 'elementor_library', 'pending', 'draft' ),
+		conditions_change_matters( 'page', 'publish', 'pending' ),
+	) );
+
 	// Widget compatibility (registry.php).
 	$design    = array( array( 'elType' => 'container', 'settings' => array( '__dynamic__' => array( 'title' => 'x' ) ), 'elements' => array(
 		array( 'elType' => 'widget', 'widgetType' => 'heading', 'settings' => array(), 'elements' => array() ),

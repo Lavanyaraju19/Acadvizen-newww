@@ -98,7 +98,10 @@ If you need a page back on the Main Website's own original version, set its Word
    - **Tablet and phone:** switch the device icons at the top. Many settings can be different per device.
 4. **Page Settings → Publish To (Acadvizen)** chooses the website: **Enrollment Website**, **Main Website** or **Both**. See section 1 and the screenshot in the quick start.
 5. **Preview on the Main Website** (in that panel) shows the last *saved* version exactly as the Main Website will show it. It publishes nothing.
-6. Click **Publish**. With approval switched on, this **submits** the page; it does not go live.
+6. Click **Publish** (or **Update**).
+   - **From plugin 0.7.9, for Administrators and Reviewers,** this publishes straight away, recorded on Approvals as approved by you. You can keep editing in the same window and click **Update** again. A future publish date schedules it instead.
+   - **For Editors, Authors and Contributors** (and for everyone until 0.7.9 is installed), this **submits** the page for approval. It does not go live until it is approved and published (section 4).
+   - A design that cannot be shown on a chosen website (for example a shop widget on Main) is refused with the reason. Typed HTML or shortcodes need an administrator.
 
 ![Elementor editor](screenshots/13-elementor-editor.png)
 
@@ -218,6 +221,8 @@ Hostinger keeps the backups. **hPanel → Websites → enroll.acadvizen.com → 
 - download the latest **database** backup (database `…_xDzzw` is the Enrollment website);
 - download the **files** backup.
 
+**Pick the right database.** The hosting account holds several databases. The Enrollment website's is the one ending in **`_xDzzw`**; its backup is a few hundred MB. The 24 Oct download `u713346627_kb4Ph…sql.gz` (30 KB) is a different, almost empty WordPress, not the Enrollment website.
+
 Ask your developer to verify a downloaded backup: checksum, integrity, table count and a test restore in an isolated copy. **Never restore an older backup over the live website**: it would lose every enquiry and change made since.
 
 ## 10c. Main Website's own admin
@@ -240,5 +245,7 @@ These are known and recorded; none breaks a page.
 | Location pages | No `<h1>` heading (also the case on the Main Website before). |
 | 3 blog categories | Three Main posts had a "category" that is a keyword list of 256–304 characters (WordPress allows 200). They were not stored in WordPress, and not shortened. Rechecked 24 Oct: neither website shows these categories on the post or on `/blog`, and Main's own category pages are unchanged. To give these posts real categories, choose short ones in Main's admin and in WordPress. |
 | Main's own admin | Not yet locked for content WordPress now draws: see 10c. |
+| Homepage registration popup | The "Quick Registration" popup was approved and published on 23 Oct but is not shown: Elementor Pro's list of where popups appear was not refreshed. Plugin 0.7.9 fixes this and shows it again once installed. |
+| Publication status | A page can show "Publishing" for good if a background check was lost (e.g. Contact since 23 Oct; the page itself is live). Plugin 0.7.9 resumes such checks. |
 
 Evidence for every result is in `docs/cms-implementation/PRODUCTION-TASK-LEDGER.md`. What each Elementor widget does on each website, and the exact publication states, are in `docs/cms-implementation/REQUIREMENT-CAPABILITY-MATRIX.md`.
