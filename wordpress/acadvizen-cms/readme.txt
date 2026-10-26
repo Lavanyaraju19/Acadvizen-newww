@@ -1,7 +1,7 @@
 === Acadvizen Master Admin ===
 Requires at least: 6.5
 Requires PHP: 8.0
-Stable tag: 0.7.9
+Stable tag: 0.7.10
 
 One WordPress admin for both Acadvizen websites. Design with Elementor, choose "Publish To"
 (Enrollment, Main or Both), publish. Pages for www.acadvizen.com are rendered by WordPress and
@@ -71,6 +71,14 @@ Deactivating changes nothing for existing Enrollment pages. Deleting the plugin 
 own data (logs, jobs, version table); content is kept.
 
 == Changelog ==
+
+= 0.7.10 =
+* Popups on Main pages open as overlays. Elementor's dialog styles are now linked on every page drawn for
+  the Main Website. Before, Elementor only added them when another element (the image lightbox) needed
+  them first, so the homepage's Quick Registration popup appeared as a block at the bottom of the page
+  (production, 26 Oct 2026).
+* An administrator's explicit "Pending Review" stays a request for review; only Publish/Update publishes
+  directly (0.7.9 behaviour, made precise).
 
 = 0.7.9 =
 * "Publish" and "Update" in the editor publish for administrators and reviewers, as in normal

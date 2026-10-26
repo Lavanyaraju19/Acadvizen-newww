@@ -159,6 +159,7 @@ function bootstrap_bridge_request(): void {
 	remove_action( 'wp_enqueue_scripts', 'wp_enqueue_emoji_styles' );
 	// Enrollment's own marketing embed (Hostinger Reach) does not belong on Main Website pages.
 	add_action( 'wp_enqueue_scripts', static fn() => wp_dequeue_script( 'hostinger-reach-embed' ), 999 );
+	add_action( 'wp_enqueue_scripts', __NAMESPACE__ . '\\enqueue_dialog_styles', 20 );
 	// Discovery links point at this WordPress' internal API; the Main Website does not need them.
 	add_action(
 		'wp',
@@ -175,6 +176,18 @@ function bootstrap_bridge_request(): void {
 			remove_action( 'template_redirect', 'wp_shortlink_header', 11 );
 		}
 	);
+}
+
+/**
+ * Elementor's dialog styles (popups and lightboxes drawn as full-screen overlays) are not linked in the page:
+ * Elementor's scripts add them when something else on the page needs them first (on Enrollment, the image
+ * lightbox). A Main page with a popup and no lightbox never got them, so the popup appeared as a block at the
+ * bottom of the page (26 Oct 2026, the homepage's Quick Registration popup). Drawn for Main, they are linked.
+ */
+function enqueue_dialog_styles(): void {
+	if ( defined( 'ELEMENTOR_ASSETS_URL' ) && defined( 'ELEMENTOR_VERSION' ) && wp_style_is( 'elementor-frontend', 'registered' ) ) {
+		wp_enqueue_style( 'acv-elementor-dialog', ELEMENTOR_ASSETS_URL . 'css/conditionals/dialog.min.css', array( 'elementor-frontend' ), ELEMENTOR_VERSION );
+	}
 }
 
 /**

@@ -83,6 +83,7 @@ try {
   let pub = await settle(pageId)
   let live = await get(MAIN, `/${slug}`)
   check('D1 verified on the Main website, showing the design', pub.outcome === 'verified' && live.status === 200 && live.html.includes(`${MARKER} v1`) && live.html.includes('Talk to us'), `${pub.outcome} HTTP ${live.status}`)
+  check("D1 the Main page links Elementor's dialog styles (popups and lightboxes open as overlays)", /css\/conditionals\/dialog\.min\.css/.test(live.html))
   check('D1 recorded in the approval history', Number(act('log-has', 'approve', 'approved')) > 0)
 
   // D2. Changing the live page: Elementor opens its working copy; "Publish" there publishes the change.
