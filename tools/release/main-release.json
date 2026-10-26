@@ -1,5 +1,5 @@
 {
   "comment": "Read by tools/release/release-main.sh. expected_live: the production deployment that must be live now (also the rollback target). expect_noindex: addresses this release makes noindex on purpose (empty author page, empty list pages); they leave the sitemap.",
-  "expected_live": "dpl_56BrUwoX4opAgGZ3UDBrw4iBQEa1",
+  "expected_live": "dpl_2B5hNrES1eUqxDhrbVJVuEfkiAyV",
   "expect_noindex": ["/blog/author/john-doe", "/companies", "/internships", "/resources"]
 }

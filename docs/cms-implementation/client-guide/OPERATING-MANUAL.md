@@ -2,8 +2,8 @@
 
 **For:** Acadvizen administrators and reviewers.
 
-**Matches:** the production system as of 23 October 2026.
-- Enrollment WordPress with the Acadvizen Master Admin plugin **0.7.7**.
+**Matches:** the production system as of 26 October 2026.
+- Enrollment WordPress with the Acadvizen Master Admin plugin **0.7.10** (installed 26 Oct 2026).
 - Main website deployment `dpl_2B5hNrES1eUqxDhrbVJVuEfkiAyV`.
 
 Every screenshot here was taken on the live admin; e-mail addresses are masked. For the short version, see [QUICK-START.md](QUICK-START.md).
@@ -41,7 +41,7 @@ If you need a page back on the Main Website's own original version, set its Word
 
 1. Go to https://enroll.acadvizen.com/wp-admin/. Sign in, and tick **Remember Me**.
 
-2. The left menu has **Acadvizen Master Admin** with these entries:
+2. Until 26 Oct 2026 the left menu had **Acadvizen Master Admin** with these entries (today's menu is in step 3):
 
    | Menu item | What it is for |
    |---|---|
@@ -72,7 +72,7 @@ If you need a page back on the Main Website's own original version, set its Word
 
    ![Master Admin dashboard](screenshots/01-master-admin-dashboard.png)
 
-3. **After the plugin 0.7.8 update** (prepared and tested locally; it is installed only after a fresh backup), the menu follows standard WordPress:
+3. **The menu (since 26 Oct 2026, plugin 0.7.8 and later)** follows standard WordPress (the screenshot above shows the earlier layout):
 
    | Left menu | Contains |
    |---|---|
@@ -99,8 +99,8 @@ If you need a page back on the Main Website's own original version, set its Word
 4. **Page Settings → Publish To (Acadvizen)** chooses the website: **Enrollment Website**, **Main Website** or **Both**. See section 1 and the screenshot in the quick start.
 5. **Preview on the Main Website** (in that panel) shows the last *saved* version exactly as the Main Website will show it. It publishes nothing.
 6. Click **Publish** (or **Update**).
-   - **From plugin 0.7.9, for Administrators and Reviewers,** this publishes straight away, recorded on Approvals as approved by you. You can keep editing in the same window and click **Update** again. A future publish date schedules it instead.
-   - **For Editors, Authors and Contributors** (and for everyone until 0.7.9 is installed), this **submits** the page for approval. It does not go live until it is approved and published (section 4).
+   - **For Administrators and Reviewers,** this publishes straight away, recorded on Approvals as approved by you. You can keep editing in the same window and click **Update** again. A future publish date schedules it instead. Choosing *Pending Review* (Quick Edit or the WordPress editor) asks for a review instead.
+   - **For Editors, Authors and Contributors,** this **submits** the page for approval. It does not go live until it is approved and published (section 4).
    - A design that cannot be shown on a chosen website (for example a shop widget on Main) is refused with the reason. Typed HTML or shortcodes need an administrator.
 
 ![Elementor editor](screenshots/13-elementor-editor.png)
@@ -184,7 +184,8 @@ The site time zone is **Asia/Kolkata**. Any change to a scheduled item before it
   - **Import Main Website**.
 - **Backups:**
   - The hosting backups are in Hostinger hPanel → Backups.
-  - The last verified backup set is from 17 October 2026.
+  - The last verified backup set is from **24 October 2026 15:15** (database `…_xDzzw` and files; checksum and test restore on 26 Oct, see `PRODUCTION-ACCEPTANCE-2026-10-26.md`).
+  - Hostinger makes a backup **weekly** (next: 31 Oct). On this plan, manual backups are locked; for a backup before a large change, wait for the weekly one or upgrade the plan.
   - Ask for a fresh backup before large changes.
 - **The Main Website's own admin** (www.acadvizen.com/admin) still opens. Content now edited in WordPress should be edited **here**, not there. Edits made there to pages that WordPress draws will not show on the website.
 
@@ -245,7 +246,7 @@ These are known and recorded; none breaks a page.
 | Location pages | No `<h1>` heading (also the case on the Main Website before). |
 | 3 blog categories | Three Main posts had a "category" that is a keyword list of 256–304 characters (WordPress allows 200). They were not stored in WordPress, and not shortened. Rechecked 24 Oct: neither website shows these categories on the post or on `/blog`, and Main's own category pages are unchanged. To give these posts real categories, choose short ones in Main's admin and in WordPress. |
 | Main's own admin | Not yet locked for content WordPress now draws: see 10c. |
-| Homepage registration popup | The "Quick Registration" popup was approved and published on 23 Oct but is not shown: Elementor Pro's list of where popups appear was not refreshed. Plugin 0.7.9 fixes this and shows it again once installed. |
-| Publication status | A page can show "Publishing" for good if a background check was lost (e.g. Contact since 23 Oct; the page itself is live). Plugin 0.7.9 resumes such checks. |
+| Homepage registration popup | Fixed 26 Oct (plugin 0.7.10): the Quick Registration popup now opens over the homepage after about 90 seconds, on desktop and phone. |
+| Publication status | Fixed 26 Oct (plugin 0.7.9): a check that was lost is resumed hourly and whenever Approvals opens (Contact is verified again). |
 
 Evidence for every result is in `docs/cms-implementation/PRODUCTION-TASK-LEDGER.md`. What each Elementor widget does on each website, and the exact publication states, are in `docs/cms-implementation/REQUIREMENT-CAPABILITY-MATRIX.md`.

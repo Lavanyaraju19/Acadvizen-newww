@@ -17,7 +17,7 @@ Nothing changes on either website until a reviewer approves it and it is publish
    - **Main Blogs:** blog posts for www.acadvizen.com/blog.
    - **Tools**, **Courses**, **Locations** (with **Cities & Areas** inside it): the matching Main pages.
 
-   *Plugin 0.7.8 (prepared, not installed yet) makes these normal menu items, next to Posts and Pages. Until it is installed, they are under **Acadvizen Master Admin**.*
+   *They are normal WordPress menu items, next to Posts and Pages. The plugin's own menu is **Approvals & Publishing**.*
 
 3. **Edit with Elementor.** Click **Edit with Elementor**. Click any heading, text, button or image on the page and change it in the left panel.
 
@@ -38,17 +38,17 @@ Nothing changes on either website until a reviewer approves it and it is publish
 5. **Preview.** Use the **Preview on the Main Website** link in that panel, or the desktop, tablet and phone icons at the top. Previewing publishes nothing.
 
 6. **Publish.** Click **Publish** (or **Update**).
-   - **Administrators and Reviewers, from plugin 0.7.9:** this publishes, as in normal WordPress. The page updates on the chosen website(s) within about a minute, and you can keep editing and click **Update** again. A page with a future date is scheduled instead.
-   - **Editors, Authors and Contributors** (and everyone before 0.7.9 is installed): Publish only *submits* the change for approval. Nothing goes live until step 7.
+   - **Administrators and Reviewers:** this publishes, as in normal WordPress. The page updates on the chosen website(s) within about a minute, and you can keep editing and click **Update** again. A page with a future date is scheduled instead. (Choosing *Pending Review* instead asks for a review.)
+   - **Editors, Authors and Contributors:** Publish only *submits* the change for approval. Nothing goes live until step 7.
 
-7. **Approve and publish** (only for a submitted change). Go to **Acadvizen Master Admin → Approvals** (after the update: click **Approvals & Publishing**).
+7. **Approve and publish** (only for a submitted change). Click **Approvals & Publishing** in the left menu (it opens Approvals).
    1. Open the previews and tick **"I checked the … preview"**.
    2. Click **Approve this revision**.
    3. Click **Publish approved revision**.
 
    The website updates within about a minute.
 
-   > **Until 0.7.9 is installed, administrators must also do step 7.** On 24 Oct, 35 changes were submitted with Publish and none were approved, so none of them reached the website. They are still waiting on Approvals.
+   > **Waiting items from before 26 Oct:** 35 changes made with Publish on 24 Oct (and more on 26 Oct morning) only *submitted* the page, because Publish could not yet publish for administrators. They are still waiting on Approvals & Publishing: approve and publish them there, or open the page again and click Publish.
 
    ![Approvals](screenshots/02-approvals.png)
 
