@@ -31,8 +31,8 @@ The `u713346627_kb4Ph…` file supplied on 25 Oct belongs to another, almost emp
 | What | Version | Way back |
 |---|---|---|
 | Enrollment plugin "Acadvizen Master Admin" | **0.7.10** (08:26Z). 0.7.9 was installed at 08:03Z | `node tools/release/install-plugin.mjs --session <session> --undo` reinstalls 0.7.9; with the 0.7.7 package in `plugin-release.json`, 0.7.7 |
-| Main Website | see the ledger, 26 Oct (release of commit `de0386b`) | `bash tools/release/release-main.sh --undo` |
-| Git | `origin/headless-wordpress` at `de0386b` and later | — |
+| Main Website | **`dpl_JDZNEJ2c7UtvMBbc459sgYUdrpMj`** from commit `b804b34` (12:06Z; retry of a quick WordPress refusal), then **`dpl_13s8yPa5GTauWxsi4hvchXrvPVVa`**: the same build with `WORDPRESS_OWNS_PUBLIC_CONTENT=true` (12:51Z) | lock: `bash tools/release/set-content-ownership.sh --undo dpl_JDZNEJ2c7UtvMBbc459sgYUdrpMj`; release: `bash tools/release/release-main.sh --undo` (back to `dpl_2B5hNrES1eUqxDhrbVJVuEfkiAyV`) |
+| Git | `origin/headless-wordpress` (see the ledger for the final commit) | — |
 
 Every install passed the guarded checks:
 - Master Admin active at the new version; the other 33 plugins unchanged;
@@ -53,6 +53,8 @@ Every install passed the guarded checks:
 | Main-only pages (`/blog/author/john-doe`, `/companies`, `/internships`, `/resources`) | 200, noindex, not in the sitemap |
 | Routes | Main `/admin` 200; `/contact` 200; enquiry route `POST`; CMS API anonymous 401; Enrollment home 200 |
 | Quick Registration popup (Main homepage) | Opens after ~96 s as a centred overlay at 1440 and 390 px; 6 form fields; closes with ×; no page errors; not on `/about`, `/blog`, `/contact` or a location page. Nothing was submitted. `popup-*-0710.png` |
+| Main release (guarded) | Two identical control reads; after the switch **310/310 identical on every check**; the 4 Main-only addresses noindex and out of the sitemap |
+| Ownership lock | Live: anonymous `POST /api/cms/pages` → **423**; companies, internships, resources, authors → 401 (not locked); leads → 400 (not locked); Main `/admin` 200; **310/310** addresses identical |
 | Contact (Main) status | Was "Publishing" since 23 Oct; now **"Published (verified)"**. 23 other lost checks from the 22–23 Oct batches were resumed and verified |
 
 | Suite (LOCAL, plugin 0.7.10) | Result |
@@ -91,6 +93,5 @@ Every install passed the guarded checks:
 |---|---|---|
 | Forced partial failure on production (#16) | Needs the signing secret in the test environment; it was not extracted | Owner decides on an approved way to provide it, or accepts the LOCAL result |
 | Navigation and template editing on production (#14) | Changing the live shared header, footer or menu changes every Main page | Owner names a harmless change to make (and undo) during the client demo |
-| Ownership lock (`WORDPRESS_OWNS_PUBLIC_CONTENT`) | See the ledger, 26 Oct | — |
 | Personal accounts | No approved names, e-mails and roles; everyone uses the shared `tharikar98` Administrator account | Owner sends names, e-mails and roles |
 | 9 waiting approval items (#8516, #9304, #10936, #11007, #11011, #11415, #11453, #11457, #11521, plus the team's 26 Oct submissions) | Other people's work; not touched | The team opens Approvals & Publishing and approves or rejects each, or re-opens the page and clicks Publish (0.7.10 publishes directly for administrators) |

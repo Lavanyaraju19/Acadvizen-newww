@@ -230,7 +230,7 @@ Ask your developer to verify a downloaded backup: checksum, integrity, table cou
 
 www.acadvizen.com/admin still works for **leads**, users, the student area, and the lists behind **/companies**, **/internships**, **/resources** and the blog author, category and tag pages.
 
-Content that WordPress now draws (pages, blogs, tools, locations, header, footer, menus, SEO) must be edited in **WordPress**. A switch that makes Main's admin refuse such edits with a clear message is prepared, but **not switched on yet** (owner decision, after a fresh backup).
+Content that WordPress now draws (pages, blogs, tools, locations, header, footer, menus, SEO) must be edited in **WordPress**. Since 26 Oct 2026 Main's admin **refuses** such edits with the message "This content is managed in the WordPress Master Admin" (HTTP 423). Leads, users, the student area and the companies, internships, resources and blog author, category and tag lists stay editable there.
 
 ## 11. Known differences and limits (as of 23 Oct 2026)
 
@@ -245,7 +245,7 @@ These are known and recorded; none breaks a page.
 | Homepage | The video shows the browser's player controls under its cover; the page is a little taller on phones. |
 | Location pages | No `<h1>` heading (also the case on the Main Website before). |
 | 3 blog categories | Three Main posts had a "category" that is a keyword list of 256–304 characters (WordPress allows 200). They were not stored in WordPress, and not shortened. Rechecked 24 Oct: neither website shows these categories on the post or on `/blog`, and Main's own category pages are unchanged. To give these posts real categories, choose short ones in Main's admin and in WordPress. |
-| Main's own admin | Not yet locked for content WordPress now draws: see 10c. |
+| Main's own admin | Locked for content WordPress now draws since 26 Oct (see 10c). |
 | Homepage registration popup | Fixed 26 Oct (plugin 0.7.10): the Quick Registration popup now opens over the homepage after about 90 seconds, on desktop and phone. |
 | Publication status | Fixed 26 Oct (plugin 0.7.9): a check that was lost is resumed hourly and whenever Approvals opens (Contact is verified again). |
 

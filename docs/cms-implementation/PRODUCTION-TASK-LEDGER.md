@@ -2,7 +2,7 @@
 
 This is the living list of every production task.
 
-- **Updated:** 25 Oct 2026.
+- **Updated:** 26 Oct 2026.
 - **Production evidence:** the `PRODUCTION — …` labels below come only from the live websites. Local results are marked "local (supplementary)".
 - **Starting point:** `PRODUCTION-AUDIT-2026-10-21.md`.
 
@@ -27,6 +27,22 @@ Status values: DONE · VERIFIED (production) · READY (built and tested, waiting
 4. The Both partial-failure test and a scheduling re-run on production.
 5. Commit and push the repository changes: plugin 0.7.7 source, release and migration tools, docs.
 6. Rotate the shared admin account (used by both the team and the test runs) and the deferred credentials.
+
+## Production completion, 26 Oct 2026
+
+Full record: [PRODUCTION-ACCEPTANCE-2026-10-26.md](PRODUCTION-ACCEPTANCE-2026-10-26.md). All times UTC.
+
+| # | Item | Status | Result |
+|---|---|---|---|
+| Q1 | Correct Enrollment database backup | **DONE** | Downloaded from hPanel after the owner's sign-in (Cloudflare and email code by the owner; no credential handled by us): `u713346627_xDzzw` backup of **24 Oct 15:15** (newest; weekly backups, manual ones locked on the plan) to `Downloadscadvizen-backup-20261026\`. sha256 `b9f1a0fb888fc8b83e6de8a9fc3228d71aaee5dbf0b9703163a8112648a1dad9`, gzip OK, dump complete, 111 tables. Restore-tested in a network-less throwaway MariaDB (307 s, exit 0; content matches live), container removed |
+| Q2 | Plugin 0.7.9 | **LIVE** 08:03Z | Guarded install PASS. Contact's stuck "Publishing" became "Published (verified)"; 23 other lost checks were resumed and verified; the popup is back on the homepage |
+| Q3 | Plugin 0.7.10 | **LIVE** 08:26Z | The popup opened as a block at the bottom of the page: Elementor's dialog styles were not linked on Main pages. 0.7.10 links them. Also: an administrator's explicit "Pending Review" stays a submission. Guarded install PASS (rollback 0.7.9) |
+| Q4 | Popup verification | **PASS** | Overlay at 1440 and 390 px after ~96 s, closes, no errors; only on the homepage |
+| Q5 | Production acceptance | **PASS** | elementor-live 52/52, approval-live 16/16, scheduling-live 6/6; SEO 320/320 vs 23 Oct; Enrollment 59/59; blog images 372/372; Main-only pages noindex; enquiry route `POST`; API 401 |
+| Q6 | Main release | **LIVE** `dpl_JDZNEJ2c7UtvMBbc459sgYUdrpMj` (`b804b34`) 12:06Z | Main retries a quick WordPress refusal once: single 503s were seen during the site-wide redraw and stopped three control checks. The inventory tool also asks a 503 once more, recorded as `retried_503`. 310/310 identical after the release |
+| Q7 | Ownership lock | **LIVE** `dpl_13s8yPa5GTauWxsi4hvchXrvPVVa` 12:51Z | `WORDPRESS_OWNS_PUBLIC_CONTENT=true`: pages 423; companies, internships, resources, authors 401; leads 400; `/admin` 200; 310/310 identical. Script fix: curl could not write to /dev/null with path conversion off (exit 23); probes write to the run folder |
+| Q8 | Team activity, not touched | **RECORDED** | 26 Oct 05:51–07:17Z (11:21–12:47 IST), shared account: submissions of New Home, Mentors 1, About Us, Project 1; the live "New Home" removed by them at 06:48Z. Waiting items unchanged by us |
+| Q9 | Open | **BLOCKED (external)** | Forced partial failure on production (signing secret); navigation and template change on production (owner to choose a harmless change); personal accounts (names, e-mails, roles) |
 
 ## Final production completion prompt, 25 Oct 2026
 

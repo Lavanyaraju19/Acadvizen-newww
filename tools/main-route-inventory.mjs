@@ -105,7 +105,11 @@ async function main() {
     // A dropped connection or timeout is not an answer from the site: try again (3 attempts). Any HTTP
     // answer, an error status included, is recorded as it is. 22 Oct 2026: two addresses read as 0 once
     // on a slow network ended a release's control check although both answered 200.
-    for (let attempt = 1; attempt <= 3 && !status; attempt++) {
+    // A 503 ("temporarily unavailable, try again in a minute") is asked once more after 3 s and the row says so
+    // (retried_503): 26 Oct 2026, single 503s on a busy WordPress stopped three release control checks.
+    let retried503 = false
+    for (let attempt = 1; attempt <= 3 && (!status || (status === 503 && !retried503)); attempt++) {
+      if (status === 503) { retried503 = true; await new Promise((ok) => setTimeout(ok, 3000)) }
       try {
         const r = await fetch(own(`${MAIN}${path}`), { redirect: 'manual', headers: { 'user-agent': 'acadvizen-route-inventory (read-only)' }, signal: AbortSignal.timeout(60000) })
         status = r.status
@@ -119,6 +123,7 @@ async function main() {
     rows.push({
       path,
       status,
+      ...(retried503 ? { retried_503: true } : {}),
       ...classify(path),
       title: attr(html, /<title[^>]*>([^<]*)<\/title>/i),
       description: attr(html, /<meta[^>]+name="description"[^>]+content="([^"]*)"/i),

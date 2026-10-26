@@ -42,7 +42,7 @@ var_listed() {
 }
 remove_var() { printf 'y\n' | npx --yes vercel env rm "$VAR" production --yes >> "$OUT/env-rm.txt" 2>&1 || true; log "$VAR removed: $(var_listed && echo NO || echo yes)"; }
 inventory() { node --no-warnings tools/main-route-inventory.mjs --main "$MAIN" --out "$OUT/$1.json" --text > "$OUT/inventory-$1.log" 2>&1; }
-post_status() { curl -s -o /dev/null -w '%{http_code}' -X POST -H 'content-type: application/json' --data '{}' "$MAIN$1"; }
+post_status() { curl -s -o "$OUT/probe.body" -w '%{http_code}' -X POST -H 'content-type: application/json' --data '{}' "$MAIN$1"; }
 
 linked=$(node -e "console.log(require('./.vercel/project.json').projectName)")
 [ "$linked" = "$PROJECT" ] || { log "STOP: this folder is linked to '$linked', not $PROJECT"; exit 1; }
@@ -90,7 +90,7 @@ ok=1
 inventory after
 node tools/main-migration-compare.mjs "$OUT/before.json" "$OUT/after.json" --md "$OUT/compare.md" > "$OUT/compare.txt" 2>&1 || ok=0
 log "every address: $(tail -1 "$OUT/compare.txt")"
-admin=$(curl -s -o /dev/null -w '%{http_code}' "$MAIN/admin")
+admin=$(curl -s -o "$OUT/probe.body" -w '%{http_code}' "$MAIN/admin")
 pages=$(post_status /api/cms/pages)
 log "Main /admin: $admin | anonymous POST /api/cms/pages: $pages (expected 423)"
 [ "$admin" = "200" ] && [ "$pages" = "423" ] || ok=0
