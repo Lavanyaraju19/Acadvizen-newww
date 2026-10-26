@@ -627,6 +627,7 @@ function guard_rest_insert( $prepared, $request ) {
 		$type = $existing instanceof \WP_Post ? $existing->post_type : (string) ( $prepared->post_type ?? '' );
 		if ( is_site_post_type( $type ) || is_template_post_type( $type ) ) {
 			$prepared->post_status = 'pending';
+			publish_requested( true );
 		}
 	}
 	return $prepared;
@@ -654,6 +655,7 @@ function guard_post_data( array $data, array $postarr ): array {
 	}
 	if ( in_array( $data['post_status'] ?? '', array( 'publish', 'future' ), true ) ) {
 		$data['post_status'] = 'pending'; // "Publish" submits for approval.
+		publish_requested( true );
 	}
 	return $data;
 }
@@ -701,7 +703,7 @@ function after_candidate_design_saved( $document, $data ): void {
 function refresh_candidate( \WP_Post $post ): void {
 	$state  = approval_state( $post->ID );
 	$hash   = current_fingerprint( $post );
-	$direct = 'pending' === $post->post_status && is_editor_request() && reviewer_publishes_directly();
+	$direct = 'pending' === $post->post_status && publish_requested() && is_editor_request() && reviewer_publishes_directly();
 	$edited = approval_transition( $state, 'edited', array( 'hash' => $hash, 'user' => get_current_user_id() ) );
 	if ( is_array( $edited ) && $edited !== $state ) {
 		update_post_meta( $post->ID, APPROVAL_META, $edited );
@@ -727,6 +729,18 @@ function refresh_candidate( \WP_Post $post ): void {
 	if ( $direct && in_array( $state['state'] ?? '', array( 'pending', 'approved' ), true ) && $hash === ( $state['hash'] ?? '' ) ) {
 		publish_own_submission( $post );
 	}
+}
+
+/**
+ * Whether this request asked to publish (or schedule): the save guards turned that into "pending". An
+ * explicit "Pending Review" (Quick Edit, the block editor) is a request for review and stays one.
+ */
+function publish_requested( ?bool $set = null ): bool {
+	static $requested = false;
+	if ( null !== $set ) {
+		$requested = $set;
+	}
+	return $requested;
 }
 
 /**

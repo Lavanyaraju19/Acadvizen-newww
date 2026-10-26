@@ -74,11 +74,13 @@ const media = (await rest('GET', 'wp/v2/media?media_type=image&per_page=1&orderb
 // Pages → Quick Edit → Draft (the REST route refuses to change a live page under approval).
 await admin.goto(`${WP}/wp-admin/admin.php?page=acadvizen-cms-settings`, { timeout: 180000 })
 const APPROVAL = /APPROVAL on/.test(await admin.locator('#wpbody-content').innerText().catch(() => ''))
+// Plugin 0.7.9+: an administrator's Publish / Update publishes directly (self-approval recorded); DIRECT_PUBLISH=1.
+const DIRECT = APPROVAL && process.env.DIRECT_PUBLISH === '1'
 
 // Returns the post Elementor actually opened (under approval, a live page opens its working copy).
 async function openEditor(id) {
   await admin.goto(`${WP}/wp-admin/post.php?post=${id}&action=elementor`, { timeout: 180000 })
-  await admin.waitForFunction(() => window.elementor && window.$e && elementor.documents?.getCurrent?.() && elementor.getPreviewContainer?.(), null, { timeout: 180000 })
+  await admin.waitForFunction(() => window.elementor && window.$e && elementor.documents?.getCurrent?.() && elementor.getPreviewContainer?.(), null, { timeout: Number(process.env.EDITOR_TIMEOUT_MS || 180000) })
   await sleep(2000)
   return Number(new URL(admin.url()).searchParams.get('post')) || id
 }
@@ -177,11 +179,12 @@ async function journey(dest) {
   check(`${dest} 3 Preview (signed in) shows the draft`, (await pv.content()).includes(`${label} V1`)); await pv.close()
 
   await save('publish')
-  if (APPROVAL) {
+  if (APPROVAL && !DIRECT) {
     const waiting = await get(onMain ? mainUrl : enrollUrl)
     check(`${dest} 4 Publish submits it for approval (not public yet)`, waiting.status !== 200 || !waiting.html.includes(`${label} V1`), `HTTP ${waiting.status}`)
   }
-  await approveAndPublish(id, `${dest} 4`)
+  if (DIRECT) check(`${dest} 4 the administrator's Publish publishes directly (no Approvals step)`, (await rest('GET', `wp/v2/pages/${id}?context=edit`)).json.status === 'publish')
+  else await approveAndPublish(id, `${dest} 4`)
   const m1 = onMain ? await until(() => get(mainUrl), (r) => r.html.includes(`${label} V1`)) : null
   const e1 = onEnroll ? (await until(() => get(enrollUrl), (r) => r.html.includes(`${label} V1`), 120000)).last : await get(enrollUrl)
   if (onMain) check(`${dest} 4 Publish: live on Main`, m1.ok, `${m1.s}s, render version ${m1.last.version}`)
@@ -201,11 +204,12 @@ async function journey(dest) {
   }
 
   const editId = await openEditor(id); await setHeading(`${label} V2`); await save('publish')
-  if (APPROVAL) {
+  if (DIRECT) check(`${dest} 6 the live page opened as its working copy; Update publishes it directly`, editId !== id, `${id} -> ${editId}`)
+  if (APPROVAL && !DIRECT) {
     const still = await get(onMain ? mainUrl : enrollUrl)
     check(`${dest} 6 the change waits for approval in a working copy; the live page keeps V1`, editId !== id && still.html.includes(`${label} V1`) && !still.html.includes(`${label} V2`), `${id} -> ${editId}`)
   }
-  await approveAndPublish(editId, `${dest} 6`)
+  if (!DIRECT) await approveAndPublish(editId, `${dest} 6`)
   if (onMain) { const m2 = await until(() => get(mainUrl), (r) => r.html.includes(`${label} V2`)); check(`${dest} 6 Update reaches Main`, m2.ok, `${m2.s}s`) }
   if (onEnroll) { const e2 = await until(() => get(enrollUrl), (r) => r.html.includes(`${label} V2`), 120000); check(`${dest} 6 Update reaches Enrollment`, e2.ok, `${e2.s}s`) }
 

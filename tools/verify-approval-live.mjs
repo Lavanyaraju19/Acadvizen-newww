@@ -43,6 +43,15 @@ async function openElementor(id) {
 }
 async function save(kind) { await page.evaluate(async (k) => { await $e.run(k === 'publish' ? 'document/save/publish' : 'document/save/draft') }, kind); await page.waitForFunction(() => !elementor.saver.isSaving, null, { timeout: 180000 }); await sleep(2500) }
 async function setHeading(text) { await page.evaluate((t) => { const f = (c) => (c.model.get('widgetType') === 'heading' ? c : (c.children || []).map(f).find(Boolean)); $e.run('document/elements/settings', { container: f(elementor.getPreviewContainer()), settings: { title: t } }) }, text) }
+// Plugin 0.7.9+ (DIRECT_PUBLISH=1): an administrator's Publish publishes directly, so this test asks for review
+// the way an administrator does then: Save Draft, then status "Pending Review" (block editor / REST).
+const DIRECT = process.env.DIRECT_PUBLISH === '1'
+async function submitForReview(id) {
+  if (!DIRECT) return save('publish')
+  await save('draft')
+  const r = await rest('POST', `wp/v2/pages/${id}`, { status: 'pending' })
+  if (r.status !== 200) console.log(`INFO submit for review #${id}: HTTP ${r.status} ${r.json.code || ''}`)
+}
 async function row(id) {
   await page.goto(`${WP}/wp-admin/admin.php?page=acadvizen-cms-approvals`, { timeout: 180000 })
   const r = page.locator(`#acv-candidate-${id}`)
@@ -83,7 +92,7 @@ try {
   let pub = await both()
   check('2 draft: not public on Main or Enrollment', pub.main.status !== 200 && pub.enroll.status !== 200, `Main ${pub.main.status}, Enrollment ${pub.enroll.status}`)
 
-  await save('publish')
+  await submitForReview(liveId)
   let r = await row(liveId)
   check('3 "Publish" submits it for approval (waiting, not live)', r?.state === 'pending' && r.approve === 1, JSON.stringify(r))
   pub = await both()
@@ -101,7 +110,7 @@ try {
   check('6 the live page cannot be changed directly (needs approval)', restEdit.status === 403 && restEdit.json.code === 'acv_live_needs_approval', `HTTP ${restEdit.status} ${restEdit.json.code || ''}`)
   const copyId = await openElementor(liveId)
   check('6 opening the live page in Elementor opens its working copy', copyId && copyId !== liveId, `${liveId} -> ${copyId}`)
-  await setHeading(`${MARK} V2`); await save('publish')
+  await setHeading(`${MARK} V2`); await submitForReview(copyId)
   r = await row(copyId)
   pub = await both()
   check('6 the change is waiting for approval; both websites still show V1', r?.state === 'pending' && pub.main.html.includes(`${MARK} V1`) && pub.enroll.html.includes(`${MARK} V1`) && !pub.main.html.includes(`${MARK} V2`), r?.state)
@@ -112,7 +121,7 @@ try {
   // A rejected change goes back to the editor as a draft and leaves the approval queue.
   check('7 Reject: the change goes back to the editor; both websites keep V1', /Rejected/i.test(rejected) && (!r || ['rejected', 'draft'].includes(r.state)) && pub.main.html.includes(`${MARK} V1`) && pub.enroll.html.includes(`${MARK} V1`) && !pub.main.html.includes(`${MARK} V2`), `${r?.state || 'not in the queue'} | ${rejected}`)
 
-  await openElementor(liveId); await save('publish')
+  const again = await openElementor(liveId); await submitForReview(again)
   r = await row(copyId)
   check('8 resubmitted after the rejection', r?.state === 'pending', r?.state)
   await act(copyId, '.acv-approve', { tick: true }); await act(copyId, '.acv-publish')

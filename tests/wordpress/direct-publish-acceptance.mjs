@@ -130,6 +130,15 @@ try {
   st = json(act('state', futureId))
   check('D6 Publish with a future date schedules it; nothing is public yet', st.state === 'scheduled' && Number(act('scheduled-job', futureId)) > 0 && (await get(MAIN, `/${slug}-scheduled`)).status === 404, st.state)
 
+  // D8. An administrator who explicitly asks for review ("Pending Review", block editor / REST) submits, not publishes.
+  const reviewId = Number(act('new-draft', process.env.WP_ADMIN_USER, `${MARKER} for review`, `${slug}-review`))
+  act('target', reviewId, 'main')
+  act('design', reviewId, JSON.stringify([{ id: 'r1', elType: 'container', settings: {}, elements: [{ id: 'r2', elType: 'widget', widgetType: 'heading', settings: { title: `${MARKER} for review` }, elements: [] }] }]))
+  const nonce = (await (await admin.request.get(`${WP}/wp-admin/admin-ajax.php?action=rest-nonce`)).text()).trim()
+  const asked = await admin.request.post(`${WP}/wp-json/wp/v2/pages/${reviewId}`, { headers: { 'X-WP-Nonce': nonce, 'Content-Type': 'application/json' }, data: JSON.stringify({ status: 'pending' }) })
+  st = json(act('state', reviewId))
+  check('D8 an administrator\'s "Pending Review" stays a submission for approval (not published)', asked.status() === 200 && st.state === 'pending' && st.post_status === 'pending' && (await get(MAIN, `/${slug}-review`)).status === 404, `${asked.status()} ${st.state}/${st.post_status}`)
+
   // D7. A publication whose next check was lost is resumed and settles.
   act('lose-verification', pageId)
   const resumed = Number(act('resume-verifications'))
