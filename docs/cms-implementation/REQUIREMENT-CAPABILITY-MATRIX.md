@@ -171,8 +171,64 @@ Personal accounts are **not required**.
 
 | Kind | Item | Owner |
 |---|---|---|
-| Content decision | Enrollment homepage title ("Demo - Copy") and description | Client / team |
-| Content decision | #8516, the only waiting approval item | Team |
-| Content fix | 3 missing logos on Enrollment `/learn-digital-marketing/` | Team |
+| Done 27 Oct | Enrollment homepage SEO title and description (the approved Home1 values) | — |
+| In progress | #8516 (reviewed: approve), published together with #3876's carousel fix | Developer |
+| In progress | Partner carousel: Zomato restored (38 pages); Uber/PwC slides removed on 13 of 38 pages | Developer (needs a working connection) |
+| In progress | 25 of 48 duplicate images still to delete (23 done, backed up) | Owner permission for permanent deletion in this environment |
 | Supported, not fully tested | 336 widgets not used on Main yet; signed-in Main `/admin` after the lock | Check before first use |
 | Future enhancement | Homepage unpublish warning (`PROPOSAL-HOMEPAGE-UNPUBLISH-WARNING.md`) | Owner approval needed to build |
+
+## 7. Full-site editing coverage (27 Oct 2026)
+
+**How each website is edited.**
+- **Enrollment** is WordPress + Elementor, edited directly.
+- **Main** stays Next.js. Its public pages are *designed* in the same Enrollment WordPress with Elementor. WordPress draws the approved revision, and Main serves that drawing at its own address, with its own `<head>`, sitemap and cache (the Render Bridge, section 1).
+
+**The real publishing chain for Main:**
+1. Elementor editor (Publish To = Main or Both).
+2. The plugin's approval: an administrator's Publish approves and publishes.
+3. A signed render endpoint on WordPress (`/wp-json/acadvizen-cms/v1/render`, which refuses anonymous requests with 401).
+4. Main's `app/wp-render` route.
+5. Main's data cache (5 minutes, cleared by tag when a page is published).
+6. The live address.
+7. Approvals → Recent publications records "Published (verified)" only after the address shows the approved revision.
+
+Nothing in this chain asks the administrator to edit code, a database or configuration.
+
+### 7.1 Coverage by route and component
+
+| Website · routes / components | How they are edited | Content | Design | Preview / publish | Live update verified | Gaps |
+|---|---|---|---|---|---|---|
+| Main · homepage `/` | Elementor page "… (Main)", plus the Quick Registration popup and the homepage blog card template | Full | Full (sections, layout, typography, colours, spacing, per device) | Yes / yes | Yes: popup and homepage checks 26–27 Oct | — |
+| Main · 20 dedicated pages (`/about`, `/achievements`, `/contact`, `/placement`, `/courses`, `/projects`, `/testimonials`, `/hire-from-us`, `/soft-skills`, `/privacy-policy`, `/terms-of-service`, `/blog`, `/tools`, …) | Elementor pages, Publish To = Main | Full | Full | Yes / yes | Yes: 320/320 regression; design test | — |
+| Main · 86 blog posts `/blog/<slug>` | Main Blogs (WordPress) for the content and SEO; the shared design "Main — Blog post design" for the layout | Full | Full, through the shared design | Yes / yes | Yes: blog images 372/372; blog publication 22 Oct | — |
+| Main · 67 tools `/tools/<slug>` | Tools (WordPress) plus "Main — Tool page design" | Full | Full, through the shared design | Yes / yes | Yes (regression) | — |
+| Main · 136 location, area and city pages | Locations plus the "Location & service", "Area" and "City" designs | Full, including per-page SEO | Full, through the shared designs | Yes / yes | Yes: canonical fix published and verified 27 Oct | — |
+| Main · header, footer, menu | "Main Website Header / Footer", "Main Website Menu" | Full | Full | Yes / yes | Yes: menu test 26 Oct (every page redrawn) | — |
+| Main · **new pages** | WordPress → Pages → Add New → Elementor → Publish To Main (or Both) | Full | Full | Yes / yes | **Yes: design test 27 Oct** (section 7.2) | — |
+| Main · `/companies`, `/internships`, `/resources`, `/blog/author/…`, `/blog/category/…` | Lists from Main's own database, edited in Main `/admin` | Data only | Next.js layout (noindex while empty) | Main `/admin` | — | Design not from WordPress. A WordPress page with the same Main address replaces it when wanted (no code change) |
+| Main · `/explore-programs`, 8 inactive tool pages (`/tools/buffer` …) | Main's own pages (course finder; inactive tools, noindex, outside the sitemap) | Data in Main `/admin` | Next.js | — | — | Same as above: can be replaced by a WordPress page at that address. The course finder's filtering would then have to be rebuilt in Elementor |
+| Main · `/register`, `/login`, `/forgot-password`, `/dashboard`, `/admin`, `/api` | Application (sign-up, sign-in, student area, admin) | — | — | — | — | **Never replaceable by design** (security: WordPress must not take over sign-in or account pages) |
+| Enrollment · all pages, posts, landing pages | WordPress + Elementor (Pro) | Full | Full | Yes / yes | **Yes: design test; 5 page merges; 38 carousel fixes; homepage SEO (27 Oct)** | — |
+| Enrollment · header, footer, popups, templates, menus, forms | Elementor Theme Builder, Header Footer Elementor, Appearance → Menus, MetForm / Elementor forms | Full | Full | Yes / yes | Header publication 18 Oct; menu test 26 Oct | — |
+| Both · SEO (title, description, canonical, robots) | Rank Math fields of each page or record | Full | — | Published with the page | **Yes: canonical (Main) and homepage title and description (Enrollment), 27 Oct** | — |
+| Both · site-wide styles (Elementor kit: global colours and fonts) | Elementor → Site Settings | — | Full | Publish redraws every page | Supported; not changed in tests (it is shared by every page) | Change with care: every waiting approval is marked "changed" |
+
+### 7.2 Design properties verified on the live websites (27 Oct, `verify-design-live` 53/53)
+
+These were set in the real Elementor editor and published with Elementor's own Publish button (real clicks). The values were then **measured in a fresh browser** at 1440 and 390 px:
+- heading text;
+- font size, desktop 44 px and phone 28 px;
+- font weight 700;
+- heading colour;
+- section background colour;
+- padding, desktop 48 px and phone 16 px;
+- layout, row on desktop and column on phone;
+- button label, colour and link;
+- an image from the Media Library.
+
+The run covered Main, Enrollment and Both. Two further checks:
+- **Update** changed the heading text, heading colour and background colour, and kept the same page id and address.
+- **Repeated Update** (two clicks) still left one page.
+
+**How the editor was driven.** The settings were applied with Elementor's own editor commands (`$e`), the same calls the panel's controls make. Publish and Update were mouse clicks on the editor's top bar. On very large live pages, the Update button sometimes saved the working copy without publishing it; those later publications used Elementor's publish command instead.

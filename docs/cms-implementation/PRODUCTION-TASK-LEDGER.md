@@ -101,6 +101,39 @@ Full record: [DUPLICATE-AUDIT-2026-10-27.md](DUPLICATE-AUDIT-2026-10-27.md).
 - 0 broken internal links, 0 links to removed items;
 - menus, redirects, homepage, popup, blog images 372/372, enquiry route, lock and queue all unchanged.
 
+### Master production pass, 27–28 Oct 2026 (13:55–19:15Z)
+Details: audit §8; matrix §7; acceptance §6.7.
+
+**Verified state:**
+- Git `ffcb299` before this pass;
+- Main `dpl_13s8yPa5GTauWxsi4hvchXrvPVVa` (Ready);
+- plugin 0.7.10.
+
+No code release was needed: every fix was content, made through the normal workflow.
+
+**PASS:**
+- **Design test (`tools/verify-design-live.mjs`, 53/53).**
+  - Main, Enrollment and Both: real Elementor editor; Publish and Update clicked on Elementor's top bar.
+  - Measured in a fresh browser at 1440 and 390 px: typography, colours, padding, responsive layout, button, image.
+  - Update kept the page id and address; a double Update made no duplicate.
+  - Noindex, outside the sitemaps, linked from no menu.
+  - Unpublished and trashed afterwards.
+- **Five page pairs merged (owner decision):** the originals carry the new designs (100 % match; SEO kept); the "-1" addresses 301 to them.
+- **Enrollment homepage SEO:** title, description and focus keyword, approved earlier on Home1, now on #11892.
+- **Template drafts #5901, #2941, #383, #9207** trashed (no dependencies).
+- **Zomato logo** restored at its original address (fixes 38 pages).
+- **Focused regression** after the changes.
+
+**Not finished:**
+
+| Item | State | To finish |
+|---|---|---|
+| Uber/PwC carousel slides | 13/38 pages done; 25 remain, plus #3876 (with #8516) | Run `PROFILE_DIR=<dir> PAGES=6849,6857,6864,6904,6912,6917,6932,6939,6946,6971,6977,6982,6991,6996,7001,7005,7013,7045,7050,7055,7063,7617,7631,7676,3876 WP_STORAGE_STATE=<session> node tools/fix-partner-carousel-live.mjs` on a working connection. #3876 publishes #8516 (reviewed: approve) |
+| 25 duplicate images | 23/48 deleted (backed up; the kept copies load) | The owner permits this environment to continue permanent media deletion, then `APPLY=1 … node tools/delete-duplicate-media-live.mjs` (it skips the 23 already deleted) |
+| Full 375-page regression | Focused regression only | Re-run `final-27.mjs` and `dup-content.mjs` on a working connection |
+
+**Blocker:** from 17:00Z the local connection fell to 26–64 KB/s, with drops and DNS failures (a cold editor load took more than 15 minutes). The websites answered normally.
+
 ### Duplicate audit stage 2, 27 Oct 2026 (11:00–12:10Z)
 Details: audit §7.
 

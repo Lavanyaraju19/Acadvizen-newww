@@ -176,6 +176,33 @@ The agreed setup is **one existing Administrator account**, which already signs 
 
 Nothing in the queue was approved, published, rejected or deleted during the handover.
 
+### 6.7 Design publishing test on the live websites (27 Oct, 14:20–14:37Z)
+
+`tools/verify-design-live.mjs`: **53 passed, 0 failed** (`evidence/production-20261027/design-live.out`, screenshots in `design-live/`).
+
+The test pages were **#11999 (Main), #12028 (Enrollment) and #12062 (Both)**. Each was labelled and noindex, then unpublished and trashed at the end.
+
+**Edit.** In the real Elementor editor:
+- background colour;
+- padding: 48 px desktop, 16 px phone;
+- layout: row on desktop, column on phone;
+- heading: 44/28 px, weight 700, colour;
+- a paragraph;
+- a button (label, colour, link);
+- an image from the Media Library.
+
+The settings were applied through Elementor's own editor commands. Publish and Update were mouse clicks on the editor's top bar.
+
+**Checks:**
+1. **Draft:** not public anywhere.
+2. **Preview:** the measured design matched at 1440 and 390 px.
+3. **Publish:** Main live in 48 s, Enrollment in 3 s, Both in 15 s and 2 s. The design was measured identical at both widths, in a fresh anonymous browser.
+4. **Update** (text and two colours): live in 2–12 s, same page id and address.
+5. **Double Update:** one page, one address.
+6. **Isolation:** not in the sitemaps, not linked from the homepages.
+
+**Partial failure for Both:** `verify-failure-retry-live` passed 8/8 on 26 Oct with this same plugin version (0.7.10, unchanged since).
+
 ### 6.6 Duplicate and test-content cleanup (10:00–10:50Z)
 
 The audit and its results are in [DUPLICATE-AUDIT-2026-10-27.md](DUPLICATE-AUDIT-2026-10-27.md).

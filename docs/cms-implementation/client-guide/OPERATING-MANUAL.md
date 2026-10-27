@@ -240,24 +240,27 @@ Content that WordPress now draws (pages, blogs, tools, locations, header, footer
 
 Both websites were checked again on 27 October. The backup of 24 October was checked and test-restored before anything was installed.
 
-**Your content to-do list** (none of it is a technical problem):
-1. **Homepage title.** The Enrollment homepage is titled "Demo - Copy", which shows in the browser tab and in search results, and it has no search description. Choose a title and a description, enter them in the page (or its Rank Math SEO settings), and click **Publish**.
-2. **One waiting item.** "Performance Marketing Course" (submitted 19 October) is waiting on **Approvals & Publishing**. It contains typed HTML: check the code, then approve and publish it, or reject it.
-3. **Three missing logos** on https://enroll.acadvizen.com/learn-digital-marketing/ (Zomato, Uber, PwC): upload them again in **Media** and select them in the page design.
+**Done on 27 October (your decisions):**
+- **Mentors, Placement, Career, Courses, Partnership.** The newer designs now live at the **original addresses**, which keep their SEO settings and menu links. The "-1" pages are retired, and their addresses forward (301) to the originals.
+- **Enrollment homepage.**
+  - Its browser title and search description are now the approved homepage ones ("Digital Marketing Course in Bangalore with AI | Acadvizen").
+  - "Home1" is kept as a way back to the homepage of 26 October.
+  - "New Home" stays in the Trash.
+- **Hiring-partner logos.** The Zomato logo is back on every page. The Uber and PwC slides, whose files were lost before 10 October, are removed from the carousel: done on 13 pages, the rest to follow.
+- **Unused template drafts** and 23 duplicate image files were removed.
 
-**Clean-up of 27 October.** Test pages, test blog drafts and one hidden copy of the Social Media & Influencer Marketing page were moved to the **Trash**. *Pages (or Posts, Blogs) → Trash → Restore* brings any of them back until 26 November 2026. A short list of possible duplicates is left for you to decide. It includes the "-1" versions of Mentors, Placement, Career, Courses and Partnership, and the old homepage drafts. See `DUPLICATE-AUDIT-2026-10-27.md`, section 7.
+**Still in progress** (developer):
+- the Uber/PwC slides on the remaining 25 pages;
+- publishing the "Performance Marketing Course" change waiting since 19 October (reviewed: it corrects text copied from another course);
+- deleting the other 25 duplicate images.
 
-**What is left for you to decide:**
-1. **The "-1" pages.** For Mentors, Placement, Career, Courses and Partnership, keep the **original address**: it is in the menus and has the SEO settings.
-   - If you prefer the new "-1" design, copy it into the original page and publish it there.
-   - Then unpublish the "-1" page and add a redirect (Rank Math → Redirections, 301) from its address to the original.
-2. **Old homepages.**
-   - Keep "Home1" as a way back to the homepage of 26 October, or move it to the Trash.
-   - "New Home" cannot be published while its page is in the Trash. Restore it first, or leave it if it is no longer needed.
-3. **Four unpublished template drafts** (a header, the "Acadvizen Admission Popup" and two loop items): keep or trash them.
-4. **48 duplicate image files** are listed as safe to delete. Delete them only after a fresh backup.
+**The Trash.** Everything removed on 27 October can be brought back until about 26 November 2026:
+- pages, posts, blogs and templates: *(Pages, Posts, Blogs or Templates) → Trash → Restore*;
+- Main test blogs: **Main Website → Blogs**.
 
-Main test blogs removed with **Main Website → Blogs → Trash** can be brought back from the same screen.
+Deleted image files are kept in the backups.
+
+**Retired page addresses** forward with a 301 redirect (**Rank Math → Redirections**). Don't publish a new page at a retired address; the redirect would hide it.
 
 **Changing the Enrollment homepage.** Never unpublish the page that is set as the homepage: the website's front address then shows "not found". This happened on 27 October, 06:51–08:29 UTC. To replace the homepage:
 1. Publish the new page.

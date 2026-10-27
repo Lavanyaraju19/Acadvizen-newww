@@ -6,10 +6,11 @@
 
 **Times:** UTC.
 
-**Status after stage 2 (section 7):** the audit is **not complete**.
-- R3, R7 and R8 are resolved.
-- R2 and R5 are partly resolved: their redundant items are trashed.
-- Four decisions remain with the owner or team: R1 (which design per page pair), R2 (keep Home1? New Home?), R5 (4 template drafts with content), and R6 (48 media files, after a fresh backup).
+**Status after stage 3 (27–28 Oct, section 8):** the audit is **not complete**.
+- **Resolved:** R1, R3, R5, R7 and R8.
+- **R2:** the homepage SEO is fixed. Home1 is kept as the rollback, and New Home stays in the Trash (owner instruction).
+- **R6:** 23 of the 48 duplicate images are deleted. The other 25 wait for permission to continue.
+- **Partner logos:** Zomato is restored. The Uber/PwC slides are removed on 13 of 38 pages; 25 pages, and #8516 with its page #3876, remain. Editor work stopped when the local network failed.
 
 ## 1. Result in numbers (stage 1)
 
@@ -160,6 +161,40 @@ Every change in this stage is reversible:
 On 27 Oct a Playwright timeout message printed the shared Administrator's WordPress session cookie into local tool output. It never went into a file, commit or document. Every script now prints errors as one line, without request details.
 
 At the end of stage 2 that session was **signed out** (WordPress → Log Out), which invalidates the exposed cookie on the server. Later stages need a fresh sign-in through the normal login screen.
+
+## 8. Stage 3: owner decisions carried out (27 Oct 13:55 – 28 Oct 00:45 IST, 19:15 UTC)
+
+**Owner decisions of 27 Oct:**
+- the newer "-1" designs move into the original pages;
+- restore Zomato, and drop the Uber and PwC slides.
+
+The owner signed in through the normal WordPress login screen; the session was saved without being printed. Every change below used the normal workflow: the working copy, then the administrator's Publish (self-approval recorded), then a live check.
+
+| Item | Result | Evidence |
+|---|---|---|
+| **R1** five page pairs | **Done (PASS)**:<br>• each original now shows its "-1" design (100.0 % content match, same widget count, phone 200);<br>• the original keeps its address, its Rank Math SEO title and canonical, its menu links and its version history;<br>• each "-1" page was unpublished, its address 301-redirects to the original, and it is in the Trash.<br>`/mentors-1/` → `/mentors/`, `/placement-1/` → `/placement/`, `/career-1/` → `/digital-marketing-jobs/`, `/courses-1/` → `/courses/`, `/partnership-2/` → `/partnership/`. The Mentors button that pointed at its own "-1" page now points at `/mentors/`. Partnership's old working copy held only unpublished style tweaks to the replaced design | `merge.out`, `merge/*.png`, `tools/merge-page-design-live.mjs` |
+| **R2** homepage | **SEO fixed (PASS).** #11892 now carries the homepage SEO approved and live until 27 Oct on Home1 and New Home: browser title "Digital Marketing Course in Bangalore with AI \| Acadvizen", the description and the focus keyword. Visible content is unchanged (text fingerprint `b858cb282617` before and after). Home1 #6177 is kept as the rollback, and New Home #8517 stays in the Trash (owner instruction). The old copy #11896 was replaced automatically by the plugin (stale after the 27 Oct republish) | `home-meta.out` |
+| **R5** template drafts #5901, #2941, #383, #9207 | **Trashed** (none is used by any design, condition or shortcode; #2941 was never published, and the live popup is #7696) | `dup-cleanup-backup-20261027/cleanup-2.log` |
+| **R6** 48 duplicate images | **23 deleted, 25 remain.**<br>Recovery for all 48:<br>• each is in the restore-tested 24 Oct backup (48/48 files, 48/48 database records);<br>• a fresh copy of every file and its full record was saved first (SHA-256 list).<br>Every deleted file now answers 404, and its 34 kept identical copies answer 200. The run stopped on a dropped connection; continuing it was then refused by this environment's permission check for permanent deletions | `media-delete.out` |
+| **Partner logos** (38 pages: broken Zomato, Uber and PwC images since before 10 Oct) | **Zomato restored on all 38** with no page edit: the library's own Zomato logo (same 150 × 150 format) was put back at the original address `uploads/2026/09/zomato-1.png`.<br>**Uber/PwC slides removed on 13 of 38 pages**: carousel 10 → 8, verified in the live HTML, same id and address.<br>**25 pages remain**, and so does #3876, whose working copy is #8516 | `partner-carousel.out`, `tools/fix-partner-carousel-live.mjs` |
+| **#8516** "Performance Marketing Course" (waiting since 19 Oct) | **Reviewed, not yet published.**<br>• The submitted text replaces wrong copied text on the live page (a "45 Days Digital Marketing Course" overview on the Performance Marketing page).<br>• Its HTML widgets are identical to the live page's, so it adds no new code.<br>• The live page has not changed since 12 Oct, so no later edit would be lost.<br>Decision: approve. It will be published together with its page's carousel fix | analysis in this section |
+
+**Why editor work stopped.** From about 17:00 UTC the connection of the machine running the tools fell to 26–64 KB/s, with dropped connections and DNS failures, including to Cloudflare's CDN. As a result:
+- a cold Elementor editor load exceeded 15 minutes, and React never finished loading;
+- even Vercel's edge cache answered in 5 s.
+
+The websites themselves were fine: uncached WordPress requests took 1–2 s. The tools stop instead of leaving a page half-done, so nothing is in an unknown state. Each remaining step is a resumable command (ledger).
+
+**Focused regression after stage 3** (`focused-regression.txt`):
+- both homepages 200, with the new Enrollment SEO title and description, and the Main popup present;
+- the five originals 200 and self-canonical; their "-1" addresses 301 to them;
+- Enrollment sitemap 59 addresses: no duplicates, no retired or test address;
+- Main sitemap 310: no duplicates;
+- the MG Road canonical is correct;
+- the 4 Main-only pages are noindex and outside the sitemap;
+- Main `/admin` 200; lock 423; Leads 401; enquiry route `POST`; `/test/` 404; plugin 0.7.10;
+- today's design-test addresses answer 404 on both websites;
+- `zomato-1.png` 200.
 
 ## Appendix A. Duplicate media: file-by-file
 
