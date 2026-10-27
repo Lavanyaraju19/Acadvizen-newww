@@ -232,6 +232,25 @@ www.acadvizen.com/admin still works for **leads**, users, the student area, and 
 
 Content that WordPress now draws (pages, blogs, tools, locations, header, footer, menus, SEO) must be edited in **WordPress**. Since 26 Oct 2026 Main's admin **refuses** such edits with the message "This content is managed in the WordPress Master Admin" (HTTP 423). Leads, users, the student area and the companies, internships, resources and blog author, category and tag lists stay editable there.
 
+## 10d. Status at handover (27 October 2026)
+
+**Ready to use.** Everything in this manual was tested on the live websites on 26 October 2026, on labelled test pages that were unpublished afterwards: writing, editing, previewing, publishing, scheduling, restoring, unpublishing, menu editing and failure recovery. The backup of 24 October was checked and test-restored before anything was installed.
+
+**Still to do:**
+1. **Personal accounts.** Send your developer each person's name, e-mail and role. Until then, the team shares one Administrator account.
+2. **Waiting items.** Changes submitted before 26 October are still waiting on **Approvals & Publishing**. Approve and publish them there, or open each page and click **Publish**.
+3. **Homepage title.** The Enrollment homepage is currently titled "Demo - Copy", which shows in the browser tab and in search results. Rename it in the editor and click **Publish**.
+
+**Changing the Enrollment homepage.** Never unpublish the page that is set as the homepage: the website's front address then shows "not found". This happened on 27 October, 06:51–08:29 UTC. To replace the homepage:
+1. Publish the new page.
+2. Choose it under **Settings → Reading → Homepage**.
+3. Check https://enroll.acadvizen.com/.
+4. Only then unpublish the old page.
+
+**Known limits** are listed in section 11. None of them stops a page from working.
+
+**If a publication fails:** Approvals & Publishing → Recent publications shows each website's result and the reason. The previous version stays live. Fix the cause (for example, a redirect on that address), then click **Check again**. Versions & Rollback (or **Restore**) puts an earlier version back.
+
 ## 11. Known differences and limits (as of 23 Oct 2026)
 
 These are known and recorded; none breaks a page.
@@ -246,6 +265,7 @@ These are known and recorded; none breaks a page.
 | Location pages | No `<h1>` heading (also the case on the Main Website before). |
 | 3 blog categories | Three Main posts had a "category" that is a keyword list of 256–304 characters (WordPress allows 200). They were not stored in WordPress, and not shortened. Rechecked 24 Oct: neither website shows these categories on the post or on `/blog`, and Main's own category pages are unchanged. To give these posts real categories, choose short ones in Main's admin and in WordPress. |
 | Main's own admin | Locked for content WordPress now draws since 26 Oct (see 10c). |
+| Changing the shared header, footer, menu or a shared design | Every Main page is redrawn. Each page updates within a few minutes; the whole website can take longer. Check two or three pages, not just one. |
 | Homepage registration popup | Fixed 26 Oct (plugin 0.7.10): the Quick Registration popup now opens over the homepage after about 90 seconds, on desktop and phone. |
 | Publication status | Fixed 26 Oct (plugin 0.7.9): a check that was lost is resumed hourly and whenever Approvals opens (Contact is verified again). |
 

@@ -47,8 +47,11 @@ Every install passed the guarded checks:
 | `verify-elementor-live` (Main, Enrollment, Both: create → Save Draft → Preview → Publish → 1440/768/390 → Update → Restore → Unpublish) | **52/52** |
 | `verify-approval-live` (Pending Review → approve → publish → live page protected → change waits → Reject → resubmit → publish → Restore → Unpublish) | **16/16** |
 | `verify-scheduling-live` (future date → Publish = scheduled, not public → live at its time (+52 s) → Unpublish) | **6/6** |
+| `verify-failure-retry-live` (Both: published → cause in place → next revision reported **failed** with each website's reason, Main keeps the previous version → cause removed → Check again → verified on both) | **8/8** |
+| `verify-navigation-live` (Main menu item's title attribute set → live on Main pages in 171 s → restored; menu identical to the original) | **PASS**. Check 2's own message read was a false negative (it read WordPress' update banner); the save was confirmed by reading the item back. The restore went through the menu-item endpoint |
+| Final regression (26 Oct 16:10Z – 27 Oct) | Main 320/320 identical to 23 Oct; blog images 372/372; popup; `/admin` 200; lock 423 (companies 401, leads 400); enquiry `POST`; Enrollment 58/59 (`/mentors/` retitled "Mentors 1" by the team) |
 | SEO and sitemap: 320 Main addresses against 23 Oct (status, title, description, canonical, robots, sitemap membership) | **320/320 identical**; sitemap 310; all 310 drawn by WordPress |
-| Enrollment: 59 pages against 23 Oct | **59/59** (`/test/` still 404) |
+| Enrollment: 59 pages against 23 Oct | **59/59** on 26 Oct (`/test/` still 404). 27 Oct 08:30Z: home 200 again after the team's unpublish (section 5); 62 of 63 other sitemap addresses 200, plus one Rank Math 301 set up by the team |
 | Blog images: every WordPress image on the 86 live blog posts | **372/372 load** |
 | Main-only pages (`/blog/author/john-doe`, `/companies`, `/internships`, `/resources`) | 200, noindex, not in the sitemap |
 | Routes | Main `/admin` 200; `/contact` 200; enquiry route `POST`; CMS API anonymous 401; Enrollment home 200 |
@@ -81,9 +84,9 @@ Every install passed the guarded checks:
 | 11 | Enrollment unaffected | **PASS** | Main-only test absent from Enrollment; Enrollment 59/59 identical |
 | 12 | Draft and published status | **PASS** | Draft not public; Approvals → Recent publications "Published (verified)" |
 | 13 | Media editing | **PASS** (an image from the Media Library placed and shown on both websites) | elementor-live 5 `img:true` |
-| 14 | Navigation and template editing | **NOT RE-RUN TODAY** | It would change the live shared header, footer or menu on every Main page. Earlier production evidence: Main header/footer published and verified 18 Oct (Recent publications). LOCAL: `site-chrome-acceptance` |
+| 14 | Navigation editing | **PASS** (16:00–16:09Z) | Appearance → Menus → Main Website Menu → "Contact" → Title Attribute "Contact Acadvizen" (hover text only) → Save Menu. Live on `/`, `/about`, `/blog`, a location page after **171 s**; Enrollment not affected. Restored: the attribute cleared (the menu screen's restore click timed out, so the menu-item endpoint was used), the menu is **identical to its saved original** (8 items, every field), every page back to its original link in ~5 min. Sweep of 27 Oct 07:30Z: **0 of 310** sitemap addresses carry the hover attribute, all 310 answer 200 (one blog post contains the words "Contact Acadvizen" in its own article text; that is not the menu). `navigation-live.out`, `navigation/menu-before.json`, `navigation/menu-after.json`, `navigation/menus-set.png`. Template editing: the shared designs are edited the same way (Templates); the header/footer publication was verified on production on 18 Oct |
 | 15 | Scheduling | **PASS** | scheduling-live 6/6 |
-| 16 | Failure reporting and retry | **PARTLY** | A lost check is recovered (Contact + 23 others, PRODUCTION). Forcing a website to fail on production needs the signing secret in the test environment; no approved way exists. LOCAL: both-failure 12/12 and approval A9 |
+| 16 | Failure reporting and retry | **PASS** (`verify-failure-retry-live` 8/8, 15:17–15:56Z) | No secret and no test code on the server: a Both test page; a temporary Rank Math redirect on its own Enrollment address made the next revision impossible to show → Approvals reported **failed** with each website's reason (Enrollment: another revision shown; Main: drawing failed, http_307), never success; Main visitors kept the previous approved version (V1) → redirect removed → **Check again** → verified on both in 56 s, both showing V2 → page unpublished, redirect deleted. Also: lost checks recovered (Contact + 23). `failure-retry-live-2.out` (the first attempt, `failure-retry-live.out`, proved the failure report but its cleanup call was refused; the leftover redirect was removed at about 15:17Z, before the second run) |
 | 17 | Rollback and restoration | **PASS** | elementor-live 7 and approval-live 9: Restore puts the earlier version back live |
 | 18 | Everything without source code or the old dashboard | **PASS** | All steps through WordPress, Elementor and Approvals & Publishing |
 
@@ -91,7 +94,6 @@ Every install passed the guarded checks:
 
 | Item | Why | One action needed |
 |---|---|---|
-| Forced partial failure on production (#16) | Needs the signing secret in the test environment; it was not extracted | Owner decides on an approved way to provide it, or accepts the LOCAL result |
-| Navigation and template editing on production (#14) | Changing the live shared header, footer or menu changes every Main page | Owner names a harmless change to make (and undo) during the client demo |
+| Enrollment homepage title | The final check of 27 Oct found the Enrollment homepage answering 404 since 06:51Z: the team had unpublished the page set as the homepage ("Demo", #11892). With the owner's approval, it was republished unchanged at 08:29Z: 200, and Approvals shows "Published (verified)" for the team's approved revision `4dfd2da9e3fd`. Details in the ledger. Its title still reads "Demo - Copy" | The team renames it in the editor |
 | Personal accounts | No approved names, e-mails and roles; everyone uses the shared `tharikar98` Administrator account | Owner sends names, e-mails and roles |
 | 9 waiting approval items (#8516, #9304, #10936, #11007, #11011, #11415, #11453, #11457, #11521, plus the team's 26 Oct submissions) | Other people's work; not touched | The team opens Approvals & Publishing and approves or rejects each, or re-opens the page and clicks Publish (0.7.10 publishes directly for administrators) |

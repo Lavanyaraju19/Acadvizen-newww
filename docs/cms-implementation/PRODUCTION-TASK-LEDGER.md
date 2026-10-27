@@ -2,7 +2,7 @@
 
 This is the living list of every production task.
 
-- **Updated:** 26 Oct 2026.
+- **Updated:** 27 Oct 2026.
 - **Production evidence:** the `PRODUCTION — …` labels below come only from the live websites. Local results are marked "local (supplementary)".
 - **Starting point:** `PRODUCTION-AUDIT-2026-10-21.md`.
 
@@ -28,6 +28,55 @@ Status values: DONE · VERIFIED (production) · READY (built and tested, waiting
 5. Commit and push the repository changes: plugin 0.7.7 source, release and migration tools, docs.
 6. Rotate the shared admin account (used by both the team and the test runs) and the deferred credentials.
 
+## Handover status, 27 Oct 2026
+
+Record: [PRODUCTION-ACCEPTANCE-2026-10-26.md](PRODUCTION-ACCEPTANCE-2026-10-26.md). All times UTC.
+
+### Completed and verified on production
+
+| Item | Evidence |
+|---|---|
+| Correct Enrollment database backup (24 Oct 15:15), checksum, restore test | Q1 below; `evidence/backup-20261026/` |
+| Plugin 0.7.10 live (direct publish for administrators, lost-check recovery, popups) | Q2–Q4 |
+| Main release `dpl_JDZNEJ2c7UtvMBbc459sgYUdrpMj` and ownership lock `dpl_13s8yPa5GTauWxsi4hvchXrvPVVa` | Q6–Q7 |
+| 18-item client demo: **18/18 PASS** | Acceptance §4 |
+| #14 navigation editing: Contact title attribute set, live on Main in 171 s, Enrollment unaffected, restored. Menu identical to its original; pages back in about 5 min. Sweep 27 Oct 07:30Z: 0 of 310 Main addresses carry the hover text, all 310 answer 200 | `navigation-live.out`, `navigation/` |
+| #16 failure and retry: failure reported with each website's reason, Main kept the previous version, Check again verified both in 56 s, page unpublished, redirect removed | `failure-retry-live-2.out` |
+| LIVE suites: elementor 52/52, approval 16/16, scheduling 6/6, failure-retry 8/8 | `evidence/production-20261026/*.out` |
+| Final regression (26–27 Oct): Main 320/320 identical to 23 Oct (sitemap 310, all drawn by WordPress); blog images 372/372; popup and dialog styles on the homepage; `/admin` 200; lock 423 (companies 401, leads 400: not locked); `/test/` 404; CMS API 401; enquiry route `POST` | `final-regression.txt` |
+| Test pages: all labelled test pages are drafts and answer 404 on both websites; no test redirect left | Checked 26 Oct after each run |
+| The team uses direct publishing: "New Home" and "demo" published by them 27 Oct 04:21–04:32Z (submit, approve, publish in one second) | Approvals history |
+
+**Enrollment 58/59 identical to 23 Oct.** The 59th, `/mentors/`, now has the title "Mentors 1". That page is the team's own work ("Mentors 1" submissions 24 and 26 Oct; their publishing on 27 Oct), not a test change.
+
+**Enrollment homepage outage, 27 Oct 06:51–08:29Z (found and fixed during the final check).**
+- **Cause.** The team's own actions under the shared account (Approvals history, IST = UTC+5:30):
+  - 04:21Z: Home1 (#6177) was unpublished;
+  - 04:32Z: "demo" (#11892) was published and set as the homepage (Settings → Reading);
+  - 06:51:25Z: **"Demo" was unpublished while it was the homepage**, so `/` answered 404;
+  - 06:51:33Z: "Demo – Copy" was published over it, and Approvals correctly reported "Enrollment: Failed (HTTP 404)".
+- **Not involved.** No test tool and no plugin step changed it: `apply_revision` never changes a page's status, and nothing in the plugin touches the homepage setting.
+- **Fix (owner approved).** #11892 republished unchanged with Elementor → Publish at 08:29Z. `/` answered 200 in 2 s, and Approvals shows "Enrollment: Published (verified)" for the same approved revision `4dfd2da9e3fd`. The other 63 Enrollment sitemap addresses: 62 answer 200, and `/social-media-influencer-marketing/` is a Rank Math 301 to `/learn-digital-marketing/` (the team's redirect).
+- **Left for the team.** The homepage's title is "Demo - Copy" (browser tab and search results); rename it in the editor.
+- **Recommended plugin guard (not built).** Warn before unpublishing the page set as the homepage, and refuse to publish a copy over an unpublished page.
+
+### Accepted limitations (documented, not defects to fix now)
+
+| Limitation | Where documented |
+|---|---|
+| Hosting backups are weekly; manual backups are locked on the current Hostinger plan | Manual §10b |
+| Elementor widgets: 79 refused on Main (shop, cart, login run on Enrollment only); 336 drawn by Elementor but not yet used or tested on Main | Matrix §2 |
+| Small visual differences recorded at migration: `/blog` "SEP" dates, `/achievements` carousel arrows, homepage video controls, no `<h1>` on location pages, 3 over-long blog categories | Manual §11 |
+| A change to a shared header, footer, menu or design redraws every Main page. Each page updates within minutes; the whole site takes longer | Manual §9 |
+
+### Genuinely pending (needs the owner)
+
+| Item | Action |
+|---|---|
+| Personal WordPress accounts | The owner sends each person's name, e-mail and role (Administrator, Reviewer, Editor or Author); then they are created and checked |
+| The team's waiting approval items (#8516, #9304, #10936, #11007, #11011, #11415, #11453, #11457, #11521 and later ones) | The team approves or rejects each on Approvals & Publishing, or opens the page and clicks Publish |
+| Enrollment homepage title "Demo - Copy" | The team renames the homepage (#11892) in the editor and clicks Publish |
+
 ## Production completion, 26 Oct 2026
 
 Full record: [PRODUCTION-ACCEPTANCE-2026-10-26.md](PRODUCTION-ACCEPTANCE-2026-10-26.md). All times UTC.
@@ -42,7 +91,7 @@ Full record: [PRODUCTION-ACCEPTANCE-2026-10-26.md](PRODUCTION-ACCEPTANCE-2026-10
 | Q6 | Main release | **LIVE** `dpl_JDZNEJ2c7UtvMBbc459sgYUdrpMj` (`b804b34`) 12:06Z | Main retries a quick WordPress refusal once: single 503s were seen during the site-wide redraw and stopped three control checks. The inventory tool also asks a 503 once more, recorded as `retried_503`. 310/310 identical after the release |
 | Q7 | Ownership lock | **LIVE** `dpl_13s8yPa5GTauWxsi4hvchXrvPVVa` 12:51Z | `WORDPRESS_OWNS_PUBLIC_CONTENT=true`: pages 423; companies, internships, resources, authors 401; leads 400; `/admin` 200; 310/310 identical. Script fix: curl could not write to /dev/null with path conversion off (exit 23); probes write to the run folder |
 | Q8 | Team activity, not touched | **RECORDED** | 26 Oct 05:51–07:17Z (11:21–12:47 IST), shared account: submissions of New Home, Mentors 1, About Us, Project 1; the live "New Home" removed by them at 06:48Z. Waiting items unchanged by us |
-| Q9 | Open | **BLOCKED (external)** | Forced partial failure on production (signing secret); navigation and template change on production (owner to choose a harmless change); personal accounts (names, e-mails, roles) |
+| Q9 | Open | see 27 Oct | #14 and #16 were completed on 26 Oct (see 27 Oct); personal accounts are pending |
 
 ## Final production completion prompt, 25 Oct 2026
 
