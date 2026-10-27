@@ -81,6 +81,26 @@ Acceptance §6 has the details. Everything was read-only; no content, enquiry or
 - **Test content:** 54 test pages are drafts, and their 21 addresses answer 404 on both websites.
 - **Not verified today:** signed-in use of Main `/admin`. Main's admin has its own sign-in, the saved sessions expired on 12 Oct, and no password was asked for. The Leads routes are verified intact (read 401, empty submission 400) and unaffected by the lock.
 
+### Duplicate and test-content audit, 27 Oct 2026 (10:00–10:50Z)
+Full record: [DUPLICATE-AUDIT-2026-10-27.md](DUPLICATE-AUDIT-2026-10-27.md).
+
+**Removed: 76 items.** 75 went to the WordPress Trash (restorable for 30 days) and 1 test image was deleted (file kept); each record was saved locally first. The items:
+- 54 labelled test pages and their archives;
+- 17 test blog drafts (7 posts, 10 Main Blogs);
+- #8512, a published 96 % copy of `/learn-digital-marketing/` hidden behind a 301;
+- 3 empty abandoned drafts;
+- 1 test image.
+
+**Retained with a reason:** version archives, working copies, templated location pages, Main city/area pages, and the cross-site pages.
+
+**Awaiting review: 9 groups (R1–R8).** The 5 pairs of published Enrollment pages, the retired homepages, the template drafts, 145 duplicate media copies, a canonical pointing at a 404, and the test blogs in Main's own database.
+
+**Verified after the cleanup:**
+- Main 320/320 identical to 23 Oct;
+- Enrollment sitemap 64/64 answer 200;
+- 0 broken internal links, 0 links to removed items;
+- menus, redirects, homepage, popup, blog images 372/372, enquiry route, lock and queue all unchanged.
+
 ### 1. Completed and production-verified
 Everything in the "Completed and verified on production" table above, plus the 27 Oct final verification.
 

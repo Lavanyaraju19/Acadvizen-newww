@@ -245,6 +245,8 @@ Both websites were checked again on 27 October. The backup of 24 October was che
 2. **One waiting item.** "Performance Marketing Course" (submitted 19 October) is waiting on **Approvals & Publishing**. It contains typed HTML: check the code, then approve and publish it, or reject it.
 3. **Three missing logos** on https://enroll.acadvizen.com/learn-digital-marketing/ (Zomato, Uber, PwC): upload them again in **Media** and select them in the page design.
 
+**Clean-up of 27 October.** Test pages, test blog drafts and one hidden copy of the Social Media & Influencer Marketing page were moved to the **Trash**. *Pages (or Posts, Blogs) → Trash → Restore* brings any of them back until 26 November 2026. A short list of possible duplicates is left for you to decide. It includes the "-1" versions of Mentors, Placement, Career, Courses and Partnership, and the old homepage drafts. See `DUPLICATE-AUDIT-2026-10-27.md`, section 5.
+
 **Changing the Enrollment homepage.** Never unpublish the page that is set as the homepage: the website's front address then shows "not found". This happened on 27 October, 06:51–08:29 UTC. To replace the homepage:
 1. Publish the new page.
 2. Choose it under **Settings → Reading → Homepage**.

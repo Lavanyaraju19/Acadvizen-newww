@@ -175,3 +175,17 @@ The agreed setup is **one existing Administrator account**, which already signs 
 | Recent publications (last 20) | 16 verified, 4 failed | Failed: three test pages that were later unpublished; Home1 (#6177), which the team then unpublished. None needs action |
 
 Nothing in the queue was approved, published, rejected or deleted during the handover.
+
+### 6.6 Duplicate and test-content cleanup (10:00–10:50Z)
+
+The audit and its results are in [DUPLICATE-AUDIT-2026-10-27.md](DUPLICATE-AUDIT-2026-10-27.md).
+
+**Removed: 76.** 75 went to the Trash and 1 test image was deleted. They include all 54 test pages of these acceptance runs. The test pages named in sections 3–4 are therefore now in the WordPress Trash, not drafts. Their evidence files remain.
+
+**Awaiting review:** 9 groups, owned by the owner or the team.
+
+**After the cleanup:**
+- Main 320/320 identical to 23 Oct;
+- Enrollment sitemap 64, all 200;
+- 0 broken internal links;
+- menus, redirects, popup, blog images, enquiry route, lock and queue unchanged.
