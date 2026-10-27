@@ -34,6 +34,8 @@ The `u713346627_kb4Ph…` file supplied on 25 Oct belongs to another, almost emp
 | Main Website | **`dpl_JDZNEJ2c7UtvMBbc459sgYUdrpMj`** from commit `b804b34` (12:06Z; retry of a quick WordPress refusal), then **`dpl_13s8yPa5GTauWxsi4hvchXrvPVVa`**: the same build with `WORDPRESS_OWNS_PUBLIC_CONTENT=true` (12:51Z) | lock: `bash tools/release/set-content-ownership.sh --undo dpl_JDZNEJ2c7UtvMBbc459sgYUdrpMj`; release: `bash tools/release/release-main.sh --undo` (back to `dpl_2B5hNrES1eUqxDhrbVJVuEfkiAyV`) |
 | Git | `origin/headless-wordpress` (see the ledger for the final commit) | — |
 
+Re-verified unchanged on 27 Oct: section 6.1.
+
 Every install passed the guarded checks:
 - Master Admin active at the new version; the other 33 plugins unchanged;
 - the CMS API answers 401 to anonymous requests;
@@ -48,7 +50,7 @@ Every install passed the guarded checks:
 | `verify-approval-live` (Pending Review → approve → publish → live page protected → change waits → Reject → resubmit → publish → Restore → Unpublish) | **16/16** |
 | `verify-scheduling-live` (future date → Publish = scheduled, not public → live at its time (+52 s) → Unpublish) | **6/6** |
 | `verify-failure-retry-live` (Both: published → cause in place → next revision reported **failed** with each website's reason, Main keeps the previous version → cause removed → Check again → verified on both) | **8/8** |
-| `verify-navigation-live` (Main menu item's title attribute set → live on Main pages in 171 s → restored; menu identical to the original) | **PASS**. Check 2's own message read was a false negative (it read WordPress' update banner); the save was confirmed by reading the item back. The restore went through the menu-item endpoint |
+| `verify-navigation-live` (Main menu item's title attribute set → live on Main pages in 171 s → restored; menu identical to the original) | **PASS, with two tool failures explained.** The run log itself reads "3 passed, 2 failed":<br>• check 2 read WordPress' update banner instead of the save message; the save was confirmed by reading the item back and by the change going live (check 3);<br>• the restore click timed out, so the restore went through the menu-item endpoint (Approvals history "navigation saved_by_reviewer", 16:03:58Z).<br>Checks 5–6 were completed outside the run: `menu-after.json` (16:03:59Z) is identical to `menu-before.json`. Re-verified 27 Oct: the live menu still equals it, and 0/320 pages carry the text. (`menus-cleared.png` is from an aborted earlier attempt, 15:58Z) |
 | Final regression (26 Oct 16:10Z – 27 Oct) | Main 320/320 identical to 23 Oct; blog images 372/372; popup; `/admin` 200; lock 423 (companies 401, leads 400); enquiry `POST`; Enrollment 58/59 (`/mentors/` retitled "Mentors 1" by the team) |
 | SEO and sitemap: 320 Main addresses against 23 Oct (status, title, description, canonical, robots, sitemap membership) | **320/320 identical**; sitemap 310; all 310 drawn by WordPress |
 | Enrollment: 59 pages against 23 Oct | **59/59** on 26 Oct (`/test/` still 404). 27 Oct 08:30Z: home 200 again after the team's unpublish (section 5); 62 of 63 other sitemap addresses 200, plus one Rank Math 301 set up by the team |
@@ -90,10 +92,86 @@ Every install passed the guarded checks:
 | 17 | Rollback and restoration | **PASS** | elementor-live 7 and approval-live 9: Restore puts the earlier version back live |
 | 18 | Everything without source code or the old dashboard | **PASS** | All steps through WordPress, Elementor and Approvals & Publishing |
 
-## 5. Open items
+## 5. Open items (as of 27 Oct 2026, 10:00Z)
 
-| Item | Why | One action needed |
+No technical item is open. What remains is content owned by the client and the team (section 6.5).
+
+| Item | Owner | Action |
 |---|---|---|
-| Enrollment homepage title | The final check of 27 Oct found the Enrollment homepage answering 404 since 06:51Z: the team had unpublished the page set as the homepage ("Demo", #11892). With the owner's approval, it was republished unchanged at 08:29Z: 200, and Approvals shows "Published (verified)" for the team's approved revision `4dfd2da9e3fd`. Details in the ledger. Its title still reads "Demo - Copy" | The team renames it in the editor |
-| Personal accounts | No approved names, e-mails and roles; everyone uses the shared `tharikar98` Administrator account | Owner sends names, e-mails and roles |
-| 9 waiting approval items (#8516, #9304, #10936, #11007, #11011, #11415, #11453, #11457, #11521, plus the team's 26 Oct submissions) | Other people's work; not touched | The team opens Approvals & Publishing and approves or rejects each, or re-opens the page and clicks Publish (0.7.10 publishes directly for administrators) |
+| Enrollment homepage title "Demo - Copy" (browser tab and search results). The page has no meta description | Client / team | Choose the title, and a description. The record holds no approved title; Home1's title until 27 Oct was "Digital Marketing Course in Bangalore with AI \| Acadvizen". Then rename the page (or set its Rank Math title) and click Publish |
+| 1 waiting approval item: #8516 "Performance Marketing Course" | Team | A reviewer with code rights checks its typed HTML, then approves and publishes or rejects it |
+| 3 missing logo files on `/learn-digital-marketing/` (`zomato-1.png`, `uber-1.png`, `pwc.png`; also absent in the 24 Oct files backup) | Team | Re-upload the logos and select them in that page's design |
+| Personal accounts | — | **NOT REQUIRED.** The existing Administrator account is sufficient for the agreed setup |
+
+Earlier versions of this report listed 9 waiting items (#9304, #10936, …). On 27 Oct only #8516 is still waiting; the team handled the others through direct publishing on 26–27 Oct.
+
+## 6. Final verification, 27 Oct 2026
+
+Read-only unless stated; no enquiry, lead or content was created. Evidence (not in Git): `evidence/production-20261027/`:
+- `final-regression.txt`;
+- `render.txt` and `render/*.png`.
+
+### 6.1 Deployed state
+
+| What | Verified value | How |
+|---|---|---|
+| Main | `dpl_13s8yPa5GTauWxsi4hvchXrvPVVa`, production, Ready (created 26 Oct 12:49Z). It is the redeploy of `dpl_JDZNEJ2c7UtvMBbc459sgYUdrpMj` (commit `b804b34`) with the ownership lock | `vercel inspect https://www.acadvizen.com`; release log of 26 Oct |
+| Enrollment plugin | Acadvizen Master Admin **0.7.10**, active (34 plugins, 28 active) | WordPress plugins list; public `readme.txt` Stable tag 0.7.10 |
+| Git | `origin/headless-wordpress` at `968d68b` before this update | `git fetch`; `git rev-parse` |
+| Backup | `u713346627_xDzzw.20261024094529.sql.gz`, SHA-256 `b9f1a0fb…1dad9`, recomputed 27 Oct: match. It does not contain changes after 24 Oct 15:15 | `sha256sum` |
+
+### 6.2 The existing Administrator
+
+The agreed setup is **one existing Administrator account**, which already signs in to the Enrollment WordPress. The checks below ran under that account's own production session: user #1, role `administrator`, holding the plugin's `acv_review_publication` capability.
+
+| # | Capability | Result | Evidence |
+|---|---|---|---|
+| 1 | Sign in to the Enrollment dashboard | **VERIFIED** 27 Oct | Session valid; `users/me` = administrator |
+| 2 | The existing CMS workflow for Main content, without a second CMS | **VERIFIED** 27 Oct | Approvals, Publishing, Versions, Pages, Menus, Templates, Rank Math redirections, Settings → Reading all open (200) |
+| 3 | Open and edit supported content in WordPress / Elementor | **VERIFIED** 26 Oct (LIVE) | `elementor-live.out` 52/52 |
+| 4 | Preview drafts safely | **VERIFIED** 26 Oct | elementor-live 3 (draft not public) |
+| 5 | Publish and update to the intended website | **VERIFIED** 26 Oct; again 27 Oct (#11892 republished, verified) | elementor-live; ledger 27 Oct |
+| 6 | Main, Enrollment and Both destinations | **VERIFIED** 26 Oct | elementor-live (three test pages, one per destination) |
+| 7 | Schedule; publication status; retry a failed check | **VERIFIED** 26 Oct | `scheduling-live.out` 6/6; `failure-retry-live-2.out` 8/8 |
+| 8 | Approval and restore workflows | **VERIFIED** 26 Oct | `approval-live.out` 16/16 |
+| 9 | Restore or unpublish safely | **VERIFIED** 26 Oct | elementor-live 7, approval-live 9; every test page unpublished (54 drafts, 21 addresses 404 on both websites, 27 Oct) |
+| 10 | Main `/admin` and Leads | **Leads preserved: VERIFIED** 27 Oct. **Signed-in use of Main `/admin`: NOT VERIFIED today** | `/admin` and `/admin/leads` answer 200. The Leads API: anonymous read 401, anonymous empty submission 400 (validation, no lead created), not affected by the lock. Main's admin is a separate sign-in. The saved sessions expired on 12 Oct, and no password was requested |
+
+**Elementor widgets:** proven live are the 11 widget types used by the 310 Main pages, plus the end-to-end types (Container, Heading, Text Editor, Button, Image). 336 more are supported but not individually tested on Main. 79 are refused on Main by design (shop, cart, login). Details: capability matrix §2.
+
+### 6.3 Live regression
+
+| Check | Result |
+|---|---|
+| Main: 320 addresses against the 23 Oct crawl (status, sitemap membership, served by WordPress, title, canonical, robots, description; entities decoded) | **320/320 identical**; sitemap 310, all drawn by WordPress |
+| Main: visible text of every page against the 23 Oct crawl | **319/320 identical**. The homepage differs only by the Quick Registration popup: with the popup block removed, its text hash equals the 23 Oct hash (`540c9a391e9d`). That is the intended popup fix (§5a P3/P4) |
+| Main homepage versions 21–25 (26 Oct 16:01Z → 27 Oct 07:36Z) | Same text. They were redrawn for the menu test and the team's template publications; no content change |
+| Main-only pages `/blog/author/john-doe`, `/companies`, `/internships`, `/resources` | 200, `noindex, follow`, not in the sitemap |
+| Test hover text from demo #14 | On 0 of 320 pages. The live "Main Website Menu" (#56) is identical to the original snapshot of 26 Oct (8 items, every field) |
+| Popup (browser, 1440 px) | Opened after 92 s as a fixed overlay (450 × 368), 6 fields, closed with ×, nothing submitted |
+| Browser rendering of the Main home, a blog post and a location page, and the Enrollment home and a page (1440 and 390 px) | Header, footer and navigation visible; no page errors; no horizontal scroll; Main images all load |
+| Routes | Main `/admin` 200, `/contact` 200. Lock: anonymous `POST /api/cms/pages` **423**; companies, internships, resources, authors 401 (not locked); leads 400. Signed CMS routes 401 no-store. Enquiry route `POST`. Enrollment `/test/` 404 |
+| Blog images on Main (86 posts) | **372/372** load |
+| Enrollment: the 59 pages against 23 Oct | 56 identical. Three differ, all explained: `/` (the team's new homepage, §6.4); `/test/` 404 (intended); `/mentors/` retitled by the team |
+| Enrollment sitemap | 65 addresses; 64 answer 200. `/social-media-influencer-marketing/` is a Rank Math 301 set up by the team |
+| Test content | 54 labelled test pages, all drafts; their 21 addresses answer 404 on both websites (so no test redirect is left) |
+
+### 6.4 Enrollment homepage
+
+- **Status:** published, 200. Settings → Reading homepage = #11892, still assigned.
+- **Content:** the team's design: the course-landing hero, the enquiry form and their "Admission open" popup. Its Elementor documents are 960, 1035, 1799, 6147, 7696 (header, footer and parts unchanged) and 11892 (the page).
+- **SEO:** canonical `https://enroll.acadvizen.com/`; robots `index, follow`.
+- **Title:** **"Demo - Copy - enroll.acadvizen.com"**, with **no meta description**.
+- **Decision:** no approved replacement title is recorded, so the page was **not changed** (§5).
+
+### 6.5 Approvals & Publishing queue (read 27 Oct 09:34Z)
+
+| Section | Count | Items |
+|---|---|---|
+| Waiting for approval | **1** | #8516 "Performance Marketing Course": changes to a live Enrollment page, submitted 19 Oct (revision `e608ad03352d`). It contains typed HTML, so a reviewer must confirm the code |
+| Approved, ready to publish | **0** | "None." |
+| Scheduled | **0** | No page or post scheduled |
+| Rejected | 0 in the last 100 history entries | — |
+| Recent publications (last 20) | 16 verified, 4 failed | Failed: three test pages that were later unpublished; Home1 (#6177), which the team then unpublished. None needs action |
+
+Nothing in the queue was approved, published, rejected or deleted during the handover.

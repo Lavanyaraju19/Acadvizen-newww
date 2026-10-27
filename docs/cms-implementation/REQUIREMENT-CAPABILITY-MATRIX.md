@@ -1,6 +1,6 @@
-# Requirements, capabilities and evidence (updated 26 October 2026)
+# Requirements, capabilities and evidence (updated 27 October 2026)
 
-**26 Oct 2026:** plugin **0.7.10** is live on production. Production results are in [PRODUCTION-ACCEPTANCE-2026-10-26.md](PRODUCTION-ACCEPTANCE-2026-10-26.md).
+**27 Oct 2026:** plugin **0.7.10** and Main `dpl_13s8yPa5GTauWxsi4hvchXrvPVVa` (with the ownership lock) are live and re-verified. Production results, including the final verification of 27 Oct (§6), are in [PRODUCTION-ACCEPTANCE-2026-10-26.md](PRODUCTION-ACCEPTANCE-2026-10-26.md).
 
 **For:** the owner and the reviewers who accept the handover.
 
@@ -88,8 +88,8 @@ Today all 310 Main sitemap addresses are drawn this way, with 0 differences in s
 | R3 | Custom Master CMS dashboard out of the main editing workflow, without breaking services | Plugin **0.7.8** (carried in 0.7.9): content types (Main Blogs, Courses, Locations, Tools, FAQs, Testimonials) are normal top-level WordPress menus; the plugin menu is "Approvals & Publishing" and opens Approvals; the overview page is no longer listed (its address still works); 9 duplicate links removed. Screen names and every service unchanged | PHP 356/356; LOCAL: menu and all 8 screens 200, screen hook names unchanged, stall repair attached (`evidence/local-menu-078.png`) | **PRODUCTION** (0.7.8 menus, live since 26 Oct) |
 | R4 | Destination: Enrollment / Main / Both in the normal workflow | Page Settings → **Publish To (Acadvizen)** in Elementor; also in the WordPress editor | `verify-elementor-live` (each destination) | **PRODUCTION** |
 | R5 | Approval before publishing | Editors, Authors, Contributors: Publish = submit; a reviewer approves the exact revision, after ticking each chosen website's preview. Administrators and Reviewers: from 0.7.9, Publish/Update publishes directly (self-approval recorded), section 5a | `verify-approval-live` 16/16 (PRODUCTION, 0.7.6); `direct-publish-acceptance` 11/11 and `approval-acceptance` 47/47 (LOCAL, 0.7.9) | **PRODUCTION** 26 Oct: `verify-elementor-live` 52/52 (direct publish), `verify-approval-live` 16/16 (submit flow) |
-| R6 | Truthful remote status, retry, preview, rollback | Section 4 | Section 4 | **PRODUCTION**, except the forced Main failure (R7) |
-| R7 | Both: partial failure reported, never success | Each website has its own state; the outcome is "partial failure" naming the failed website; the failed website keeps the previous version; Check again retries | LOCAL: `approval-acceptance` A9 and `both-failure-acceptance` 12/12 | Forced failure **BLOCKED on production** (needs the signing secret in the test environment; not extracted). Recovery of a lost check **PRODUCTION** 26 Oct: Contact and 23 others resumed and verified |
+| R6 | Truthful remote status, retry, preview, rollback | Section 4 | Section 4 | **PRODUCTION** |
+| R7 | Both: failure reported, never success | Each website has its own state. The outcome is "partial failure" (or "failed") with each website's reason; the failed website keeps the previous version; Check again retries | PRODUCTION `verify-failure-retry-live` 8/8 (26 Oct). No secret was used: a temporary Rank Math redirect was the cause. Reported **failed** with each website's reason; Main kept V1; Check again verified both. LOCAL: `both-failure-acceptance` 12/12 | **PRODUCTION**. Lost-check recovery also verified 26 Oct (Contact and 23 others) |
 | R8 | Scheduling | Future date → "Schedule approved revision"; any change cancels it | PRODUCTION `verify-scheduling-live` 6/6 on 26 Oct (live 52 s after its time) | **PRODUCTION** |
 | R9 | Media deletion protection | 0.7.7 `media-guard.php`: files used by published, scheduled or waiting content cannot be deleted; the page using it is named | PHP tests; live since 22 Oct | **PRODUCTION** |
 | R10 | Over-long blog categories handled safely | Section 5 | Section 5 | **No change needed** |
@@ -98,9 +98,9 @@ Today all 310 Main sitemap addresses are drawn this way, with 0 differences in s
 | R13 | SEO preserved | Per-page Rank Math fields; Main's head, sitemap and robots | 23 Oct crawl: 0 differences | **PRODUCTION** |
 | R14 | `/test/` unpublished; Bangalore "Feature title" placeholder omitted | — | 23 Oct crawl | **PRODUCTION** |
 | R15 | Four Main-only pages noindex and out of the sitemap while empty | Main release 40f41a7 | Live `dpl_2B5hNrES…` | **PRODUCTION** |
-| R16 | Main `/admin` keeps Leads and the Main-only lists | Unchanged. The ownership lock (WordPress-drawn content refused in Main's admin with 423) is prepared: commit 40729e6 keeps companies, internships, resources, authors, categories and tags editable | Unit tests; `set-content-ownership.sh` | Lock **not switched on**: waits for the backup and push |
+| R16 | Main `/admin` keeps Leads and the Main-only lists | The ownership lock refuses WordPress-drawn content in Main's admin with 423. Companies, internships, resources, authors, categories, tags and leads stay editable | 27 Oct: `/admin` and `/admin/leads` 200; pages 423; entity lists 401; Leads read 401, empty submission 400 (anonymous) | **PRODUCTION** (lock on since 26 Oct 12:51Z). A signed-in check of Main's admin was not repeated after the lock: its separate login was not available |
 | R17 | Fresh backup before releases that depend on it | Hostinger hPanel backups | Newest is 17 Oct | **DONE 26 Oct**: `u713346627_xDzzw` backup of 24 Oct 15:15 downloaded through hPanel (owner's sign-in), sha256 `b9f1a0fb…`, restore-tested in an isolated container (111 tables) |
-| R18 | Personal accounts | Users → Add New User; roles Administrator / Reviewer / Editor / Author / Contributor | — | **BLOCKED**: no approved names and e-mails |
+| R18 | Accounts | One existing Administrator account manages both websites (agreed setup). Users → Add New User remains available if wanted later | 27 Oct: user #1, administrator with the review capability, signed in; every CMS screen opens; the LIVE suites ran under it | **PRODUCTION**. Personal accounts: **NOT REQUIRED** |
 
 ## 4. Publication contract
 
@@ -157,12 +157,22 @@ Found read-only on production (Approvals history, Publishing status, Templates, 
 
 The Main publishing path itself works: 288 Main pages are "Published", and every recent Main publication is verified (the approved revision is shown at its address).
 
-## 6. What is not complete, and why
+## 6. What is not complete, and why (27 Oct 2026)
 
-| Item | Why | Next step |
+**No technical item is open.** The items that were listed here on 25 Oct were all done on 26 Oct and are verified on production:
+- the correct database backup;
+- the push;
+- the 0.7.9 and 0.7.10 installs;
+- the ownership lock;
+- the scheduling re-run;
+- the Both failure test.
+
+Personal accounts are **not required**.
+
+| Kind | Item | Owner |
 |---|---|---|
-| Fresh backup | 25 Oct: the **files** backup of 24 Oct is valid (sha256 `d404585a…`, archive intact, Enrollment `public_html` with plugin 0.7.7). The **database** file supplied (`u713346627_kb4Ph…`, 30 KB, 21 tables, site `cms.acadvizen.com`) is **not** the Enrollment database (`u713346627_xDzzw`) | Owner downloads the `…_xDzzw` database backup of the same 24 Oct set in hPanel → Backups → Databases; the developer verifies it, then releases |
-| Push of the reviewed commits | Refused by the command safety check in this environment | Owner adds the allow rule `Bash(git push origin headless-wordpress)`, or pushes |
-| 0.7.9 install (includes 0.7.8); ownership lock; scheduling re-run; production acceptance | Gated on the database backup | `tools/release/install-plugin.mjs`, `set-content-ownership.sh`, the regression suites |
-| Both partial failure on production | Needs the signing secret in the test environment; no approved mechanism | Owner decides whether to provide one; until then the LOCAL proof stands |
-| Personal accounts | No approved names, e-mails and roles | Owner supplies them |
+| Content decision | Enrollment homepage title ("Demo - Copy") and description | Client / team |
+| Content decision | #8516, the only waiting approval item | Team |
+| Content fix | 3 missing logos on Enrollment `/learn-digital-marketing/` | Team |
+| Supported, not fully tested | 336 widgets not used on Main yet; signed-in Main `/admin` after the lock | Check before first use |
+| Future enhancement | Homepage unpublish warning (`PROPOSAL-HOMEPAGE-UNPUBLISH-WARNING.md`) | Owner approval needed to build |

@@ -48,7 +48,7 @@ Nothing changes on either website until a reviewer approves it and it is publish
 
    The website updates within about a minute.
 
-   > **Waiting items from before 26 Oct:** 35 changes made with Publish on 24 Oct (and more on 26 Oct morning) only *submitted* the page, because Publish could not yet publish for administrators. They are still waiting on Approvals & Publishing: approve and publish them there, or open the page again and click Publish.
+   > **Waiting items (27 Oct):** one change is still waiting on Approvals & Publishing: "Performance Marketing Course" (19 Oct). It contains typed HTML. Check the code, then approve and publish it, or reject it.
 
    ![Approvals](screenshots/02-approvals.png)
 
@@ -65,6 +65,7 @@ Check the preview, then click **Submit the current version again**, and approve 
 - **Approvals → Recent publications → Restore** puts the earlier version back live.
 - **Versions & Rollback** lists every published version of each Main page.
 - To take a page off the website: **Pages (or Blogs, Tools…) → Quick Edit → Status: Draft**. A Main address then shows the Main Website's own original page again.
+- **Never take the Enrollment homepage offline.** That is the page chosen under **Settings → Reading → Homepage**. To replace it: publish the new page, choose it there, check https://enroll.acadvizen.com/, and only then unpublish the old one.
 
 ## Images
 

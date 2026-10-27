@@ -58,24 +58,70 @@ Record: [PRODUCTION-ACCEPTANCE-2026-10-26.md](PRODUCTION-ACCEPTANCE-2026-10-26.m
 - **Not involved.** No test tool and no plugin step changed it: `apply_revision` never changes a page's status, and nothing in the plugin touches the homepage setting.
 - **Fix (owner approved).** #11892 republished unchanged with Elementor → Publish at 08:29Z. `/` answered 200 in 2 s, and Approvals shows "Enrollment: Published (verified)" for the same approved revision `4dfd2da9e3fd`. The other 63 Enrollment sitemap addresses: 62 answer 200, and `/social-media-influencer-marketing/` is a Rank Math 301 to `/learn-digital-marketing/` (the team's redirect).
 - **Left for the team.** The homepage's title is "Demo - Copy" (browser tab and search results); rename it in the editor.
-- **Recommended plugin guard (not built).** Warn before unpublishing the page set as the homepage, and refuse to publish a copy over an unpublished page.
+- **Homepage guard.** A warning before unpublishing the page set as the homepage, and a refusal to publish a copy over an unpublished page, are proposed in `PROPOSAL-HOMEPAGE-UNPUBLISH-WARNING.md`. Not built.
 
-### Accepted limitations (documented, not defects to fix now)
+### Final verification, 27 Oct 2026 (10:00Z)
+
+Acceptance §6 has the details. Everything was read-only; no content, enquiry or lead was created.
+- **Live versions:** Main `dpl_13s8yPa5GTauWxsi4hvchXrvPVVa` (Ready, production) and plugin 0.7.10 are still live.
+- **Backup:** the checksum was recomputed and matches.
+- **Administrator:**
+  - the existing account (user #1, administrator, reviewer capability) is signed in and opens every CMS screen;
+  - LIVE suites of 26 Oct cover editing, preview, the three destinations, scheduling, retry, approval, restore and unpublish.
+- **Main:**
+  - 320/320 addresses are identical to 23 Oct on status, sitemap, title, canonical, robots and description;
+  - visible text is identical on 319/320 pages. The homepage differs only by the Quick Registration popup: without it, the text hash equals 23 Oct's;
+  - blog images 372/372;
+  - popup opens, closes, and nothing was submitted;
+  - lock 423; leads and the other Main lists not locked;
+  - in a browser, both homepages render at 1440 and 390 px with no page errors.
+- **Enrollment:**
+  - 56/59 pages identical to 23 Oct; the 3 differences are explained (homepage, `/test/`, `/mentors/`);
+  - sitemap 64/65 answer 200; the 65th is the team's own 301.
+- **Test content:** 54 test pages are drafts, and their 21 addresses answer 404 on both websites.
+- **Not verified today:** signed-in use of Main `/admin`. Main's admin has its own sign-in, the saved sessions expired on 12 Oct, and no password was asked for. The Leads routes are verified intact (read 401, empty submission 400) and unaffected by the lock.
+
+### 1. Completed and production-verified
+Everything in the "Completed and verified on production" table above, plus the 27 Oct final verification.
+
+### 2. Supported, not fully tested
+| Item | Note |
+|---|---|
+| 336 Elementor widgets marked "Works" but used by no Main page yet | Drawn by the same Elementor; check each in the Main preview before first use (matrix §2) |
+| 8 widgets that work with a reviewer check (search, sitemap, post lists, Code Highlight, Hostinger Reach, Max Mega Menu) | Matrix §2 |
+| Signed-in use of Main `/admin` after the 26 Oct lock | Route checks pass; a sign-in check needs Main's admin login |
+
+### 3. Accepted limitations (documented, not defects to fix now)
 
 | Limitation | Where documented |
 |---|---|
-| Hosting backups are weekly; manual backups are locked on the current Hostinger plan | Manual §10b |
-| Elementor widgets: 79 refused on Main (shop, cart, login run on Enrollment only); 336 drawn by Elementor but not yet used or tested on Main | Matrix §2 |
+| Hosting backups are weekly; manual backups are locked on the current Hostinger plan. The verified backup does not contain changes after 24 Oct 15:15 and must never be restored over the live website | Manual §10b |
+| Elementor widgets: 79 refused on Main (shop, cart, login run on Enrollment only) | Matrix §2 |
 | Small visual differences recorded at migration: `/blog` "SEP" dates, `/achievements` carousel arrows, homepage video controls, no `<h1>` on location pages, 3 over-long blog categories | Manual §11 |
 | A change to a shared header, footer, menu or design redraws every Main page. Each page updates within minutes; the whole site takes longer | Manual §9 |
 
-### Genuinely pending (needs the owner)
+### 4. Client / team content decisions
 
-| Item | Action |
+| Item | Owner | Action |
+|---|---|---|
+| Enrollment homepage title "Demo - Copy", and no meta description | Client / team | Choose the title, then rename #11892 or set its Rank Math title, and Publish. No approved title is on record. Until 27 Oct, Home1's title was "Digital Marketing Course in Bangalore with AI \| Acadvizen" |
+| #8516 "Performance Marketing Course": the only waiting item (19 Oct; typed HTML) | Team | A reviewer with code rights checks the code, then approves and publishes or rejects. Approved: 0, scheduled: 0 |
+| 3 missing logos on `/learn-digital-marketing/` (`zomato-1.png`, `uber-1.png`, `pwc.png`; already absent in the 24 Oct files backup) | Team | Re-upload and reselect them in the page design |
+| Bangalore "Feature title" placeholder block (Manual §11) | Owner | Keep omitted, or supply the text |
+
+### 5. Future enhancements (not required for handover)
+
+| Item | Where |
 |---|---|
-| Personal WordPress accounts | The owner sends each person's name, e-mail and role (Administrator, Reviewer, Editor or Author); then they are created and checked |
-| The team's waiting approval items (#8516, #9304, #10936, #11007, #11011, #11415, #11453, #11457, #11521 and later ones) | The team approves or rejects each on Approvals & Publishing, or opens the page and clicks Publish |
-| Enrollment homepage title "Demo - Copy" | The team renames the homepage (#11892) in the editor and clicks Publish |
+| Warning before the homepage is unpublished; refuse a copy published over an unpublished page | `PROPOSAL-HOMEPAGE-UNPUBLISH-WARNING.md` |
+
+### 6. Genuine technical blockers
+**None.**
+
+### Not required
+| Item | Status |
+|---|---|
+| Personal WordPress accounts | **NOT REQUIRED.** The agreed setup uses one existing Administrator account, which is sufficient. No account was created and no permission changed |
 
 ## Production completion, 26 Oct 2026
 
@@ -91,7 +137,7 @@ Full record: [PRODUCTION-ACCEPTANCE-2026-10-26.md](PRODUCTION-ACCEPTANCE-2026-10
 | Q6 | Main release | **LIVE** `dpl_JDZNEJ2c7UtvMBbc459sgYUdrpMj` (`b804b34`) 12:06Z | Main retries a quick WordPress refusal once: single 503s were seen during the site-wide redraw and stopped three control checks. The inventory tool also asks a 503 once more, recorded as `retried_503`. 310/310 identical after the release |
 | Q7 | Ownership lock | **LIVE** `dpl_13s8yPa5GTauWxsi4hvchXrvPVVa` 12:51Z | `WORDPRESS_OWNS_PUBLIC_CONTENT=true`: pages 423; companies, internships, resources, authors 401; leads 400; `/admin` 200; 310/310 identical. Script fix: curl could not write to /dev/null with path conversion off (exit 23); probes write to the run folder |
 | Q8 | Team activity, not touched | **RECORDED** | 26 Oct 05:51–07:17Z (11:21–12:47 IST), shared account: submissions of New Home, Mentors 1, About Us, Project 1; the live "New Home" removed by them at 06:48Z. Waiting items unchanged by us |
-| Q9 | Open | see 27 Oct | #14 and #16 were completed on 26 Oct (see 27 Oct); personal accounts are pending |
+| Q9 | Open | see 27 Oct | #14 and #16 were completed on 26 Oct (see 27 Oct). Personal accounts: NOT REQUIRED (one existing Administrator account) |
 
 ## Final production completion prompt, 25 Oct 2026
 
@@ -136,7 +182,7 @@ Overall: **PARTIALLY COMPLETE.**
 | 2 | Bangalore area page | **COMPLETE** | Live: 200, drawn by WordPress, no "Feature title", "Feature description" or "Why choose us"; canonical self, `index, follow`, in the sitemap. |
 | 3 | `WORDPRESS_OWNS_PUBLIC_CONTENT` | **PREPARED; NOT APPLIED** (gated on 1, on the push, and on an allow rule) | Inspection found the lock would also have blocked the Main admin screens for `/companies`, `/internships`, `/resources` and blog authors/categories/tags (generic `entities` writes). **Fixed** in commit `40729e6`: those tables stay editable; leads were never locked (`/api/cms/leads`). Unit 312/312. Script `tools/release/set-content-ownership.sh <live id>`: it adds only this variable, redeploys, compares every address, probes (anonymous POST `/api/cms/pages` → 423; companies, internships, resources, authors, leads ≠ 423) and rolls back automatically. Probes today, lock off: pages 401, companies 401, leads 400. **Order:** backup → push → release `40729e6` with `release-main.sh` → `set-content-ownership.sh`. |
 | 4 | Git | **COMMITTED LOCALLY; NOT PUSHED** (awaiting owner approval) | `e1b82ff`: 40 files, plugin 0.7.7 source (rebuilt package sha256 = installed `32cc3050…`), tools, tests, docs. `40729e6`: 3 files (ownership fix, test, script). Plus a docs commit for this update. Excluded: `next.config.mjs` (Option C hunk), `wordpress/main-site/`, the Option C docs, all PNG screenshots, evidence result files, `dist/`. Secret scan: none; `git diff --check` clean; repository hook "No secrets found". Unit 312/312, PHP 354/354, plugin PHP lint 0 failures. |
-| 5 | Individual accounts | **DOCUMENTED; creation BLOCKED** (gated on 1) | Users: 2 accounts, both Administrator (one shared by the team and the test runs). Implemented roles: Administrator, **Reviewer (approves publishing)** (plugin role: editor + approve/publish), Editor, Author, Contributor. Manual §10a: how to add people, change passwords, log out other sessions. No credential was changed. |
+| 5 | Individual accounts | **NOT REQUIRED** (decided 27 Oct: one existing Administrator account). Was: documented; creation blocked | Users: 2 accounts, both Administrator (one shared by the team and the test runs). Implemented roles: Administrator, **Reviewer (approves publishing)** (plugin role: editor + approve/publish), Editor, Author, Contributor. Manual §10a: how to add people, change passwords, log out other sessions. No credential was changed. |
 | 6 | Both partial-failure test | **BLOCKED** | It creates test content on production, so it waits for the fresh backup (directive rule 4). It also needs the signing secret in the test's environment, which was not exported from the private env file; nothing was bypassed. |
 | 7 | Scheduling test | **BLOCKED** (gated on 1) | Last production result: 7/7 on 19 Oct 2026. |
 | 8 | Final verification (read-only parts) | **COMPLETE for what needs no change** | Main `dpl_2B5hNrES1eUqxDhrbVJVuEfkiAyV` Ready; final crawl 17:2xZ: 310/310 sitemap addresses 200 and drawn by WordPress, 0 differences in status, title, canonical, robots or description against 21 Oct; the 4 Main-only pages 200, noindex, not in the sitemap; Enrollment 58/59 identical to 15 Oct (`/test/` intended); Main `/admin` 200; Enrollment `wp-login` 200; plugin 0.7.7; enquiry route present; `/manifest` and `/render` 401 no-store; env names present, ownership variable not set. Queue: #8516 (stale since 19 Oct), #10936, #11007 pending, untouched. **#9304:** last seen pending, untouched, 22 Oct 15:19Z; it left the queue by 23 Oct 15:35Z through the team's own action. The publish records of all 9 batches show the tools never acted on #9304, #8516 or #8517. |

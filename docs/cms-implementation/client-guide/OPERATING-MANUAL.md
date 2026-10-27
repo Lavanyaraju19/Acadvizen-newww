@@ -191,7 +191,7 @@ The site time zone is **Asia/Kolkata**. Any change to a scheduled item before it
 
 ## 10a. Users, roles and sign-in safety
 
-**Today:** two Administrator accounts exist. One of them is also used by the team for daily work and was used for the 22–23 Oct test runs. Give every person their own account.
+**Agreed setup:** one existing **Administrator** account manages both websites; it is enough, and no other account is needed. (A second Administrator, `acv-integration`, exists for the technical connection; don't use it for daily work.) If you later want people to have their own accounts, follow "To add a person" below.
 
 **Roles that exist in this WordPress:**
 
@@ -211,9 +211,7 @@ The site time zone is **Asia/Kolkata**. Any change to a scheduled item before it
 **Password and session safety:**
 - Each person changes their own password under **Users → Profile → Set New Password**.
 - On the same screen, **Log Out Everywhere Else** ends that account's other sessions.
-- Do not share an account, and never send passwords by e-mail or chat.
-
-**Before removing the shared account:** check that each new account can do its job. Then the owner removes or demotes the shared one.
+- Never send passwords by e-mail or chat.
 
 ## 10b. Backups
 
@@ -234,12 +232,18 @@ Content that WordPress now draws (pages, blogs, tools, locations, header, footer
 
 ## 10d. Status at handover (27 October 2026)
 
-**Ready to use.** Everything in this manual was tested on the live websites on 26 October 2026, on labelled test pages that were unpublished afterwards: writing, editing, previewing, publishing, scheduling, restoring, unpublishing, menu editing and failure recovery. The backup of 24 October was checked and test-restored before anything was installed.
+**Ready to use.** Your existing Administrator account can manage both websites now. Everything in this manual was tested on the live websites on 26 October 2026, on labelled test pages that were unpublished afterwards:
+- writing, editing and previewing;
+- publishing and scheduling;
+- restoring and unpublishing;
+- menu editing and failure recovery.
 
-**Still to do:**
-1. **Personal accounts.** Send your developer each person's name, e-mail and role. Until then, the team shares one Administrator account.
-2. **Waiting items.** Changes submitted before 26 October are still waiting on **Approvals & Publishing**. Approve and publish them there, or open each page and click **Publish**.
-3. **Homepage title.** The Enrollment homepage is currently titled "Demo - Copy", which shows in the browser tab and in search results. Rename it in the editor and click **Publish**.
+Both websites were checked again on 27 October. The backup of 24 October was checked and test-restored before anything was installed.
+
+**Your content to-do list** (none of it is a technical problem):
+1. **Homepage title.** The Enrollment homepage is titled "Demo - Copy", which shows in the browser tab and in search results, and it has no search description. Choose a title and a description, enter them in the page (or its Rank Math SEO settings), and click **Publish**.
+2. **One waiting item.** "Performance Marketing Course" (submitted 19 October) is waiting on **Approvals & Publishing**. It contains typed HTML: check the code, then approve and publish it, or reject it.
+3. **Three missing logos** on https://enroll.acadvizen.com/learn-digital-marketing/ (Zomato, Uber, PwC): upload them again in **Media** and select them in the page design.
 
 **Changing the Enrollment homepage.** Never unpublish the page that is set as the homepage: the website's front address then shows "not found". This happened on 27 October, 06:51–08:29 UTC. To replace the homepage:
 1. Publish the new page.
