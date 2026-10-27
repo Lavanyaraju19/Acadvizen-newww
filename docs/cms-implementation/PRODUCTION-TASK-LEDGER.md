@@ -101,6 +101,32 @@ Full record: [DUPLICATE-AUDIT-2026-10-27.md](DUPLICATE-AUDIT-2026-10-27.md).
 - 0 broken internal links, 0 links to removed items;
 - menus, redirects, homepage, popup, blog images 372/372, enquiry route, lock and queue all unchanged.
 
+### Duplicate audit stage 2, 27 Oct 2026 (11:00–12:10Z)
+Details: audit §7.
+
+**Done (all reversible):**
+- **R7 fixed:** the canonical of Main `/social-media-marketing-course-in-mg-road` is now its own address, published through the normal workflow and verified (revision `73c0ef876568`).
+- **R8:** 10 Main test blogs went to Main's own trash, via the Master Admin.
+- **Trashed:**
+  - 4 orphan working copies: #11935, #11894, #8533, #11850;
+  - 4 empty template drafts: #958, #189, #9199, #9198;
+  - the sandbox copy "Test" #2876 (all its text is live on `/placement-2/`).
+
+**Media scan:** 160 duplicate files are in use and 48 are safe to delete (list in appendix A). Deleting them waits for a fresh backup.
+
+**Owner or team decisions:**
+- R1: per Enrollment page pair, which design? The original address stays canonical; the "-1" page gets unpublished with a 301.
+- R2: keep Home1 #6177 as the way back? Is New Home abandoned (its live page is in the Trash)?
+- R5: four template drafts with content.
+- R6: a fresh backup, then delete the 48 media files.
+
+**Checked after the changes:**
+- Main 319/320 identical to 23 Oct (the one difference is the canonical fix);
+- Enrollment sitemap 64/64 answer 200;
+- 0 broken links; menus, redirects, popup, images, enquiry route, lock and queue unchanged.
+
+**Security:** the exposed WordPress session was signed out.
+
 ### 1. Completed and production-verified
 Everything in the "Completed and verified on production" table above, plus the 27 Oct final verification.
 
