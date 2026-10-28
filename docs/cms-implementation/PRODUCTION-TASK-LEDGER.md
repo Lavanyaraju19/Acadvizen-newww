@@ -101,6 +101,24 @@ Full record: [DUPLICATE-AUDIT-2026-10-27.md](DUPLICATE-AUDIT-2026-10-27.md).
 - 0 broken internal links, 0 links to removed items;
 - menus, redirects, homepage, popup, blog images 372/372, enquiry route, lock and queue all unchanged.
 
+### Production repair, 28 Oct 2026 evening (11:50Z – 29 Oct): see FINAL-REPORT-2026-10-28-EVENING.md
+
+The 10:35Z "CLIENT-READY" state below did not hold through the afternoon. These changes and findings came afterwards; all fixes are verified on production.
+
+| Item | Status |
+|---|---|
+| **Yoast SEO** activated next to Rank Math (after 10:18Z; all plugins had been deactivated and reactivated within the week). It broke titles and canonicals on both websites, and caused the Google "Demo - Copy" title | VERIFIED: Yoast deactivated (owner approved); titles and canonicals back to Rank Math on both websites; Main 319/320 identical to the 23 Oct baseline |
+| Homepage #11892 titled "Demo - Copy" | VERIFIED: WordPress title "Home" via the CMS (owner approved, together with the team's carousel spacing tweak −0.4 → −0.5) |
+| "Published page shows Draft" | VERIFIED: plugin **0.7.11** (working-copy status badge, list labels, identical copies not listed). Live state-machine test on production |
+| "New" #9304 published 4× into the trashed New Home #8517 (each check failed) | VERIFIED: 0.7.11 refuses this; New Home stays in the Trash |
+| Five buttons opening the never-published popup #2941 did nothing; the 27 Oct audit wrongly called #2941 unused | VERIFIED: #2941 restored to Draft; buttons now open #7696 (owner decision); each clicked live |
+| Layout "changed after cleanup" | VERIFIED: no regression. The merged pages are identical to the chosen designs; the only difference is the removed "Courses 1"/"Career 1" title bar |
+| LiteSpeed Do Not Cache URIs for sitemaps | VERIFIED: set (owner approved); sitemaps answered `no-cache` |
+| Old addresses `/career/` (landed on the Mysore page) and `/paternship/` (404) | VERIFIED: Rank Math 301 to `/digital-marketing-jobs/` and `/partnership/`; one hop each |
+| Session cookie printed by a test tool's error output | DONE: session signed out (cookie verified invalid); text removed; tools print first lines only |
+| Google re-crawl of the homepage | OPEN (owner, Search Console): URL Inspection → Request indexing |
+| Fresh database backup | OPEN (needs hosting access); latest verified backup is from 26 Oct |
+
 ### Final handover, 28 Oct 2026 (08:28–10:35Z): CLIENT-READY
 Full report: [FINAL-HANDOVER-REPORT-2026-10-28.md](FINAL-HANDOVER-REPORT-2026-10-28.md).
 

@@ -103,6 +103,17 @@ If you need a page back on the Main Website's own original version, set its Word
    - **For Editors, Authors and Contributors,** this **submits** the page for approval. It does not go live until it is approved and published (section 4).
    - A design that cannot be shown on a chosen website (for example a shop widget on Main) is refused with the reason. Typed HTML or shortcodes need an administrator.
 
+**"Draft" in the editor does not mean your page went back to Draft.** When you edit a live page you work in its *working copy*, and a working copy is always a draft, even right after you publish it. The page visitors see stays **Published**. To see the real status:
+- **In Elementor:** a coloured bar at the bottom of the screen reports the live page, for example *Live page "Mentors": Published (verified on its websites). This working copy has no unpublished changes.* It refreshes after every Publish or Update.
+  - Green: live and identical.
+  - Blue: you have changes that are not live yet.
+  - Amber: the last check on a website failed (see section 5).
+  - Red: the live page is in the Trash or unpublished.
+- **In Pages:** the live page's own row. Published pages carry no "Draft" label.
+- **On the website:** open the page's address.
+
+**A working copy of a page that is in the Trash cannot be published.** Publish then stops with "the live page this working copy belongs to is in the Trash or unpublished, so nothing was changed". Restore the page from the Trash first (if it should come back), or discard the copy.
+
 ![Elementor editor](screenshots/13-elementor-editor.png)
 
 **Shared designs.** Blog posts, tool pages and location pages share one design each, edited under **Templates**. Changing a shared design changes every page that uses it, after approval. The Main header and footer are under **Header & Footer**.
@@ -263,9 +274,20 @@ Deleted image files are kept in the backups.
 **Avoiding duplicate pages.** The duplicates found in October ("Mentors 1", "Career 1", "Courses 1", "Placement 1", "Partnership", "Project 1") all came the same way. Before 26 October, Publish only sent a change for approval, so the website did not change. New pages were created to try again, and WordPress silently gave each one a numbered address (`/mentors-1/`). Since 26 October, Publish and Update by an administrator change the live page directly. To keep one page per subject:
 1. **To change a page, edit that page.** Go to **Pages**, find it, then **Edit with Elementor**, and click **Update**. Don't use *Add New*, *Duplicate* or *Copy* to change an existing page.
 2. **A new address ending in -1, -2 … means that address is already taken.** If you see that, you are probably creating a second copy of an existing page. Stop and edit the existing one instead.
-3. **"Working copy of a live page"** drafts are normal. The website creates one while you edit a live page, and keeps it after you publish. They are never public. Leave them alone; there is no need to delete them.
+3. **Working copies are normal.** The website creates one while you edit a live page, and keeps it after you publish. They are never public. Leave them alone; there is no need to delete them. Since 28 October (plugin 0.7.11):
+   - a working copy that is the same as its live page is no longer listed in **Pages**, so each page shows once, with its real status;
+   - a working copy that holds changes not yet live is listed as **"Unpublished changes to a live page (the live page stays published)"**.
 4. **If a change doesn't show up after Update,** check **Approvals & Publishing → Recent publications**. It shows "Published (verified)", "Publishing" or "Failed" with the reason. Click **Check again** there; don't create a new page.
 5. **Never publish a half-finished page.** Placeholder text such as "Add Your Heading Text Here / Lorem ipsum" becomes public and searchable. Save it as a draft until it is ready.
+
+**One SEO plugin only.** Page titles, descriptions, canonical addresses and sitemaps come from **Rank Math**. On 28 October (from some time after 10:18 until 12:34 UTC), Yoast SEO was active next to it. Every page on both websites then carried two titles and two canonical addresses, and Yoast's were wrong:
+- "Demo - Copy" on the Enrollment homepage;
+- "About (Main) - enroll.acadvizen.com" on Main pages;
+- `/career/`, which leads to the Mysore page.
+
+Yoast is now deactivated (still installed). Don't activate it, or any other SEO plugin, without your developer.
+
+**Popup buttons.** A button can open an Elementor popup only if that popup is **published**. On 28 October, five buttons ("Explore Acadvizen", "Book Free Career Counselling", "Contact Now") pointed at the never-published popup *Acadvizen Admission Popup* (#2941) and did nothing. They now open the published admission popup (#7696). When you add a popup button, choose a published popup and test the button on the live page.
 
 **Changing the Enrollment homepage.** Never unpublish the page that is set as the homepage: the website's front address then shows "not found". This happened on 27 October, 06:51–08:29 UTC. To replace the homepage:
 1. Publish the new page.

@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Acadvizen Master Admin
  * Description:       One WordPress admin for both Acadvizen websites. Design with Elementor, choose "Publish To" (Enrollment, Main or Both) and publish. Pages for www.acadvizen.com are rendered by WordPress/Elementor and published through the Acadvizen Render Bridge.
- * Version:           0.7.10
+ * Version:           0.7.11
  * Requires at least: 6.5
  * Requires PHP:      8.0
  * Author:            Acadvizen
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const VERSION        = '0.7.10';
+const VERSION        = '0.7.11';
 const POST_TYPE      = 'acv_blog';
 const REST_NAMESPACE = 'acadvizen-cms/v1';
 const MENU_SLUG      = 'acadvizen-cms';
@@ -66,6 +66,8 @@ add_action( BLOG_PULL_HOOK, __NAMESPACE__ . '\\pull_main_blog_changes' );
 /* Approval before publishing (approval.php; on with ACADVIZEN_CMS_APPROVAL) ----------------------- */
 add_action( 'load-post.php', __NAMESPACE__ . '\\redirect_live_to_working_copy', 1 );
 add_action( 'elementor/document/before_save', __NAMESPACE__ . '\\guard_elementor_save', 1, 2 );
+add_action( 'elementor/editor/after_enqueue_scripts', __NAMESPACE__ . '\\enqueue_working_copy_badge' );
+add_action( 'rest_api_init', __NAMESPACE__ . '\\register_working_copy_route' );
 add_filter( 'wp_insert_post_data', __NAMESPACE__ . '\\guard_post_data', 20, 2 );
 foreach ( array_merge( SITE_POST_TYPES, TEMPLATE_POST_TYPES ) as $acv_scope_type ) {
 	add_filter( "rest_pre_insert_{$acv_scope_type}", __NAMESPACE__ . '\\guard_rest_insert', 10, 2 );
@@ -203,6 +205,7 @@ if ( is_admin() ) {
 	add_action( 'admin_notices', __NAMESPACE__ . '\\render_approval_notice' );
 	add_action( 'pre_get_posts', __NAMESPACE__ . '\\hide_archives_from_lists' );
 	add_filter( 'display_post_states', __NAMESPACE__ . '\\label_working_copies', 10, 2 );
+	add_filter( 'wp_count_posts', __NAMESPACE__ . '\\count_without_identical_copies', 10, 2 );
 	add_action(
 		'admin_menu',
 		static function () {

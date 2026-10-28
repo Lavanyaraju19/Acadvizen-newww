@@ -1,7 +1,7 @@
 === Acadvizen Master Admin ===
 Requires at least: 6.5
 Requires PHP: 8.0
-Stable tag: 0.7.10
+Stable tag: 0.7.11
 
 One WordPress admin for both Acadvizen websites. Design with Elementor, choose "Publish To"
 (Enrollment, Main or Both), publish. Pages for www.acadvizen.com are rendered by WordPress and
@@ -71,6 +71,19 @@ Deactivating changes nothing for existing Enrollment pages. Deleting the plugin 
 own data (logs, jobs, version table); content is kept.
 
 == Changelog ==
+
+= 0.7.11 =
+* A working copy can no longer be published into a page that is in the Trash or unpublished. Before, the
+  change was applied to the hidden page, reported as "publishing" and then as a failed check (production,
+  28 Oct 2026: four publications of "New" into the trashed "New Home"). Submitting or publishing such a copy
+  now stops with an explanation, and nothing changes.
+* The live page's real status is shown wherever a working copy appears: a badge in the Elementor editor
+  (refreshed after each save), the Approval box of the edit screen, and the label in the Pages list
+  ("Working copy, same as the live page" / "Unpublished changes to a live page"). A working copy is a draft by
+  design, also right after it was published, which read as if the published page had gone back to Draft.
+* Working copies identical to their published live page are no longer listed as extra "Draft" rows (and are
+  left out of the "Drafts (n)" count). Opening the live page still opens its working copy. Copies holding
+  changes, including changes Elementor autosaved, stay listed.
 
 = 0.7.10 =
 * Popups on Main pages open as overlays. Elementor's dialog styles are now linked on every page drawn for

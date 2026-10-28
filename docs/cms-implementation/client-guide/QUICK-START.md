@@ -51,6 +51,8 @@ Nothing changes on either website until a reviewer approves it and it is publish
    > **Edit, don't duplicate:** to change a page, open that page and click **Update**. Never create a new page or a copy to change an existing one. A new address ending in "-1" means the page already exists.
    >
    > **If Publish is interrupted** (lost connection, closed tab): your change stays in the page's working copy; it is not lost and not published. Open the page again and click **Publish** (or **Update**). The same page is updated; no copy is created.
+   >
+   > **"Draft" after Publish?** In Elementor you edit the page's *working copy*, which stays a draft by design. The live page is still **Published**. The coloured bar at the bottom of the editor shows the live page's real status (green = published and identical). In **Pages**, the page's own row has no "Draft" label.
 
    ![Approvals](screenshots/02-approvals.png)
 
@@ -79,6 +81,8 @@ Imported Main images are titled **"Main Website: …"**. Please don't delete the
 
 - change **Settings → Acadvizen CMS Switches** or the Master Admin **Settings**;
 - change plugins, the theme, or anything under **Elementor → Site Settings** (it affects both websites);
+  - in particular, **never activate a second SEO plugin** (such as Yoast SEO) next to **Rank Math**. On 28 October, Yoast was switched on for a few hours. It replaced every page title on both websites with "Demo - Copy", "About (Main) - enroll.acadvizen.com" and similar, and added wrong canonical addresses. All titles and descriptions live in Rank Math;
+  - don't deactivate all plugins at once to troubleshoot; ask your developer instead;
 - approve or delete other people's waiting items unless that is your role.
 
 Ask your developer for any of these.

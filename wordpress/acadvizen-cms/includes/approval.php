@@ -474,6 +474,64 @@ function is_stale_working_copy( array $copy_state, string $live_revision ): bool
 	return 'published' === ( $copy_state['state'] ?? '' ) && (string) ( $copy_state['hash'] ?? '' ) !== $live_revision;
 }
 
+/**
+ * Where a working copy stands, from the live page's point of view: the live page's real status (a copy is a draft
+ * by design, also right after it was published from the editor) and whether the copy holds changes the live page
+ * does not show. Both current fingerprints are compared (a change to the global styles changes both alike), so
+ * changes Elementor autosaved into the copy count too.
+ *
+ * @return array{live: string, changes: bool, outcome: string}
+ */
+function working_copy_standing( string $live_status, string $live_fingerprint, string $copy_fingerprint, string $outcome ): array {
+	$live = 'publish' === $live_status ? 'published' : ( 'trash' === $live_status ? 'trash' : 'unpublished' );
+	return array( 'live' => $live, 'changes' => '' === $live_fingerprint || $copy_fingerprint !== $live_fingerprint, 'outcome' => 'published' === $live ? $outcome : '' );
+}
+
+/** One line for administrators: the live page's status and what this copy holds. */
+function working_copy_summary( array $standing, string $live_title ): string {
+	if ( 'trash' === $standing['live'] ) {
+		/* translators: %s: page title */
+		return sprintf( __( 'The live page "%s" is in the Trash: this working copy cannot be published. Restore the page first, or discard this copy.', 'acadvizen-cms' ), $live_title );
+	}
+	if ( 'unpublished' === $standing['live'] ) {
+		/* translators: %s: page title */
+		return sprintf( __( 'The live page "%s" is not published: this working copy cannot be published. Publish the page itself, or discard this copy.', 'acadvizen-cms' ), $live_title );
+	}
+	$checks = array(
+		'verified'        => __( 'Published (verified on its websites)', 'acadvizen-cms' ),
+		'publishing'      => __( 'Published (being checked on its websites)', 'acadvizen-cms' ),
+		'partial_failure' => __( 'Published, but the last check failed on one website', 'acadvizen-cms' ),
+		'failed'          => __( 'Published, but the last check failed', 'acadvizen-cms' ),
+	);
+	$status = $checks[ $standing['outcome'] ] ?? __( 'Published', 'acadvizen-cms' );
+	return $standing['changes']
+		/* translators: 1: page title, 2: status */
+		? sprintf( __( 'Live page "%1$s": %2$s. This working copy has changes that are not live yet.', 'acadvizen-cms' ), $live_title, $status )
+		/* translators: 1: page title, 2: status */
+		: sprintf( __( 'Live page "%1$s": %2$s. This working copy has no unpublished changes ("Draft" is the status of the copy, not of the live page).', 'acadvizen-cms' ), $live_title, $status );
+}
+
+/** The standing of a working copy (empty for any other document). */
+function working_copy_status( \WP_Post $copy ): array {
+	$live_id = (int) get_post_meta( $copy->ID, COPY_OF_META, true );
+	$live    = $live_id ? get_post( $live_id ) : null;
+	if ( ! $live instanceof \WP_Post ) {
+		return array();
+	}
+	$publication = get_post_meta( $live_id, PUBLICATION_META, true );
+	$standing    = working_copy_standing( $live->post_status, current_fingerprint( $live ), current_fingerprint( $copy ), (string) ( is_array( $publication ) ? ( $publication['outcome'] ?? '' ) : '' ) );
+	return $standing + array( 'live_id' => $live_id, 'live_title' => get_the_title( $live ), 'summary' => working_copy_summary( $standing, get_the_title( $live ) ) );
+}
+
+/**
+ * A working copy whose live page is not published cannot be published: applying it would change a page nobody
+ * sees (one in the Trash, for example) and report "publishing" for a page that can never be verified.
+ */
+function live_target_error( int $candidate_id ): string {
+	$live_id = (int) get_post_meta( $candidate_id, COPY_OF_META, true );
+	return $live_id && 'publish' !== get_post_status( $live_id ) ? 'live_not_published' : '';
+}
+
 function working_copy_for( \WP_Post $live, bool $create = true ): int {
 	$existing = (int) get_post_meta( $live->ID, WORKING_COPY_META, true );
 	if ( $existing && ( $copy = get_post( $existing ) ) && 'trash' !== $copy->post_status && (int) get_post_meta( $existing, COPY_OF_META, true ) === $live->ID ) {
@@ -799,6 +857,15 @@ function main_address_conflict( \WP_Post $post ): int {
 }
 
 function submit_candidate( \WP_Post $post ): string {
+	$live_error = live_target_error( $post->ID );
+	if ( '' !== $live_error ) {
+		approval_bypass( true );
+		wp_update_post( array( 'ID' => $post->ID, 'post_status' => 'draft' ) );
+		approval_bypass( false );
+		approval_log( 'submit', $post->ID, 'refused', $live_error, array( 'live' => (int) get_post_meta( $post->ID, COPY_OF_META, true ) ) );
+		approval_flash( 'error', approval_error_text( $live_error ) );
+		return $live_error;
+	}
 	$conflict = main_address_conflict( $post );
 	if ( $conflict ) {
 		approval_bypass( true );
@@ -852,6 +919,7 @@ function approval_error_text( string $code, array $report = array() ): string {
 		'changed_since_approved'  => __( 'It changed after it was approved: the approval no longer applies. Submit it again.', 'acadvizen-cms' ),
 		'no_revision'             => __( 'There is nothing to submit.', 'acadvizen-cms' ),
 		'main_address_in_use'     => __( 'Another live page already uses this Main Website address. Change the address, or edit that page instead.', 'acadvizen-cms' ),
+		'live_not_published'      => __( 'Not published: the live page this working copy belongs to is in the Trash or unpublished, so nothing was changed. Restore or publish that page first, or discard this working copy.', 'acadvizen-cms' ),
 		'previews_not_checked'    => __( 'Check the preview of every chosen website first, and tick it ("I checked the … preview").', 'acadvizen-cms' ),
 		'already_scheduled'       => __( 'It is already scheduled. Cancel the schedule first to publish it now.', 'acadvizen-cms' ),
 		'not_scheduled'           => __( 'It is not scheduled.', 'acadvizen-cms' ),
@@ -906,6 +974,11 @@ function publish_approved( int $candidate_id, bool $due = false, bool $keep_copy
 	$candidate = get_post( $candidate_id );
 	if ( ! $candidate instanceof \WP_Post || ! in_approval_scope( $candidate ) ) {
 		return 'not_found';
+	}
+	$live_error = live_target_error( $candidate_id );
+	if ( '' !== $live_error ) {
+		approval_log( 'publish', $candidate_id, 'refused', $live_error );
+		return $live_error;
 	}
 	$hash   = current_fingerprint( $candidate );
 	$report = document_compatibility( $candidate );
@@ -1698,6 +1771,10 @@ function render_approval_box( \WP_Post $post ): void {
 	$names = array( '' => __( 'Draft', 'acadvizen-cms' ), 'draft' => __( 'Draft (changed after approval)', 'acadvizen-cms' ), 'pending' => __( 'Waiting for approval', 'acadvizen-cms' ), 'approved' => __( 'Approved, ready to publish', 'acadvizen-cms' ), 'scheduled' => __( 'Approved and scheduled', 'acadvizen-cms' ), 'rejected' => __( 'Rejected', 'acadvizen-cms' ), 'published' => __( 'Published', 'acadvizen-cms' ) );
 	if ( get_post_meta( $post->ID, COPY_OF_META, true ) ) {
 		echo '<p>' . esc_html__( 'Working copy of a live page: visitors see the live page until this is approved and published.', 'acadvizen-cms' ) . '</p>';
+		$standing = working_copy_status( $post );
+		if ( $standing ) {
+			printf( '<p class="acv-live-standing"><strong>%1$s</strong> <a href="%2$s">%3$s</a></p>', esc_html( $standing['summary'] ), esc_url( (string) get_permalink( $standing['live_id'] ) ), esc_html__( 'View live page', 'acadvizen-cms' ) );
+		}
 		if ( current_user_can( 'delete_post', $post->ID ) ) {
 			printf( '<p><a class="acv-discard" href="%1$s" onclick="return confirm(&quot;%2$s&quot;);">%3$s</a></p>', esc_url( approval_action_url( 'discard', $post->ID ) ), esc_js( __( 'Throw away these changes? The live page stays as it is.', 'acadvizen-cms' ) ), esc_html__( 'Discard working copy', 'acadvizen-cms' ) );
 		}
@@ -1722,11 +1799,51 @@ function hide_archives_from_lists( \WP_Query $query ): void {
 	$meta   = (array) $query->get( 'meta_query' );
 	$meta[] = array( 'key' => ARCHIVE_OF_META, 'compare' => 'NOT EXISTS' );
 	$query->set( 'meta_query', $meta );
+	// A working copy identical to its published live page is the editor's scratch space, not a page of its own:
+	// listed, it reads as a second "Draft" of a page that is live. Copies with unpublished changes stay listed.
+	$hidden = identical_working_copies( is_array( $type ) ? (string) reset( $type ) : (string) $type );
+	if ( $hidden ) {
+		$query->set( 'post__not_in', array_merge( (array) $query->get( 'post__not_in' ), $hidden ) );
+	}
+}
+
+/** Working copies of a post type that hold nothing the published live page does not show. */
+function identical_working_copies( string $type ): array {
+	static $cache = array();
+	if ( ! isset( $cache[ $type ] ) ) {
+		$cache[ $type ] = array();
+		$ids            = get_posts( array( 'post_type' => $type, 'post_status' => array( 'draft', 'pending' ), 'posts_per_page' => 200, 'no_found_rows' => true, 'fields' => 'ids', 'meta_key' => COPY_OF_META, 'meta_compare' => 'EXISTS', 'suppress_filters' => true ) ); // phpcs:ignore WordPress.DB.SlowDBQuery
+		foreach ( $ids as $id ) {
+			$copy     = get_post( (int) $id );
+			$standing = $copy instanceof \WP_Post ? working_copy_status( $copy ) : array();
+			if ( $standing && 'published' === $standing['live'] && ! $standing['changes'] && in_array( ( approval_state( (int) $id )['state'] ?? '' ), array( '', 'published' ), true ) ) {
+				$cache[ $type ][] = (int) $id;
+			}
+		}
+	}
+	return $cache[ $type ];
+}
+
+/** The list's status counts leave out the working copies the list hides, so "Drafts (n)" matches its rows. */
+function count_without_identical_copies( $counts, string $type ) {
+	if ( ! is_admin() || ! approval_enabled() || ! did_action( 'load-edit.php' ) || ! is_object( $counts ) || ! in_array( $type, array_merge( SITE_POST_TYPES, TEMPLATE_POST_TYPES ), true ) ) {
+		return $counts;
+	}
+	foreach ( identical_working_copies( $type ) as $id ) {
+		$status = get_post_status( $id );
+		if ( isset( $counts->$status ) && $counts->$status > 0 ) {
+			--$counts->$status;
+		}
+	}
+	return $counts;
 }
 
 function label_working_copies( array $states, \WP_Post $post ): array {
 	if ( approval_enabled() && get_post_meta( $post->ID, COPY_OF_META, true ) ) {
-		$states['acv_working_copy'] = __( 'Working copy of a live page', 'acadvizen-cms' );
+		$standing                   = working_copy_status( $post );
+		$states['acv_working_copy'] = ! $standing ? __( 'Working copy of a live page', 'acadvizen-cms' ) : ( 'published' !== $standing['live']
+			? __( 'Working copy of a page in the Trash or unpublished: cannot be published', 'acadvizen-cms' )
+			: ( $standing['changes'] ? __( 'Unpublished changes to a live page (the live page stays published)', 'acadvizen-cms' ) : __( 'Working copy, same as the live page', 'acadvizen-cms' ) ) );
 	}
 	$state = approval_state( $post->ID );
 	if ( approval_enabled() && ! empty( $state['state'] ) && in_array( $state['state'], array( 'pending', 'approved', 'rejected' ), true ) ) {
@@ -1734,3 +1851,42 @@ function label_working_copies( array $states, \WP_Post $post ): array {
 	}
 	return $states;
 }
+
+/* The live page's status inside the editor ---------------------------------------------------------------- */
+
+/** Read-only: where a working copy stands (for the badge in the Elementor editor). Editors of the copy only. */
+function register_working_copy_route(): void {
+	register_rest_route(
+		REST_NAMESPACE,
+		'/working-copy/(?P<id>\d+)',
+		array(
+			'methods'             => \WP_REST_Server::READABLE,
+			'callback'            => __NAMESPACE__ . '\rest_working_copy_status',
+			'permission_callback' => static fn( \WP_REST_Request $request ) => current_user_can( 'edit_post', (int) $request['id'] ),
+		)
+	);
+}
+
+function rest_working_copy_status( \WP_REST_Request $request ): \WP_REST_Response {
+	$copy     = get_post( (int) $request['id'] );
+	$standing = $copy instanceof \WP_Post && approval_enabled() ? working_copy_status( $copy ) : array();
+	$response = new \WP_REST_Response( $standing ? array_intersect_key( $standing, array_flip( array( 'live', 'changes', 'outcome', 'live_id', 'summary' ) ) ) + array( 'is_copy' => true ) : array( 'is_copy' => false ) );
+	$response->header( 'Cache-Control', 'no-store' );
+	return $response;
+}
+
+/**
+ * Elementor editor of a working copy: a badge with the live page's real status. Elementor shows the copy's own
+ * status (a draft, by design), which read as if a published page had gone back to Draft. Refreshed after saves.
+ */
+function enqueue_working_copy_badge(): void {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- which document the editor shows; nothing is changed.
+	$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
+	if ( ! approval_enabled() || ! $post_id || ! get_post_meta( $post_id, COPY_OF_META, true ) ) {
+		return;
+	}
+	$config = array( 'url' => rest_url( REST_NAMESPACE . '/working-copy/' . $post_id ), 'nonce' => wp_create_nonce( 'wp_rest' ) );
+	wp_add_inline_script( 'elementor-editor', 'window.acvWorkingCopy=' . wp_json_encode( $config ) . ';' . WORKING_COPY_BADGE_JS );
+}
+
+const WORKING_COPY_BADGE_JS = '(function(){var c=window.acvWorkingCopy;if(!c)return;var el=document.createElement("div");el.id="acv-live-standing";el.setAttribute("role","status");el.style.cssText="position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:99999;max-width:640px;padding:8px 14px;border-radius:6px;font:13px/1.4 sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.25);color:#fff;background:#1e5f3a";var tries=0;function show(d){if(!d||!d.is_copy){el.remove();return}el.textContent=d.summary;el.style.background=d.live!=="published"?"#8a1f1f":(d.outcome==="failed"||d.outcome==="partial_failure"?"#8a5a00":(d.changes?"#2b4f7a":"#1e5f3a"));if(!el.isConnected)document.body.appendChild(el);if(d.outcome==="publishing"&&tries<20){tries++;setTimeout(load,15000)}}function load(){fetch(c.url,{credentials:"same-origin",headers:{"X-WP-Nonce":c.nonce},cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(show).catch(function(){})}var n=0,t=setInterval(function(){n++;if(window.$e&&$e.commands&&$e.commands.on){clearInterval(t);$e.commands.on("run:after",function(component,command){if(/^document\/save\//.test(command)){tries=0;setTimeout(load,2500)}})}if(n>240)clearInterval(t)},500);if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",load);else load()})();';

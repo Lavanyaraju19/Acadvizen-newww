@@ -875,6 +875,22 @@ namespace Acadvizen\CMS {
 	check( 'approval: rejection goes back to the editor with a note', array( 'rejected', 'Fix the hero' ), array( approval_transition( $sub, 'reject', $ctx( array( 'can_review' => true, 'note' => 'Fix the hero' ) ) )['state'], approval_transition( $sub, 'reject', $ctx( array( 'can_review' => true, 'note' => 'Fix the hero' ) ) )['note'] ) );
 	check( 'approval: history keeps every step', array( 'submitted', 'approved', 'approval_invalidated_by_edit' ), array_column( $inv['history'], 'what' ) );
 
+	// Working copies: the live page's real status (production, 28 Oct 2026: a published page "showed Draft").
+	$wc = working_copy_standing( 'publish', 'f1', 'f1', 'verified' );
+	check( 'working copy: published from the editor and unchanged reads as the live page published, no changes', array( 'published', false, 'verified' ), array( $wc['live'], $wc['changes'], $wc['outcome'] ) );
+	check( 'working copy: a change autosaved into the copy counts as unpublished', true, working_copy_standing( 'publish', 'f1', 'f2', 'verified' )['changes'] );
+	check( 'working copy: the live page in the Trash / unpublished is reported as such', array( 'trash', 'unpublished', '' ), array( working_copy_standing( 'trash', 'f1', 'f1', 'failed' )['live'], working_copy_standing( 'draft', 'f1', 'f1', '' )['live'], working_copy_standing( 'trash', 'f1', 'f1', 'failed' )['outcome'] ) );
+	check( 'working copy: the summary says the live page is published and "Draft" is the copy', true, false !== strpos( working_copy_summary( $wc, 'Mentors' ), 'Live page "Mentors": Published (verified on its websites)' ) && false !== strpos( working_copy_summary( $wc, 'Mentors' ), 'no unpublished changes' ) );
+	check( 'working copy: a failed last check is not reported as a success', true, false !== strpos( working_copy_summary( working_copy_standing( 'publish', 'f1', 'f1', 'failed' ), 'Home' ), 'the last check failed' ) );
+	check( 'working copy: a copy of a trashed page says it cannot be published', true, false !== strpos( working_copy_summary( working_copy_standing( 'trash', 'f1', 'f1', '' ), 'New Home' ), 'is in the Trash: this working copy cannot be published' ) );
+	$GLOBALS['acv_meta'][3001][ COPY_OF_META ] = 8517;
+	$GLOBALS['acv_meta'][3002][ COPY_OF_META ] = 723;
+	$GLOBALS['acv_statuses'][8517]             = 'trash';
+	$GLOBALS['acv_statuses'][723]              = 'publish';
+	check( 'publishing into a trashed live page is refused; a published one, or a page of its own, is not', array( 'live_not_published', '', '' ), array( live_target_error( 3001 ), live_target_error( 3002 ), live_target_error( 3003 ) ) );
+	check( 'the refusal explains that nothing changed', true, false !== strpos( approval_error_text( 'live_not_published' ), 'nothing was changed' ) );
+	unset( $GLOBALS['acv_meta'][3001], $GLOBALS['acv_meta'][3002], $GLOBALS['acv_statuses'][8517], $GLOBALS['acv_statuses'][723] );
+
 	// The Approvals screen must include old items, keep query order, and scan once for both state groups.
 	$approval_query_ids = range( 2120, 2001 );
 	$approval_query_ids[] = 2118;
