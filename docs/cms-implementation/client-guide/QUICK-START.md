@@ -48,7 +48,7 @@ Nothing changes on either website until a reviewer approves it and it is publish
 
    The website updates within about a minute.
 
-   > **Waiting items (27 Oct):** one change is still waiting on Approvals & Publishing: "Performance Marketing Course" (19 Oct). It contains typed HTML. Check the code, then approve and publish it, or reject it.
+   > **If Publish is interrupted** (lost connection, closed tab): your change stays in the page's working copy; it is not lost and not published. Open the page again and click **Publish** (or **Update**). The same page is updated; no copy is created.
 
    ![Approvals](screenshots/02-approvals.png)
 

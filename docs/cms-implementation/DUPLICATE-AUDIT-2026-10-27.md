@@ -6,11 +6,14 @@
 
 **Times:** UTC.
 
-**Status after stage 3 (27–28 Oct, section 8):** the audit is **not complete**.
-- **Resolved:** R1, R3, R5, R7 and R8.
+**Status on 28 Oct 2026, 07:45 UTC: complete.** Every item is resolved, or retained for a recorded reason.
+- **Resolved:** R1, R3, R5, R6, R7 and R8.
+  - R6: all 48 duplicate images deleted. The last 25 were re-scanned on a fresh export first.
 - **R2:** the homepage SEO is fixed. Home1 is kept as the rollback, and New Home stays in the Trash (owner instruction).
-- **R6:** 23 of the 48 duplicate images are deleted. The other 25 wait for permission to continue.
-- **Partner logos:** Zomato is restored. The Uber/PwC slides are removed on 13 of 38 pages; 25 pages, and #8516 with its page #3876, remain. Editor work stopped when the local network failed.
+- **Partner logos:** done on all 38 pages.
+- **#8516:** published.
+- **Section 1 "Awaiting review":** superseded; see sections 7–8 and the ledger ("Final completion, 28 Oct").
+- **Still retained on purpose:** the near-identical location pages (intended design) and the plugin's version archives (rollback).
 
 ## 1. Result in numbers (stage 1)
 

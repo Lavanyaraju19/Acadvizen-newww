@@ -172,9 +172,9 @@ Personal accounts are **not required**.
 | Kind | Item | Owner |
 |---|---|---|
 | Done 27 Oct | Enrollment homepage SEO title and description (the approved Home1 values) | — |
-| In progress | #8516 (reviewed: approve), published together with #3876's carousel fix | Developer |
-| In progress | Partner carousel: Zomato restored (38 pages); Uber/PwC slides removed on 13 of 38 pages | Developer (needs a working connection) |
-| In progress | 25 of 48 duplicate images still to delete (23 done, backed up) | Owner permission for permanent deletion in this environment |
+| Done 28 Oct | #8516 approved and published; the approval queue is empty | — |
+| Done 28 Oct | Partner carousel on 38/38 pages: Zomato restored, the lost Uber/PwC slides removed (verified at 1440 and 390 px) | — |
+| Done 28 Oct | 48/48 duplicate images deleted (backed up; every kept copy loads) | — |
 | Supported, not fully tested | 336 widgets not used on Main yet; signed-in Main `/admin` after the lock | Check before first use |
 | Future enhancement | Homepage unpublish warning (`PROPOSAL-HOMEPAGE-UNPUBLISH-WARNING.md`) | Owner approval needed to build |
 

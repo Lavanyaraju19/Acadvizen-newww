@@ -33,7 +33,7 @@ const EDITOR_MS = Number(process.env.EDITOR_TIMEOUT_MS || 900000)
 await admin.goto(`${WP}/wp-admin/admin-ajax.php?action=rest-nonce`); const nonce = (await admin.locator('body').innerText()).trim()
 if (!/^[a-f0-9]{10}$/.test(nonce)) { console.log('STOP: not signed in'); process.exit(2) }
 const page = async (id) => (await (await ctx.request.get(`${WP}/wp-json/wp/v2/pages/${id}?context=edit&_fields=id,slug,status,link`, { headers: { 'X-WP-Nonce': nonce } })).json())
-let done = 0
+let done = 0; const skippedPages = []
 // A page that times out (slow connection) is tried once more before the run stops.
 const queue = PAGES.map((id) => ({ id, tries: 0 }))
 while (queue.length) {
@@ -66,7 +66,9 @@ while (queue.length) {
     if (!r.changed.length) console.log(`${t()} #${id}: its working copy #${copy} already holds the change (saved earlier, not published); publishing it`)
     // Elementor's own publish command (the action behind its Publish/Update button; the button itself proved
     // unreliable on these large pages). An administrator's publish is approved and published directly.
-    await admin.evaluate(async () => { await $e.run('document/save/publish') })
+    // A save request that never answers must not hang the run: after 3 minutes it counts as a failed try
+    // (the next try finds the change already in the working copy and publishes it).
+    await Promise.race([admin.evaluate(async () => { await $e.run('document/save/publish') }), sleep(180000).then(() => { throw new Error('save did not finish within 3 minutes') })])
     await sleep(1500); await admin.waitForFunction(() => !elementor.saver.isSaving, null, { timeout: 180000 }); await sleep(4000)
     let ok = false, detail = ''
     for (let i = 0; i < 18 && !ok; i++) { const s = await liveRefs(); detail = `live HTML: removed-slide files ${s.bad}, zomato-1 ${s.zomato}`; ok = s.bad === 0 && s.zomato > 0; if (!ok) await sleep(10000) }
@@ -75,7 +77,11 @@ while (queue.length) {
     console.log(`${t()} ${ok && same ? 'DONE' : 'FAIL'} #${id} /${before.slug}/ (edited copy #${copy}, carousel ${r.changed.join(',')}) | ${detail} | id/address unchanged ${same}`)
     if (!(ok && same)) break
     done++
-  } catch (e) { if (!job.tries++) { console.log(`${t()} RETRY #${id}: ${short(e)}`); queue.unshift(job); continue } console.log(`${t()} STOP #${id}: ${short(e)}`); break }
+  } catch (e) {
+    if (!job.tries++) { console.log(`${t()} RETRY #${id}: ${short(e)}`); queue.unshift(job); continue }
+    // The editor could not be opened or saved twice: nothing was published for this page; record it and go on.
+    console.log(`${t()} SKIPPED #${id} after 2 tries (nothing published): ${short(e)}`); skippedPages.push(id)
+  }
 }
-console.log(`${t()} pages fixed: ${done}/${PAGES.length}`)
+console.log(`${t()} pages fixed: ${done}/${PAGES.length}${skippedPages.length ? ` | skipped (editor did not open): ${skippedPages.join(",")}` : ""}`)
 await b.close()

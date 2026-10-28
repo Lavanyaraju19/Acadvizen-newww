@@ -176,6 +176,24 @@ The agreed setup is **one existing Administrator account**, which already signs 
 
 Nothing in the queue was approved, published, rejected or deleted during the handover.
 
+### 6.8 Final regression, 28 Oct 2026 (07:25–07:45Z)
+Evidence: `evidence/production-20261028/`.
+
+| Suite | Result |
+|---|---|
+| Main, 320 addresses against 23 Oct | 319 identical + 1 intended (MG Road canonical); 310 sitemap addresses drawn by WordPress |
+| Enrollment, 59 baseline pages | 56 identical; 3 explained (homepage robots order, `/test/` 404, `/mentors/` title) |
+| Enrollment sitemap | 59 addresses, all 200 |
+| Sitemaps / duplicates | No address listed twice; 0 exact duplicate bodies; 0 cross-site duplicates |
+| Main-only pages | 4/4 noindex, outside the sitemap |
+| Routes | `/admin` 200, lock 423, Leads read 401 and empty POST 400, lists 401, signed API 401, enquiry `POST`, `/test/` 404 |
+| Blog images | 372/372 |
+| Internal links / menus / queue | 242 targets from 369 pages, 0 broken; 4/4 menus clean; queue empty |
+| Browser checks, 1440 and 390 px | 10 views: header, footer, navigation, 0 broken images, 0 page errors; popup opened and closed |
+| Partner carousel | 38/38 pages; 8 logos loaded at both widths |
+
+Nothing failed. Nothing was left unrun, except the parts covered by earlier LIVE evidence with the same plugin version: approval, scheduling, failure and retry (26 Oct).
+
 ### 6.7 Design publishing test on the live websites (27 Oct, 14:20–14:37Z)
 
 `tools/verify-design-live.mjs`: **53 passed, 0 failed** (`evidence/production-20261027/design-live.out`, screenshots in `design-live/`).

@@ -246,13 +246,11 @@ Both websites were checked again on 27 October. The backup of 24 October was che
   - Its browser title and search description are now the approved homepage ones ("Digital Marketing Course in Bangalore with AI | Acadvizen").
   - "Home1" is kept as a way back to the homepage of 26 October.
   - "New Home" stays in the Trash.
-- **Hiring-partner logos.** The Zomato logo is back on every page. The Uber and PwC slides, whose files were lost before 10 October, are removed from the carousel: done on 13 pages, the rest to follow.
-- **Unused template drafts** and 23 duplicate image files were removed.
+- **Hiring-partner logos.** The Zomato logo is back on every page. The Uber and PwC slides, whose files were lost before 10 October, were removed from the carousel on all 38 course and location pages. Each carousel now shows 8 logos.
+- **"Performance Marketing Course"** (waiting since 19 October) was approved and published. It corrects text that had been copied from another course. **Approvals & Publishing is now empty.**
+- **Unused template drafts** and 48 duplicate image files were removed. An identical copy of every image stays; the deleted files are in the backups.
 
-**Still in progress** (developer):
-- the Uber/PwC slides on the remaining 25 pages;
-- publishing the "Performance Marketing Course" change waiting since 19 October (reviewed: it corrects text copied from another course);
-- deleting the other 25 duplicate images.
+**Nothing is waiting on you.** The websites are ready for routine work.
 
 **The Trash.** Everything removed on 27 October can be brought back until about 26 November 2026:
 - pages, posts, blogs and templates: *(Pages, Posts, Blogs or Templates) → Trash → Restore*;

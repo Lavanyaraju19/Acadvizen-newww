@@ -101,6 +101,40 @@ Full record: [DUPLICATE-AUDIT-2026-10-27.md](DUPLICATE-AUDIT-2026-10-27.md).
 - 0 broken internal links, 0 links to removed items;
 - menus, redirects, homepage, popup, blog images 372/372, enquiry route, lock and queue all unchanged.
 
+### Final completion, 28 Oct 2026 (19:00Z 27 Oct – 07:45Z 28 Oct)
+Evidence: `evidence/production-20261028/` and `evidence/production-20261027/partner-carousel.out`, `media-delete.out`.
+
+**State:** Git `66f9225` = origin; Main `dpl_13s8yPa5GTauWxsi4hvchXrvPVVa` (Ready); plugin 0.7.10. No code release: no code defect was found.
+
+**Done (PASS):**
+- **Partner carousel, 38/38 pages.** No missing Uber/PwC files, and the restored Zomato logo is present.
+  - Live HTML checked on all 38.
+  - In a browser at 1440 and 390 px: 8 slides, 8 logos loaded, 0 broken, no page errors, order kept.
+- **#8516 "Performance Marketing Course"** published together with its page's carousel fix.
+  - Verified unchanged since review (pending since 19 Oct, design identical to the reviewed export; the live page untouched since 12 Oct).
+  - Live: the reviewed "Course Overview" text is shown and the wrong "45 Days" text is gone. The approval queue is now empty.
+- **Duplicate images: all 48 deleted.**
+  - The 25 remaining files were re-scanned on a fresh export, and all 25 were still unreferenced.
+  - Each file and record was saved first; all 48 are also in the 24 Oct backup.
+  - All 48 now answer 404; all 46 kept identical copies answer 200.
+- **Full regression:**
+  - Main: 320 addresses, 319 identical to 23 Oct + 1 intended (MG Road canonical); 310 drawn by WordPress.
+  - Enrollment: 56/59 identical + 3 explained; sitemap 59/59 answer 200.
+  - Sitemaps: no duplicates. Exact duplicate bodies: 0.
+  - Blog images 372/372.
+  - Routes 9/9 checks (admin, lock, Leads, lists, signed API, enquiry route, `/test/`).
+  - Internal links: 242 targets from 369 pages, 0 broken.
+  - Menus 4/4 clean.
+  - Browser checks: 10 views plus the popup.
+
+**Tool fixes during the run** (no effect on the websites):
+- the page loop now records a page that cannot be opened twice and carries on;
+- the save command has a 3-minute limit, so a hung save becomes a retry;
+- a browser profile built during the outage cached broken scripts and was deleted;
+- `tail -f` does not see appends from another process on this machine, so progress was read by polling the file.
+
+**Resilience seen in practice:** network drops interrupted edits several times. In every case the change waited in the page's single working copy (not published, not lost), and the next run published it. No duplicate pages were created.
+
 ### Master production pass, 27–28 Oct 2026 (13:55–19:15Z)
 Details: audit §8; matrix §7; acceptance §6.7.
 
