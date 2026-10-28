@@ -260,6 +260,13 @@ Deleted image files are kept in the backups.
 
 **Retired page addresses** forward with a 301 redirect (**Rank Math → Redirections**). Don't publish a new page at a retired address; the redirect would hide it.
 
+**Avoiding duplicate pages.** The duplicates found in October ("Mentors 1", "Career 1", "Courses 1", "Placement 1", "Partnership", "Project 1") all came the same way. Before 26 October, Publish only sent a change for approval, so the website did not change. New pages were created to try again, and WordPress silently gave each one a numbered address (`/mentors-1/`). Since 26 October, Publish and Update by an administrator change the live page directly. To keep one page per subject:
+1. **To change a page, edit that page.** Go to **Pages**, find it, then **Edit with Elementor**, and click **Update**. Don't use *Add New*, *Duplicate* or *Copy* to change an existing page.
+2. **A new address ending in -1, -2 … means that address is already taken.** If you see that, you are probably creating a second copy of an existing page. Stop and edit the existing one instead.
+3. **"Working copy of a live page"** drafts are normal. The website creates one while you edit a live page, and keeps it after you publish. They are never public. Leave them alone; there is no need to delete them.
+4. **If a change doesn't show up after Update,** check **Approvals & Publishing → Recent publications**. It shows "Published (verified)", "Publishing" or "Failed" with the reason. Click **Check again** there; don't create a new page.
+5. **Never publish a half-finished page.** Placeholder text such as "Add Your Heading Text Here / Lorem ipsum" becomes public and searchable. Save it as a draft until it is ready.
+
 **Changing the Enrollment homepage.** Never unpublish the page that is set as the homepage: the website's front address then shows "not found". This happened on 27 October, 06:51–08:29 UTC. To replace the homepage:
 1. Publish the new page.
 2. Choose it under **Settings → Reading → Homepage**.

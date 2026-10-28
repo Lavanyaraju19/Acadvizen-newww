@@ -101,6 +101,26 @@ Full record: [DUPLICATE-AUDIT-2026-10-27.md](DUPLICATE-AUDIT-2026-10-27.md).
 - 0 broken internal links, 0 links to removed items;
 - menus, redirects, homepage, popup, blog images 372/372, enquiry route, lock and queue all unchanged.
 
+### Final handover, 28 Oct 2026 (08:28–10:35Z): CLIENT-READY
+Full report: [FINAL-HANDOVER-REPORT-2026-10-28.md](FINAL-HANDOVER-REPORT-2026-10-28.md).
+
+**Done today:**
+- "Mentors" and "Career" titles restored on the original pages;
+- "Project 1" (placeholder text, published by mistake) unpublished, with a 301 to `/projects-2/`;
+- 45 leftover working copies trashed;
+- the Enrollment sitemap 404 fixed (permalinks re-saved, the three sitemap addresses purged from LiteSpeed).
+
+**Live tests:**
+- design test: Main, Enrollment and Both all passed (37/37 on the re-run, plus the Main journey);
+- approval test 16/16;
+- full regression clean;
+- Main `/admin` and Leads verified signed in;
+- PHP 359/359, JS 318/318, secret scan clean.
+
+**Root cause of the duplicates: operational, not a code defect.** Publish only submitted for approval before 0.7.9, so new pages were created and WordPress silently suffixed their addresses. Prevention: 0.7.9's direct publish, the working copy linked by page id, Main's 409 / replay protection, and the "edit, don't duplicate" guidance.
+
+**Open:** one LiteSpeed setting (do not cache the sitemap addresses). It needs the owner's authorization; the environment refused the change.
+
 ### Final completion, 28 Oct 2026 (19:00Z 27 Oct – 07:45Z 28 Oct)
 Evidence: `evidence/production-20261028/` and `evidence/production-20261027/partner-carousel.out`, `media-delete.out`.
 

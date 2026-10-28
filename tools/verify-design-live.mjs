@@ -48,8 +48,10 @@ const rest = async (method, route, data) => { try { const r = await adminCtx.req
 const media = (await rest('GET', 'wp/v2/media?media_type=image&per_page=1&orderby=date&mime_type=image/png')).json[0]
 
 async function openEditor(id) {
-  await admin.goto(`${WP}/wp-admin/post.php?post=${id}&action=elementor`, { timeout: 180000 })
-  await admin.waitForFunction(() => window.elementor && window.$e && elementor.documents?.getCurrent?.() && elementor.getPreviewContainer?.(), null, { timeout: 300000 })
+  // Generous limits: on a slow or unstable connection a cold editor load can take several minutes.
+  const ms = Number(process.env.EDITOR_TIMEOUT_MS || 480000)
+  await admin.goto(`${WP}/wp-admin/post.php?post=${id}&action=elementor`, { timeout: ms, waitUntil: 'domcontentloaded' })
+  await admin.waitForFunction(() => window.elementor && window.$e && elementor.documents?.getCurrent?.() && elementor.getPreviewContainer?.(), null, { timeout: ms })
   await sleep(2500)
   return Number(new URL(admin.url()).searchParams.get('post')) || id
 }
@@ -184,7 +186,7 @@ async function cleanup() {
     check(`cleanup ${c.dest}: unpublished and gone from both websites`, st === 'draft' && gone.ok, `status ${st}`)
     // The page, its working copies and archives (same title) to the Trash.
     const all = await rest('GET', `wp/v2/pages?search=${encodeURIComponent(c.label)}&status=draft,pending,private&per_page=50&context=edit&_fields=id,title,status`)
-    const mine = (all.json || []).filter((p) => p.title?.raw === c.label || p.title?.raw?.startsWith(c.label))
+    const mine = (Array.isArray(all.json) ? all.json : []).filter((p) => p.title?.raw === c.label || p.title?.raw?.startsWith(c.label))
     let n = 0; for (const p of mine) { const d = await rest('DELETE', `wp/v2/pages/${p.id}`); if (d.status === 200) n++ }
     check(`cleanup ${c.dest}: the test page and its copies/archives moved to the Trash`, n === mine.length && mine.some((p) => p.id === c.id), `${n}/${mine.length}: ${mine.map((p) => '#' + p.id).join(',')}`)
   }

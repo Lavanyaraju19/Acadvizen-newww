@@ -48,6 +48,8 @@ Nothing changes on either website until a reviewer approves it and it is publish
 
    The website updates within about a minute.
 
+   > **Edit, don't duplicate:** to change a page, open that page and click **Update**. Never create a new page or a copy to change an existing one. A new address ending in "-1" means the page already exists.
+   >
    > **If Publish is interrupted** (lost connection, closed tab): your change stays in the page's working copy; it is not lost and not published. Open the page again and click **Publish** (or **Update**). The same page is updated; no copy is created.
 
    ![Approvals](screenshots/02-approvals.png)
