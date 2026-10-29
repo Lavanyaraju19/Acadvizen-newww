@@ -77,6 +77,15 @@ Upload and replace images in **Media**. An image that a published or waiting pag
 
 Imported Main images are titled **"Main Website: …"**. Please don't delete them.
 
+## After an important change: ask Google to re-read the page
+
+In your normal browser, signed in with a Google account that owns the website in Search Console:
+1. Open https://search.google.com/search-console.
+2. Paste the page address into **URL Inspection**.
+3. Click **Request indexing**.
+
+Google updates its results in its own time.
+
 ## Please do not
 
 - change **Settings → Acadvizen CMS Switches** or the Master Admin **Settings**;

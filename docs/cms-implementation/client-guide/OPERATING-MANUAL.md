@@ -255,7 +255,7 @@ Both websites were checked again on 27 October. The backup of 24 October was che
 - **Mentors, Placement, Career, Courses, Partnership.** The newer designs now live at the **original addresses**, which keep their SEO settings and menu links. The "-1" pages are retired, and their addresses forward (301) to the originals.
 - **Enrollment homepage.**
   - Its browser title and search description are now the approved homepage ones ("Digital Marketing Course in Bangalore with AI | Acadvizen").
-  - "Home1" is kept as a way back to the homepage of 26 October.
+  - "Home1", the homepage of 26 October, was kept as a draft to go back to. It was moved to the Trash on 29 October (07:40 IST). Restore it from Pages → Trash if you still want that way back; it can be restored until about 28 November.
   - "New Home" stays in the Trash.
 - **Hiring-partner logos.** The Zomato logo is back on every page. The Uber and PwC slides, whose files were lost before 10 October, were removed from the carousel on all 38 course and location pages. Each carousel now shows 8 logos.
 - **"Performance Marketing Course"** (waiting since 19 October) was approved and published. It corrects text that had been copied from another course. **Approvals & Publishing is now empty.**
@@ -286,6 +286,19 @@ Deleted image files are kept in the backups.
 - `/career/`, which leads to the Mysore page.
 
 Yoast is now deactivated (still installed). Don't activate it, or any other SEO plugin, without your developer.
+
+**Asking Google to refresh a page (Search Console).** After an important change to a page's title or content, you can ask Google to re-read it. This needs a Google account that owns the Search Console property, in your normal browser (Google does not allow automated browsers to sign in):
+1. Open https://search.google.com/search-console and choose the property for enroll.acadvizen.com (or acadvizen.com).
+2. Paste the page address into **URL Inspection** at the top, for example `https://enroll.acadvizen.com/`.
+3. Click **Request indexing** and wait for "Indexing requested".
+
+Google decides when its results change; this only puts the page in its queue.
+
+**Missing image on Timeline (29 Oct).** One image on `/timeline/` shows as broken: its file (`ChatGPT-Image-Sep-3-2026-03_25_43-PM.png`, made on 3 Sep) was deleted before 10 Oct and is in no backup. To fix it:
+1. Upload the original to **Media**.
+2. On Timeline, use **Edit with Elementor**, click the broken image, then **Choose Image**, pick it, and click **Update**.
+
+Alternatively, delete that image element.
 
 **Popup buttons.** A button can open an Elementor popup only if that popup is **published**. On 28 October, five buttons ("Explore Acadvizen", "Book Free Career Counselling", "Contact Now") pointed at the never-published popup *Acadvizen Admission Popup* (#2941) and did nothing. They now open the published admission popup (#7696). When you add a popup button, choose a published popup and test the button on the live page.
 

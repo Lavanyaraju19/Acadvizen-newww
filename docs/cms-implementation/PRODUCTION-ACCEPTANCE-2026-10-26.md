@@ -234,3 +234,15 @@ The audit and its results are in [DUPLICATE-AUDIT-2026-10-27.md](DUPLICATE-AUDIT
 - Enrollment sitemap 64, all 200;
 - 0 broken internal links;
 - menus, redirects, popup, blog images, enquiry route, lock and queue unchanged.
+
+### 6.9 Re-verification, 29 Oct 2026 (02:30–03:20 UTC; plugin 0.7.11)
+
+Recorded in [FINAL-COMPLETION-REPORT-2026-10-29.md](FINAL-COMPLETION-REPORT-2026-10-29.md), evidence `evidence/production-20261029/`:
+
+- **Main, all 320 baseline addresses:** metadata 319/320 identical to the 23 Oct baseline (the other is the intended MG Road canonical); visible text 319/320 (the homepage popup).
+- **Enrollment:** 57/59 identical (2 explained); sitemap 58/58 answer 200.
+- **Live tests:**
+  - state machine 14/14;
+  - approval test (Both) all steps: approve, reject, resubmit, restore, unpublish.
+- **Backup:** the 24 Oct backup set of section 1, re-verified (checksums, integrity) and restore-tested again on 29 Oct (237 s, 111 tables).
+- **Changed since section 6.4:** Home1 #6177 is no longer a draft rollback. The team moved it to the Trash on 29 Oct 02:10 UTC (restorable).

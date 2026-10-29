@@ -331,3 +331,10 @@ Delete only after a fresh, verified backup.
 | 13260x735x490 | #484 | none (one copy kept) |
 | 22394x1000x563 | #449 | none (one copy kept) |
 | 3941x1200x26 | #382, #380, #202, #188 | design/meta of #263 elementor_library publish; attached to #263 (+3 more in use) |
+
+## Addendum, 29 Oct 2026
+
+- **#9304 "New"** (working copy of New Home #8517) held no unique work: identical design, settings, content and SEO to #8517 and its archives. Discarded with the plugin's action on 28 Oct 19:38 UTC (in the Trash, restorable). New Home #8517 stays in the Trash.
+- **Home1 #6177 and its copy #11884** were moved to the Trash by the team on 29 Oct 02:10 UTC, so section 8's "Home1 kept as the rollback" no longer holds. Both can be restored from the Trash; `/home1/` still redirects to `/`.
+- **Test records** of the 28 Oct live tests (pages, working copies and 23 archived versions) are all in the Trash.
+- **Inventory on 29 Oct:** 378 page records; no published duplicates (`evidence/production-20261029/inventory-20261029.csv`).

@@ -20,6 +20,9 @@ const OUT = process.env.EVIDENCE_DIR || path.join(process.cwd(), 'approval-live-
 const T = new Date().toISOString().replace(/\D/g, '').slice(0, 12)
 const MARK = `CMS APPROVAL TEST ${T}`, SLUG = `cms-approval-test-${T}`
 const TRACKING = /(^|\.)(googletagmanager\.com|google-analytics\.com|analytics\.google\.com|doubleclick\.net|googleadservices\.com|facebook\.(com|net)|clarity\.ms|hotjar\.(com|io))$/i
+// Playwright request errors carry a call log with the cookies: only ever print the first line of an error.
+process.on('uncaughtException', (e) => { console.log(`STOP: ${String(e?.message || e).split('\n')[0].slice(0, 200)}`); process.exit(1) })
+process.on('unhandledRejection', (e) => { console.log(`STOP: ${String(e?.message || e).split('\n')[0].slice(0, 200)}`); process.exit(1) })
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const results = []; const check = (n, ok, d = '') => { results.push(Boolean(ok)); console.log(`${ok ? 'PASS' : 'FAIL'} ${n}${d ? ` — ${d}` : ''}`) }
 const get = async (url) => { const r = await fetch(`${url}${url.includes('?') ? '&' : '?'}acvcheck=${Date.now()}`, { redirect: 'manual' }); return { status: r.status, html: r.status === 200 ? await r.text() : '' } }
@@ -134,7 +137,7 @@ try {
   const back = await until(both, (b) => b.main.html.includes(`${MARK} V1`) && b.enroll.html.includes(`${MARK} V1`) && !b.main.html.includes(`${MARK} V2`))
   check('9 Restore: the earlier revision is back live on both websites', back.ok, `${back.s}s`)
 } catch (e) {
-  check('run finished without an error', false, String(e.message || e).slice(0, 300))
+  check('run finished without an error', false, String(e.message || e).split('\n')[0].slice(0, 200))
 } finally {
   if (liveId) {
     // With approval on, a reviewer takes a live page off line in Pages → Quick Edit → Status: Draft.
@@ -148,7 +151,7 @@ try {
       await page.locator('#the-list tr.inline-editor button.save').dispatchEvent('click')
       await page.waitForSelector(`${rowSel}:not(.inline-editor)`, { timeout: 120000 }); await sleep(2000)
       status = (await rest('GET', `wp/v2/pages/${liveId}?context=edit`)).json.status || ''
-    } catch (e) { status = `error: ${String(e.message).slice(0, 80)}` }
+    } catch (e) { status = `error: ${String(e.message).split('\n')[0].slice(0, 80)}` }
     const gone = await until(both, (b) => (b.main.status !== 200 || !b.main.html.includes(MARK)) && (b.enroll.status !== 200 || !b.enroll.html.includes(MARK)), 180000)
     check('10 Unpublish (Pages → Quick Edit → Draft, kept as a draft): gone from both websites', status === 'draft' && gone.ok, `status ${status} | Main ${gone.last.main.status}, Enrollment ${gone.last.enroll.status}`)
   }

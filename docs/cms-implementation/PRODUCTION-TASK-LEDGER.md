@@ -101,6 +101,20 @@ Full record: [DUPLICATE-AUDIT-2026-10-27.md](DUPLICATE-AUDIT-2026-10-27.md).
 - 0 broken internal links, 0 links to removed items;
 - menus, redirects, homepage, popup, blog images 372/372, enquiry route, lock and queue all unchanged.
 
+### Final completion, 29 Oct 2026 (28 Oct 19:20Z – 29 Oct 03:40Z): see FINAL-COMPLETION-REPORT-2026-10-29.md
+
+| Item | Status |
+|---|---|
+| Backup | VERIFIED: latest existing set, 24 Oct 09:45:29Z (database and files). Checksums re-verified; restore-tested in an isolated container on 29 Oct. No fresh full backup: manual backups are locked; hPanel was not signed in. A content snapshot was taken 29 Oct 03:12Z (content only) |
+| Working copy #9304 | DONE: no unique work; discarded to the Trash. New Home #8517 still in the Trash |
+| Timeline image (media #743) | BLOCKED: the original exists in no backup, local folder or web archive. The team must re-upload it |
+| Google Request indexing | BLOCKED: Google refuses sign-in in the automated browser. Owner step: URL Inspection → Request indexing |
+| Main blog images, 86 posts | VERIFIED: 372 Enrollment images (439 in all), 0 failed, stable over 4 rounds; text identical. The lower counts came from the regression script's fetching, not reproduced, and nothing is missing |
+| Both websites | VERIFIED: Main 319/320 metadata and text; Enrollment 57/59; sitemaps, robots, redirects, SEO heads, layouts at 3 widths, 6 popup buttons |
+| Publishing workflow on 0.7.11 | VERIFIED: state machine 14/14; approval test (Both) all steps |
+| Test artifacts | DONE: 0 outside the Trash |
+| Home1 #6177 + copy #11884 | Information: trashed by the team, 29 Oct 02:10Z; not reversed |
+
 ### Production repair, 28 Oct 2026 evening (11:50Z – 29 Oct): see FINAL-REPORT-2026-10-28-EVENING.md
 
 The 10:35Z "CLIENT-READY" state below did not hold through the afternoon. These changes and findings came afterwards; all fixes are verified on production.

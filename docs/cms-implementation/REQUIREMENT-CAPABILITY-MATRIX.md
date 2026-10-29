@@ -177,6 +177,11 @@ Personal accounts are **not required**.
 | Done 28 Oct | 48/48 duplicate images deleted (backed up; every kept copy loads) | — |
 | Supported, not fully tested | 336 widgets not used on Main yet; signed-in Main `/admin` after the lock | Check before first use |
 | Future enhancement | Homepage unpublish warning (`PROPOSAL-HOMEPAGE-UNPUBLISH-WARNING.md`) | Owner approval needed to build |
+| Done 28 Oct | Plugin 0.7.11: the live page's real status is shown on working copies; a copy of a trashed page cannot be published (live tests 14/14 and approval, 29 Oct) | — |
+| Done 28 Oct | Yoast SEO deactivated (it broke titles and canonicals on both websites); homepage titled "Home"; 5 popup buttons fixed; `/career/` and `/paternship/` redirects | — |
+| Done 29 Oct | #9304 discarded (no unique work); all 86 Main blog posts audited (images load, text intact) | — |
+| Blocked 29 Oct | Google "Request indexing" of the homepage (Google refuses sign-in in an automated browser) | Owner, in their own browser |
+| Blocked 29 Oct | Timeline image (media #743): the original exists in no backup | Team: re-upload it |
 
 ## 7. Full-site editing coverage (27 Oct 2026)
 
