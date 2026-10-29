@@ -7,9 +7,87 @@
   - Enrollment: https://enroll.acadvizen.com (WordPress/Elementor);
   - Main: https://www.acadvizen.com (Next.js, drawn from the same WordPress).
 - **Shared admin:** https://enroll.acadvizen.com/wp-admin/.
-- **Evidence:** `evidence/production-20261029/` unless another folder is named.
+- **Evidence:** `evidence/production-20261029/` unless another folder is named. Final-state evidence is in `evidence/production-20261029/final/`.
+- **Updated with the final state:** 29 Oct 2026, 05:40 UTC (11:10 IST).
 
-## Overall status: PARTIALLY COMPLETE
+## FINAL STATE (29 Oct 2026, 05:40 UTC): COMPLETE (Google indexing is a client action, intentionally deferred)
+
+All implementation work is done and verified on the live websites. Nothing technical is left open.
+
+### PASS / FAIL / BLOCKED
+
+| Item | Result | Evidence (`evidence/production-20261029/`) |
+|---|---|---|
+| Timeline broken image | **PASS.** The original exists nowhere (`timeline-image.txt`), so only the broken image element (`dcb0167`, media #743) was removed through the CMS. Its empty container, every other element (324 of 324 kept, none added), the title, the address and Published status are unchanged. The blank band shrank from 46 px to 20 px (the container's padding); the page has **0 failed requests** at 1440/768/390 px | `final/timeline-fix.out`, `timeline-after.out`, `timeline-after/` (before/after images), `final/layout.out` |
+| Home1 and the Trash | **PASS (nothing to restore).** Home1 #6177 and its copy #11884 are in the Trash (the team's action, 29 Oct 02:10 UTC); restorable until about 28 Nov 02:10 UTC. Home1's design is also kept in two saved versions that are not in the Trash (#8643, #11886). The live homepage #11892 "Home" has 10 Restore points of its own. `/` answers 200; `/home1/` → `/` in one hop. Nothing was restored, published or deleted | `final/records-final.txt`, `final/redirects.txt` |
+| Backup | **PASS (latest existing verified set).** 24 Oct 2026 09:45:29 UTC, database and files: checksums re-verified and restore-tested on 29 Oct. **No newer backup reachable:** there is no authorized hPanel session, and manual backups are locked on the plan | `backup/` |
+| Working copy #9304 | **PASS:** discarded to the Trash, no unique work; New Home stays in the Trash | `working-copy-9304.txt`, `final/records-final.txt` |
+| Both websites | **PASS** (below) | `final/` |
+| Publishing workflow | **PASS:** state machine 14/14; approval test on Both: approve, reject, resubmit, restore, unpublish | `final/working-copy-live.out`, `final/approval-live.out` |
+| Main blog posts and images | **PASS:** 86/86 posts 200; 439 images (372 Enrollment uploads), **0 failed**; visible text identical | `final/main-blog-images-final.*`, `final/main-text.out` |
+| Test content and duplicates | **PASS:** 0 test records outside the Trash; 71 published pages, no duplicates (the only same-title pairs are each Enrollment page and its Main-only "(Main)" record, one per website by design) | `final/records-final.txt` |
+| Automated checks | **PASS:** PHP lint 0 errors; PHP 367/367; JavaScript 318/318; secret scan clean | `final/automated-tests.out` |
+| Google Request indexing | **CLIENT ACTION — INTENTIONALLY DEFERRED.** The owner handles it (see the end of this section) | — |
+
+### Changes made in this final pass
+
+| When (UTC) | Change | Page |
+|---|---|---|
+| 29 Oct 04:27 | Removed the broken image element `dcb0167` (Elementor, working copy #13040 → Publish) | Timeline #733, https://enroll.acadvizen.com/timeline/ |
+| 29 Oct 04:55–05:30 | Live tests created test pages; afterwards they and all their copies and archives were moved to the Trash | test pages only (titles "CMS STATUS/APPROVAL TEST …") |
+
+No plugin, theme, setting, Main or other page was changed. There was **no deployment**: plugin 0.7.11 is unchanged and Main was not redeployed, because no Main code changed. No other user's work was overwritten: the Timeline working copy held no unpublished changes, which the tool checks before editing.
+
+### Production verification (29 Oct 04:30–05:30 UTC)
+
+- **Main:**
+  - all 320 baseline addresses answer 200; metadata 319/320 and visible text 319/320 match the 23 Oct baseline (explained: the MG Road canonical fix, the homepage popup);
+  - sitemap 310 addresses;
+  - `/admin` and `/admin/leads` answer (route level); the Leads API refuses anonymous visitors (401); the content lock answers 423;
+  - signed-in use of Main `/admin` was last verified by the owner on 28 Oct, and the Main deployment has not changed since.
+- **Enrollment:**
+  - 57/59 baseline pages identical (2 explained); sitemap 58/58 answer 200;
+  - 14 key pages × 3 widths: **42/42 renders clean** (no overflow, broken image, failed request, empty section or page error; header, footer and forms present);
+  - 6 popup buttons open popup #7696;
+  - the enquiry route `/wp-json/acadvizen/v1/enquiry` is present (POST only), and the enquiry forms are present. **No enquiry was submitted.**
+- **SEO:**
+  - 18 addresses on both sites: one title and one canonical each, Rank Math only, no Yoast;
+  - redirects: 11 old addresses in one hop each, and `/new-home/` 404 (intended);
+  - robots.txt correct on both sites.
+- **WordPress admin:** signed in by the owner through the normal login, used, and signed out afterwards.
+
+### Backup and rollback
+
+- **Recovery set:** the 24 Oct 2026 09:45:29 UTC backup (database + files), locally at `C:\Users\HP\Downloads\acadvizen-backup-20261026\` and `C:\Users\HP\Downloads\u713346627.20261024094529.tar.gz`. Verified and restore-tested on 29 Oct. **Never restore it over the live website.**
+- **Content snapshot** of 29 Oct 03:12 UTC: `C:\Users\HP\Downloads\acadvizen-content-export-20261029\`.
+- **Undo the Timeline change:** Approvals & Publishing → Recent publications → **Restore** on Timeline. Note that this brings the broken image back.
+- **Plugin rollback package:** 0.7.10 in `dist/` (sha256 `0cd87f15…b0b778`).
+
+### Commits and deployment
+
+- **Commits:** `1e1a59e` (03:40 UTC). This final pass is in the commit that adds this section and `tools/remove-element-live.mjs`; its hash is given in the chat message that hands over this report.
+- **Deployment:** none. Plugin 0.7.11 is unchanged; Main is unchanged.
+
+### Access restrictions met
+
+- **WordPress:** no saved session was valid, because sessions are signed out after each use for security. The owner signed in once through the normal login (04:25 UTC); it was used only for the Timeline change and the tests, then signed out.
+- **Hostinger hPanel:** no authorized session exists, and manual backups are locked on this plan. Nothing in the remaining work required it.
+- **Google:** refuses sign-in in automated browsers, which is why indexing is the client action below.
+
+### CLIENT ACTION — INTENTIONALLY DEFERRED: Google indexing
+
+The owner will do this personally:
+1. Open Search Console in a normal browser.
+2. **URL Inspection** → `https://enroll.acadvizen.com/`.
+3. **Request indexing**.
+
+The page is ready for it: one correct title and canonical, `index, follow`, in the sitemap.
+
+---
+
+## Status at 03:40 UTC (superseded by the final state above)
+
+Sections 1–11 below record the state at 03:40 UTC, before the final pass.
 
 Every task that could be done from this environment is done and verified on the live websites. Two items are blocked outside it:
 

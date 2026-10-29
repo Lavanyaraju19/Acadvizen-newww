@@ -294,11 +294,10 @@ Yoast is now deactivated (still installed). Don't activate it, or any other SEO 
 
 Google decides when its results change; this only puts the page in its queue.
 
-**Missing image on Timeline (29 Oct).** One image on `/timeline/` shows as broken: its file (`ChatGPT-Image-Sep-3-2026-03_25_43-PM.png`, made on 3 Sep) was deleted before 10 Oct and is in no backup. To fix it:
-1. Upload the original to **Media**.
-2. On Timeline, use **Edit with Elementor**, click the broken image, then **Choose Image**, pick it, and click **Update**.
-
-Alternatively, delete that image element.
+**Timeline image (fixed 29 Oct).** One image near the top of `/timeline/` pointed at a file deleted before 10 October (`ChatGPT-Image-Sep-3-2026-03_25_43-PM.png`); it is in no backup. That broken image element was removed, and nothing else on the page changed. If you still have the original picture:
+1. Upload it to **Media**.
+2. On Timeline, use **Edit with Elementor**.
+3. Drag an **Image** element into the small empty box below the AI-tools section, choose the picture, and click **Update**.
 
 **Popup buttons.** A button can open an Elementor popup only if that popup is **published**. On 28 October, five buttons ("Explore Acadvizen", "Book Free Career Counselling", "Contact Now") pointed at the never-published popup *Acadvizen Admission Popup* (#2941) and did nothing. They now open the published admission popup (#7696). When you add a popup button, choose a published popup and test the button on the live page.
 

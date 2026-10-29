@@ -101,14 +101,18 @@ Full record: [DUPLICATE-AUDIT-2026-10-27.md](DUPLICATE-AUDIT-2026-10-27.md).
 - 0 broken internal links, 0 links to removed items;
 - menus, redirects, homepage, popup, blog images 372/372, enquiry route, lock and queue all unchanged.
 
+### Final state, 29 Oct 2026 05:40Z: COMPLETE (Google indexing is the client action, deferred)
+
+Timeline fixed; live tests 14/14 and approval (Both) all pass; Main 319/320; Enrollment 57/59; 42/42 layouts clean; 0 test records outside the Trash; no duplicates. See the final-state section of FINAL-COMPLETION-REPORT-2026-10-29.md.
+
 ### Final completion, 29 Oct 2026 (28 Oct 19:20Z – 29 Oct 03:40Z): see FINAL-COMPLETION-REPORT-2026-10-29.md
 
 | Item | Status |
 |---|---|
 | Backup | VERIFIED: latest existing set, 24 Oct 09:45:29Z (database and files). Checksums re-verified; restore-tested in an isolated container on 29 Oct. No fresh full backup: manual backups are locked; hPanel was not signed in. A content snapshot was taken 29 Oct 03:12Z (content only) |
 | Working copy #9304 | DONE: no unique work; discarded to the Trash. New Home #8517 still in the Trash |
-| Timeline image (media #743) | BLOCKED: the original exists in no backup, local folder or web archive. The team must re-upload it |
-| Google Request indexing | BLOCKED: Google refuses sign-in in the automated browser. Owner step: URL Inspection → Request indexing |
+| Timeline image (media #743) | DONE 29 Oct 04:27Z: the original exists in no backup, local folder or web archive, so the broken image element was removed through the CMS; the rest of the page is unchanged; 0 failed requests at 3 widths |
+| Google Request indexing | CLIENT ACTION, intentionally deferred: the owner does URL Inspection → Request indexing (Google refuses sign-in in automated browsers) |
 | Main blog images, 86 posts | VERIFIED: 372 Enrollment images (439 in all), 0 failed, stable over 4 rounds; text identical. The lower counts came from the regression script's fetching, not reproduced, and nothing is missing |
 | Both websites | VERIFIED: Main 319/320 metadata and text; Enrollment 57/59; sitemaps, robots, redirects, SEO heads, layouts at 3 widths, 6 popup buttons |
 | Publishing workflow on 0.7.11 | VERIFIED: state machine 14/14; approval test (Both) all steps |
